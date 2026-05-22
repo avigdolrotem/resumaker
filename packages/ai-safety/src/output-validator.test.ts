@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateOutput, parseAndValidate } from './output-validator.js';
+import { validateOutput, parseAndValidate } from './output-validator';
 
 const validResume = {
   metadata: {

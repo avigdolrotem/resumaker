@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { sanitizeInput } from './input-filter.js';
+import { sanitizeInput } from './input-filter';
 
 describe('sanitizeInput - benign inputs', () => {
   it('passes a normal English job description', () => {

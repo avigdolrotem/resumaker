@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildPrompt } from './prompt-builder.js';
+import { buildPrompt } from './prompt-builder';
 
 describe('buildPrompt - structure', () => {
   it('returns system + user separation', () => {

@@ -6,7 +6,7 @@
  */
 
 import { ResumeSchema, type Resume, ValidationError } from '@resumaker/shared';
-import { sanitizeInput } from './input-filter.js';
+import { sanitizeInput } from './input-filter';
 
 export interface ValidateResult {
   valid: boolean;
