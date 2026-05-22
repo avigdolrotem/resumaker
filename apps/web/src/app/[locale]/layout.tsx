@@ -61,7 +61,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} dir={dir} className={`${heebo.variable} ${inter.variable}`}>
-      <body className="min-h-screen bg-background font-sans text-foreground antialiased">
+      <body className="bg-background text-foreground min-h-screen font-sans antialiased">
         <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
       </body>
     </html>

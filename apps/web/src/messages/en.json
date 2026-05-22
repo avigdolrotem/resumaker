@@ -10,6 +10,9 @@
     "signIn": "Sign in",
     "signUp": "Sign up",
     "dashboard": "Dashboard",
+    "newResume": "New Resume",
+    "myResumes": "My Resumes",
+    "settings": "Settings",
     "signOut": "Sign out"
   },
   "home": {
@@ -37,6 +40,74 @@
         "description": "Your data is encrypted, not sold, and never used to train models"
       }
     }
+  },
+  "auth": {
+    "common": {
+      "loading": "Loading…"
+    },
+    "fields": {
+      "name": "Full name",
+      "email": "Email",
+      "password": "Password"
+    },
+    "signUp": {
+      "title": "Create account",
+      "subtitle": "Start building resumes in minutes",
+      "cta": "Sign up",
+      "haveAccount": "Already have an account?",
+      "passwordHint": "At least 12 characters"
+    },
+    "signIn": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to continue",
+      "cta": "Sign in",
+      "noAccount": "Don't have an account?",
+      "forgotPassword": "Forgot password?"
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "passwordTooShort": "Password must be at least 12 characters.",
+      "invalidCredentials": "Invalid email or password."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Hi, {name}",
+    "newResumeBtn": "Create new resume",
+    "stats": {
+      "resumes": "Resumes",
+      "generations": "Generations",
+      "lastUsed": "Last activity"
+    },
+    "noResumes": "No resumes yet. Let's get started!",
+    "recent": "Recent resumes"
+  },
+  "builder": {
+    "title": "Resume Builder",
+    "jdLabel": "Job description",
+    "jdPlaceholder": "Paste the job description here...",
+    "urlLabel": "Or paste a link",
+    "urlPlaceholder": "https://...",
+    "profileTitle": "My profile",
+    "industryLabel": "Industry",
+    "industries": {
+      "tech": "Tech",
+      "healthcare": "Healthcare",
+      "finance": "Finance",
+      "general": "General"
+    },
+    "localeLabel": "Resume language",
+    "locales": {
+      "auto": "Auto",
+      "he": "Hebrew",
+      "en": "English"
+    },
+    "generate": "Generate resume",
+    "generating": "Generating... this may take a few seconds",
+    "atsScore": "ATS Score",
+    "missingKeywords": "Missing keywords",
+    "suggestions": "Suggestions",
+    "downloadPdf": "Download PDF"
   },
   "ats": {
     "score": "ATS Score",

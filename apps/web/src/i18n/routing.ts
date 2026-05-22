@@ -10,33 +10,9 @@ export const routing = defineRouting({
   defaultLocale: 'he',
 
   /**
-   * Localized pathnames if needed in the future.
-   * e.g. /he/קורות-חיים, /en/resume
+   * Using English pathnames in both locales for simplicity (easier to share,
+   * type, support analytics). Hebrew users see Hebrew content at /he/sign-up.
    */
-  pathnames: {
-    '/': '/',
-    '/resume': {
-      he: '/קורות-חיים',
-      en: '/resume',
-    },
-    '/templates': {
-      he: '/תבניות',
-      en: '/templates',
-    },
-    '/pricing': {
-      he: '/מחירים',
-      en: '/pricing',
-    },
-    '/sign-in': {
-      he: '/כניסה',
-      en: '/sign-in',
-    },
-    '/sign-up': {
-      he: '/הרשמה',
-      en: '/sign-up',
-    },
-  },
-
   localePrefix: 'always',
 });
 

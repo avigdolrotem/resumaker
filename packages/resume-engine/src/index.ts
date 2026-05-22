@@ -1,9 +1,6 @@
 /**
- * Resume rendering engine.
- * React-PDF templates for resume export, supporting RTL Hebrew.
- *
- * Templates: 5 designs across industries (tech, healthcare, finance, general).
- * Implementation pending.
+ * Resume rendering engine — React-PDF templates.
  */
 
-export {};
+export { ModernTemplate } from './templates/modern';
+export type { ResumePdfProps } from './templates/types';

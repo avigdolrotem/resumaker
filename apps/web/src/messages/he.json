@@ -10,6 +10,9 @@
     "signIn": "כניסה",
     "signUp": "הרשמה",
     "dashboard": "אזור אישי",
+    "newResume": "קורות חיים חדשים",
+    "myResumes": "קורות החיים שלי",
+    "settings": "הגדרות",
     "signOut": "התנתקות"
   },
   "home": {
@@ -37,6 +40,74 @@
         "description": "הנתונים שלך מוצפנים, לא נמכרים, ולא משמשים לאימון מודלים"
       }
     }
+  },
+  "auth": {
+    "common": {
+      "loading": "טוען…"
+    },
+    "fields": {
+      "name": "שם מלא",
+      "email": "דוא״ל",
+      "password": "סיסמה"
+    },
+    "signUp": {
+      "title": "צור חשבון",
+      "subtitle": "התחל לבנות קורות חיים תוך דקות",
+      "cta": "הרשמה",
+      "haveAccount": "כבר יש לך חשבון?",
+      "passwordHint": "לפחות 12 תווים"
+    },
+    "signIn": {
+      "title": "ברוכים השבים",
+      "subtitle": "התחבר כדי להמשיך",
+      "cta": "כניסה",
+      "noAccount": "אין לך חשבון?",
+      "forgotPassword": "שכחת סיסמה?"
+    },
+    "errors": {
+      "generic": "אירעה שגיאה. אנא נסה שוב.",
+      "passwordTooShort": "הסיסמה חייבת להיות לפחות 12 תווים.",
+      "invalidCredentials": "אימייל או סיסמה שגויים."
+    }
+  },
+  "dashboard": {
+    "title": "אזור אישי",
+    "welcome": "שלום, {name}",
+    "newResumeBtn": "צור קורות חיים חדשים",
+    "stats": {
+      "resumes": "קורות חיים",
+      "generations": "יצירות",
+      "lastUsed": "פעילות אחרונה"
+    },
+    "noResumes": "עדיין אין לך קורות חיים. בוא נתחיל!",
+    "recent": "קורות חיים אחרונים"
+  },
+  "builder": {
+    "title": "בונה קורות חיים",
+    "jdLabel": "תיאור המשרה",
+    "jdPlaceholder": "הדבק כאן את תיאור המשרה...",
+    "urlLabel": "או קישור למודעה",
+    "urlPlaceholder": "https://...",
+    "profileTitle": "הפרופיל שלי",
+    "industryLabel": "תחום",
+    "industries": {
+      "tech": "הייטק",
+      "healthcare": "בריאות",
+      "finance": "פיננסים",
+      "general": "כללי"
+    },
+    "localeLabel": "שפת קורות החיים",
+    "locales": {
+      "auto": "אוטומטי",
+      "he": "עברית",
+      "en": "English"
+    },
+    "generate": "צור קורות חיים",
+    "generating": "יוצר... זה עשוי לקחת מספר שניות",
+    "atsScore": "ניקוד ATS",
+    "missingKeywords": "מילות מפתח חסרות",
+    "suggestions": "המלצות לשיפור",
+    "downloadPdf": "הורד PDF"
   },
   "ats": {
     "score": "ניקוד ATS",
