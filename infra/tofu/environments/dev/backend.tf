@@ -5,9 +5,6 @@ terraform {
     region         = "us-east-1"
     dynamodb_table = "resumaker-tofu-locks"
     encrypt        = true
-    kms_key_id     = "alias/resumaker-tofu-state"
-
-    # Force MFA for state operations in prod (uncomment when MFA configured)
-    # role_arn   = "arn:aws:iam::857812839967:role/TofuStateAccess"
+    # Using bucket-level SSE-S3 (AES256). Add KMS key for prod environment.
   }
 }
