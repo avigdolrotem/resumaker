@@ -113,3 +113,10 @@ venv/
 .devcontainer/local-*
 docker-compose.override.yml
 .localstack/
+
+# ─── Claude Code / AI tool databases ───
+ruvector.db
+.claude/
+.cursor/
+.aider*
+.continue/
