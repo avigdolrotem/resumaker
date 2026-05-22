@@ -1,0 +1,64 @@
+# Pre-commit hooks for Resumaker
+# Install: pnpm prepare (or: pre-commit install)
+# Run manually on all files: pre-commit run --all-files
+
+repos:
+  # Built-in essentials
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # Secret scanning (CRITICAL)
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  # Prettier formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        types_or: [javascript, jsx, ts, tsx, json, yaml, markdown, css, scss]
+        exclude: 'pnpm-lock\.yaml|package-lock\.json'
+
+  # OpenTofu formatting & validation
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.5
+    hooks:
+      - id: terraform_fmt
+        args: ['--args=-recursive']
+      - id: terraform_validate
+        args: ['--tf-init-args=-backend=false']
+
+  # YAML linting (for K8s/Helm/Ansible)
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [-c=.yamllint.yml]
+        exclude: 'pnpm-lock\.yaml'
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
+    hooks:
+      - id: markdownlint
+        args: [--fix]
+        exclude: 'CHANGELOG\.md'
+
+# Pre-push: heavier checks
+default_install_hook_types: [pre-commit, pre-push]

@@ -1,0 +1,11 @@
+# Codeowners — automatic reviewer assignment
+
+# Default
+* @rotem
+
+# Security-sensitive areas — extra eyes
+/packages/ai-safety/    @rotem
+/docs/SECURITY.md       @rotem
+/docs/AI_SAFETY.md      @rotem
+/.github/workflows/     @rotem
+/infra/                 @rotem

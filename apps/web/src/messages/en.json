@@ -1,0 +1,62 @@
+{
+  "metadata": {
+    "title": "Resumaker — AI-Powered Resume Builder",
+    "description": "Create tailored resumes for any job using AI. Full Hebrew support, ATS scoring, and professional templates."
+  },
+  "nav": {
+    "home": "Home",
+    "templates": "Templates",
+    "pricing": "Pricing",
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "dashboard": "Dashboard",
+    "signOut": "Sign out"
+  },
+  "home": {
+    "hero": {
+      "title": "Build a Winning Resume with AI",
+      "subtitle": "Paste a job description — get a tailored, ATS-scored resume in Hebrew or English",
+      "cta": "Start creating",
+      "secondaryCta": "See examples"
+    },
+    "features": {
+      "ats": {
+        "title": "ATS Scoring",
+        "description": "See exactly how well your resume matches the job description"
+      },
+      "templates": {
+        "title": "5 Custom Templates",
+        "description": "Templates tailored for industries: Tech, Healthcare, Finance, and more"
+      },
+      "rtl": {
+        "title": "Hebrew-First Design",
+        "description": "Native RTL support, optimal typography, formatted for the Israeli market"
+      },
+      "secure": {
+        "title": "Privacy & Security",
+        "description": "Your data is encrypted, not sold, and never used to train models"
+      }
+    }
+  },
+  "ats": {
+    "score": "ATS Score",
+    "missing_keywords": "Missing Keywords",
+    "suggestions": "Improvement Suggestions"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "rate_limit": "Too many requests. Please try again later.",
+    "invalid_input": "Invalid or missing input.",
+    "unauthorized": "Please sign in to perform this action."
+  },
+  "common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit"
+  }
+}

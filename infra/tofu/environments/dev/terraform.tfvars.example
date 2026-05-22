@@ -1,0 +1,7 @@
+# Copy to terraform.tfvars (gitignored)
+# tfvars files are gitignored except this example
+
+aws_region  = "us-east-1"
+environment = "dev"
+project     = "resumaker"
+vpc_cidr    = "10.10.0.0/16"

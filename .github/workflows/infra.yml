@@ -1,0 +1,116 @@
+name: Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infra.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write  # for OIDC AWS auth
+
+jobs:
+  validate:
+    name: OpenTofu validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        env: [dev, staging, prod]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.12.0
+          tofu_wrapper: false
+
+      - name: Format check
+        run: tofu fmt -recursive -check
+        working-directory: infra/tofu
+
+      - name: Validate
+        run: |
+          tofu init -backend=false
+          tofu validate
+        working-directory: infra/tofu/environments/${{ matrix.env }}
+
+  lint:
+    name: tflint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+      - run: tflint --init
+      - run: tflint --recursive --format compact
+        working-directory: infra/tofu
+
+  trivy:
+    name: Trivy IaC scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: config
+          scan-ref: ./infra/tofu
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+
+  plan:
+    name: Plan ${{ matrix.env }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'pull_request'
+    needs: [validate, lint, trivy]
+    strategy:
+      matrix:
+        env: [dev]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::857812839967:role/GitHubActionsRole
+          aws-region: us-east-1
+
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.12.0
+
+      - name: Init
+        run: tofu init
+        working-directory: infra/tofu/environments/${{ matrix.env }}
+
+      - name: Plan
+        run: tofu plan -no-color -out=plan.tfplan
+        working-directory: infra/tofu/environments/${{ matrix.env }}
+
+      - name: Comment plan on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync(
+              `infra/tofu/environments/${{ matrix.env }}/plan.tfplan`,
+              'utf8'
+            ).slice(0, 60000);
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### OpenTofu Plan (${{ matrix.env }})\n\`\`\`\n${plan}\n\`\`\``
+            });

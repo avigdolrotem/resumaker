@@ -1,0 +1,39 @@
+{
+  "name": "resumaker",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Hebrew-first AI resume builder with ATS optimization",
+  "author": "Rotem Avigdol <rotem@avigdol.com>",
+  "license": "MIT",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter @resumaker/web dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter tests-e2e test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "security:secrets": "gitleaks detect --source . --verbose",
+    "security:deps": "pnpm audit --audit-level=moderate",
+    "security:iac": "trivy config infra/",
+    "security:all": "pnpm security:secrets && pnpm security:deps && pnpm security:iac",
+    "infra:fmt": "tofu -chdir=infra/tofu fmt -recursive",
+    "infra:validate": "tofu -chdir=infra/tofu validate",
+    "infra:plan:dev": "tofu -chdir=infra/tofu/environments/dev plan",
+    "prepare": "pre-commit install || true"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.10"
+  }
+}
