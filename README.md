@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/rotem/resumaker/actions/workflows/ci.yml/badge.svg)](https://github.com/rotem/resumaker/actions/workflows/ci.yml)
 [![Security](https://github.com/rotem/resumaker/actions/workflows/security.yml/badge.svg)](https://github.com/rotem/resumaker/actions/workflows/security.yml)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: BUSL 1.1](https://img.shields.io/badge/license-BUSL%201.1-orange.svg)](LICENSE)
 
 ## What This Is
 
@@ -41,20 +41,20 @@ Browser → Cloudflare → Next.js (Vercel) → API Gateway →
 
 ## Tech Stack
 
-| Layer | Choice |
-|---|---|
-| Frontend | Next.js 16, TypeScript, Tailwind v4, shadcn/ui, Aceternity UI, next-intl |
-| Backend | Node.js, Hono/Fastify, microservices |
-| Database | PostgreSQL (AWS RDS) + Redis (ElastiCache) |
-| Auth | Better Auth |
-| AI | Claude Sonnet (default), Gemini, GPT-5 (premium tier) |
-| Storage | AWS S3 |
-| Infra | AWS (il-central-1) via OpenTofu |
-| Containers | Docker + EKS + Helm |
-| GitOps | ArgoCD |
-| CI/CD | GitHub Actions |
-| Monitoring | Sentry + Grafana + Prometheus + Loki |
-| Payments | Stripe |
+| Layer      | Choice                                                                   |
+| ---------- | ------------------------------------------------------------------------ |
+| Frontend   | Next.js 16, TypeScript, Tailwind v4, shadcn/ui, Aceternity UI, next-intl |
+| Backend    | Node.js, Hono/Fastify, microservices                                     |
+| Database   | PostgreSQL (AWS RDS) + Redis (ElastiCache)                               |
+| Auth       | Better Auth                                                              |
+| AI         | Claude Sonnet (default), Gemini, GPT-5 (premium tier)                    |
+| Storage    | AWS S3                                                                   |
+| Infra      | AWS (il-central-1) via OpenTofu                                          |
+| Containers | Docker + EKS + Helm                                                      |
+| GitOps     | ArgoCD                                                                   |
+| CI/CD      | GitHub Actions                                                           |
+| Monitoring | Sentry + Grafana + Prometheus + Loki                                     |
+| Payments   | Stripe                                                                   |
 
 ## Project Structure
 
@@ -91,21 +91,25 @@ pnpm dev
 
 ## Documentation
 
-| Document | Purpose |
-|---|---|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture and data flow |
-| [STACK.md](docs/STACK.md) | Technology choices and trade-offs |
-| [SECURITY.md](docs/SECURITY.md) | Security model and threat analysis |
-| [AI_SAFETY.md](docs/AI_SAFETY.md) | LLM safety layer design |
-| [INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md) | AWS infrastructure details |
-| [AUTH.md](docs/AUTH.md) | Authentication & authorization design |
-| [MICROSERVICES.md](docs/MICROSERVICES.md) | Service boundaries & communication |
-| [DEVOPS.md](docs/DEVOPS.md) | CI/CD and operational practices |
-| [SETUP.md](docs/SETUP.md) | Local development setup |
+| Document                                    | Purpose                               |
+| ------------------------------------------- | ------------------------------------- |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)     | System architecture and data flow     |
+| [STACK.md](docs/STACK.md)                   | Technology choices and trade-offs     |
+| [SECURITY.md](docs/SECURITY.md)             | Security model and threat analysis    |
+| [AI_SAFETY.md](docs/AI_SAFETY.md)           | LLM safety layer design               |
+| [INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md) | AWS infrastructure details            |
+| [AUTH.md](docs/AUTH.md)                     | Authentication & authorization design |
+| [MICROSERVICES.md](docs/MICROSERVICES.md)   | Service boundaries & communication    |
+| [DEVOPS.md](docs/DEVOPS.md)                 | CI/CD and operational practices       |
+| [SETUP.md](docs/SETUP.md)                   | Local development setup               |
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Resumaker™ is source-available under the **Business Source License 1.1** — see [LICENSE](LICENSE).
+
+In short: you may read, fork, modify, and run this code for non-production purposes. You may not offer it to third parties as a hosted or embedded service that competes with the commercial version. Four years after each release, the code converts to the Apache License 2.0.
+
+For commercial / competitive use licensing, contact <licensing@resumaker.co.il>.
 
 ## Author
 

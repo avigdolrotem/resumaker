@@ -4,7 +4,7 @@
   "private": true,
   "description": "Hebrew-first AI resume builder with ATS optimization",
   "author": "Rotem Avigdol <rotem@avigdol.com>",
-  "license": "MIT",
+  "license": "BUSL-1.1",
   "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=22.0.0",
