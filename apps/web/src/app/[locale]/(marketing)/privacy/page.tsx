@@ -1,4 +1,4 @@
-import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 
 export default async function PrivacyPage({ params }: { params: Promise<{ locale: Locale }> }) {

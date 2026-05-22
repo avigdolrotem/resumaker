@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,6 +14,7 @@ type LocaleChoice = 'auto' | 'he' | 'en';
 
 interface ResumeResult {
   resume: {
+    metadata: { language: 'he' | 'en'; generated_at: string; template: string };
     contact: { name: string; email?: string };
     summary: string;
     experience: Array<{
@@ -32,6 +34,13 @@ interface ResumeResult {
   };
 }
 
+interface ATSScore {
+  overall: number;
+  matched_keywords: string[];
+  missing_keywords: string[];
+  suggestions: Array<{ type: string; severity: string; message: string }>;
+}
+
 export default function BuilderPage() {
   const t = useTranslations('builder');
   const [jd, setJd] = useState('');
@@ -49,6 +58,10 @@ export default function BuilderPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ResumeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [atsScore, setAtsScore] = useState<ATSScore | null>(null);
+  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -92,11 +105,56 @@ export default function BuilderPage() {
         setError(data.error ?? 'Generation failed');
       } else {
         setResult(data);
+        setSavedId(null);
+        setAtsScore(null);
+        // Auto-trigger ATS scoring against the original JD (if pasted)
+        if (jd) {
+          void fetchAtsScore(data.resume, jd);
+        }
       }
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchAtsScore(resume: ResumeResult['resume'], jobDescription: string) {
+    try {
+      const res = await fetch('/api/resumes/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resume, jobDescription }),
+      });
+      if (res.ok) {
+        const data: ATSScore = await res.json();
+        setAtsScore(data);
+      }
+    } catch {
+      /* non-blocking; score is best-effort */
+    }
+  }
+
+  async function handleSave() {
+    if (!result) return;
+    setSaving(true);
+    try {
+      const title = name ? `${name} - ${industry}` : `Resume ${new Date().toLocaleDateString()}`;
+      const res = await fetch('/api/resumes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content: result.resume, templateId: 'modern-1' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.id) {
+        setSavedId(data.id);
+      } else {
+        setError(data.error ?? 'Save failed');
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -281,10 +339,99 @@ export default function BuilderPage() {
             </Card>
           )}
 
-          {result && <ResumePreview resume={result.resume} metadata={result.metadata} />}
+          {result && (
+            <div className="space-y-4">
+              {/* Action bar */}
+              <Card>
+                <CardContent className="flex flex-wrap items-center gap-2 pt-6">
+                  {savedId ? (
+                    <span className="rounded-md bg-green-50 px-3 py-2 text-sm font-medium text-green-700">
+                      ✓ Saved
+                    </span>
+                  ) : (
+                    <Button onClick={handleSave} disabled={saving} size="sm">
+                      {saving ? 'Saving...' : 'Save resume'}
+                    </Button>
+                  )}
+                  {savedId && (
+                    <>
+                      <Button asChild size="sm" variant="outline">
+                        <a href={`/api/resumes/${savedId}/pdf`} target="_blank" rel="noreferrer">
+                          {t('downloadPdf')}
+                        </a>
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => router.push('/dashboard')}>
+                        Back to dashboard
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              {atsScore && <AtsScoreCard score={atsScore} />}
+              <ResumePreview resume={result.resume} metadata={result.metadata} />
+            </div>
+          )}
         </div>
       </div>
     </div>
+  );
+}
+
+function AtsScoreCard({ score }: { score: ATSScore }) {
+  const colorClass =
+    score.overall >= 70
+      ? 'text-green-600'
+      : score.overall >= 50
+        ? 'text-yellow-600'
+        : 'text-red-600';
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-baseline justify-between">
+          <span>ATS Score</span>
+          <span className={`text-4xl font-bold ${colorClass}`}>{score.overall}</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {score.missing_keywords.length > 0 && (
+          <div>
+            <p className="mb-2 text-sm font-medium text-neutral-700">Missing keywords</p>
+            <div className="flex flex-wrap gap-1">
+              {score.missing_keywords.slice(0, 10).map((k) => (
+                <span key={k} className="rounded bg-red-50 px-2 py-1 text-xs text-red-700">
+                  {k}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        {score.suggestions.length > 0 && (
+          <div>
+            <p className="mb-2 text-sm font-medium text-neutral-700">Suggestions</p>
+            <ul className="space-y-1 text-sm">
+              {score.suggestions.map((s, i) => (
+                <li key={i} className="flex gap-2 text-neutral-700">
+                  <span
+                    className={
+                      s.severity === 'high'
+                        ? 'text-red-600'
+                        : s.severity === 'medium'
+                          ? 'text-yellow-600'
+                          : 'text-neutral-500'
+                    }
+                  >
+                    •
+                  </span>
+                  {s.message}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

@@ -13,7 +13,8 @@ const globalForRedis = globalThis as unknown as { _redis?: RedisClient };
 
 async function getClient(): Promise<RedisClient> {
   if (globalForRedis._redis) return globalForRedis._redis;
-  const client = createClient({ url: process.env.REDIS_URL });
+  const url = process.env.REDIS_URL;
+  const client = url ? createClient({ url }) : createClient();
   client.on('error', (err: Error) => console.error('[redis] error:', err));
   await client.connect();
   globalForRedis._redis = client;

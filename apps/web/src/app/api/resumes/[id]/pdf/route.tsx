@@ -14,7 +14,7 @@ import { ModernTemplate } from '@resumaker/resume-engine';
 import { ResumeSchema } from '@resumaker/shared';
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
   const session = await auth.api.getSession({ headers: await headers() });

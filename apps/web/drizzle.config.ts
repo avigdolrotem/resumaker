@@ -7,7 +7,7 @@ if (!process.env.DATABASE_URL) {
     const env = readFileSync('../../.env', 'utf-8');
     for (const line of env.split('\n')) {
       const m = line.match(/^([A-Z_]+)=(.+)$/);
-      if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
+      if (m && m[1] && !process.env[m[1]]) process.env[m[1]] = m[2] ?? '';
     }
   } catch {
     /* .env not found, rely on process env */
