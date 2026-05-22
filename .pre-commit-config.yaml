@@ -37,7 +37,7 @@ repos:
 
   # OpenTofu formatting & validation
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.96.5
+    rev: v1.105.0
     hooks:
       - id: terraform_fmt
         args: ['--args=-recursive']

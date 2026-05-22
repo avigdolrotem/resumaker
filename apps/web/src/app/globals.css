@@ -1,60 +1,52 @@
 @import 'tailwindcss';
 
+@theme {
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(222 47% 11%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(222 47% 11%);
+  --color-primary: hsl(220 75% 55%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(220 14% 96%);
+  --color-secondary-foreground: hsl(222 47% 11%);
+  --color-muted: hsl(220 14% 96%);
+  --color-muted-foreground: hsl(220 9% 46%);
+  --color-accent: hsl(220 14% 96%);
+  --color-accent-foreground: hsl(222 47% 11%);
+  --color-destructive: hsl(0 84% 60%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-border: hsl(220 13% 91%);
+  --color-input: hsl(220 13% 91%);
+  --color-ring: hsl(220 75% 55%);
+
+  --color-brand-50: hsl(220 100% 97%);
+  --color-brand-100: hsl(220 95% 93%);
+  --color-brand-200: hsl(220 90% 85%);
+  --color-brand-300: hsl(220 85% 75%);
+  --color-brand-400: hsl(220 80% 65%);
+  --color-brand-500: hsl(220 75% 55%);
+  --color-brand-600: hsl(220 70% 45%);
+  --color-brand-700: hsl(220 70% 35%);
+  --color-brand-800: hsl(220 70% 25%);
+  --color-brand-900: hsl(220 75% 15%);
+
+  --radius: 0.5rem;
+
+  --font-sans: var(--font-heebo), var(--font-inter), system-ui, sans-serif;
+}
+
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --primary: 220 75% 55%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 220 14% 96%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 220 75% 55%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222 47% 11%;
-    --foreground: 0 0% 100%;
-    --card: 222 47% 11%;
-    --card-foreground: 0 0% 100%;
-    --primary: 220 80% 65%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 222 33% 17%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 222 33% 17%;
-    --muted-foreground: 220 9% 64%;
-    --accent: 222 33% 17%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 222 33% 17%;
-    --input: 222 33% 17%;
-    --ring: 220 80% 65%;
-  }
-
-  * {
-    @apply border-border;
-  }
-
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: 'rlig' 1, 'calt' 1;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
   }
 
-  /* RTL-aware utilities are handled via Tailwind logical properties (ps-, pe-, etc.) */
-
-  /* Better Hebrew typography */
   [lang='he'] {
-    font-feature-settings: 'kern' 1, 'liga' 1;
+    font-feature-settings:
+      'kern' 1,
+      'liga' 1;
   }
 }

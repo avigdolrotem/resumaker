@@ -3,7 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
+      "@/*": ["./src/*"],
       "@resumaker/shared": ["../../packages/shared/src"],
       "@resumaker/ui": ["../../packages/ui/src"],
       "@resumaker/ai-safety": ["../../packages/ai-safety/src"]
@@ -14,11 +14,6 @@
     "moduleResolution": "Bundler",
     "jsx": "preserve"
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
