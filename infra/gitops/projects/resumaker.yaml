@@ -16,7 +16,7 @@ spec:
   description: Resumaker app + supporting infra
 
   sourceRepos:
-    - https://github.com/rotem/resumaker # update to your actual repo URL
+    - https://github.com/avigdolrotem/resumaker # update to your actual repo URL
     - https://github.com/*/resumaker.git
     - https://charts.external-secrets.io
     - https://argoproj.github.io/argo-helm

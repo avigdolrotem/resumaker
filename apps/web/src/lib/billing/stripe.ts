@@ -11,7 +11,9 @@
  *   2. Set STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET
  *   3. Set PAYMENT_PROVIDER=stripe
  *   4. Create products in dashboard, paste price IDs into STRIPE_PRICE_* env vars
- *   5. Run `stripe listen --forward-to localhost:3000/api/billing/webhook` in dev
+ *   5. In the Stripe Dashboard, add a webhook endpoint at
+ *      `https://resumaker.co.il/api/billing/webhook` and copy the
+ *      signing secret into STRIPE_WEBHOOK_SECRET.
  */
 
 import Stripe from 'stripe';

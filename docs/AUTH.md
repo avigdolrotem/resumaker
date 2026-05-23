@@ -227,9 +227,7 @@ If user lost 2FA device:
 
 ### Google
 
-- Authorized redirect URIs:
-  - `http://localhost:3000/api/auth/callback/google` (dev)
-  - `https://staging.resumaker.co.il/api/auth/callback/google`
+- Authorized redirect URI:
   - `https://resumaker.co.il/api/auth/callback/google`
 - Scopes: `openid email profile`
 

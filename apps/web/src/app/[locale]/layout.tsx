@@ -53,12 +53,11 @@ export async function generateMetadata({
       address: false,
       telephone: false,
     },
+    // Only icon.svg exists today. Add favicon.ico + apple-touch-icon.png
+    // to apps/web/public/ when a real logo is designed, then add them
+    // back to the icons array.
     icons: {
-      icon: [
-        { url: '/favicon.ico', sizes: 'any' },
-        { url: '/icon.svg', type: 'image/svg+xml' },
-      ],
-      apple: '/apple-touch-icon.png',
+      icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
     },
     manifest: '/site.webmanifest',
     alternates: {
@@ -76,20 +75,14 @@ export async function generateMetadata({
       title: t('title'),
       description: t('description'),
       siteName: 'Resumaker',
-      images: [
-        {
-          url: '/og-image.png',
-          width: 1200,
-          height: 630,
-          alt: 'Resumaker — AI-powered resume builder',
-        },
-      ],
+      // og-image.png intentionally omitted until a designed image lands
+      // in apps/web/public/. Twitter / OG previews will fall back to the
+      // page title + description — fine for soft launch.
     },
     twitter: {
-      card: 'summary_large_image',
+      card: 'summary',
       title: t('title'),
       description: t('description'),
-      images: ['/og-image.png'],
     },
     robots: {
       index: true,

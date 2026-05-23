@@ -10,7 +10,7 @@ metadata:
 spec:
   generators:
     - git:
-        repoURL: https://github.com/rotem/resumaker.git # update to your repo
+        repoURL: https://github.com/avigdolrotem/resumaker.git # update to your repo
         revision: main
         files:
           - path: infra/gitops/apps/*.yaml
@@ -23,7 +23,7 @@ spec:
     spec:
       project: resumaker
       source:
-        repoURL: https://github.com/rotem/resumaker.git
+        repoURL: https://github.com/avigdolrotem/resumaker.git
         targetRevision: main
         path: '{{path}}'
       destination:

@@ -131,20 +131,9 @@ Tags: `vMAJOR.MINOR.PATCH` for releases.
 
 ## Environments
 
-### Local Development
-
-```bash
-docker-compose up        # Postgres, Redis, Localstack
-pnpm dev                 # Start all apps with hot reload
-```
-
-### Staging
-
-- Auto-deployed from `main`
-- Database: dev RDS instance (small)
-- Same auth providers as prod
-- URL: `staging.resumaker.co.il`
-- Used for: integration testing, demo
+There is no local-dev environment and no staging tier by design —
+single-environment deployment model. CI runs tests + typecheck on every
+push; merged commits to `main` are eligible for tagging.
 
 ### Production
 

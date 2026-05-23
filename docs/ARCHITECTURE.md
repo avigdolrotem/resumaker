@@ -210,17 +210,16 @@ Resumaker is a microservices-based AI resume builder targeting the Israeli job m
 
 ### Environments
 
-| Environment    | Frontend                         | Backend             | Database        | LLM                          |
-| -------------- | -------------------------------- | ------------------- | --------------- | ---------------------------- |
-| **Local dev**  | localhost:3000                   | localhost:3001-3005 | docker postgres | Real Anthropic API (dev key) |
-| **Staging**    | staging.resumaker.co.il (Vercel) | EKS in us-east-1    | RDS small       | Real Anthropic API           |
-| **Production** | resumaker.co.il (Vercel)         | EKS in il-central-1 | RDS multi-AZ    | Real Anthropic API           |
+There is no local-dev environment by design — all development happens
+against production (single-environment deployment model).
 
-### Why Hybrid Hosting
+| Environment    | Frontend / Backend               | Database                 | Cache               | LLM           |
+| -------------- | -------------------------------- | ------------------------ | ------------------- | ------------- |
+| **CI**         | Vitest in GitHub Actions         | mocked                   | mocked              | mocked        |
+| **Production** | EKS in `il-central-1` (Tel Aviv) | RDS Postgres 17 multi-AZ | ElastiCache Redis 7 | Anthropic API |
 
-- **Vercel** for the Next.js frontend: best DX, free tier sufficient, instant deploys, edge functions
-- **AWS** for backend: VPC isolation, RDS, S3, control over scaling, portfolio value
-- **Cloudflare** in front of everything: free DDoS/CDN, hides origin IPs
+Cloudflare sits in front of the public ALB for DDoS mitigation,
+caching of static assets, and origin-IP hiding.
 
 ## Cross-Cutting Concerns
 

@@ -2,8 +2,8 @@
 
 > Hebrew-first AI resume builder with ATS optimization. Generate tailored resumes from job descriptions using LLMs, with security and accessibility baked in.
 
-[![CI](https://github.com/rotem/resumaker/actions/workflows/ci.yml/badge.svg)](https://github.com/rotem/resumaker/actions/workflows/ci.yml)
-[![Security](https://github.com/rotem/resumaker/actions/workflows/security.yml/badge.svg)](https://github.com/rotem/resumaker/actions/workflows/security.yml)
+[![CI](https://github.com/avigdolrotem/resumaker/actions/workflows/ci.yml/badge.svg)](https://github.com/avigdolrotem/resumaker/actions/workflows/ci.yml)
+[![Security](https://github.com/avigdolrotem/resumaker/actions/workflows/security.yml/badge.svg)](https://github.com/avigdolrotem/resumaker/actions/workflows/security.yml)
 [![License: BUSL 1.1](https://img.shields.io/badge/license-BUSL%201.1-orange.svg)](LICENSE)
 
 ## What This Is
@@ -81,18 +81,26 @@ resumaker/
 
 ## Getting Started
 
-See [docs/SETUP.md](docs/SETUP.md) for the complete setup guide.
+Single-environment deployment — there is no local-dev workflow.
+All development happens against the production cluster.
 
 ```bash
-# Prerequisites: Node 20+, pnpm 9+, Docker, AWS CLI configured
+# 1. Install deps + run tests + typecheck
 pnpm install
-pnpm dev
+pnpm -r test && pnpm -r typecheck
+
+# 2. Deploy
+git tag v0.1.0 && git push --tags
+# → CI builds container, pushes to ECR, ArgoCD rolls
 ```
+
+See [docs/PRE_LAUNCH.md](docs/PRE_LAUNCH.md) for the full deploy checklist.
 
 ## Documentation
 
 | Document                                    | Purpose                               |
 | ------------------------------------------- | ------------------------------------- |
+| [PRE_LAUNCH.md](docs/PRE_LAUNCH.md)         | Step-by-step launch checklist         |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md)     | System architecture and data flow     |
 | [STACK.md](docs/STACK.md)                   | Technology choices and trade-offs     |
 | [SECURITY.md](docs/SECURITY.md)             | Security model and threat analysis    |
@@ -101,7 +109,7 @@ pnpm dev
 | [AUTH.md](docs/AUTH.md)                     | Authentication & authorization design |
 | [MICROSERVICES.md](docs/MICROSERVICES.md)   | Service boundaries & communication    |
 | [DEVOPS.md](docs/DEVOPS.md)                 | CI/CD and operational practices       |
-| [SETUP.md](docs/SETUP.md)                   | Local development setup               |
+| [runbooks/](docs/runbooks/)                 | On-call playbooks                     |
 
 ## License
 

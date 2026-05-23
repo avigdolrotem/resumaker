@@ -18,7 +18,7 @@ spec:
   project: resumaker
 
   source:
-    repoURL: https://github.com/rotem/resumaker.git # update to your repo
+    repoURL: https://github.com/avigdolrotem/resumaker.git # update to your repo
     targetRevision: main
     path: infra/helm/resumaker
     helm:

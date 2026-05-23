@@ -11,7 +11,7 @@ keywords:
   - llm
 home: https://resumaker.co.il
 sources:
-  - https://github.com/rotem/resumaker
+  - https://github.com/avigdolrotem/resumaker
 maintainers:
   - name: Rotem Avigdol
     email: rotem@avigdol.com
