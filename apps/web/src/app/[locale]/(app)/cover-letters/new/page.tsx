@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { Copy, RefreshCw, Sparkles } from 'lucide-react';
+import { Copy, RefreshCw, Save, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,6 +21,9 @@ export default function NewCoverLetterPage() {
   const [letter, setLetter] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [detectedLocale, setDetectedLocale] = useState<'he' | 'en'>('en');
 
   async function generate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -45,11 +48,46 @@ export default function NewCoverLetterPage() {
         setError(data.error ?? 'Generation failed');
       } else {
         setLetter(data.letter);
+        setDetectedLocale(data.metadata?.detectedLocale ?? 'en');
       }
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSave() {
+    if (!letter) return;
+    setSaving(true);
+    try {
+      const title = company
+        ? `Cover letter — ${company}`
+        : `Cover letter ${new Date().toLocaleDateString()}`;
+      const res = await fetch('/api/cover-letters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          content: letter,
+          jobDescription: jd,
+          companyName: company || undefined,
+          recipientName: recipient || undefined,
+          tone,
+          locale: detectedLocale,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.id) {
+        toast.success('Saved');
+        setSavedId(data.id);
+      } else {
+        toast.error(data.error ?? 'Save failed');
+      }
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -153,11 +191,18 @@ export default function NewCoverLetterPage() {
                       <Copy className="me-1 h-4 w-4" />
                       {t('copy')}
                     </Button>
+                    {!savedId && (
+                      <Button variant="outline" size="sm" onClick={handleSave} disabled={saving}>
+                        <Save className="me-1 h-4 w-4" />
+                        {saving ? '…' : 'Save'}
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
                         setLetter(null);
+                        setSavedId(null);
                         void generate({
                           preventDefault: () => {},
                         } as React.FormEvent<HTMLFormElement>);

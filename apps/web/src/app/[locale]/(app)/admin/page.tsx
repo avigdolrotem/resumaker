@@ -1,7 +1,7 @@
 import { db, schema } from '@/db';
 import { desc, count, sum, gte, sql } from 'drizzle-orm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AdminRoleSelect } from '@/components/admin-role-select';
+import { AdminUserSearch } from '@/components/admin-user-search';
 import { Users, FileText, Coins, Activity, AlertTriangle } from 'lucide-react';
 
 export default async function AdminPage() {
@@ -36,7 +36,7 @@ export default async function AdminPage() {
 
   const recentUsers = await db.query.users.findMany({
     orderBy: [desc(schema.users.createdAt)],
-    limit: 15,
+    limit: 50,
   });
 
   const recentGenerations = await db.query.generations.findMany({
@@ -96,58 +96,14 @@ export default async function AdminPage() {
         />
       </div>
 
-      {/* Users table */}
+      {/* Users table (searchable, filterable) */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent users</CardTitle>
-          <CardDescription>Last 15 sign-ups</CardDescription>
+          <CardTitle>Users</CardTitle>
+          <CardDescription>Last 50 sign-ups — searchable + role-filterable</CardDescription>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <caption className="sr-only">Recently registered users</caption>
-            <thead className="text-start text-xs uppercase text-neutral-500">
-              <tr className="border-b border-neutral-200">
-                <th scope="col" className="pb-2 ps-1 font-medium">
-                  Email
-                </th>
-                <th scope="col" className="pb-2 font-medium">
-                  Name
-                </th>
-                <th scope="col" className="pb-2 font-medium">
-                  Role
-                </th>
-                <th scope="col" className="pb-2 font-medium">
-                  Verified
-                </th>
-                <th scope="col" className="pb-2 font-medium">
-                  Joined
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-100">
-              {recentUsers.map((u) => (
-                <tr key={u.id} className={u.deletedAt ? 'opacity-50' : ''}>
-                  <td className="py-2 ps-1 font-mono text-xs" dir="ltr">
-                    {u.email}
-                  </td>
-                  <td className="py-2">{u.name ?? '—'}</td>
-                  <td className="py-2">
-                    <AdminRoleSelect userId={u.id} currentRole={u.role} />
-                  </td>
-                  <td className="py-2 text-xs">
-                    {u.emailVerified ? (
-                      <span className="text-emerald-600">✓</span>
-                    ) : (
-                      <span className="text-amber-600">○</span>
-                    )}
-                  </td>
-                  <td className="py-2 text-xs text-neutral-500">
-                    {new Date(u.createdAt).toLocaleDateString()}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <CardContent>
+          <AdminUserSearch users={recentUsers} />
         </CardContent>
       </Card>
 
