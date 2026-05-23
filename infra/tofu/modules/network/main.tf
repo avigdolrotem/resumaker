@@ -43,9 +43,9 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = false # Even public subnets don't auto-assign IPs
 
   tags = {
-    Name                                          = "${local.name_prefix}-public-${var.azs[count.index]}"
-    "kubernetes.io/role/elb"                      = "1"
-    "kubernetes.io/cluster/${local.name_prefix}"  = "shared"
+    Name                                         = "${local.name_prefix}-public-${var.azs[count.index]}"
+    "kubernetes.io/role/elb"                     = "1"
+    "kubernetes.io/cluster/${local.name_prefix}" = "shared"
   }
 }
 
@@ -57,9 +57,9 @@ resource "aws_subnet" "private" {
   availability_zone = var.azs[count.index]
 
   tags = {
-    Name                                          = "${local.name_prefix}-private-${var.azs[count.index]}"
-    "kubernetes.io/role/internal-elb"             = "1"
-    "kubernetes.io/cluster/${local.name_prefix}"  = "shared"
+    Name                                         = "${local.name_prefix}-private-${var.azs[count.index]}"
+    "kubernetes.io/role/internal-elb"            = "1"
+    "kubernetes.io/cluster/${local.name_prefix}" = "shared"
   }
 }
 

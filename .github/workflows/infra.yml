@@ -14,7 +14,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  id-token: write  # for OIDC AWS auth
+  id-token: write # for OIDC AWS auth
 
 jobs:
   validate:

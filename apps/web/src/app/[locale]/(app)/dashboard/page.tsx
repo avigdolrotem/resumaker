@@ -6,6 +6,7 @@ import { db, schema } from '@/db';
 import { eq, desc, count, isNull, and, gte, sql } from 'drizzle-orm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ResumeGrid } from '@/components/resume-grid';
 import {
   FileText,
   Sparkles,
@@ -167,7 +168,7 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Recent resumes */}
+      {/* Recent resumes (filterable) */}
       <section>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">{t('recent')}</h2>
@@ -180,64 +181,7 @@ export default async function DashboardPage() {
             </Link>
           )}
         </div>
-        {recentResumes.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="py-16 text-center">
-              <div className="bg-brand-50 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                <FileText className="text-brand-600 h-8 w-8" />
-              </div>
-              <h3 className="mb-2 text-lg font-semibold">{t('noResumes')}</h3>
-              <p className="mb-6 text-sm text-neutral-600">
-                {isHebrew
-                  ? 'בנה את קורות החיים הראשונים שלך תוך דקות'
-                  : 'Build your first resume in minutes'}
-              </p>
-              <Button asChild>
-                <Link href="/builder">
-                  <Plus className="me-2 h-4 w-4" />
-                  {t('newResumeBtn')}
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {recentResumes.map((r) => (
-              <Link
-                key={r.id}
-                href={{ pathname: '/builder', query: { id: r.id } }}
-                className="group block"
-              >
-                <Card className="hover:border-brand-300 hover:shadow-brand-500/5 h-full transition hover:-translate-y-0.5 hover:shadow-md">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="line-clamp-1 text-base">{r.title}</CardTitle>
-                      <ArrowRight className="text-brand-400 group-hover:text-brand-600 h-4 w-4 flex-shrink-0 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2 text-xs">
-                      <span className="bg-brand-50 text-brand-700 rounded-full px-2 py-0.5 font-medium">
-                        {r.locale.toUpperCase()}
-                      </span>
-                      {r.industry && (
-                        <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-medium text-neutral-600">
-                          {r.industry}
-                        </span>
-                      )}
-                      <span className="ms-auto text-neutral-500">
-                        {new Date(r.updatedAt).toLocaleDateString(isHebrew ? 'he-IL' : 'en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
+        <ResumeGrid resumes={recentResumes} isHebrew={isHebrew} />
       </section>
 
       {/* Recent activity */}

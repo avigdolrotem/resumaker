@@ -74,8 +74,10 @@ Resumaker is a microservices-based AI resume builder targeting the Israeli job m
 ## Service Boundaries
 
 ### 1. Frontend (`apps/web`)
+
 **Tech**: Next.js 16, TypeScript, Tailwind v4, shadcn/ui, Aceternity UI
 **Responsibilities**:
+
 - All user-facing UI (Hebrew RTL primary, English LTR secondary)
 - Server Components for static/marketing pages
 - Client Components for editor, preview, dashboard
@@ -83,8 +85,10 @@ Resumaker is a microservices-based AI resume builder targeting the Israeli job m
 - Renders resumes via React-PDF (both preview and download)
 
 ### 2. Auth Service (within `apps/web` and `apps/api/auth`)
+
 **Tech**: Better Auth, Postgres
 **Responsibilities**:
+
 - Email + password registration with verification
 - OAuth (Google, GitHub)
 - Magic link login
@@ -93,8 +97,10 @@ Resumaker is a microservices-based AI resume builder targeting the Israeli job m
 - Organization/team support (for future enterprise tier)
 
 ### 3. Resume Generator (`apps/api/resume-generator`)
+
 **Tech**: Node.js (Hono), Vercel AI SDK, Postgres
 **Responsibilities**:
+
 - Receives sanitized JD + user profile
 - Routes to AI Safety Layer
 - Calls appropriate LLM via orchestrator
@@ -103,8 +109,10 @@ Resumaker is a microservices-based AI resume builder targeting the Israeli job m
 - Returns structured resume JSON
 
 ### 4. AI Safety Layer (`packages/ai-safety`)
+
 **Tech**: TypeScript library, used by all LLM-touching services
 **Responsibilities**:
+
 - Strip prompt injection patterns
 - Enforce input length limits
 - Validate output schema
@@ -113,16 +121,20 @@ Resumaker is a microservices-based AI resume builder targeting the Israeli job m
 - See [AI_SAFETY.md](AI_SAFETY.md)
 
 ### 5. ATS Scorer (`apps/api/ats-scorer`)
+
 **Tech**: Node.js, custom matching algorithm + LLM verification
 **Responsibilities**:
+
 - Extract keywords from JD
 - Compare against generated resume
 - Score (0-100) + missing keywords list
 - Suggest improvements
 
 ### 6. JD Parser (`apps/api/jd-parser`)
+
 **Tech**: Node.js, Playwright headless, Firecrawl (optional)
 **Responsibilities**:
+
 - Accept text paste
 - Accept URL → fetch + extract content
 - Strip ads/navigation
@@ -130,8 +142,10 @@ Resumaker is a microservices-based AI resume builder targeting the Israeli job m
 - Pass clean text to other services
 
 ### 7. Billing Service (`apps/api/billing`)
+
 **Tech**: Node.js, Stripe SDK
 **Responsibilities**:
+
 - Subscription management (infrastructure only at launch)
 - Webhook handling
 - Usage metering
@@ -196,11 +210,11 @@ Resumaker is a microservices-based AI resume builder targeting the Israeli job m
 
 ### Environments
 
-| Environment | Frontend | Backend | Database | LLM |
-|---|---|---|---|---|
-| **Local dev** | localhost:3000 | localhost:3001-3005 | docker postgres | Real Anthropic API (dev key) |
-| **Staging** | staging.resumaker.co.il (Vercel) | EKS in us-east-1 | RDS small | Real Anthropic API |
-| **Production** | resumaker.co.il (Vercel) | EKS in il-central-1 | RDS multi-AZ | Real Anthropic API |
+| Environment    | Frontend                         | Backend             | Database        | LLM                          |
+| -------------- | -------------------------------- | ------------------- | --------------- | ---------------------------- |
+| **Local dev**  | localhost:3000                   | localhost:3001-3005 | docker postgres | Real Anthropic API (dev key) |
+| **Staging**    | staging.resumaker.co.il (Vercel) | EKS in us-east-1    | RDS small       | Real Anthropic API           |
+| **Production** | resumaker.co.il (Vercel)         | EKS in il-central-1 | RDS multi-AZ    | Real Anthropic API           |
 
 ### Why Hybrid Hosting
 
@@ -210,26 +224,26 @@ Resumaker is a microservices-based AI resume builder targeting the Israeli job m
 
 ## Cross-Cutting Concerns
 
-| Concern | Implementation |
-|---|---|
-| **Observability** | OpenTelemetry → Grafana/Prometheus/Loki on EKS, Sentry for errors |
-| **Secrets** | AWS Secrets Manager (prod), `/Volumes/Server_Data/secrets/` (local dev) |
-| **Tracing** | OTel distributed traces across all services |
-| **Logging** | Structured JSON logs, correlation IDs |
-| **Caching** | Redis for: rate limits, JD parse results, ATS computations |
-| **Idempotency** | All POST endpoints use idempotency keys |
-| **Encryption** | TLS 1.3 everywhere, AES-256 at rest |
-| **Compliance** | Israeli Privacy Law of 1981 (updated 2024), GDPR-compatible |
+| Concern           | Implementation                                                          |
+| ----------------- | ----------------------------------------------------------------------- |
+| **Observability** | OpenTelemetry → Grafana/Prometheus/Loki on EKS, Sentry for errors       |
+| **Secrets**       | AWS Secrets Manager (prod), `/Volumes/Server_Data/secrets/` (local dev) |
+| **Tracing**       | OTel distributed traces across all services                             |
+| **Logging**       | Structured JSON logs, correlation IDs                                   |
+| **Caching**       | Redis for: rate limits, JD parse results, ATS computations              |
+| **Idempotency**   | All POST endpoints use idempotency keys                                 |
+| **Encryption**    | TLS 1.3 everywhere, AES-256 at rest                                     |
+| **Compliance**    | Israeli Privacy Law of 1981 (updated 2024), GDPR-compatible             |
 
 ## Scalability Targets (V1)
 
-| Metric | Target |
-|---|---|
-| Concurrent users | 1,000 |
-| Resume generations/min | 100 |
-| P95 latency (UI) | <300ms |
-| P95 latency (LLM call) | <8s |
-| Uptime SLO | 99.5% |
+| Metric                 | Target |
+| ---------------------- | ------ |
+| Concurrent users       | 1,000  |
+| Resume generations/min | 100    |
+| P95 latency (UI)       | <300ms |
+| P95 latency (LLM call) | <8s    |
+| Uptime SLO             | 99.5%  |
 
 ## Design Principles
 

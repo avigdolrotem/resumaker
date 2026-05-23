@@ -1,0 +1,17 @@
+apiVersion: v2
+name: resumaker
+description: Resumaker — AI resume builder for the Israeli job market
+type: application
+version: 0.1.0
+appVersion: '0.1.0'
+keywords:
+  - resume
+  - ai
+  - hebrew
+  - llm
+home: https://resumaker.co.il
+sources:
+  - https://github.com/rotem/resumaker
+maintainers:
+  - name: Rotem Avigdol
+    email: rotem@avigdol.com

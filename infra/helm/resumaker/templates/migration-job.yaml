@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "resumaker.fullname" . }}-migrate-{{ .Release.Revision }}
+  labels:
+    {{- include "resumaker.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: '-5'
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        {{- include "resumaker.selectorLabels" . | nindent 8 }}
+        job-type: migration
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "resumaker.serviceAccountName" . }}
+      containers:
+        - name: migrate
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ['node']
+          args: ['node_modules/drizzle-kit/bin.cjs', 'migrate']
+          workingDir: /app/apps/web
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-db
+                  key: url
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

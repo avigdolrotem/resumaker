@@ -16,3 +16,4 @@ ignore: |
   .next/
   .terraform/
   pnpm-lock.yaml
+  infra/helm/**/templates/

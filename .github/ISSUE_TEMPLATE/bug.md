@@ -7,10 +7,13 @@ assignees: ''
 ---
 
 ## Describe the bug
+
 A clear, concise description of what's wrong.
 
 ## To reproduce
+
 Steps:
+
 1.
 2.
 3.
@@ -20,6 +23,7 @@ Steps:
 ## Actual behavior
 
 ## Environment
+
 - Browser:
 - OS:
 - Locale (he / en):

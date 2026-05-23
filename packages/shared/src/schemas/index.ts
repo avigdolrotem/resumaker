@@ -53,15 +53,25 @@ export const ResumeSchema = z.object({
   experience: z.array(ExperienceSchema).max(20),
   education: z.array(EducationSchema).max(10),
   skills: z.array(z.string().max(100)).max(50),
-  languages: z.array(z.object({
-    name: z.string().max(50),
-    level: z.string().max(50),
-  })).max(10).optional(),
-  certifications: z.array(z.object({
-    name: z.string().max(200),
-    issuer: z.string().max(200),
-    date: z.string().optional(),
-  })).max(10).optional(),
+  languages: z
+    .array(
+      z.object({
+        name: z.string().max(50),
+        level: z.string().max(50),
+      }),
+    )
+    .max(10)
+    .optional(),
+  certifications: z
+    .array(
+      z.object({
+        name: z.string().max(200),
+        issuer: z.string().max(200),
+        date: z.string().optional(),
+      }),
+    )
+    .max(10)
+    .optional(),
 });
 
 export type Resume = z.infer<typeof ResumeSchema>;
@@ -70,11 +80,13 @@ export const ATSScoreSchema = z.object({
   overall: z.number().min(0).max(100),
   matched_keywords: z.array(z.string()),
   missing_keywords: z.array(z.string()),
-  suggestions: z.array(z.object({
-    type: z.enum(['keyword', 'format', 'content', 'structure']),
-    severity: z.enum(['low', 'medium', 'high']),
-    message: z.string(),
-  })),
+  suggestions: z.array(
+    z.object({
+      type: z.enum(['keyword', 'format', 'content', 'structure']),
+      severity: z.enum(['low', 'medium', 'high']),
+      message: z.string(),
+    }),
+  ),
 });
 
 export type ATSScore = z.infer<typeof ATSScoreSchema>;

@@ -19,6 +19,7 @@
 ## User Flows
 
 ### Sign Up
+
 ```
 1. User clicks "הרשמה" (Sign up) or chooses OAuth provider
 2. Email path:
@@ -35,6 +36,7 @@
 ```
 
 ### Sign In
+
 ```
 1. User enters email + password
 2. Password verified (Argon2id)
@@ -45,6 +47,7 @@
 ```
 
 ### Magic Link
+
 ```
 1. User enters email only
 2. Single-use token (10 min expiry) emailed
@@ -53,6 +56,7 @@
 ```
 
 ### Passkey (WebAuthn)
+
 ```
 1. User registers passkey (once, per-device)
 2. On login: browser prompts FaceID/TouchID/Windows Hello
@@ -61,6 +65,7 @@
 ```
 
 ### Forgot Password
+
 ```
 1. User enters email
 2. (Same response regardless of email existing → no enumeration)
@@ -72,15 +77,15 @@
 
 ## Session Management
 
-| Aspect | Detail |
-|---|---|
-| Storage | Postgres `sessions` table |
-| Token | Random 32-byte ID in httpOnly cookie |
-| Rotation | New token on every elevated action |
-| Expiry | 30 days idle, 90 days absolute |
-| Bind to | IP (loose match) + User-Agent fingerprint |
-| Logout | Revoke single session OR all sessions |
-| Concurrent | Multiple devices allowed |
+| Aspect     | Detail                                    |
+| ---------- | ----------------------------------------- |
+| Storage    | Postgres `sessions` table                 |
+| Token      | Random 32-byte ID in httpOnly cookie      |
+| Rotation   | New token on every elevated action        |
+| Expiry     | 30 days idle, 90 days absolute            |
+| Bind to    | IP (loose match) + User-Agent fingerprint |
+| Logout     | Revoke single session OR all sessions     |
+| Concurrent | Multiple devices allowed                  |
 
 ## Account Structure
 
@@ -155,11 +160,13 @@ CREATE TABLE passkeys (
 ## Authorization Model
 
 ### Roles
+
 - `user` — default, can manage own resumes and account
 - `admin` — internal use, full access
 - `support` — read-only access to user accounts (for help requests)
 
 ### Resource Ownership
+
 Every resource (resume, generation, subscription) has `user_id`. Backend enforces:
 
 ```typescript
@@ -167,13 +174,14 @@ Every resource (resume, generation, subscription) has `user_id`. Backend enforce
 async function requireOwnership(resourceId: string, userId: string) {
   const owner = await db.query.resumes.findFirst({
     where: eq(resumes.id, resourceId),
-    columns: { user_id: true }
+    columns: { user_id: true },
   });
   if (owner?.user_id !== userId) throw new ForbiddenError();
 }
 ```
 
 ### Postgres Row Level Security (Defense in Depth)
+
 ```sql
 ALTER TABLE resumes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY user_own_resumes ON resumes
@@ -185,6 +193,7 @@ Backend sets `app.user_id` per transaction. Even if app code is buggy, DB refuse
 ## Multi-Factor Authentication
 
 ### Enrollment
+
 ```
 1. User in settings clicks "Enable 2FA"
 2. Backend generates TOTP secret + QR code
@@ -196,6 +205,7 @@ Backend sets `app.user_id` per transaction. Even if app code is buggy, DB refuse
 ```
 
 ### Login Flow With 2FA
+
 ```
 1. Password verified
 2. Backend issues short-lived (5 min) "pending_mfa" token
@@ -206,7 +216,9 @@ Backend sets `app.user_id` per transaction. Even if app code is buggy, DB refuse
 ```
 
 ### Recovery
+
 If user lost 2FA device:
+
 1. Backup codes (one-time use, must regenerate after exhaustion)
 2. Identity verification via email + waiting period (24h)
 3. Last resort: support ticket with ID verification
@@ -214,6 +226,7 @@ If user lost 2FA device:
 ## OAuth Configuration
 
 ### Google
+
 - Authorized redirect URIs:
   - `http://localhost:3000/api/auth/callback/google` (dev)
   - `https://staging.resumaker.co.il/api/auth/callback/google`
@@ -221,43 +234,44 @@ If user lost 2FA device:
 - Scopes: `openid email profile`
 
 ### GitHub
+
 - Same redirect pattern
 - Scopes: `read:user user:email`
 
 ## Security Controls
 
-| Control | Implementation |
-|---|---|
-| Password hashing | Argon2id (memory: 64MB, iterations: 3, parallelism: 4) |
-| Breached password check | HIBP API (k-anonymity) on registration + password change |
-| Rate limiting (login) | 5 attempts per 15 min per IP, progressive backoff |
-| Account enumeration prevention | Same response for "user not found" and "wrong password" |
-| Session fixation | New session ID on every privilege escalation |
-| CSRF | SameSite=Lax cookies + per-form tokens for state changes |
-| XSS | Strict CSP, no inline scripts/styles, React auto-escaping |
-| Clickjacking | `X-Frame-Options: DENY` |
-| Audit logging | Every auth event logged (login, logout, password change, 2FA toggle) |
+| Control                        | Implementation                                                       |
+| ------------------------------ | -------------------------------------------------------------------- |
+| Password hashing               | Argon2id (memory: 64MB, iterations: 3, parallelism: 4)               |
+| Breached password check        | HIBP API (k-anonymity) on registration + password change             |
+| Rate limiting (login)          | 5 attempts per 15 min per IP, progressive backoff                    |
+| Account enumeration prevention | Same response for "user not found" and "wrong password"              |
+| Session fixation               | New session ID on every privilege escalation                         |
+| CSRF                           | SameSite=Lax cookies + per-form tokens for state changes             |
+| XSS                            | Strict CSP, no inline scripts/styles, React auto-escaping            |
+| Clickjacking                   | `X-Frame-Options: DENY`                                              |
+| Audit logging                  | Every auth event logged (login, logout, password change, 2FA toggle) |
 
 ## Endpoints
 
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/api/auth/sign-up` | Create account |
-| POST | `/api/auth/sign-in` | Email + password |
-| POST | `/api/auth/sign-out` | End session |
-| GET | `/api/auth/session` | Get current session |
-| POST | `/api/auth/forgot-password` | Initiate reset |
-| POST | `/api/auth/reset-password` | Complete reset |
-| GET | `/api/auth/sign-in/google` | OAuth redirect |
-| GET | `/api/auth/callback/google` | OAuth callback |
-| POST | `/api/auth/2fa/enable` | Begin 2FA enrollment |
-| POST | `/api/auth/2fa/verify` | Confirm 2FA setup |
-| POST | `/api/auth/2fa/disable` | Remove 2FA |
-| POST | `/api/auth/passkey/register` | Add passkey |
-| POST | `/api/auth/passkey/authenticate` | Login via passkey |
-| GET | `/api/auth/sessions` | List user's active sessions |
-| DELETE | `/api/auth/sessions/:id` | Revoke specific session |
-| DELETE | `/api/auth/sessions/all` | Revoke all sessions |
+| Method | Path                             | Purpose                     |
+| ------ | -------------------------------- | --------------------------- |
+| POST   | `/api/auth/sign-up`              | Create account              |
+| POST   | `/api/auth/sign-in`              | Email + password            |
+| POST   | `/api/auth/sign-out`             | End session                 |
+| GET    | `/api/auth/session`              | Get current session         |
+| POST   | `/api/auth/forgot-password`      | Initiate reset              |
+| POST   | `/api/auth/reset-password`       | Complete reset              |
+| GET    | `/api/auth/sign-in/google`       | OAuth redirect              |
+| GET    | `/api/auth/callback/google`      | OAuth callback              |
+| POST   | `/api/auth/2fa/enable`           | Begin 2FA enrollment        |
+| POST   | `/api/auth/2fa/verify`           | Confirm 2FA setup           |
+| POST   | `/api/auth/2fa/disable`          | Remove 2FA                  |
+| POST   | `/api/auth/passkey/register`     | Add passkey                 |
+| POST   | `/api/auth/passkey/authenticate` | Login via passkey           |
+| GET    | `/api/auth/sessions`             | List user's active sessions |
+| DELETE | `/api/auth/sessions/:id`         | Revoke specific session     |
+| DELETE | `/api/auth/sessions/all`         | Revoke all sessions         |
 
 ## Related
 

@@ -1,0 +1,101 @@
+# Default values — override per environment via values.dev.yaml / values.prod.yaml
+
+image:
+  repository: '' # ECR URL injected by CI: <account>.dkr.ecr.<region>.amazonaws.com/resumaker-prod/web
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+ingress:
+  enabled: true
+  className: alb # AWS Load Balancer Controller
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internal
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/healthcheck-path: /api/health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+  hosts:
+    - host: resumaker.co.il
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: [] # ACM cert handled at the ALB level via the cert annotation
+
+# Probes — hit our /api/health endpoints
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 15
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /api/health/ready
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  failureThreshold: 3
+
+# Env injected from AWS Secrets Manager via external-secrets-operator
+# (see templates/externalsecret.yaml). Plain envs:
+env:
+  NODE_ENV: production
+  APP_URL: https://resumaker.co.il
+  APP_NAME: Resumaker
+  DEFAULT_LOCALE: he
+  STRIPE_ENABLED: 'false'
+  LOG_LEVEL: info
+  PLAYWRIGHT_FALLBACK: 'true'
+
+# Pulled from Secrets Manager (managed by external-secrets-operator)
+secretsManagerName: resumaker-prod/app
+
+# DB credentials come from RDS-managed secret separately
+dbCredentialsSecretName: resumaker-prod/db-credentials
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Service account with IRSA for AWS API access
+serviceAccount:
+  create: true
+  annotations: {}
+  # eks.amazonaws.com/role-arn: arn:aws:iam::<account>:role/resumaker-prod-web
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ['ALL']
+
+podSecurityContext:
+  fsGroup: 1001

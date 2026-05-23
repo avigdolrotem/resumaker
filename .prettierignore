@@ -11,3 +11,8 @@ package-lock.json
 yarn.lock
 .git
 docs/CHANGELOG.md
+
+# Helm templates use Go template syntax {{ }} which prettier mangles
+infra/helm/**/templates/**/*.yaml
+infra/helm/**/templates/**/*.tpl
+infra/helm/**/templates/**/_helpers.tpl

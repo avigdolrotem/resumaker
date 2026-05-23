@@ -2,18 +2,18 @@
 
 ## Prerequisites
 
-| Tool | Min version | Install (macOS) |
-|---|---|---|
-| Node.js | 22.x | `brew install node` |
-| pnpm | 9.x | `npm install -g pnpm` |
-| Docker Desktop | 27+ | [docker.com](https://www.docker.com/products/docker-desktop) |
-| AWS CLI | 2.34+ | `brew install awscli` |
-| OpenTofu | 1.12+ | `brew install opentofu` |
-| kubectl | 1.34+ | `brew install kubectl` |
-| Helm | 4.x | `brew install helm` |
-| pre-commit | 4.x | `brew install pre-commit` |
-| gitleaks | 8.x | `brew install gitleaks` |
-| trivy | 0.70+ | `brew install trivy` |
+| Tool           | Min version | Install (macOS)                                              |
+| -------------- | ----------- | ------------------------------------------------------------ |
+| Node.js        | 22.x        | `brew install node`                                          |
+| pnpm           | 9.x         | `npm install -g pnpm`                                        |
+| Docker Desktop | 27+         | [docker.com](https://www.docker.com/products/docker-desktop) |
+| AWS CLI        | 2.34+       | `brew install awscli`                                        |
+| OpenTofu       | 1.12+       | `brew install opentofu`                                      |
+| kubectl        | 1.34+       | `brew install kubectl`                                       |
+| Helm           | 4.x         | `brew install helm`                                          |
+| pre-commit     | 4.x         | `brew install pre-commit`                                    |
+| gitleaks       | 8.x         | `brew install gitleaks`                                      |
+| trivy          | 0.70+       | `brew install trivy`                                         |
 
 All already installed if you went through the project setup.
 
@@ -49,12 +49,14 @@ pnpm dev   # Starts frontend on localhost:3000
 Most values in `.env.example` work as-is. Critical ones to set:
 
 ### Required
+
 ```bash
 ANTHROPIC_API_KEY=sk-ant-api03-...   # From /Volumes/Server_Data/secrets/resumaker.env
 BETTER_AUTH_SECRET=$(openssl rand -base64 32)
 ```
 
 ### Optional (skip for basic dev)
+
 ```bash
 GOOGLE_CLIENT_ID=...     # Only if testing Google OAuth
 SENTRY_DSN=...           # Errors logged to console without this
@@ -180,19 +182,25 @@ cd infra/tofu/environments/dev && tofu apply
 ## Troubleshooting
 
 ### "Port 3000 already in use"
+
 Something else is running. Find + kill: `lsof -ti:3000 | xargs kill`
 
 ### "Database connection refused"
+
 Postgres container not running. `docker-compose up -d postgres`
 
 ### "Module not found" after switching branches
+
 `pnpm install` again — dependencies may have changed.
 
 ### Hebrew text shows reversed / weird
+
 Check that the page has `dir="rtl"` on `<html>` for Hebrew. See `apps/web/app/[locale]/layout.tsx`.
 
 ### LLM calls timing out
+
 Check `ANTHROPIC_API_KEY` is set. Test directly:
+
 ```bash
 curl https://api.anthropic.com/v1/messages \
   -H "x-api-key: $ANTHROPIC_API_KEY" \
@@ -202,11 +210,13 @@ curl https://api.anthropic.com/v1/messages \
 ```
 
 ### Pre-commit hook fails
+
 Run `pre-commit run --all-files` to see what's failing. Fix the underlying issue, don't `--no-verify`.
 
 ## VS Code Setup
 
 Recommended extensions auto-installed via `.vscode/extensions.json`:
+
 - ESLint
 - Prettier
 - Tailwind CSS IntelliSense
@@ -215,6 +225,7 @@ Recommended extensions auto-installed via `.vscode/extensions.json`:
 - Docker
 
 Recommended settings (in `.vscode/settings.recommended.json`):
+
 - Format on save (Prettier)
 - ESLint auto-fix
 - Tailwind class detection in `cn()` and `cva()`
@@ -224,6 +235,7 @@ Copy `.vscode/settings.recommended.json` to `.vscode/settings.json` to opt in.
 ## Helpful Aliases
 
 Add to `~/.zshrc`:
+
 ```bash
 alias rm-dev='pnpm dev'
 alias rm-test='pnpm test'
