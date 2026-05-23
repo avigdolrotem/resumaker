@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"Reminder: invoke any matching skill via the Skill tool BEFORE responding. Common matches: commit-commands:commit (git commits), commit-commands:commit-push-pr (commit + push + PR), comprehensive-review:full-review (PR/code review), superpowers:verification-before-completion (before claiming work is done), superpowers:brainstorming (before creative/design work), superpowers:systematic-debugging (any bug/failure), update-config (settings/hooks), security-scanning:security-sast (security audits), tdd-workflows:tdd-cycle (TDD). If even 1% chance a skill matches, invoke it. Use parallel Agent calls for independent investigations.\"}}'"
+          }
+        ]
+      }
+    ]
+  }
+}

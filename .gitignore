@@ -116,7 +116,10 @@ docker-compose.override.yml
 
 # ─── Claude Code / AI tool databases ───
 ruvector.db
-.claude/
+# Ignore .claude/ contents but track project-level settings (hooks etc).
+# Personal overrides go in .claude/settings.local.json which stays ignored.
+.claude/*
+!.claude/settings.json
 .cursor/
 .aider*
 .continue/

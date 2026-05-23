@@ -291,36 +291,26 @@ The job-hunting beta we discussed — leave behind a `beta` flag for now.
 
 ## 🧯 Pre-Launch Sanity Checks
 
-Run these locally just before the first deploy:
+CI runs these on every push. Verify the latest `main` is green at
+`github.com/avigdolrotem/resumaker/actions` before tagging a release.
+
+If you ever need to re-run them locally (against this repo, not a dev
+server — there is no local dev workflow):
 
 ```bash
 cd /Volumes/Server_Data/code-server/workspace/resumaker
 
-# 1. All tests pass
+# All tests pass
 pnpm -r test
-# Expected: 116 unit + 16 E2E
 
-# 2. Full typecheck
+# Full typecheck (every package)
 pnpm -r typecheck
-# Expected: all 7 packages "Done"
 
-# 3. No secrets in git
+# No secrets in git
 gitleaks detect --no-banner --source .
-# Expected: "no leaks found"
 
-# 4. Container builds clean
-docker build -f apps/web/Dockerfile -t resumaker-web .
-# Expected: image built without errors
-
-# 5. Lint clean
-pnpm -r lint || true
-# Expected: warnings ok, errors not
-
-# 6. OpenTofu validates
-cd infra/tofu/environments/prod
-tofu init -backend=false
-tofu validate
-# Expected: "configuration is valid"
+# OpenTofu validates (provider-only init, no AWS creds needed)
+cd infra/tofu/environments/prod && tofu init -backend=false && tofu validate
 ```
 
 ---
