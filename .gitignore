@@ -120,3 +120,8 @@ ruvector.db
 .cursor/
 .aider*
 .continue/
+
+# AI tool state files
+agentdb.rvf
+*.rvf
+*.rvf.lock
