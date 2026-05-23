@@ -27,3 +27,33 @@ output "ecr_repos" {
 output "app_secrets_arn" {
   value = aws_secretsmanager_secret.app_secrets.arn
 }
+
+output "eks_cluster_name" {
+  description = "EKS cluster name — pass to kubectl/helm commands"
+  value       = module.eks.cluster_name
+}
+
+output "eks_cluster_endpoint" {
+  description = "EKS API server endpoint"
+  value       = module.eks.cluster_endpoint
+}
+
+output "eks_kubeconfig_command" {
+  description = "Run this after `tofu apply` to update local kubeconfig"
+  value       = module.eks.kubeconfig_command
+}
+
+output "eks_app_role_arn" {
+  description = "IRSA role for resumaker-web pods — referenced in Helm values"
+  value       = module.eks.app_role_arn
+}
+
+output "redis_endpoint" {
+  description = "ElastiCache Redis primary endpoint (private DNS)"
+  value       = module.elasticache.primary_endpoint
+}
+
+output "redis_secret_arn" {
+  description = "Secrets Manager ARN holding Redis connection URL"
+  value       = module.elasticache.secret_arn
+}

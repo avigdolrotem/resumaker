@@ -107,7 +107,31 @@
     "atsScore": "ATS Score",
     "missingKeywords": "Missing keywords",
     "suggestions": "Suggestions",
-    "downloadPdf": "Download PDF"
+    "downloadPdf": "Download PDF",
+    "form": {
+      "name": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "location": "Location",
+      "linkedin": "LinkedIn",
+      "summary": "Summary",
+      "skills": "Skills (comma separated)",
+      "experience": "Experience summary"
+    },
+    "actions": {
+      "save": "Save resume",
+      "saving": "Saving…",
+      "saved": "✓ Saved",
+      "backToDashboard": "Back to dashboard",
+      "saveFailed": "Save failed",
+      "generateFailed": "Generation failed",
+      "titleFormat": "{name} — {industry}",
+      "titleFallback": "Resume — {date}"
+    },
+    "empty": {
+      "title": "Paste a job description to start",
+      "subtitle": "AI will craft a tailored resume in Hebrew or English"
+    }
   },
   "ats": {
     "score": "ATS Score",
@@ -169,6 +193,65 @@
     "uploading": "Parsing…",
     "success": "Profile imported",
     "failed": "Could not parse file. Please check the format."
+  },
+  "billing": {
+    "pageTitle": "Simple pricing",
+    "pageSubtitle": "Pick the plan that fits — upgrade or cancel any time",
+    "comingSoonBanner": "Payments coming soon — want early access? Join the waitlist",
+    "monthly": "per month",
+    "yearly": "per year",
+    "quarterly": "Job Hunt Pack (3 months)",
+    "billedYearly": "billed yearly",
+    "billedOnce": "one-time payment",
+    "saveLabel": "Save {percent}%",
+    "free": "Free",
+    "currentTier": "Your current plan",
+    "subscribe": "Upgrade to {tier}",
+    "comingSoon": "Coming soon",
+    "joinWaitlist": "Join the waitlist",
+    "manage": "Manage subscription",
+    "openPortal": "Open billing portal",
+    "grantedByAdmin": "Your plan was granted manually by an admin",
+    "usage": {
+      "title": "Your usage this period",
+      "resumes": "Active resumes",
+      "generationsToday": "Generations today",
+      "coverLettersThisMonth": "Cover letters this month",
+      "unlimited": "Unlimited",
+      "of": "of"
+    },
+    "features": {
+      "title": "What's included",
+      "maxResumes": "{count} active resumes",
+      "maxResumesUnlimited": "Unlimited resumes",
+      "generationsPerDay": "{count} AI generations / day",
+      "generationsUnlimited": "Unlimited AI generations",
+      "coverLettersPerMonth": "{count} cover letters / month",
+      "coverLettersUnlimited": "Unlimited cover letters",
+      "atsScoring": "ATS scoring",
+      "modelChoice": "Choose AI model (Sonnet / Opus)",
+      "versionHistoryDays": "Version history — {days} days",
+      "versionHistoryUnlimited": "Unlimited version history",
+      "templates": "{count} designer templates",
+      "templatesAll": "All templates (5)",
+      "prioritySupport": "Priority support",
+      "removeBranding": "Remove Resumaker branding"
+    },
+    "gate": {
+      "resume_limit": "You've hit your resume limit. Upgrade to add more.",
+      "generation_limit": "You've hit today's generation limit. Upgrade to continue.",
+      "cover_letter_limit": "You've hit this month's cover-letter limit. Upgrade to continue.",
+      "cover_letter_disabled": "Cover letters are available on Pro and above.",
+      "model_choice": "Choosing the AI model is a Pro feature.",
+      "template_locked": "This template is available on Pro and above.",
+      "upgradeCta": "Upgrade now"
+    },
+    "success": {
+      "title": "Thank you!",
+      "subtitle": "Your plan is active. You can start building now.",
+      "cta": "Back to dashboard"
+    },
+    "canceled": "Checkout canceled. Try again whenever you're ready."
   },
   "coverLetter": {
     "title": "Cover letter",

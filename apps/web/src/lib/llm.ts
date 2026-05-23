@@ -292,9 +292,9 @@ async function recordGeneration(opts: RecordOpts): Promise<string> {
       promptTokens: opts.promptTokens ?? null,
       completionTokens: opts.completionTokens ?? null,
       durationMs: opts.durationMs ?? null,
-      safetyDetections: opts.safetyDetections
-        ? JSON.parse(JSON.stringify(opts.safetyDetections))
-        : null,
+      // Drizzle's jsonb column accepts the object as-is; no need to round-trip
+      // through JSON.parse(JSON.stringify(...)) (which is slow + drops Dates).
+      safetyDetections: opts.safetyDetections ?? null,
       status: opts.status,
       error: opts.error ?? null,
     })

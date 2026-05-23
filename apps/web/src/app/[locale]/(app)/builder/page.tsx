@@ -107,7 +107,7 @@ export default function BuilderPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? 'Generation failed');
+        setError(data.error ?? t('actions.generateFailed'));
       } else {
         setResult(data);
         setSavedId(null);
@@ -176,17 +176,19 @@ export default function BuilderPage() {
     if (!result) return;
     setSaving(true);
     try {
-      const title = name ? `${name} - ${industry}` : `Resume ${new Date().toLocaleDateString()}`;
+      const title = name
+        ? t('actions.titleFormat', { name, industry })
+        : t('actions.titleFallback', { date: new Date().toLocaleDateString() });
       const res = await fetch('/api/resumes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content: result.resume, templateId: 'modern-1' }),
+        body: JSON.stringify({ title, content: result.resume, templateId: 'modern' }),
       });
       const data = await res.json();
       if (res.ok && data.id) {
         setSavedId(data.id);
       } else {
-        setError(data.error ?? 'Save failed');
+        setError(data.error ?? t('actions.saveFailed'));
       }
     } catch (err) {
       setError((err as Error).message);
@@ -241,7 +243,7 @@ export default function BuilderPage() {
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="name">{t('profileTitle')}</Label>
+                  <Label htmlFor="name">{t('form.name')}</Label>
                   <Input
                     id="name"
                     value={name}
@@ -250,7 +252,7 @@ export default function BuilderPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('form.email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -260,7 +262,7 @@ export default function BuilderPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">{t('form.phone')}</Label>
                   <Input
                     id="phone"
                     value={phone}
@@ -269,7 +271,7 @@ export default function BuilderPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
+                  <Label htmlFor="location">{t('form.location')}</Label>
                   <Input
                     id="location"
                     value={location}
@@ -277,7 +279,7 @@ export default function BuilderPage() {
                   />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="linkedin">LinkedIn</Label>
+                  <Label htmlFor="linkedin">{t('form.linkedin')}</Label>
                   <Input
                     id="linkedin"
                     type="url"
@@ -288,7 +290,7 @@ export default function BuilderPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="summary">Summary</Label>
+                <Label htmlFor="summary">{t('form.summary')}</Label>
                 <Textarea
                   id="summary"
                   value={profileSummary}
@@ -297,7 +299,7 @@ export default function BuilderPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="skills">Skills (comma separated)</Label>
+                <Label htmlFor="skills">{t('form.skills')}</Label>
                 <Input
                   id="skills"
                   value={profileSkills}
@@ -305,7 +307,7 @@ export default function BuilderPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="experience">Experience summary</Label>
+                <Label htmlFor="experience">{t('form.experience')}</Label>
                 <Textarea
                   id="experience"
                   value={experienceText}
@@ -364,8 +366,9 @@ export default function BuilderPage() {
 
           {!result && !loading && !error && (
             <Card className="border-dashed">
-              <CardContent className="py-24 text-center text-neutral-500">
-                {t('jdPlaceholder')}
+              <CardContent className="space-y-2 py-24 text-center">
+                <p className="text-lg font-medium text-neutral-700">{t('empty.title')}</p>
+                <p className="text-sm text-neutral-500">{t('empty.subtitle')}</p>
               </CardContent>
             </Card>
           )}
@@ -386,11 +389,11 @@ export default function BuilderPage() {
                 <CardContent className="flex flex-wrap items-center gap-2 pt-6">
                   {savedId ? (
                     <span className="rounded-md bg-green-50 px-3 py-2 text-sm font-medium text-green-700">
-                      ✓ Saved
+                      {t('actions.saved')}
                     </span>
                   ) : (
                     <Button onClick={handleSave} disabled={saving} size="sm">
-                      {saving ? 'Saving...' : 'Save resume'}
+                      {saving ? t('actions.saving') : t('actions.save')}
                     </Button>
                   )}
                   {savedId && (
@@ -405,7 +408,7 @@ export default function BuilderPage() {
                         isHebrew={result.metadata.detectedLocale === 'he'}
                       />
                       <Button size="sm" variant="ghost" onClick={() => router.push('/dashboard')}>
-                        Back to dashboard
+                        {t('actions.backToDashboard')}
                       </Button>
                     </>
                   )}

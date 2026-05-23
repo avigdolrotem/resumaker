@@ -253,6 +253,110 @@ export const coverLetters = pgTable(
   }),
 );
 
+// ─── BILLING / SUBSCRIPTIONS ────────────────────────────────────────
+
+/**
+ * Per-user subscription record. One row per user.
+ *
+ * `tier` is the source of truth for feature gates.
+ * `provider` indicates which payment system owns this row:
+ *   - 'manual'       — admin grant (no external billing)
+ *   - 'stripe'       — Stripe Checkout/Billing
+ *   - 'lemonsqueezy' — LemonSqueezy (Merchant of Record, no Israeli biz number needed)
+ *
+ * Provider-specific id fields are nullable so manual grants don't need them
+ * and so we can switch providers without dropping data.
+ */
+export const subscriptions = pgTable(
+  'subscriptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' })
+      .unique(),
+    tier: varchar('tier', { length: 16 })
+      .notNull()
+      .default('free')
+      .$type<'free' | 'plus' | 'pro'>(),
+    status: varchar('status', { length: 32 })
+      .notNull()
+      .default('active')
+      .$type<'active' | 'past_due' | 'canceled' | 'incomplete' | 'trialing'>(),
+    // Which payment provider owns this subscription (defaults to 'manual'
+    // so existing free-tier rows don't break).
+    provider: varchar('provider', { length: 16 })
+      .notNull()
+      .default('manual')
+      .$type<'manual' | 'stripe' | 'lemonsqueezy'>(),
+    // Stripe-specific
+    stripeCustomerId: varchar('stripe_customer_id', { length: 64 }),
+    stripeSubscriptionId: varchar('stripe_subscription_id', { length: 64 }),
+    stripePriceId: varchar('stripe_price_id', { length: 64 }),
+    // LemonSqueezy-specific
+    lsCustomerId: varchar('ls_customer_id', { length: 64 }),
+    lsSubscriptionId: varchar('ls_subscription_id', { length: 64 }),
+    lsVariantId: varchar('ls_variant_id', { length: 64 }),
+    /** LS exposes a per-subscription portal URL — cache it for quick redirects */
+    lsCustomerPortalUrl: text('ls_customer_portal_url'),
+    // Common
+    currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
+    cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
+    grantedBy: text('granted_by'), // admin user_id when manually granted
+    notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    stripeCustomerIdx: index('subscriptions_stripe_customer_idx').on(t.stripeCustomerId),
+    lsCustomerIdx: index('subscriptions_ls_customer_idx').on(t.lsCustomerId),
+    tierIdx: index('subscriptions_tier_idx').on(t.tier),
+    providerIdx: index('subscriptions_provider_idx').on(t.provider),
+  }),
+);
+
+/**
+ * Idempotency log for Stripe webhook events. The webhook handler
+ * checks for the event id before processing; duplicates are ignored.
+ */
+export const stripeWebhookEvents = pgTable(
+  'stripe_webhook_events',
+  {
+    id: text('id').primaryKey(), // Stripe event id (evt_xxx)
+    type: varchar('type', { length: 64 }).notNull(),
+    payload: jsonb('payload').notNull(),
+    processedAt: timestamp('processed_at', { withTimezone: true }).notNull().defaultNow(),
+    success: boolean('success').notNull().default(true),
+    error: text('error'),
+  },
+  (t) => ({
+    typeIdx: index('stripe_events_type_idx').on(t.type),
+    processedIdx: index('stripe_events_processed_idx').on(t.processedAt),
+  }),
+);
+
+/**
+ * Idempotency log for LemonSqueezy webhook events. LS doesn't provide
+ * an event id in the payload (only header X-Event-Name), so we store a
+ * UUID generated from the body hash + timestamp to dedupe replays.
+ */
+export const lsWebhookEvents = pgTable(
+  'ls_webhook_events',
+  {
+    /** SHA-256 of (raw body + signature) — naturally idempotent */
+    id: text('id').primaryKey(),
+    eventName: varchar('event_name', { length: 64 }).notNull(),
+    payload: jsonb('payload').notNull(),
+    processedAt: timestamp('processed_at', { withTimezone: true }).notNull().defaultNow(),
+    success: boolean('success').notNull().default(true),
+    error: text('error'),
+  },
+  (t) => ({
+    eventNameIdx: index('ls_events_name_idx').on(t.eventName),
+    processedIdx: index('ls_events_processed_idx').on(t.processedAt),
+  }),
+);
+
 // ─── EXPORTS ────────────────────────────────────────────────────────
 
 export const schema = {
@@ -266,6 +370,9 @@ export const schema = {
   atsScores,
   auditLog,
   coverLetters,
+  subscriptions,
+  stripeWebhookEvents,
+  lsWebhookEvents,
 };
 
 export type User = typeof users.$inferSelect;
@@ -275,3 +382,6 @@ export type Generation = typeof generations.$inferSelect;
 export type ATSScore = typeof atsScores.$inferSelect;
 export type CoverLetter = typeof coverLetters.$inferSelect;
 export type ResumeVersion = typeof resumeVersions.$inferSelect;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type NewSubscription = typeof subscriptions.$inferInsert;
+export type StripeWebhookEvent = typeof stripeWebhookEvents.$inferSelect;

@@ -40,10 +40,16 @@ paths = [
   '''README\.md$''',
   '''\.gitleaks\.toml$''',
   '''pnpm-lock\.yaml$''',
+  # Test fixtures — high-entropy strings that are clearly placeholders
+  '''vitest\.setup\.ts$''',
+  '''.*\.test\.ts$''',
+  '''.*\.spec\.ts$''',
 ]
 regexes = [
   # Placeholder values used in examples
   '''sk-ant-api03-\.\.\.''',
+  '''sk-ant-test-key''',
   '''sk_test_\.\.\.''',
   '''GOCSPX-placeholder''',
+  '''test-secret-must-be-at-least-32-chars''',
 ]

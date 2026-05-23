@@ -29,6 +29,20 @@
       "when": 1779540177072,
       "tag": "0003_greedy_juggernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779545096366,
+      "tag": "0004_add_subscriptions",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1779547841556,
+      "tag": "0005_add_lemonsqueezy_provider",
+      "breakpoints": true
     }
   ]
 }

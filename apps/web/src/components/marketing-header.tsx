@@ -30,6 +30,12 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
           >
             {t('home')}
           </Link>
+          <Link
+            href="/pricing"
+            className="hover:text-brand-600 hidden text-sm font-medium text-neutral-700 transition sm:inline"
+          >
+            {t('pricing')}
+          </Link>
           <LocaleSwitcher />
           <Link
             href="/sign-in"

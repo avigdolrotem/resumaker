@@ -1,0 +1,38 @@
+# Root "app of apps" — kubectl-applied once during bootstrap.
+# After this, every Application under infra/gitops/apps/ and
+# infra/gitops/secrets/ is reconciled automatically.
+
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: resumaker-root
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/rotem/resumaker.git # update to your repo
+        revision: main
+        files:
+          - path: infra/gitops/apps/*.yaml
+          - path: infra/gitops/secrets/*.yaml
+  template:
+    metadata:
+      name: '{{path.basenameNormalized}}'
+      labels:
+        managed-by: argocd-applicationset
+    spec:
+      project: resumaker
+      source:
+        repoURL: https://github.com/rotem/resumaker.git
+        targetRevision: main
+        path: '{{path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

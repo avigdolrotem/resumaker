@@ -7,6 +7,7 @@ import { eq, desc, count, isNull, and, gte, sql } from 'drizzle-orm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ResumeGrid } from '@/components/resume-grid';
+import { OnboardingChecklist } from '@/components/onboarding-checklist';
 import {
   FileText,
   Sparkles,
@@ -35,6 +36,8 @@ export default async function DashboardPage() {
     [generationsCount],
     [recentGensCount],
     [avgScoreRow],
+    [coverLetterCount],
+    [atsScoreCount],
     recentResumes,
     recentActivity,
   ] = await Promise.all([
@@ -54,6 +57,15 @@ export default async function DashboardPage() {
       ),
     db
       .select({ avg: sql<number>`COALESCE(AVG(${schema.atsScores.overall})::int, 0)` })
+      .from(schema.atsScores)
+      .innerJoin(schema.resumes, eq(schema.atsScores.resumeId, schema.resumes.id))
+      .where(eq(schema.resumes.userId, userId)),
+    db
+      .select({ value: count() })
+      .from(schema.coverLetters)
+      .where(and(eq(schema.coverLetters.userId, userId), isNull(schema.coverLetters.deletedAt))),
+    db
+      .select({ value: count() })
       .from(schema.atsScores)
       .innerJoin(schema.resumes, eq(schema.atsScores.resumeId, schema.resumes.id))
       .where(eq(schema.resumes.userId, userId)),
@@ -78,6 +90,44 @@ export default async function DashboardPage() {
   };
 
   const userName = session.user.name ?? session.user.email.split('@')[0];
+  const locale: 'he' | 'en' = isHebrew ? 'he' : 'en';
+
+  // Onboarding checklist — shown until all 4 steps are complete.
+  const onboardingSteps = [
+    {
+      id: 'signup',
+      title: isHebrew ? 'יצרת חשבון' : 'Created your account',
+      description: '',
+      done: true,
+    },
+    {
+      id: 'first_resume',
+      title: isHebrew ? 'בנה את קורות החיים הראשונים' : 'Build your first resume',
+      description: isHebrew
+        ? 'הדבק תיאור משרה, ה-AI יבנה לך גרסה מותאמת'
+        : 'Paste a job description, AI tailors a resume to it',
+      done: stats.resumes > 0,
+      href: '/builder' as const,
+    },
+    {
+      id: 'see_ats',
+      title: isHebrew ? 'ראה את ניקוד ה-ATS שלך' : 'See your ATS score',
+      description: isHebrew
+        ? 'הניקוד מראה כמה התאמה יש לקורות החיים מול המודעה'
+        : 'See how well your resume matches the job posting',
+      done: (atsScoreCount?.value ?? 0) > 0,
+      href: '/builder' as const,
+    },
+    {
+      id: 'cover_letter',
+      title: isHebrew ? 'נסה מכתב הצעה' : 'Try a cover letter',
+      description: isHebrew
+        ? 'מכתב מותאם אישית בעברית או באנגלית'
+        : 'A tailored cover letter in Hebrew or English',
+      done: (coverLetterCount?.value ?? 0) > 0,
+      href: '/cover-letters/new' as const,
+    },
+  ];
 
   return (
     <div className="space-y-8">
@@ -96,6 +146,8 @@ export default async function DashboardPage() {
           </Link>
         </Button>
       </div>
+
+      <OnboardingChecklist items={onboardingSteps} locale={locale} />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

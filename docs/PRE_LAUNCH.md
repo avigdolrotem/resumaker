@@ -17,6 +17,20 @@
 - [x] Email service scaffolded (logs to console without API key)
 - [x] Sentry scaffolded (no-op without DSN)
 - [x] DEPLOY.md + 4 runbooks written
+- [x] Tier system (free/pro/premium) with feature gates wired into
+      resume create, generate, duplicate, and cover letter routes
+- [x] Stripe stubs (checkout, portal, webhook) — dormant until STRIPE_ENABLED=true
+- [x] Admin tier dropdown for granting premium to friends without Stripe
+- [x] Pricing page + /account/billing page (shows tier, usage, upgrade CTA)
+- [x] EKS OpenTofu module wrapping terraform-aws-modules/eks
+- [x] ArgoCD + External Secrets Operator + ALB Controller installed via tofu
+- [x] GitOps manifests under `infra/gitops/` (app-of-apps pattern)
+- [x] `.github/workflows/deploy.yml` — tag push builds + bumps Helm values
+- [x] **Payment provider abstraction** — `PAYMENT_PROVIDER` env switches
+      between Stripe and LemonSqueezy. Same UI, same gates, same DB; just
+      flip the env. Default `none` shows waitlist CTA.
+- [x] LemonSqueezy webhook handler at `/api/billing/webhook/lemonsqueezy`
+- [x] Stripe webhook handler at `/api/billing/webhook` (unchanged)
 
 ---
 
@@ -69,26 +83,22 @@ Simplest, fast to launch, scales to a few thousand users free.
 - **Estimated time: 30 minutes** · **Cost: $0/mo until traffic grows**
 
 **Path B — AWS EKS (your original plan)**
-Best portfolio piece, more setup.
+Best portfolio piece. EKS module + ArgoCD + ESO are now baked in.
 
 - [ ] Bootstrap OpenTofu state: `./scripts/bootstrap-tofu-state.sh`
-- [ ] Provision base infra: `cd infra/tofu/environments/prod && tofu apply`
-  - This creates VPC, RDS, ElastiCache, S3, ECR, Secrets Manager
-  - **You provide EKS separately** — recommend the community module:
-
-    ```hcl
-    module "eks" {
-      source = "terraform-aws-modules/eks/aws"
-      version = "~> 20.0"
-      # ... see https://registry.terraform.io/modules/terraform-aws-modules/eks
-    }
-    ```
-
-- [ ] Install ArgoCD on EKS
-- [ ] Push container image to ECR (CI handles this on tag)
-- [ ] Apply Helm chart: `helm install resumaker infra/helm/resumaker -f infra/helm/resumaker/values.prod.yaml`
-- [ ] Point Cloudflare A record at ALB
-- **Estimated time: 1-2 days first time** · **Cost: $80-150/mo**
+- [ ] Issue an ACM cert for `argocd.resumaker.co.il` in `il-central-1`
+      then set `argocd_acm_cert_arn` in `infra/tofu/environments/prod/variables.tf`
+- [ ] First apply (cluster + addons): `cd infra/tofu/environments/prod && tofu apply`
+      Creates VPC, RDS, ElastiCache, S3, ECR, Secrets Manager, EKS, IRSA roles,
+      ALB Controller, External Secrets, cert-manager, ArgoCD
+- [ ] Update kubeconfig: `eval "$(tofu output -raw eks_kubeconfig_command)"`
+- [ ] Verify ArgoCD up: `kubectl -n argocd rollout status deploy/argocd-server`
+- [ ] Update `repoURL` placeholders in `infra/gitops/*.yaml` to your real repo URL
+- [ ] Bootstrap GitOps: `kubectl apply -f infra/gitops/projects/resumaker.yaml && kubectl apply -f infra/gitops/root-app.yaml`
+- [ ] Populate Secrets Manager (see step 12 below)
+- [ ] Tag a release: `git tag v0.1.0 && git push --tags` → CI builds + ArgoCD syncs
+- [ ] Point Cloudflare A record at the resulting ALB
+- **Cost: ~$120-180/mo cluster + ~$40-80/mo data plane**
 
 ### 6. Cloudflare configuration
 
@@ -148,11 +158,124 @@ psql $DATABASE_URL -c "UPDATE users SET role='admin' WHERE email='rotem@avigdol.
 - GitHub: Settings → Developer settings → OAuth Apps → set `GITHUB_CLIENT_ID/SECRET`
 - App will auto-show buttons when env vars are present
 
-### 12. Stripe (when you have business number)
+### 12. Populate AWS Secrets Manager
 
-- Heshbonit (חשבונית) integration via Greeninvoice / iCount
-- Subscription product setup
-- Wire `/api/billing/*` endpoints
+The pods read from `resumaker-prod/app` and `resumaker-prod/db-credentials`.
+The latter is auto-populated by the RDS module. The former you create manually:
+
+```bash
+aws secretsmanager put-secret-value \
+  --secret-id resumaker-prod/app \
+  --secret-string "$(cat <<'EOF'
+{
+  "ANTHROPIC_API_KEY": "sk-ant-...",
+  "BETTER_AUTH_SECRET": "$(openssl rand -base64 48)",
+  "RESEND_API_KEY": "re_...",
+  "SENTRY_DSN": "https://...",
+  "CRON_SECRET": "$(openssl rand -base64 32)",
+  "GOOGLE_CLIENT_ID": "",
+  "GOOGLE_CLIENT_SECRET": "",
+  "GITHUB_CLIENT_ID": "",
+  "GITHUB_CLIENT_SECRET": "",
+  "STRIPE_SECRET_KEY": "",
+  "STRIPE_PUBLISHABLE_KEY": "",
+  "STRIPE_WEBHOOK_SECRET": "",
+  "STRIPE_PRICE_PRO_MONTHLY": "",
+  "STRIPE_PRICE_PRO_YEARLY": "",
+  "STRIPE_PRICE_PREMIUM_MONTHLY": "",
+  "STRIPE_PRICE_PREMIUM_YEARLY": ""
+}
+EOF
+)"
+```
+
+External Secrets Operator syncs this into a K8s Secret `resumaker-app`
+which the Deployment mounts as env vars. Refresh interval: 5 minutes.
+
+### 13. Turn on payments
+
+The billing layer is provider-agnostic. Same `lib/billing/`, same UI,
+same DB — flip one env var to switch between Stripe and LemonSqueezy.
+Right now `PAYMENT_PROVIDER=none` so the pricing page shows a waitlist
+CTA and `/api/billing/*` returns 503.
+
+#### Option A — **LemonSqueezy (recommended for v1)**
+
+Merchant of Record: they handle VAT, invoicing, and tax everywhere.
+**No Israeli business number required.** Higher fee (~5% + $0.50) but
+zero setup cost, hours to launch.
+
+1. Sign up at [lemonsqueezy.com](https://lemonsqueezy.com) (free)
+2. Create a store, then 4 variants under one product:
+   - **Pro Monthly** ₪39 — copy variant id
+   - **Pro Yearly** ₪390 — copy variant id
+   - **Premium Monthly** ₪99 — copy variant id
+   - **Premium Yearly** ₪990 — copy variant id
+3. Settings → API → generate key
+4. Settings → Webhooks → add endpoint:
+   `https://resumaker.co.il/api/billing/webhook/lemonsqueezy`
+   Subscribe to: `order_created`, `subscription_created`, `subscription_updated`,
+   `subscription_cancelled`, `subscription_expired`, `subscription_resumed`,
+   `subscription_payment_failed`
+5. Add all of these to AWS Secrets Manager (`resumaker-prod/app`):
+
+   ```json
+   {
+     "LEMONSQUEEZY_API_KEY": "...",
+     "LEMONSQUEEZY_STORE_ID": "12345",
+     "LEMONSQUEEZY_WEBHOOK_SECRET": "...",
+     "LEMONSQUEEZY_VARIANT_PRO_MONTHLY": "67890",
+     "LEMONSQUEEZY_VARIANT_PRO_YEARLY": "67891",
+     "LEMONSQUEEZY_VARIANT_PREMIUM_MONTHLY": "67892",
+     "LEMONSQUEEZY_VARIANT_PREMIUM_YEARLY": "67893"
+   }
+   ```
+
+6. In `infra/helm/resumaker/values.prod.yaml` set:
+
+   ```yaml
+   env:
+     PAYMENT_PROVIDER: lemonsqueezy
+   ```
+
+7. Push the change — ArgoCD syncs, pods restart with new env, payments live.
+
+#### Option B — **Stripe (when you have עוסק מורשה or US LLC)**
+
+Lower fees (2.9% + $0.30) but requires either an Israeli VAT-registered
+business OR a US entity (Stripe Atlas ~$500 setup, ~$1-2k/yr ongoing).
+
+1. Sign up at [stripe.com](https://stripe.com) (via Atlas if you don't have עוסק מורשה)
+2. Create products + prices: **Pro Monthly ₪39**, **Pro Yearly ₪390**, **Premium Monthly ₪99**, **Premium Yearly ₪990**
+3. Add to Secrets Manager:
+
+   ```json
+   {
+     "STRIPE_SECRET_KEY": "sk_live_...",
+     "STRIPE_PUBLISHABLE_KEY": "pk_live_...",
+     "STRIPE_WEBHOOK_SECRET": "whsec_...",
+     "STRIPE_PRICE_PRO_MONTHLY": "price_...",
+     "STRIPE_PRICE_PRO_YEARLY": "price_...",
+     "STRIPE_PRICE_PREMIUM_MONTHLY": "price_...",
+     "STRIPE_PRICE_PREMIUM_YEARLY": "price_..."
+   }
+   ```
+
+4. Stripe Dashboard → Developers → Webhooks → add endpoint:
+   `https://resumaker.co.il/api/billing/webhook` (note: no `/stripe` suffix —
+   the original Stripe handler kept its top-level path for backward compat)
+5. Set `env.PAYMENT_PROVIDER: stripe` in `values.prod.yaml`
+6. For Israeli invoicing: integrate **Greeninvoice** or **iCount** — both
+   have webhooks that listen for Stripe's `invoice.paid` and auto-issue heshbonit
+
+#### Switching providers later
+
+User subscriptions remember which provider created them (`provider` column).
+You can flip `PAYMENT_PROVIDER` from `lemonsqueezy` → `stripe` and:
+
+- **New** subscriptions go through Stripe
+- **Existing** LemonSqueezy subs keep working (portal still opens LS)
+- Migrate gradually as users churn or upgrade
 
 ### 13. Monitoring + alerts
 

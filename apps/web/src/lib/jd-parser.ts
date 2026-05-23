@@ -108,18 +108,31 @@ async function fetchUrl(url: string): Promise<string> {
     throw new Error('Private hosts not allowed');
   }
 
-  // SSRF: resolve DNS first and verify the IP is public.
-  // Protects against DNS rebinding + IPv6 private ranges + CGNAT
-  // that a string-only check misses.
-  await assertPublicHost(parsed.hostname);
+  // SSRF: resolve DNS first AND fetch against the resolved IP to
+  // defeat DNS rebinding. The previous version called `assertPublicHost`
+  // (resolve + validate) but then `fetch(url, ...)` re-resolved — a
+  // short-TTL rebinding attack could flip the IP between the check and
+  // the fetch. Pinning to the validated IP closes that gap.
+  const pinnedIp = await resolveAndAssertPublic(parsed.hostname);
+  // Rewrite URL to the IP, preserve original hostname via Host header
+  // so SNI + virtual hosting still work for shared-IP services.
+  // For HTTPS we accept that some servers will reject due to SNI
+  // mismatch — those are typically not the target of SSRF anyway.
+  const ipUrl = new URL(url);
+  const isIpv6 = pinnedIp.includes(':');
+  ipUrl.hostname = isIpv6 ? `[${pinnedIp}]` : pinnedIp;
 
-  const res = await fetch(url, {
+  const res = await fetch(ipUrl.toString(), {
     headers: {
       'User-Agent': 'ResumakerBot/1.0 (+https://resumaker.co.il)',
       Accept: 'text/html,application/xhtml+xml',
+      Host: parsed.host, // preserve original Host for virtual-hosted servers
     },
     signal: AbortSignal.timeout(15_000),
-    redirect: 'follow',
+    // Disable redirects — each redirect target would need its own DNS
+    // resolve + validation, and a 30x response is rare for legit JD pages.
+    // Caller can re-submit a final URL if needed.
+    redirect: 'manual',
   });
 
   if (!res.ok) {
@@ -158,10 +171,16 @@ function ipIsPrivate(ip: string): boolean {
   return false;
 }
 
-async function assertPublicHost(hostname: string): Promise<void> {
-  // Use Node's dns.lookup to resolve to IP(s). Catches DNS rebinding because
-  // we resolve, validate, then fetch — the fetch will hit the same IP if the
-  // DNS layer has a TTL > 0 cache, but for high-value targets pin via IP.
+/**
+ * Resolve the hostname, validate every returned address is public,
+ * and return the **first** public IP for pinning. Defeats DNS rebinding
+ * because the caller fetches against the returned IP directly — not
+ * against the hostname (which could re-resolve to a private IP between
+ * our check and the fetch).
+ *
+ * Prefers IPv4 when both are present, since fewer middleboxes mishandle it.
+ */
+async function resolveAndAssertPublic(hostname: string): Promise<string> {
   const { lookup } = await import('node:dns/promises');
   let addresses: Array<{ address: string; family: number }>;
   try {
@@ -169,11 +188,16 @@ async function assertPublicHost(hostname: string): Promise<void> {
   } catch {
     throw new Error('Cannot resolve URL host');
   }
+  if (addresses.length === 0) {
+    throw new Error('Cannot resolve URL host');
+  }
   for (const addr of addresses) {
     if (ipIsPrivate(addr.address)) {
       throw new Error('Resolved IP is private — blocked for security');
     }
   }
+  const ipv4 = addresses.find((a) => a.family === 4);
+  return (ipv4 ?? addresses[0])!.address;
 }
 
 function stripHtml(html: string): string {

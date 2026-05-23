@@ -17,4 +17,17 @@ autoscaling:
 ingress:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
+    # ACM certificate ARN for resumaker.co.il + www.resumaker.co.il
+    # Issued in il-central-1; replace with your real ARN before applying.
+    alb.ingress.kubernetes.io/certificate-arn: 'REPLACE_WITH_ACM_CERT_ARN'
+    # Strong SSL policy (TLS 1.2+ only)
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+    # ssl-redirect annotation needs a matching action — declare both.
+    # The action defines a permanent 301 from :80 to :443.
+    alb.ingress.kubernetes.io/actions.ssl-redirect: >-
+      {"Type":"redirect","RedirectConfig":{"Protocol":"HTTPS","Port":"443","StatusCode":"HTTP_301"}}
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
     # WAF + Cloudflare-IP allowlist managed at ALB
+    # alb.ingress.kubernetes.io/wafv2-acl-arn: 'arn:aws:wafv2:il-central-1:...:regional/webacl/resumaker'
+    # alb.ingress.kubernetes.io/inbound-cidrs: '173.245.48.0/20,103.21.244.0/22,...' # Cloudflare ranges

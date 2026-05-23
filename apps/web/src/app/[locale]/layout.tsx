@@ -5,6 +5,7 @@ import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server
 import { notFound } from 'next/navigation';
 import { Toaster } from 'sonner';
 import { routing, getDirection, type Locale } from '@/i18n/routing';
+import { CookieConsent } from '@/components/cookie-consent';
 import '../globals.css';
 
 const heebo = Heebo({
@@ -132,6 +133,8 @@ export default async function LocaleLayout({
         </a>
 
         <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+
+        <CookieConsent locale={locale} />
 
         <Toaster
           position={dir === 'rtl' ? 'top-left' : 'top-right'}

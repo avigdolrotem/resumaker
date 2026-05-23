@@ -10,6 +10,7 @@ import { and, eq, desc, isNull } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
+import { canCreateCoverLetter, getCoverLettersThisMonth, getUserTier } from '@/lib/billing/tier';
 
 export async function GET(): Promise<Response> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -56,6 +57,26 @@ export async function POST(req: NextRequest): Promise<Response> {
     return NextResponse.json(
       { error: 'Invalid body', detail: (err as Error).message },
       { status: 400 },
+    );
+  }
+
+  // Tier gate: cover letters per month
+  const [tier, thisMonth] = await Promise.all([
+    getUserTier(session.user.id),
+    getCoverLettersThisMonth(session.user.id),
+  ]);
+  const gate = canCreateCoverLetter(tier, thisMonth);
+  if (!gate.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Cover letter limit reached for your tier',
+        code: 'TIER_LIMIT',
+        reasonKey: gate.reasonKey,
+        requiredTier: gate.requiredTier,
+        current: gate.current,
+        limit: gate.limit,
+      },
+      { status: 402 },
     );
   }
 

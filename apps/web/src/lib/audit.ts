@@ -5,16 +5,25 @@
  * Fire-and-forget: never blocks the user's request on audit write.
  */
 
-import { createHash } from 'crypto';
+import { createHmac } from 'crypto';
 import { db, schema } from '@/db';
 
 /**
- * Privacy-preserving IP storage: SHA-256 the IP so we can correlate
- * sessions/abuse without storing PII directly.
+ * Privacy-preserving IP storage: HMAC-SHA256 the IP with a per-deployment
+ * secret. Plain SHA-256 of an IPv4 address has only ~4B preimages — trivially
+ * reversible with a rainbow table. HMAC binds the hash to our secret so a
+ * DB dump on its own can't be reversed.
+ *
+ * Falls back to BETTER_AUTH_SECRET so the function still works in dev where
+ * IP_HASH_SALT isn't separately set. Production should set a distinct
+ * IP_HASH_SALT and rotate it yearly (audit_log rows pre-rotation become
+ * un-correlatable to post-rotation rows — that's by design).
  */
 function hashIp(ip: string | null | undefined): string | null {
   if (!ip) return null;
-  return createHash('sha256').update(ip).digest('hex').slice(0, 32);
+  const secret = process.env.IP_HASH_SALT ?? process.env.BETTER_AUTH_SECRET ?? '';
+  if (!secret) return null; // never store an unsalted hash
+  return createHmac('sha256', secret).update(ip).digest('hex').slice(0, 32);
 }
 
 export type AuditEventName =
@@ -41,7 +50,13 @@ export type AuditEventName =
   | 'rate_limit_hit'
   | 'account_deleted'
   | 'data_exported'
-  | 'admin_action';
+  | 'admin_action'
+  | 'billing_checkout_started'
+  | 'billing_subscription_created'
+  | 'billing_subscription_updated'
+  | 'billing_subscription_canceled'
+  | 'billing_payment_failed'
+  | 'billing_portal_opened';
 
 interface AuditInput {
   userId?: string | null | undefined;

@@ -84,8 +84,23 @@ module "ecr" {
   force_delete = false
 }
 
+# ─── Cache ───
+module "elasticache" {
+  source = "../../modules/elasticache"
+
+  project                    = var.project
+  environment                = "prod"
+  vpc_id                     = module.network.vpc_id
+  private_subnet_ids         = module.network.private_subnet_ids
+  allowed_security_group_ids = [module.eks.node_security_group_id]
+
+  # Single node t4g.micro for v1 — flip to t4g.small + Multi-AZ once you hit ~100 paying users
+  node_type          = "cache.t4g.micro"
+  num_cache_clusters = 1
+}
+
 # ─── App-tier secrets (populated by CI on first deploy) ───
 resource "aws_secretsmanager_secret" "app_secrets" {
   name        = "${var.project}-prod/app"
-  description = "Application secrets (Anthropic, Resend, Sentry, Better Auth)"
+  description = "Application secrets (Anthropic, Resend, Sentry, Better Auth, Stripe, LemonSqueezy)"
 }

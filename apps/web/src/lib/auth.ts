@@ -13,6 +13,7 @@ import { sendEmail, emailConfig } from '@/lib/email/client';
 import { emailVerification, passwordReset, welcome } from '@/lib/email/templates';
 import { auditEvent } from '@/lib/audit';
 import { env } from '@/lib/env';
+import { ensureSubscription } from '@/lib/billing/tier';
 
 const secret = env.BETTER_AUTH_SECRET;
 const baseUrl = env.BETTER_AUTH_URL;
@@ -97,6 +98,22 @@ export const auth = betterAuth({
     cookieCache: { enabled: true, maxAge: 60 * 5 },
   },
 
+  // Rate limiting on auth endpoints (signup, signin, password reset,
+  // email verification resend). Better Auth applies these per-IP by
+  // default; we set conservative limits to thwart credential stuffing
+  // and email-bomb attacks.
+  rateLimit: {
+    enabled: true,
+    window: 60, // seconds
+    max: 10, // 10 attempts per IP per window across all auth routes
+    customRules: {
+      '/sign-in/email': { window: 60, max: 5 },
+      '/sign-up/email': { window: 60 * 60, max: 5 }, // 5 signups/hour/IP
+      '/forget-password': { window: 60 * 60, max: 3 }, // 3/hour/IP
+      '/send-verification-email': { window: 60 * 5, max: 3 },
+    },
+  },
+
   // Security defaults
   trustedOrigins: [baseUrl],
   advanced: {
@@ -108,7 +125,21 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          // Fire welcome email + audit. Don't block sign-up on these.
+          // Critical: await subscription row creation so the user's
+          // first request can read their tier without racing. It's
+          // idempotent (ON CONFLICT DO NOTHING) and fast.
+          try {
+            await ensureSubscription(user.id);
+          } catch (err) {
+            // Don't block sign-up — but surface via Sentry, not just console
+            const { logger } = await import('@/lib/observability');
+            logger.error(
+              { err: (err as Error).message, userId: user.id },
+              'auth.ensure_subscription_failed',
+            );
+          }
+
+          // Welcome email is non-critical — fire and forget.
           void (async () => {
             const tmpl = welcome({ locale: env.DEFAULT_LOCALE, name: user.name ?? undefined });
             await sendEmail({ to: user.email, subject: tmpl.subject, html: tmpl.html });

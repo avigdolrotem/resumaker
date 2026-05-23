@@ -107,7 +107,31 @@
     "atsScore": "ניקוד ATS",
     "missingKeywords": "מילות מפתח חסרות",
     "suggestions": "המלצות לשיפור",
-    "downloadPdf": "הורד PDF"
+    "downloadPdf": "הורד PDF",
+    "form": {
+      "name": "שם מלא",
+      "email": "אימייל",
+      "phone": "טלפון",
+      "location": "מיקום",
+      "linkedin": "LinkedIn",
+      "summary": "תקציר אישי",
+      "skills": "כישורים (מופרדים בפסיק)",
+      "experience": "תקציר ניסיון תעסוקתי"
+    },
+    "actions": {
+      "save": "שמור קורות חיים",
+      "saving": "שומר…",
+      "saved": "✓ נשמר",
+      "backToDashboard": "חזרה לאזור האישי",
+      "saveFailed": "השמירה נכשלה",
+      "generateFailed": "היצירה נכשלה",
+      "titleFormat": "{name} — {industry}",
+      "titleFallback": "קורות חיים — {date}"
+    },
+    "empty": {
+      "title": "הדבק תיאור משרה כדי להתחיל",
+      "subtitle": "ה-AI יבנה לך קורות חיים מותאמים אישית בעברית או באנגלית"
+    }
   },
   "ats": {
     "score": "ניקוד ATS",
@@ -169,6 +193,65 @@
     "uploading": "מנתח…",
     "success": "הפרופיל יובא בהצלחה",
     "failed": "לא ניתן לנתח את הקובץ. אנא בדוק את הפורמט."
+  },
+  "billing": {
+    "pageTitle": "מחירים פשוטים",
+    "pageSubtitle": "בחר את התוכנית שמתאימה לך — שדרג או בטל בכל עת",
+    "comingSoonBanner": "התשלום בקרוב — רוצים להיות הראשונים? הצטרפו לרשימת המתנה",
+    "monthly": "לחודש",
+    "yearly": "לשנה",
+    "quarterly": "חבילת חיפוש (3 חודשים)",
+    "billedYearly": "חיוב שנתי",
+    "billedOnce": "תשלום חד פעמי",
+    "saveLabel": "חיסכון של {percent}%",
+    "free": "חינם",
+    "currentTier": "התוכנית הנוכחית שלך",
+    "subscribe": "שדרג ל-{tier}",
+    "comingSoon": "בקרוב",
+    "joinWaitlist": "הצטרף לרשימת המתנה",
+    "manage": "ניהול מנוי",
+    "openPortal": "פתח פורטל חיוב",
+    "grantedByAdmin": "התוכנית שלך הוענקה ידנית על-ידי מנהל המערכת",
+    "usage": {
+      "title": "השימוש שלך החודש",
+      "resumes": "קורות חיים פעילים",
+      "generationsToday": "יצירות היום",
+      "coverLettersThisMonth": "מכתבי הצעה החודש",
+      "unlimited": "ללא הגבלה",
+      "of": "מתוך"
+    },
+    "features": {
+      "title": "מה כלול",
+      "maxResumes": "{count} קורות חיים פעילים",
+      "maxResumesUnlimited": "קורות חיים ללא הגבלה",
+      "generationsPerDay": "{count} יצירות AI ביום",
+      "generationsUnlimited": "יצירות AI ללא הגבלה",
+      "coverLettersPerMonth": "{count} מכתבי הצעה בחודש",
+      "coverLettersUnlimited": "מכתבי הצעה ללא הגבלה",
+      "atsScoring": "ניקוד ATS",
+      "modelChoice": "בחירת מודל AI (Sonnet / Opus)",
+      "versionHistoryDays": "היסטוריית גרסאות — {days} ימים",
+      "versionHistoryUnlimited": "היסטוריית גרסאות ללא הגבלה",
+      "templates": "{count} תבניות עיצוב",
+      "templatesAll": "כל התבניות (5)",
+      "prioritySupport": "תמיכה בעדיפות",
+      "removeBranding": "ללא לוגו של Resumaker בקורות החיים"
+    },
+    "gate": {
+      "resume_limit": "הגעת למגבלת קורות החיים. שדרג כדי ליצור עוד.",
+      "generation_limit": "הגעת למגבלת היצירות היומית. שדרג כדי להמשיך.",
+      "cover_letter_limit": "הגעת למגבלת מכתבי ההצעה החודשית. שדרג כדי להמשיך.",
+      "cover_letter_disabled": "מכתבי הצעה זמינים בתוכנית Pro ומעלה.",
+      "model_choice": "בחירת מודל AI זמינה בתוכנית Pro ומעלה.",
+      "template_locked": "תבנית זו זמינה בתוכנית Pro ומעלה.",
+      "upgradeCta": "שדרג עכשיו"
+    },
+    "success": {
+      "title": "תודה רבה!",
+      "subtitle": "התוכנית שלך פעילה. אפשר להתחיל ליצור.",
+      "cta": "חזרה לאזור האישי"
+    },
+    "canceled": "התשלום בוטל. אפשר לנסות שוב מתי שתרצה."
   },
   "coverLetter": {
     "title": "מכתב הצעה",

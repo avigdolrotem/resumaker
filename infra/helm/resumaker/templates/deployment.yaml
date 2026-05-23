@@ -65,11 +65,153 @@ spec:
                   name: {{ include "resumaker.fullname" . }}-app
                   key: CRON_SECRET
                   optional: true
+            # Stripe (no-op until PAYMENT_PROVIDER=stripe)
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: STRIPE_SECRET_KEY
+                  optional: true
+            - name: STRIPE_PUBLISHABLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: STRIPE_PUBLISHABLE_KEY
+                  optional: true
+            - name: STRIPE_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: STRIPE_WEBHOOK_SECRET
+                  optional: true
+            - name: STRIPE_PRICE_PLUS_MONTHLY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: STRIPE_PRICE_PLUS_MONTHLY
+                  optional: true
+            - name: STRIPE_PRICE_PLUS_YEARLY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: STRIPE_PRICE_PLUS_YEARLY
+                  optional: true
+            - name: STRIPE_PRICE_PLUS_QUARTERLY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: STRIPE_PRICE_PLUS_QUARTERLY
+                  optional: true
+            - name: STRIPE_PRICE_PRO_MONTHLY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: STRIPE_PRICE_PRO_MONTHLY
+                  optional: true
+            - name: STRIPE_PRICE_PRO_YEARLY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: STRIPE_PRICE_PRO_YEARLY
+                  optional: true
+            - name: STRIPE_PRICE_PRO_QUARTERLY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: STRIPE_PRICE_PRO_QUARTERLY
+                  optional: true
+            # LemonSqueezy (Merchant of Record — no Israeli biz number needed)
+            - name: LEMONSQUEEZY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: LEMONSQUEEZY_API_KEY
+                  optional: true
+            - name: LEMONSQUEEZY_STORE_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: LEMONSQUEEZY_STORE_ID
+                  optional: true
+            - name: LEMONSQUEEZY_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: LEMONSQUEEZY_WEBHOOK_SECRET
+                  optional: true
+            - name: LEMONSQUEEZY_VARIANT_PLUS_MONTHLY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: LEMONSQUEEZY_VARIANT_PLUS_MONTHLY
+                  optional: true
+            - name: LEMONSQUEEZY_VARIANT_PLUS_YEARLY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: LEMONSQUEEZY_VARIANT_PLUS_YEARLY
+                  optional: true
+            - name: LEMONSQUEEZY_VARIANT_PLUS_QUARTERLY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: LEMONSQUEEZY_VARIANT_PLUS_QUARTERLY
+                  optional: true
+            - name: LEMONSQUEEZY_VARIANT_PRO_MONTHLY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: LEMONSQUEEZY_VARIANT_PRO_MONTHLY
+                  optional: true
+            - name: LEMONSQUEEZY_VARIANT_PRO_YEARLY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: LEMONSQUEEZY_VARIANT_PRO_YEARLY
+                  optional: true
+            - name: LEMONSQUEEZY_VARIANT_PRO_QUARTERLY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: LEMONSQUEEZY_VARIANT_PRO_QUARTERLY
+                  optional: true
+            # OAuth providers (optional — no-op when unset)
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: GOOGLE_CLIENT_ID
+                  optional: true
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: GOOGLE_CLIENT_SECRET
+                  optional: true
+            - name: GITHUB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: GITHUB_CLIENT_ID
+                  optional: true
+            - name: GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: GITHUB_CLIENT_SECRET
+                  optional: true
             # DB URL from the RDS-managed secret
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ include "resumaker.fullname" . }}-db
+                  key: url
+            # Redis URL — rate limiter falls back to in-memory (not safe in prod)
+            # if this is unset, so verify the ExternalSecret syncs before launch.
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "resumaker.fullname" . }}-redis
                   key: url
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}

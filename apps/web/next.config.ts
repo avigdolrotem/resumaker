@@ -28,19 +28,29 @@ const nextConfig: NextConfig = {
             value: 'max-age=63072000; includeSubDomains; preload',
           },
           {
-            // Starter CSP. Tighten after launch (remove 'unsafe-inline' from
-            // script-src once we've audited inline scripts).
+            // Production CSP. `unsafe-eval` removed (Next 16 + React 19 don't
+            // require it). `unsafe-inline` on script-src remains because Next's
+            // hydration script is inlined; nonce-based CSP for that is the
+            // post-launch tightening goal.
+            //
+            // `img-src` narrowed to explicit hosts instead of `https:` wildcard
+            // so we don't allow loading from arbitrary trackers if the app is
+            // ever embedded in a 3rd-party context.
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' data: https://fonts.gstatic.com",
-              "img-src 'self' data: blob: https:",
-              "connect-src 'self' https://api.anthropic.com",
+              "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
+              "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://*.stripe.com https://*.lemonsqueezy.com",
+              "connect-src 'self' https://api.anthropic.com https://*.sentry.io",
+              // Stripe Checkout uses a hosted iframe + same for LS
+              'frame-src https://checkout.stripe.com https://*.lemonsqueezy.com https://js.stripe.com',
               "frame-ancestors 'none'",
               "base-uri 'self'",
-              "form-action 'self'",
+              "form-action 'self' https://checkout.stripe.com",
+              "object-src 'none'",
+              'upgrade-insecure-requests',
             ].join('; '),
           },
         ],

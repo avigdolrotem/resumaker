@@ -1,0 +1,64 @@
+# Egress allowances for the resumaker-web pods.
+#
+# Allowed:
+#   - DNS                  (kube-dns in kube-system, both UDP+TCP 53)
+#   - RDS                  (private CIDR, port 5432)
+#   - ElastiCache Redis    (private CIDR, port 6379)
+#   - HTTPS to internet    (Anthropic, Resend, Stripe/LS APIs, OAuth providers)
+#
+# Blocked by default-deny + omission:
+#   - IMDS metadata (169.254.169.254) — IMDSv2 also requires a token,
+#     but blocking here defense-in-depth
+#   - Pod-to-pod traffic in other namespaces
+#   - SMTP / IMAP / arbitrary TCP
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-egress
+  namespace: resumaker
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: resumaker
+  policyTypes:
+    - Egress
+  egress:
+    # DNS — both UDP (standard) and TCP (fallback for large responses)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+    # RDS Postgres in private VPC CIDR (matches network module's 10.0.0.0/16)
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/16
+            except:
+              - 169.254.169.254/32 # explicitly block AWS IMDS even within VPC
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
+
+    # Outbound HTTPS for external APIs (Anthropic, Resend, Stripe, LS, OAuth)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8 # don't allow the broad internet rule to reach VPC
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443

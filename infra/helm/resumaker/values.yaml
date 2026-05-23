@@ -68,7 +68,9 @@ env:
   APP_URL: https://resumaker.co.il
   APP_NAME: Resumaker
   DEFAULT_LOCALE: he
-  STRIPE_ENABLED: 'false'
+  # Active payment provider: 'none' | 'stripe' | 'lemonsqueezy'
+  # Flip to 'lemonsqueezy' (or 'stripe') once secrets are populated.
+  PAYMENT_PROVIDER: none
   LOG_LEVEL: info
   PLAYWRIGHT_FALLBACK: 'true'
 

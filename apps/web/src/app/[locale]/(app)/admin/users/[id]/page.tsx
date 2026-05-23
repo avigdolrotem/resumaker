@@ -16,6 +16,8 @@ import { db, schema } from '@/db';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminRoleSelect } from '@/components/admin-role-select';
+import { AdminTierSelect } from '@/components/admin-tier-select';
+import { getUserTier } from '@/lib/billing/tier';
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -35,28 +37,30 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   });
   if (!user) notFound();
 
-  const [userResumes, userGenerations, userAuditEvents, userCoverLetters] = await Promise.all([
-    db.query.resumes.findMany({
-      where: and(eq(schema.resumes.userId, id), isNull(schema.resumes.deletedAt)),
-      orderBy: [desc(schema.resumes.updatedAt)],
-      limit: 10,
-    }),
-    db.query.generations.findMany({
-      where: eq(schema.generations.userId, id),
-      orderBy: [desc(schema.generations.createdAt)],
-      limit: 10,
-    }),
-    db.query.auditLog.findMany({
-      where: eq(schema.auditLog.userId, id),
-      orderBy: [desc(schema.auditLog.createdAt)],
-      limit: 20,
-    }),
-    db.query.coverLetters.findMany({
-      where: and(eq(schema.coverLetters.userId, id), isNull(schema.coverLetters.deletedAt)),
-      orderBy: [desc(schema.coverLetters.updatedAt)],
-      limit: 10,
-    }),
-  ]);
+  const [userResumes, userGenerations, userAuditEvents, userCoverLetters, userTier] =
+    await Promise.all([
+      db.query.resumes.findMany({
+        where: and(eq(schema.resumes.userId, id), isNull(schema.resumes.deletedAt)),
+        orderBy: [desc(schema.resumes.updatedAt)],
+        limit: 10,
+      }),
+      db.query.generations.findMany({
+        where: eq(schema.generations.userId, id),
+        orderBy: [desc(schema.generations.createdAt)],
+        limit: 10,
+      }),
+      db.query.auditLog.findMany({
+        where: eq(schema.auditLog.userId, id),
+        orderBy: [desc(schema.auditLog.createdAt)],
+        limit: 20,
+      }),
+      db.query.coverLetters.findMany({
+        where: and(eq(schema.coverLetters.userId, id), isNull(schema.coverLetters.deletedAt)),
+        orderBy: [desc(schema.coverLetters.updatedAt)],
+        limit: 10,
+      }),
+      getUserTier(id),
+    ]);
 
   // Token total
   const totalTokens = userGenerations.reduce(
@@ -90,7 +94,10 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                 </div>
               )}
             </div>
-            <AdminRoleSelect userId={user.id} currentRole={user.role} />
+            <div className="flex flex-col items-end gap-2">
+              <AdminRoleSelect userId={user.id} currentRole={user.role} />
+              <AdminTierSelect userId={user.id} currentTier={userTier} />
+            </div>
           </div>
         </CardHeader>
         <CardContent>

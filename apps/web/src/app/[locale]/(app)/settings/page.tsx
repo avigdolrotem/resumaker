@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSession, signOut } from '@/lib/auth-client';
-import { useRouter } from '@/i18n/navigation';
+import { useRouter, Link } from '@/i18n/navigation';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -93,6 +93,18 @@ export default function SettingsPage() {
             <Label>Member since</Label>
             <Input defaultValue={new Date(session.user.createdAt).toLocaleDateString()} disabled />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Billing</CardTitle>
+          <CardDescription>Manage your subscription and view usage</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="outline">
+            <Link href="/account/billing">Open billing settings</Link>
+          </Button>
         </CardContent>
       </Card>
 

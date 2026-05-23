@@ -10,6 +10,7 @@ import { and, eq, desc, isNull } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { ResumeSchema } from '@resumaker/shared';
+import { canCreateResume, getActiveResumeCount, getUserTier } from '@/lib/billing/tier';
 
 export async function GET(): Promise<Response> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -34,10 +35,20 @@ export async function GET(): Promise<Response> {
   return NextResponse.json({ resumes: list });
 }
 
+/**
+ * Hard cap on serialized resume size — protects against a malicious or
+ * runaway client packing 16 MB of JSONB into a single row. Realistic
+ * resumes serialize to 2-8 KB, so 64 KB is generous (10× headroom).
+ */
+const MAX_RESUME_BYTES = 64 * 1024;
+
 const PostBodySchema = z.object({
   title: z.string().min(1).max(255),
-  content: ResumeSchema,
-  templateId: z.string().max(50).default('modern-1'),
+  content: ResumeSchema.refine(
+    (c) => JSON.stringify(c).length <= MAX_RESUME_BYTES,
+    `Resume content exceeds ${MAX_RESUME_BYTES / 1024} KB limit`,
+  ),
+  templateId: z.string().max(50).default('modern'),
 });
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -53,6 +64,26 @@ export async function POST(req: NextRequest): Promise<Response> {
     return NextResponse.json(
       { error: 'Invalid body', detail: (err as Error).message },
       { status: 400 },
+    );
+  }
+
+  // Tier gate: cap number of active resumes per tier.
+  const [tier, activeCount] = await Promise.all([
+    getUserTier(session.user.id),
+    getActiveResumeCount(session.user.id),
+  ]);
+  const gate = canCreateResume(tier, activeCount);
+  if (!gate.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Resume limit reached for your tier',
+        code: 'TIER_LIMIT',
+        reasonKey: gate.reasonKey,
+        requiredTier: gate.requiredTier,
+        current: gate.current,
+        limit: gate.limit,
+      },
+      { status: 402 }, // Payment Required
     );
   }
 

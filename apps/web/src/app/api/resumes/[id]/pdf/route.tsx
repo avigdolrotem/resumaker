@@ -12,7 +12,7 @@ import { headers } from 'next/headers';
 import { eq, and, isNull } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
-import { ModernTemplate } from '@resumaker/resume-engine';
+import { renderTemplate } from '@resumaker/resume-engine';
 import { ResumeSchema } from '@resumaker/shared';
 import { get as pdfCacheGet, set as pdfCacheSet, makeKey as pdfCacheKey } from '@/lib/pdf-cache';
 import { auditEvent } from '@/lib/audit';
@@ -45,8 +45,8 @@ export async function GET(
     return NextResponse.json({ error: 'Invalid resume content' }, { status: 500 });
   }
 
-  // Cache check (hashed by resumeId + content) — saves ~200ms render time
-  const cacheKey = pdfCacheKey(id, row.content);
+  // Cache key includes templateId so switching templates invalidates the cache
+  const cacheKey = pdfCacheKey(id, { template: row.templateId, content: row.content });
   const cached = pdfCacheGet(cacheKey);
 
   let pdfBuffer: Uint8Array;
@@ -57,7 +57,9 @@ export async function GET(
     fromCache = true;
   } else {
     try {
-      const rendered = await renderToBuffer(<ModernTemplate resume={parsed.data} />);
+      const rendered = await renderToBuffer(
+        renderTemplate(row.templateId, { resume: parsed.data }),
+      );
       pdfBuffer = new Uint8Array(rendered);
       pdfCacheSet(cacheKey, pdfBuffer);
     } catch (err) {

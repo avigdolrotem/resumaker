@@ -32,6 +32,12 @@ const EnvSchema = z.object({
   BETTER_AUTH_SECRET: z.string().min(32, 'BETTER_AUTH_SECRET must be >=32 chars'),
   BETTER_AUTH_URL: z.string().url().default('http://localhost:3000'),
 
+  // Privacy: HMAC secret for hashing IPs in audit_log. Rotate yearly.
+  // Falls back to BETTER_AUTH_SECRET if unset — fine for dev, but
+  // production should set a distinct value (so audit_log can be backed
+  // up separately from session storage without cross-correlation risk).
+  IP_HASH_SALT: z.string().min(32, 'IP_HASH_SALT must be >=32 chars').optional(),
+
   // OAuth (optional)
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
@@ -57,14 +63,36 @@ const EnvSchema = z.object({
   AWS_REGION: z.string().default('il-central-1'),
   AWS_S3_BUCKET: z.string().optional(),
 
-  // Stripe (off at launch)
+  // Payment provider selection.
+  //   'none'         — no payments (free tier only). Pricing page shows waitlist CTA.
+  //   'stripe'       — Stripe Checkout + webhooks (needs US LLC via Stripe Atlas, or Osek Murshe + Stripe Israel)
+  //   'lemonsqueezy' — LemonSqueezy Merchant of Record (no Israeli biz number required, recommended for v1)
+  PAYMENT_PROVIDER: z.enum(['none', 'stripe', 'lemonsqueezy']).default('none'),
+
+  // Stripe — only consulted when PAYMENT_PROVIDER='stripe'
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_PUBLISHABLE_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
-  STRIPE_ENABLED: z
-    .string()
-    .transform((v) => v === 'true')
-    .default('false'),
+  // Stripe Price IDs — one per tier × interval. `_quarterly` is the
+  // 3-month one-time "Job Hunt Pack" (Stripe `mode: 'payment'`).
+  STRIPE_PRICE_PLUS_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_PLUS_YEARLY: z.string().optional(),
+  STRIPE_PRICE_PLUS_QUARTERLY: z.string().optional(),
+  STRIPE_PRICE_PRO_MONTHLY: z.string().optional(),
+  STRIPE_PRICE_PRO_YEARLY: z.string().optional(),
+  STRIPE_PRICE_PRO_QUARTERLY: z.string().optional(),
+
+  // LemonSqueezy — only consulted when PAYMENT_PROVIDER='lemonsqueezy'
+  LEMONSQUEEZY_API_KEY: z.string().optional(),
+  LEMONSQUEEZY_STORE_ID: z.string().optional(),
+  LEMONSQUEEZY_WEBHOOK_SECRET: z.string().optional(),
+  // LS variant IDs — `_quarterly` is the one-time Job Hunt Pack product
+  LEMONSQUEEZY_VARIANT_PLUS_MONTHLY: z.string().optional(),
+  LEMONSQUEEZY_VARIANT_PLUS_YEARLY: z.string().optional(),
+  LEMONSQUEEZY_VARIANT_PLUS_QUARTERLY: z.string().optional(),
+  LEMONSQUEEZY_VARIANT_PRO_MONTHLY: z.string().optional(),
+  LEMONSQUEEZY_VARIANT_PRO_YEARLY: z.string().optional(),
+  LEMONSQUEEZY_VARIANT_PRO_QUARTERLY: z.string().optional(),
 
   // Email (Resend)
   RESEND_API_KEY: z.string().optional(),
@@ -83,19 +111,9 @@ const EnvSchema = z.object({
     .transform((v) => v === 'true')
     .default('true'),
 
-  // Feature flags
-  FEATURE_JOB_HUNTING_BETA: z
-    .string()
-    .transform((v) => v === 'true')
-    .default('false'),
-  FEATURE_MULTI_LLM_CHOICE: z
-    .string()
-    .transform((v) => v === 'true')
-    .default('false'),
-  FEATURE_COVER_LETTER: z
-    .string()
-    .transform((v) => v === 'true')
-    .default('false'),
+  // Feature flags: currently no flags are gating anything in the app.
+  // Add them here (with `default('false')`) once you wire a flag check
+  // in the code so the env contract stays meaningful.
 });
 
 function parseEnv() {

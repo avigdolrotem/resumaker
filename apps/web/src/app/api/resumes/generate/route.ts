@@ -24,6 +24,7 @@ import { generateResume } from '@/lib/llm';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { sanitizeInput } from '@resumaker/ai-safety';
 import { PromptInjectionError, ValidationError, LLMError } from '@resumaker/shared';
+import { canGenerate, getGenerationsToday, getUserTier } from '@/lib/billing/tier';
 
 const BodySchema = z
   .object({
@@ -44,7 +45,27 @@ export async function POST(req: NextRequest): Promise<Response> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // ─── 2. Rate limit ───
+  // ─── 2. Tier gate (per-day cap by tier) — fail fast before rate limit ───
+  const [tier, generationsToday] = await Promise.all([
+    getUserTier(session.user.id),
+    getGenerationsToday(session.user.id),
+  ]);
+  const tierGate = canGenerate(tier, generationsToday);
+  if (!tierGate.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Daily generation limit reached for your tier',
+        code: 'TIER_LIMIT',
+        reasonKey: tierGate.reasonKey,
+        requiredTier: tierGate.requiredTier,
+        current: tierGate.current,
+        limit: tierGate.limit,
+      },
+      { status: 402 },
+    );
+  }
+
+  // ─── 3. Rate limit (abuse-defense, shorter window than tier cap) ───
   const limit = parseInt(process.env.RATE_LIMIT_PER_USER_PER_HOUR ?? '10', 10);
   const rl = await checkRateLimit(`gen:user:${session.user.id}`, limit, 3600);
   if (!rl.allowed) {

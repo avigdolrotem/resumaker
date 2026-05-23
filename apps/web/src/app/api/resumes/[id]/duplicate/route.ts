@@ -11,6 +11,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
+import { canCreateResume, getActiveResumeCount, getUserTier } from '@/lib/billing/tier';
 
 export async function POST(
   _req: NextRequest,
@@ -31,6 +32,26 @@ export async function POST(
 
   if (!original) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  // Tier gate: duplicating still counts toward the resume cap
+  const [tier, activeCount] = await Promise.all([
+    getUserTier(session.user.id),
+    getActiveResumeCount(session.user.id),
+  ]);
+  const gate = canCreateResume(tier, activeCount);
+  if (!gate.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Resume limit reached for your tier',
+        code: 'TIER_LIMIT',
+        reasonKey: gate.reasonKey,
+        requiredTier: gate.requiredTier,
+        current: gate.current,
+        limit: gate.limit,
+      },
+      { status: 402 },
+    );
   }
 
   // Naive "Copy of ..." prefix; cap title length
