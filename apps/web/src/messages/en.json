@@ -128,6 +128,67 @@
     "edit": "Edit",
     "back": "Back",
     "next": "Next",
-    "submit": "Submit"
+    "submit": "Submit",
+    "saving": "Saving…",
+    "deleting": "Deleting…"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": {
+      "title": "Profile",
+      "description": "Your account information",
+      "name": "Name",
+      "email": "Email",
+      "memberSince": "Member since"
+    },
+    "sessions": {
+      "title": "Sessions",
+      "description": "Sign out from all devices",
+      "signOutAll": "Sign out everywhere"
+    },
+    "yourData": {
+      "title": "Your data",
+      "description": "Download a copy of everything we have about your account (GDPR + Israeli Privacy Law)",
+      "export": "Export my data",
+      "exportSuccess": "Your data has been downloaded.",
+      "exportFailed": "Export failed. Please try again."
+    },
+    "danger": {
+      "title": "Danger zone",
+      "description": "Irreversible actions",
+      "deleteAccount": "Delete my account",
+      "confirmTitle": "Are you sure?",
+      "confirmDescription": "This will permanently delete your account, resumes, and history.",
+      "confirmYes": "Yes, delete my account",
+      "deleted": "Account deleted",
+      "deleteFailed": "Could not delete account. Please contact support."
+    }
+  },
+  "import": {
+    "button": "Import PDF / TXT",
+    "uploading": "Parsing…",
+    "success": "Profile imported",
+    "failed": "Could not parse file. Please check the format."
+  },
+  "coverLetter": {
+    "title": "Cover letter",
+    "newTitle": "New cover letter",
+    "subtitle": "Generate a tailored cover letter for any job",
+    "jdLabel": "Job description",
+    "jdPlaceholder": "Paste the job posting…",
+    "companyLabel": "Company name (optional)",
+    "recipientLabel": "Hiring manager name (optional)",
+    "toneLabel": "Tone",
+    "tones": {
+      "formal": "Formal & professional",
+      "friendly": "Friendly & approachable",
+      "enthusiastic": "Enthusiastic & energetic"
+    },
+    "generate": "Generate cover letter",
+    "generating": "Writing…",
+    "copy": "Copy to clipboard",
+    "copied": "Copied",
+    "regenerate": "Try another version",
+    "empty": "Paste a job description to generate a tailored cover letter."
   }
 }

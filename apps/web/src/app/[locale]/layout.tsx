@@ -30,14 +30,74 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'metadata' });
+  const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
 
   return {
-    title: t('title'),
+    metadataBase: new URL(appUrl),
+    title: {
+      default: t('title'),
+      template: '%s · Resumaker',
+    },
     description: t('description'),
+    applicationName: 'Resumaker',
+    authors: [{ name: 'Rotem Avigdol', url: 'https://avigdol.com' }],
+    creator: 'Rotem Avigdol',
+    publisher: 'Resumaker',
+    keywords:
+      locale === 'he'
+        ? ['קורות חיים', 'AI', 'בינה מלאכותית', 'עבודה', 'הייטק', 'ATS', 'מותאם אישית', 'ישראל']
+        : ['resume', 'CV', 'AI', 'ATS', 'job application', 'cover letter', 'Israel', 'Hebrew'],
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false,
+    },
+    icons: {
+      icon: [
+        { url: '/favicon.ico', sizes: 'any' },
+        { url: '/icon.svg', type: 'image/svg+xml' },
+      ],
+      apple: '/apple-touch-icon.png',
+    },
+    manifest: '/site.webmanifest',
     alternates: {
+      canonical: `/${locale}`,
       languages: {
         he: '/he',
         en: '/en',
+        'x-default': '/he',
+      },
+    },
+    openGraph: {
+      type: 'website',
+      locale: locale === 'he' ? 'he_IL' : 'en_US',
+      url: `${appUrl}/${locale}`,
+      title: t('title'),
+      description: t('description'),
+      siteName: 'Resumaker',
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: 'Resumaker — AI-powered resume builder',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t('title'),
+      description: t('description'),
+      images: ['/og-image.png'],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-snippet': -1,
+        'max-image-preview': 'large',
       },
     },
   };

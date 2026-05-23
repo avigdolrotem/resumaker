@@ -128,6 +128,67 @@
     "edit": "ערוך",
     "back": "חזור",
     "next": "הבא",
-    "submit": "שלח"
+    "submit": "שלח",
+    "saving": "שומר…",
+    "deleting": "מוחק…"
+  },
+  "settings": {
+    "title": "הגדרות",
+    "profile": {
+      "title": "פרופיל",
+      "description": "פרטי החשבון שלך",
+      "name": "שם",
+      "email": "דוא״ל",
+      "memberSince": "חבר מתאריך"
+    },
+    "sessions": {
+      "title": "חיבורים",
+      "description": "התנתק מכל המכשירים",
+      "signOutAll": "התנתק מכולם"
+    },
+    "yourData": {
+      "title": "הנתונים שלך",
+      "description": "הורד עותק מכל מה שיש לנו על החשבון שלך (GDPR + חוק הגנת הפרטיות)",
+      "export": "ייצא את הנתונים שלי",
+      "exportSuccess": "הנתונים הורדו בהצלחה.",
+      "exportFailed": "הייצוא נכשל. אנא נסה שוב."
+    },
+    "danger": {
+      "title": "אזור מסוכן",
+      "description": "פעולות בלתי הפיכות",
+      "deleteAccount": "מחק את החשבון שלי",
+      "confirmTitle": "אתה בטוח?",
+      "confirmDescription": "פעולה זו תמחק לצמיתות את החשבון, קורות החיים וההיסטוריה שלך.",
+      "confirmYes": "כן, מחק את החשבון",
+      "deleted": "החשבון נמחק",
+      "deleteFailed": "לא ניתן למחוק את החשבון. אנא צור קשר עם התמיכה."
+    }
+  },
+  "import": {
+    "button": "ייבא PDF / TXT",
+    "uploading": "מנתח…",
+    "success": "הפרופיל יובא בהצלחה",
+    "failed": "לא ניתן לנתח את הקובץ. אנא בדוק את הפורמט."
+  },
+  "coverLetter": {
+    "title": "מכתב הצעה",
+    "newTitle": "מכתב הצעה חדש",
+    "subtitle": "צור מכתב הצעה מותאם לכל משרה",
+    "jdLabel": "תיאור משרה",
+    "jdPlaceholder": "הדבק את המודעה…",
+    "companyLabel": "שם החברה (אופציונלי)",
+    "recipientLabel": "שם המגייס (אופציונלי)",
+    "toneLabel": "טון",
+    "tones": {
+      "formal": "פורמלי ומקצועי",
+      "friendly": "ידידותי ונגיש",
+      "enthusiastic": "נלהב ואנרגטי"
+    },
+    "generate": "צור מכתב",
+    "generating": "כותב…",
+    "copy": "העתק ללוח",
+    "copied": "הועתק",
+    "regenerate": "נסה גרסה אחרת",
+    "empty": "הדבק תיאור משרה כדי לקבל מכתב מותאם אישית."
   }
 }
