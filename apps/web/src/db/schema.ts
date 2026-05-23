@@ -9,6 +9,7 @@
  * See docs/AUTH.md for auth schema reasoning.
  */
 
+import { sql } from 'drizzle-orm';
 import {
   pgTable,
   text,
@@ -123,6 +124,11 @@ export const resumes = pgTable(
   },
   (t) => ({
     userIdIdx: index('resumes_user_id_idx').on(t.userId),
+    // Hot path: dashboard query filters on (userId, deletedAt IS NULL)
+    // ordered by updatedAt. Partial index avoids scanning soft-deleted rows.
+    userActiveUpdatedIdx: index('resumes_user_active_updated_idx')
+      .on(t.userId, t.updatedAt.desc())
+      .where(sql`${t.deletedAt} IS NULL`),
   }),
 );
 
@@ -142,13 +148,21 @@ export const generations = pgTable(
     completionTokens: integer('completion_tokens'),
     durationMs: integer('duration_ms'),
     safetyDetections: jsonb('safety_detections'),
+    // Status: 'success' | 'rejected_input' | 'output_invalid' | 'llm_error'
     status: varchar('status', { length: 32 }).notNull(),
     error: text('error'),
+    detectedLocale: varchar('detected_locale', { length: 8 }),
+    industry: varchar('industry', { length: 32 }),
+    inputLength: integer('input_length'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
     userIdIdx: index('generations_user_id_idx').on(t.userId),
     createdAtIdx: index('generations_created_at_idx').on(t.createdAt),
+    // For admin usage stats: ORDER BY user, day
+    userCreatedIdx: index('generations_user_created_idx').on(t.userId, t.createdAt.desc()),
+    // For "list this resume's generation history"
+    resumeIdIdx: index('generations_resume_id_idx').on(t.resumeId),
   }),
 );
 

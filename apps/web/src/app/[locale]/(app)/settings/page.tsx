@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,8 @@ export default function SettingsPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   async function handleSignOutAll() {
     await signOut();
@@ -19,17 +22,50 @@ export default function SettingsPage() {
     router.refresh();
   }
 
+  async function handleExportData() {
+    setExporting(true);
+    try {
+      const res = await fetch('/api/account/export');
+      if (!res.ok) {
+        toast.error('Export failed', { description: 'Please try again.' });
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `resumaker-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success('Export ready', { description: 'Your data has been downloaded.' });
+    } catch (err) {
+      toast.error('Export failed', { description: (err as Error).message });
+    } finally {
+      setExporting(false);
+    }
+  }
+
   async function handleDeleteAccount() {
     if (!confirmDelete) {
       setConfirmDelete(true);
       return;
     }
-    const res = await fetch('/api/account', { method: 'DELETE' });
-    if (res.ok) {
-      router.push('/');
-      router.refresh();
-    } else {
-      alert('Delete failed');
+    setDeleting(true);
+    try {
+      const res = await fetch('/api/account', { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Account deleted');
+        router.push('/');
+        router.refresh();
+      } else {
+        toast.error('Could not delete account', { description: 'Please contact support.' });
+      }
+    } catch (err) {
+      toast.error('Network error', { description: (err as Error).message });
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -72,6 +108,20 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Your data</CardTitle>
+          <CardDescription>
+            Download everything we have about your account (GDPR + Israeli Privacy Law)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" onClick={handleExportData} disabled={exporting}>
+            {exporting ? 'Preparing…' : 'Export my data'}
+          </Button>
+        </CardContent>
+      </Card>
+
       <Card className="border-red-200">
         <CardHeader>
           <CardTitle className="text-red-700">Danger zone</CardTitle>
@@ -84,10 +134,20 @@ export default function SettingsPage() {
                 Are you sure? This will permanently delete your account, resumes, and history.
               </p>
               <div className="flex gap-2">
-                <Button variant="destructive" size="sm" onClick={handleDeleteAccount}>
-                  Yes, delete my account
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteAccount}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Deleting…' : 'Yes, delete my account'}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={deleting}
+                >
                   Cancel
                 </Button>
               </div>
