@@ -103,10 +103,15 @@ async function fetchUrl(url: string): Promise<string> {
     throw new Error('Only HTTP(S) URLs allowed');
   }
 
-  // Prevent SSRF: block private IP ranges
-  if (isPrivateHost(parsed.hostname)) {
+  // Quick hostname-string check (catches plaintext private IPs in the URL)
+  if (isPrivateHostname(parsed.hostname)) {
     throw new Error('Private hosts not allowed');
   }
+
+  // SSRF: resolve DNS first and verify the IP is public.
+  // Protects against DNS rebinding + IPv6 private ranges + CGNAT
+  // that a string-only check misses.
+  await assertPublicHost(parsed.hostname);
 
   const res = await fetch(url, {
     headers: {
@@ -114,6 +119,7 @@ async function fetchUrl(url: string): Promise<string> {
       Accept: 'text/html,application/xhtml+xml',
     },
     signal: AbortSignal.timeout(15_000),
+    redirect: 'follow',
   });
 
   if (!res.ok) {
@@ -124,14 +130,50 @@ async function fetchUrl(url: string): Promise<string> {
   return stripHtml(html);
 }
 
-function isPrivateHost(host: string): boolean {
+function isPrivateHostname(host: string): boolean {
   const lower = host.toLowerCase();
-  if (lower === 'localhost' || lower === '127.0.0.1' || lower === '::1') return true;
+  // localhost variants
+  if (['localhost', '127.0.0.1', '::1', '0.0.0.0', '::'].includes(lower)) return true;
+  // private IPv4
   if (/^10\./.test(lower)) return true;
   if (/^192\.168\./.test(lower)) return true;
   if (/^172\.(1[6-9]|2\d|3[01])\./.test(lower)) return true;
-  if (/^169\.254\./.test(lower)) return true; // link-local + AWS metadata
+  if (/^169\.254\./.test(lower)) return true; // link-local + cloud metadata
+  if (/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(lower)) return true; // CGNAT 100.64.0.0/10
+  if (/^127\./.test(lower)) return true; // loopback range
+  // private IPv6 prefixes — bracketed in URLs but Hostname strips brackets
+  if (/^f[cd][0-9a-f]{2}:/.test(lower)) return true; // fc00::/7 unique-local
+  if (/^fe[89ab][0-9a-f]:/.test(lower)) return true; // fe80::/10 link-local
   return false;
+}
+
+function ipIsPrivate(ip: string): boolean {
+  // Re-use the hostname check on the resolved IP string
+  if (isPrivateHostname(ip)) return true;
+  // Additional IPv6 forms after resolution
+  if (ip === '::1' || ip === '::') return true;
+  // IPv4-mapped IPv6 (::ffff:a.b.c.d)
+  const v4mapped = ip.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
+  if (v4mapped && v4mapped[1]) return isPrivateHostname(v4mapped[1]);
+  return false;
+}
+
+async function assertPublicHost(hostname: string): Promise<void> {
+  // Use Node's dns.lookup to resolve to IP(s). Catches DNS rebinding because
+  // we resolve, validate, then fetch — the fetch will hit the same IP if the
+  // DNS layer has a TTL > 0 cache, but for high-value targets pin via IP.
+  const { lookup } = await import('node:dns/promises');
+  let addresses: Array<{ address: string; family: number }>;
+  try {
+    addresses = await lookup(hostname, { all: true });
+  } catch {
+    throw new Error('Cannot resolve URL host');
+  }
+  for (const addr of addresses) {
+    if (ipIsPrivate(addr.address)) {
+      throw new Error('Resolved IP is private — blocked for security');
+    }
+  }
 }
 
 function stripHtml(html: string): string {

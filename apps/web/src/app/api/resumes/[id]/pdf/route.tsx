@@ -43,11 +43,18 @@ export async function GET(
 
   try {
     const pdfBuffer = await renderToBuffer(<ModernTemplate resume={parsed.data} />);
+    // Safe filename: strip control chars and quotes from the user-provided title,
+    // and use RFC 5987 filename* for non-ASCII (Hebrew titles)
+    const safeAscii = row.title
+      .replace(/[^\x20-\x7e]/g, '_')
+      .replace(/["\\]/g, '_')
+      .slice(0, 100);
+    const utf8Encoded = encodeURIComponent(row.title);
     return new Response(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${row.title}.pdf"`,
+        'Content-Disposition': `attachment; filename="${safeAscii}.pdf"; filename*=UTF-8''${utf8Encoded}.pdf`,
         'Cache-Control': 'private, no-store',
       },
     });

@@ -81,9 +81,10 @@ export default function BuilderPage() {
           .split(',')
           .map((s) => s.trim())
           .filter(Boolean),
-        experience: experienceText
-          ? [{ company: 'Current', title: name, start: '2020-01', description: experienceText }]
-          : [],
+        // experienceText is free-form. We pass it as description on a
+        // placeholder entry; the LLM extracts structure from it. We do NOT
+        // hardcode company/title (was a bug — produced "Role at Current").
+        experience: experienceText ? [{ description: experienceText }] : [],
       };
 
       const body: Record<string, unknown> = {

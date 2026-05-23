@@ -160,7 +160,8 @@ export async function generateResume(input: GenerateResumeInput): Promise<Genera
   const sanitized = sanitizeInput(input.jobDescription);
 
   if (sanitized.rejected) {
-    await recordGeneration({
+    // Fire-and-forget DB write so we don't add latency to the error response
+    void recordGeneration({
       ...input,
       status: 'rejected_input',
       error: sanitized.reason,
@@ -198,7 +199,8 @@ export async function generateResume(input: GenerateResumeInput): Promise<Genera
       messages: [{ role: 'user', content: user }],
     });
   } catch (err) {
-    await recordGeneration({
+    // Fire-and-forget so the user gets the error response without an extra DB roundtrip
+    void recordGeneration({
       ...input,
       status: 'llm_error',
       error: (err as Error).message,
