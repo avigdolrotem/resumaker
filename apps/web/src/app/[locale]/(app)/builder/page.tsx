@@ -135,6 +135,38 @@ export default function BuilderPage() {
     }
   }
 
+  function applyImportedProfile(p: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    location?: string;
+    linkedin?: string;
+    summary?: string;
+    skills?: string[];
+    experience?: Array<{
+      company?: string;
+      title?: string;
+      description?: string;
+      highlights?: string[];
+    }>;
+  }) {
+    if (p.name) setName(p.name);
+    if (p.email) setEmail(p.email);
+    if (p.phone) setPhone(p.phone);
+    if (p.location) setLocation(p.location);
+    if (p.linkedin) setLinkedin(p.linkedin);
+    if (p.summary) setProfileSummary(p.summary);
+    if (p.skills?.length) setProfileSkills(p.skills.join(', '));
+    if (p.experience?.length) {
+      const exp = p.experience[0];
+      const lines: string[] = [];
+      if (exp?.title && exp?.company) lines.push(`${exp.title} at ${exp.company}`);
+      if (exp?.description) lines.push(exp.description);
+      if (exp?.highlights?.length) lines.push(...exp.highlights);
+      setExperienceText(lines.join('\n'));
+    }
+  }
+
   async function handleSave() {
     if (!result) return;
     setSaving(true);
@@ -196,7 +228,10 @@ export default function BuilderPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>{t('profileTitle')}</CardTitle>
+              <CardTitle className="flex items-center justify-between gap-3">
+                <span>{t('profileTitle')}</span>
+                <ImportProfileButton onImport={applyImportedProfile} />
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -375,6 +410,66 @@ export default function BuilderPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ImportProfileButton({
+  onImport,
+}: {
+  onImport: (p: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    location?: string;
+    linkedin?: string;
+    summary?: string;
+    skills?: string[];
+    experience?: Array<{
+      company?: string;
+      title?: string;
+      description?: string;
+      highlights?: string[];
+    }>;
+  }) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setStatus(null);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/profile/import', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) {
+        setStatus(data.error ?? 'Import failed');
+      } else {
+        onImport(data.profile);
+        setStatus('Imported');
+      }
+    } catch (err) {
+      setStatus((err as Error).message);
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  }
+
+  return (
+    <label className="border-brand-200 text-brand-700 hover:bg-brand-50 inline-flex cursor-pointer items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-xs font-medium transition">
+      <input
+        type="file"
+        accept=".pdf,.txt,application/pdf,text/plain"
+        onChange={handleChange}
+        className="sr-only"
+        disabled={uploading}
+      />
+      {uploading ? 'Parsing…' : (status ?? 'Import PDF / TXT')}
+    </label>
   );
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { OAuthButtons } from '@/components/oauth-buttons';
 import { signIn } from '@/lib/auth-client';
 
 export default function SignInPage() {
@@ -15,6 +16,19 @@ export default function SignInPage() {
   const t = useTranslations('auth');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [providers, setProviders] = useState<{ google: boolean; github: boolean }>({
+    google: false,
+    github: false,
+  });
+
+  useEffect(() => {
+    fetch('/api/auth/providers')
+      .then((r) => r.json())
+      .then(setProviders)
+      .catch(() => {
+        /* ignore — buttons just won't show */
+      });
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -74,14 +88,16 @@ export default function SignInPage() {
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? t('common.loading') : t('signIn.cta')}
           </Button>
-
-          <p className="text-center text-sm text-neutral-600">
-            {t('signIn.noAccount')}{' '}
-            <Link href="/sign-up" className="text-brand-600 font-medium hover:underline">
-              {t('signUp.cta')}
-            </Link>
-          </p>
         </form>
+
+        <OAuthButtons showGoogle={providers.google} showGitHub={providers.github} />
+
+        <p className="mt-4 text-center text-sm text-neutral-600">
+          {t('signIn.noAccount')}{' '}
+          <Link href="/sign-up" className="text-brand-600 font-medium hover:underline">
+            {t('signUp.cta')}
+          </Link>
+        </p>
       </CardContent>
     </Card>
   );
