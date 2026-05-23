@@ -22,6 +22,7 @@ import { auth } from '@/lib/auth';
 import { parseJD } from '@/lib/jd-parser';
 import { generateResume } from '@/lib/llm';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { sanitizeInput } from '@resumaker/ai-safety';
 import { PromptInjectionError, ValidationError, LLMError } from '@resumaker/shared';
 
 const BodySchema = z
@@ -87,13 +88,34 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
-  // ─── 5. Generate ───
+  // ─── 5. Sanitize userProfile string fields (audit H-1 fix) ───
+  const sanitizedProfile: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(body.userProfile)) {
+    if (typeof value === 'string') {
+      const result = sanitizeInput(value);
+      if (result.rejected) {
+        return NextResponse.json(
+          { error: 'Profile field contains suspicious content', field: key },
+          { status: 400 },
+        );
+      }
+      sanitizedProfile[key] = result.cleaned;
+    } else if (Array.isArray(value)) {
+      sanitizedProfile[key] = value.map((v) =>
+        typeof v === 'string' ? sanitizeInput(v).cleaned : v,
+      );
+    } else {
+      sanitizedProfile[key] = value;
+    }
+  }
+
+  // ─── 6. Generate ───
   try {
     const result = await generateResume({
       userId: session.user.id,
       locale: jdResult.detectedLocale,
       jobDescription: jdResult.cleaned,
-      userProfile: body.userProfile,
+      userProfile: sanitizedProfile,
       ...(body.industry ? { industry: body.industry } : {}),
     });
 

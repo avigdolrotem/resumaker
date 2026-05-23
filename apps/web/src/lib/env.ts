@@ -17,6 +17,9 @@ const EnvSchema = z.object({
   // App
   APP_URL: z.string().url().default('http://localhost:3000'),
   APP_NAME: z.string().default('Resumaker'),
+  DEFAULT_LOCALE: z.enum(['he', 'en']).default('he'),
+  SUPPORTED_LOCALES: z.string().default('he,en'),
+  CRON_SECRET: z.string().min(32, 'CRON_SECRET must be >=32 chars').optional(),
 
   // Database
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),

@@ -44,11 +44,11 @@ export type AuditEventName =
   | 'admin_action';
 
 interface AuditInput {
-  userId?: string | null;
+  userId?: string | null | undefined;
   event: AuditEventName;
-  metadata?: Record<string, unknown>;
-  ipAddress?: string | null;
-  userAgent?: string | null;
+  metadata?: Record<string, unknown> | undefined;
+  ipAddress?: string | null | undefined;
+  userAgent?: string | null | undefined;
 }
 
 /**
