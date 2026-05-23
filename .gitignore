@@ -125,3 +125,5 @@ ruvector.db
 agentdb.rvf
 *.rvf
 *.rvf.lock
+
+.terraform.lock.hcl
