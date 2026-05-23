@@ -8,6 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ImportProfileButton } from '@/components/import-profile-button';
+import { AtsScoreCard } from '@/components/ats-score-card';
+import { ResumePreview } from '@/components/resume-preview';
 
 type Industry = 'tech' | 'healthcare' | 'finance' | 'general';
 type LocaleChoice = 'auto' | 'he' | 'en';
@@ -404,229 +407,14 @@ export default function BuilderPage() {
                 </CardContent>
               </Card>
 
-              {atsScore && <AtsScoreCard score={atsScore} />}
+              {atsScore && (
+                <AtsScoreCard score={atsScore} isHebrew={result.metadata.detectedLocale === 'he'} />
+              )}
               <ResumePreview resume={result.resume} metadata={result.metadata} />
             </div>
           )}
         </div>
       </div>
     </div>
-  );
-}
-
-function ImportProfileButton({
-  onImport,
-}: {
-  onImport: (p: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    location?: string;
-    linkedin?: string;
-    summary?: string;
-    skills?: string[];
-    experience?: Array<{
-      company?: string;
-      title?: string;
-      description?: string;
-      highlights?: string[];
-    }>;
-  }) => void;
-}) {
-  const [uploading, setUploading] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
-
-  async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setStatus(null);
-    try {
-      const form = new FormData();
-      form.append('file', file);
-      const res = await fetch('/api/profile/import', { method: 'POST', body: form });
-      const data = await res.json();
-      if (!res.ok) {
-        setStatus(data.error ?? 'Import failed');
-      } else {
-        onImport(data.profile);
-        setStatus('Imported');
-      }
-    } catch (err) {
-      setStatus((err as Error).message);
-    } finally {
-      setUploading(false);
-      e.target.value = '';
-    }
-  }
-
-  return (
-    <label className="border-brand-200 text-brand-700 hover:bg-brand-50 inline-flex cursor-pointer items-center gap-2 rounded-md border bg-white px-3 py-1.5 text-xs font-medium transition">
-      <input
-        type="file"
-        accept=".pdf,.txt,application/pdf,text/plain"
-        onChange={handleChange}
-        className="sr-only"
-        disabled={uploading}
-      />
-      {uploading ? 'Parsing…' : (status ?? 'Import PDF / TXT')}
-    </label>
-  );
-}
-
-function AtsScoreCard({ score }: { score: ATSScore }) {
-  const colorClass =
-    score.overall >= 70
-      ? 'text-green-600'
-      : score.overall >= 50
-        ? 'text-yellow-600'
-        : 'text-red-600';
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-baseline justify-between">
-          <span>ATS Score</span>
-          <span className={`text-4xl font-bold ${colorClass}`}>{score.overall}</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {score.missing_keywords.length > 0 && (
-          <div>
-            <p className="mb-2 text-sm font-medium text-neutral-700">Missing keywords</p>
-            <div className="flex flex-wrap gap-1">
-              {score.missing_keywords.slice(0, 10).map((k) => (
-                <span key={k} className="rounded bg-red-50 px-2 py-1 text-xs text-red-700">
-                  {k}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-        {score.suggestions.length > 0 && (
-          <div>
-            <p className="mb-2 text-sm font-medium text-neutral-700">Suggestions</p>
-            <ul className="space-y-1 text-sm">
-              {score.suggestions.map((s, i) => (
-                <li key={i} className="flex gap-2 text-neutral-700">
-                  <span
-                    className={
-                      s.severity === 'high'
-                        ? 'text-red-600'
-                        : s.severity === 'medium'
-                          ? 'text-yellow-600'
-                          : 'text-neutral-500'
-                    }
-                  >
-                    •
-                  </span>
-                  {s.message}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function ResumePreview({
-  resume,
-  metadata,
-}: {
-  resume: ResumeResult['resume'];
-  metadata: ResumeResult['metadata'];
-}) {
-  const isHebrew = metadata.detectedLocale === 'he';
-  const dir = isHebrew ? 'rtl' : 'ltr';
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>{resume.contact.name}</span>
-          <span className="text-xs font-normal text-neutral-500">
-            {metadata.durationMs}ms · {metadata.tokensUsed.input + metadata.tokensUsed.output}{' '}
-            tokens
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent dir={dir}>
-        <div className="space-y-6">
-          {resume.contact.email && (
-            <p className="text-sm text-neutral-600" dir="ltr">
-              {resume.contact.email}
-            </p>
-          )}
-
-          <section>
-            <p className="text-sm leading-relaxed">{resume.summary}</p>
-          </section>
-
-          {resume.experience.length > 0 && (
-            <section>
-              <h3 className="mb-2 border-b border-neutral-200 pb-1 text-sm font-semibold uppercase tracking-wider text-neutral-700">
-                {isHebrew ? 'ניסיון תעסוקתי' : 'Experience'}
-              </h3>
-              <div className="space-y-4">
-                {resume.experience.map((exp, i) => (
-                  <div key={i}>
-                    <div className="flex items-baseline justify-between">
-                      <p className="font-semibold">{exp.title}</p>
-                      <p className="text-xs text-neutral-500" dir="ltr">
-                        {exp.start_date} – {exp.end_date ?? (isHebrew ? 'היום' : 'present')}
-                      </p>
-                    </div>
-                    <p className="text-sm text-neutral-700">{exp.company}</p>
-                    {exp.highlights && exp.highlights.length > 0 && (
-                      <ul className="mt-2 space-y-1 text-sm">
-                        {exp.highlights.map((h, j) => (
-                          <li key={j} className="flex">
-                            <span className="mx-2 select-none text-neutral-400">•</span>
-                            <span>{h}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {resume.skills.length > 0 && (
-            <section>
-              <h3 className="mb-2 border-b border-neutral-200 pb-1 text-sm font-semibold uppercase tracking-wider text-neutral-700">
-                {isHebrew ? 'מיומנויות' : 'Skills'}
-              </h3>
-              <p className="flex flex-wrap gap-2 text-sm">
-                {resume.skills.map((s, i) => (
-                  <span key={i} className="bg-brand-50 text-brand-700 rounded px-2 py-1 text-xs">
-                    {s}
-                  </span>
-                ))}
-              </p>
-            </section>
-          )}
-
-          {resume.education.length > 0 && (
-            <section>
-              <h3 className="mb-2 border-b border-neutral-200 pb-1 text-sm font-semibold uppercase tracking-wider text-neutral-700">
-                {isHebrew ? 'השכלה' : 'Education'}
-              </h3>
-              <div className="space-y-2">
-                {resume.education.map((edu, i) => (
-                  <div key={i}>
-                    <p className="font-medium">{edu.degree}</p>
-                    <p className="text-sm text-neutral-700">{edu.institution}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
