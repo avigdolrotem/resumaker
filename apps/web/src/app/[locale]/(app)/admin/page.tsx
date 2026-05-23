@@ -1,6 +1,7 @@
 import { db, schema } from '@/db';
 import { desc, count, sum, gte, sql } from 'drizzle-orm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AdminRoleSelect } from '@/components/admin-role-select';
 import { Users, FileText, Coins, Activity, AlertTriangle } from 'lucide-react';
 
 export default async function AdminPage() {
@@ -131,7 +132,7 @@ export default async function AdminPage() {
                   </td>
                   <td className="py-2">{u.name ?? '—'}</td>
                   <td className="py-2">
-                    <RoleBadge role={u.role} />
+                    <AdminRoleSelect userId={u.id} currentRole={u.role} />
                   </td>
                   <td className="py-2 text-xs">
                     {u.emailVerified ? (
@@ -243,18 +244,6 @@ function MetricCard({
       </CardContent>
     </Card>
   );
-}
-
-function RoleBadge({ role }: { role: string }) {
-  const styles =
-    role === 'admin'
-      ? 'bg-purple-100 text-purple-700'
-      : role === 'support'
-        ? 'bg-blue-100 text-blue-700'
-        : role === 'suspended'
-          ? 'bg-red-100 text-red-700'
-          : 'bg-neutral-100 text-neutral-700';
-  return <span className={`rounded px-2 py-0.5 text-xs font-medium ${styles}`}>{role}</span>;
 }
 
 function StatusBadge({ status }: { status: string }) {

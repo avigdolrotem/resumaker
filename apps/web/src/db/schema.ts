@@ -202,6 +202,33 @@ export const auditLog = pgTable(
   }),
 );
 
+// ─── COVER LETTERS ──────────────────────────────────────────────────
+
+export const coverLetters = pgTable(
+  'cover_letters',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 255 }).notNull(),
+    content: text('content').notNull(),
+    jobDescription: text('job_description'),
+    companyName: varchar('company_name', { length: 200 }),
+    recipientName: varchar('recipient_name', { length: 200 }),
+    tone: varchar('tone', { length: 32 }).notNull().default('formal'),
+    locale: varchar('locale', { length: 8 }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (t) => ({
+    userActiveIdx: index('cover_letters_user_active_idx')
+      .on(t.userId, t.updatedAt)
+      .where(sql`${t.deletedAt} IS NULL`),
+  }),
+);
+
 // ─── EXPORTS ────────────────────────────────────────────────────────
 
 export const schema = {
@@ -213,6 +240,7 @@ export const schema = {
   generations,
   atsScores,
   auditLog,
+  coverLetters,
 };
 
 export type User = typeof users.$inferSelect;
@@ -220,3 +248,4 @@ export type NewUser = typeof users.$inferInsert;
 export type Resume = typeof resumes.$inferSelect;
 export type Generation = typeof generations.$inferSelect;
 export type ATSScore = typeof atsScores.$inferSelect;
+export type CoverLetter = typeof coverLetters.$inferSelect;
