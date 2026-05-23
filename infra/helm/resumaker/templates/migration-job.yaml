@@ -23,9 +23,11 @@ spec:
         - name: migrate
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # Uses the runtime-only migrator at apps/web/scripts/migrate.mjs
+          # (drizzle-kit is devDep and not present in the standalone image).
           command: ['node']
-          args: ['node_modules/drizzle-kit/bin.cjs', 'migrate']
-          workingDir: /app/apps/web
+          args: ['apps/web/scripts/migrate.mjs']
+          workingDir: /app
           env:
             - name: NODE_ENV
               value: production

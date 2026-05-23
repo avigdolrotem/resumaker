@@ -38,6 +38,14 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
+# Migration runner (used by the Helm pre-install Job). The Next.js
+# standalone output excludes devDeps like drizzle-kit, so we ship a
+# tiny migrator using only runtime deps (drizzle-orm + postgres) which
+# are already inside .next/standalone's node_modules tree. Copy the
+# script + the migrations directory it reads.
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/scripts ./apps/web/scripts
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/drizzle ./apps/web/drizzle
+
 USER nextjs
 
 EXPOSE 3000

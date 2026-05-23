@@ -9,14 +9,14 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { sanitizeInput } from '@resumaker/ai-safety';
 import { PromptInjectionError, LLMError } from '@resumaker/shared';
+import { env } from '@/lib/env';
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5 MB
 const MAX_TEXT_CHARS = 30_000;
 
-const apiKey = process.env.ANTHROPIC_API_KEY;
-const PARSE_MODEL = process.env.PARSE_LLM_MODEL ?? 'claude-haiku-4-5';
+const PARSE_MODEL = env.PARSE_LLM_MODEL;
 
-const client = apiKey ? new Anthropic({ apiKey, timeout: 60_000 }) : null;
+const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, timeout: 60_000 });
 
 export interface ParsedProfile {
   name?: string;

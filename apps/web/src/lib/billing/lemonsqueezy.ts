@@ -127,11 +127,15 @@ export async function createCheckoutUrl(args: {
   userId: string;
   userEmail: string;
   successUrl: string;
+  /** UI locale of the buyer — controls receipt-button copy. */
+  locale?: 'he' | 'en';
 }): Promise<string> {
   ensureLemonSqueezy();
   if (!env.LEMONSQUEEZY_STORE_ID) {
     throw new Error('LEMONSQUEEZY_STORE_ID is not set');
   }
+
+  const receiptButton = args.locale === 'he' ? 'חזרה לאזור האישי' : 'Back to dashboard';
 
   const { data, error } = await createCheckout(env.LEMONSQUEEZY_STORE_ID, args.variantId, {
     checkoutData: {
@@ -142,7 +146,7 @@ export async function createCheckoutUrl(args: {
     },
     productOptions: {
       redirectUrl: args.successUrl,
-      receiptButtonText: 'Back to dashboard',
+      receiptButtonText: receiptButton,
       receiptLinkUrl: args.successUrl,
     },
     checkoutOptions: {

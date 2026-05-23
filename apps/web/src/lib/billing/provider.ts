@@ -62,6 +62,8 @@ export async function startCheckout(args: {
   priceKey: PriceKey;
   successUrl: string;
   cancelUrl: string;
+  /** UI locale of the buyer — passed to provider for receipt copy etc. */
+  locale?: 'he' | 'en';
 }): Promise<CheckoutResult> {
   const provider = getActiveProvider();
 
@@ -149,6 +151,7 @@ export async function startCheckout(args: {
         userId: args.userId,
         userEmail: args.userEmail,
         successUrl: args.successUrl,
+        ...(args.locale ? { locale: args.locale } : {}),
       });
       // Mark the subscription row as "lemonsqueezy" provider so when the
       // webhook arrives we don't accidentally treat it as a Stripe row.

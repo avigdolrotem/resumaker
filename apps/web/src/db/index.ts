@@ -1,30 +1,28 @@
 /**
  * Database client.
  *
- * Singleton pg client + drizzle-orm.
+ * Singleton pg client + drizzle-orm. Reads through the centralized
+ * zod-validated env so a mistyped DATABASE_POOL_MAX surfaces at boot
+ * instead of becoming NaN that postgres-js silently treats as default.
  */
 
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import { env } from '@/lib/env';
 import { schema } from './schema';
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  throw new Error('DATABASE_URL is not set');
-}
-
-// In dev, hot reload would create many connections — cache on globalThis
+// Cache on globalThis so test isolation + hot reload don't leak connections.
 const globalForDb = globalThis as unknown as { _pg?: ReturnType<typeof postgres> };
 
 const client =
   globalForDb._pg ??
-  postgres(connectionString, {
-    max: parseInt(process.env.DATABASE_POOL_MAX ?? '20', 10),
+  postgres(env.DATABASE_URL, {
+    max: env.DATABASE_POOL_MAX,
     idle_timeout: 30,
     connect_timeout: 10,
   });
 
-if (process.env.NODE_ENV !== 'production') {
+if (env.NODE_ENV !== 'production') {
   globalForDb._pg = client;
 }
 

@@ -20,18 +20,16 @@ import {
   type Industry,
 } from '@resumaker/shared';
 import { db, schema } from '@/db';
+import { env } from '@/lib/env';
 
-const apiKey = process.env.ANTHROPIC_API_KEY;
-if (!apiKey) {
-  throw new Error('ANTHROPIC_API_KEY is not set');
-}
-
-const MODEL = process.env.DEFAULT_LLM_MODEL ?? 'claude-sonnet-4-6';
-const MAX_TOKENS = parseInt(process.env.LLM_MAX_TOKENS ?? '4096', 10);
-const TIMEOUT_MS = parseInt(process.env.LLM_TIMEOUT_MS ?? '60000', 10);
+// Read through the centralized env so `LLM_MAX_TOKENS=NaN` is caught at
+// startup by zod's coerce.number() instead of producing silent NaN at use.
+const MODEL = env.DEFAULT_LLM_MODEL;
+const MAX_TOKENS = env.LLM_MAX_TOKENS;
+const TIMEOUT_MS = env.LLM_TIMEOUT_MS;
 
 const client = new Anthropic({
-  apiKey,
+  apiKey: env.ANTHROPIC_API_KEY,
   timeout: TIMEOUT_MS,
 });
 

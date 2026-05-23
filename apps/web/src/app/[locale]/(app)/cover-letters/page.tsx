@@ -1,4 +1,5 @@
 import { headers } from 'next/headers';
+import { getLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
@@ -11,7 +12,8 @@ export default async function CoverLettersPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return null;
 
-  const isHebrew = (await headers()).get('x-locale') === 'he';
+  // Read locale from next-intl, not from a non-existent `x-locale` header.
+  const isHebrew = (await getLocale()) === 'he';
 
   const letters = await db.query.coverLetters.findMany({
     where: and(

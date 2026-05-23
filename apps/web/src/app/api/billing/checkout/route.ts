@@ -11,6 +11,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
+import { getLocale } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { startCheckout, getActiveProvider } from '@/lib/billing/provider';
@@ -53,12 +54,17 @@ export async function POST(req: NextRequest): Promise<Response> {
       ? `${env.APP_URL}/billing/success?session_id={CHECKOUT_SESSION_ID}`
       : `${env.APP_URL}/billing/success`;
 
+  // Pass locale so LS receipt button etc. render in the user's language.
+  const rawLocale = await getLocale();
+  const locale: 'he' | 'en' = rawLocale === 'he' ? 'he' : 'en';
+
   const result = await startCheckout({
     userId: session.user.id,
     userEmail: session.user.email,
     priceKey: body.priceKey,
     successUrl,
     cancelUrl: `${env.APP_URL}/pricing?canceled=1`,
+    locale,
   });
 
   if (!result.ok) {

@@ -1,5 +1,5 @@
 import { headers } from 'next/headers';
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, getLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
@@ -26,7 +26,11 @@ export default async function DashboardPage() {
 
   const userId = session.user.id;
   const t = await getTranslations('dashboard');
-  const isHebrew = (await headers()).get('x-locale') === 'he';
+  // Use next-intl's getLocale() which reads from the resolved locale segment.
+  // Previously read `x-locale` header which nothing sets — Hebrew users
+  // were silently getting English copy on the most-visited page.
+  const locale = await getLocale();
+  const isHebrew = locale === 'he';
 
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
@@ -90,7 +94,8 @@ export default async function DashboardPage() {
   };
 
   const userName = session.user.name ?? session.user.email.split('@')[0];
-  const locale: 'he' | 'en' = isHebrew ? 'he' : 'en';
+  // Narrow next-intl's broader locale type to the union our components accept.
+  const uiLocale: 'he' | 'en' = locale === 'he' ? 'he' : 'en';
 
   // Onboarding checklist — shown until all 4 steps are complete.
   const onboardingSteps = [
@@ -147,7 +152,7 @@ export default async function DashboardPage() {
         </Button>
       </div>
 
-      <OnboardingChecklist items={onboardingSteps} locale={locale} />
+      <OnboardingChecklist items={onboardingSteps} locale={uiLocale} />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
