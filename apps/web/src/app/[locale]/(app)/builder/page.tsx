@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ImportProfileButton } from '@/components/import-profile-button';
 import { AtsScoreCard } from '@/components/ats-score-card';
 import { ResumePreview } from '@/components/resume-preview';
+import { VersionHistory } from '@/components/version-history';
 
 type Industry = 'tech' | 'healthcare' | 'finance' | 'general';
 type LocaleChoice = 'auto' | 'he' | 'en';
@@ -399,6 +400,10 @@ export default function BuilderPage() {
                           {t('downloadPdf')}
                         </a>
                       </Button>
+                      <VersionHistory
+                        resumeId={savedId}
+                        isHebrew={result.metadata.detectedLocale === 'he'}
+                      />
                       <Button size="sm" variant="ghost" onClick={() => router.push('/dashboard')}>
                         Back to dashboard
                       </Button>

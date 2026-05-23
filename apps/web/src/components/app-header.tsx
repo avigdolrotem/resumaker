@@ -54,10 +54,13 @@ export function AppHeader() {
             <div className="ms-2 h-8 w-20 animate-pulse rounded bg-neutral-100" />
           ) : session ? (
             <div className="ms-2 flex items-center gap-2">
-              <span className="hidden text-sm text-neutral-600 lg:inline">
-                <UserCircle className="me-1 inline h-4 w-4" />
-                {session.user.name}
-              </span>
+              <Link
+                href="/profile"
+                className="hover:text-brand-700 hover:bg-brand-50 hidden items-center gap-1 rounded-md px-2 py-1 text-sm text-neutral-600 transition lg:inline-flex"
+              >
+                <UserCircle className="h-4 w-4" />
+                <span className="max-w-[140px] truncate">{session.user.name}</span>
+              </Link>
               <Button variant="ghost" size="sm" onClick={handleSignOut} title={t('signOut')}>
                 <LogOut className="h-4 w-4" />
               </Button>
