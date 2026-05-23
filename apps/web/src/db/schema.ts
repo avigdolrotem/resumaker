@@ -202,6 +202,30 @@ export const auditLog = pgTable(
   }),
 );
 
+// ─── RESUME VERSIONS ────────────────────────────────────────────────
+
+/**
+ * Append-only version log for resumes. New row inserted on every PATCH
+ * to /api/resumes/[id]. Lets users restore or compare past versions.
+ */
+export const resumeVersions = pgTable(
+  'resume_versions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    resumeId: uuid('resume_id')
+      .notNull()
+      .references(() => resumes.id, { onDelete: 'cascade' }),
+    versionNumber: integer('version_number').notNull(),
+    content: jsonb('content').notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
+    label: varchar('label', { length: 100 }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    resumeIdx: index('resume_versions_resume_idx').on(t.resumeId, t.versionNumber),
+  }),
+);
+
 // ─── COVER LETTERS ──────────────────────────────────────────────────
 
 export const coverLetters = pgTable(
@@ -237,6 +261,7 @@ export const schema = {
   sessions,
   verifications,
   resumes,
+  resumeVersions,
   generations,
   atsScores,
   auditLog,
@@ -249,3 +274,4 @@ export type Resume = typeof resumes.$inferSelect;
 export type Generation = typeof generations.$inferSelect;
 export type ATSScore = typeof atsScores.$inferSelect;
 export type CoverLetter = typeof coverLetters.$inferSelect;
+export type ResumeVersion = typeof resumeVersions.$inferSelect;

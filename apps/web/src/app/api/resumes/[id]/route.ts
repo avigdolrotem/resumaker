@@ -7,10 +7,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, desc } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { ResumeSchema } from '@resumaker/shared';
+import { auditEvent } from '@/lib/audit';
 
 async function getOwnedResume(
   resumeId: string,
@@ -74,6 +75,23 @@ export async function PATCH(
     );
   }
 
+  // If content is changing, snapshot the previous version FIRST
+  if (body.content) {
+    const [latest] = await db
+      .select({ version: schema.resumeVersions.versionNumber })
+      .from(schema.resumeVersions)
+      .where(eq(schema.resumeVersions.resumeId, id))
+      .orderBy(desc(schema.resumeVersions.versionNumber))
+      .limit(1);
+    const nextVersion = (latest?.version ?? 0) + 1;
+    await db.insert(schema.resumeVersions).values({
+      resumeId: id,
+      versionNumber: nextVersion,
+      content: existing.content,
+      title: existing.title,
+    });
+  }
+
   await db
     .update(schema.resumes)
     .set({
@@ -82,6 +100,12 @@ export async function PATCH(
       updatedAt: new Date(),
     })
     .where(eq(schema.resumes.id, id));
+
+  auditEvent({
+    userId: session.user.id,
+    event: 'resume_updated',
+    metadata: { resumeId: id, contentChanged: Boolean(body.content) },
+  });
 
   return NextResponse.json({ success: true });
 }
