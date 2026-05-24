@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "language": "Russian (ru)",
+    "direction": "ltr",
+    "status": "stub — populate from en.json before launching ru locale",
+    "owner": "translation team"
+  },
+  "metadata": {
+    "title": "Resumaker — конструктор резюме на основе ИИ",
+    "description": "Создавайте резюме под любую вакансию с помощью ИИ."
+  },
+  "nav": {
+    "home": "Главная",
+    "templates": "Шаблоны",
+    "pricing": "Цены",
+    "signIn": "Войти",
+    "signUp": "Регистрация",
+    "dashboard": "Панель",
+    "newResume": "Новое резюме",
+    "myResumes": "Мои резюме",
+    "settings": "Настройки",
+    "signOut": "Выйти"
+  },
+  "errors": {
+    "generic": "Что-то пошло не так. Попробуйте ещё раз.",
+    "notFound": "Страница не найдена",
+    "backHome": "На главную"
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "back": "Назад"
+  }
+}

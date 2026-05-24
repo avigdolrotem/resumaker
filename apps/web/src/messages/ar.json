@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "language": "Arabic (ar)",
+    "direction": "rtl",
+    "status": "stub — populate from en.json before launching ar locale",
+    "owner": "translation team"
+  },
+  "metadata": {
+    "title": "Resumaker — منشئ السيرة الذاتية المدعوم بالذكاء الاصطناعي",
+    "description": "أنشئ سيرة ذاتية مخصصة لأي وظيفة باستخدام الذكاء الاصطناعي."
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "templates": "القوالب",
+    "pricing": "الأسعار",
+    "signIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "dashboard": "لوحة التحكم",
+    "newResume": "سيرة جديدة",
+    "myResumes": "سيرتي الذاتية",
+    "settings": "الإعدادات",
+    "signOut": "تسجيل الخروج"
+  },
+  "errors": {
+    "generic": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+    "notFound": "الصفحة غير موجودة",
+    "backHome": "العودة إلى الصفحة الرئيسية"
+  },
+  "common": {
+    "loading": "جارٍ التحميل…",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "back": "رجوع"
+  }
+}
