@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -76,4 +77,29 @@ const nextConfig: NextConfig = {
   output: 'standalone',
 };
 
-export default withNextIntl(nextConfig);
+// `withSentryConfig` uploads source maps to Sentry on every build so
+// prod stack traces are readable instead of looking like minified
+// gibberish. The upload step itself is a no-op when SENTRY_AUTH_TOKEN
+// isn't set (local + CI without the secret), so this wrapper is safe
+// in every environment. See:
+// https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+export default withSentryConfig(withNextIntl(nextConfig), {
+  org: 'resumaker-yc',
+  project: 'javascript-nextjs',
+
+  // Source map upload only happens when SENTRY_AUTH_TOKEN is provided
+  // (typically as a GitHub Actions secret passed to `docker build`).
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  // Tunnel /api/sentry-tunnel through our own origin so ad-blockers
+  // don't drop client error events. Costs an extra Next route but no
+  // client-side blocker false positives.
+  tunnelRoute: '/api/sentry-tunnel',
+  disableLogger: true, // strips Sentry's own console logs from prod bundle
+  reactComponentAnnotation: { enabled: true }, // better breadcrumbs
+  // Don't fail the build if Sentry upload errors out (e.g. token missing).
+  // Stack traces will still work, just won't be deminified server-side.
+  errorHandler: (err) => {
+    console.warn('[sentry-build] source map upload skipped:', err.message);
+  },
+});

@@ -70,35 +70,96 @@ Without this, you'll only see errors in app logs. **3 minutes.**
 - [ ] Create project at [sentry.io](https://sentry.io) → Next.js
 - [ ] Copy DSN, set `SENTRY_DSN=https://...` in production env
 
-### 5. Decide your hosting path
+### 5. Hosting — AWS EKS (single-environment deployment)
 
-**Path A — Vercel + Supabase (recommended for v1)**
-Simplest, fast to launch, scales to a few thousand users free.
+Decision locked: prod-only on AWS EKS in `il-central-1`. Roughly
+$120-180/mo for the cluster + $40-80/mo for the data plane. No
+staging tier, no local-dev workflow.
 
-- [ ] Push to GitHub (step 2)
-- [ ] Import repo at vercel.com
-- [ ] Add all env vars from `.env.example`
-- [ ] Set custom domain `resumaker.co.il`
-- [ ] Vercel handles SSL automatically
-- **Estimated time: 30 minutes** · **Cost: $0/mo until traffic grows**
+#### 5a. Pre-flight check
 
-**Path B — AWS EKS (your original plan)**
-Best portfolio piece. EKS module + ArgoCD + ESO are now baked in.
+Run this first — it confirms every prerequisite for `tofu apply`:
 
-- [ ] Bootstrap OpenTofu state: `./scripts/bootstrap-tofu-state.sh`
-- [ ] Issue an ACM cert for `argocd.resumaker.co.il` in `il-central-1`
-      then set `argocd_acm_cert_arn` in `infra/tofu/environments/prod/variables.tf`
-- [ ] First apply (cluster + addons): `cd infra/tofu/environments/prod && tofu apply`
-      Creates VPC, RDS, ElastiCache, S3, ECR, Secrets Manager, EKS, IRSA roles,
-      ALB Controller, External Secrets, cert-manager, ArgoCD
-- [ ] Update kubeconfig: `eval "$(tofu output -raw eks_kubeconfig_command)"`
-- [ ] Verify ArgoCD up: `kubectl -n argocd rollout status deploy/argocd-server`
-- [ ] Update `repoURL` placeholders in `infra/gitops/*.yaml` to your real repo URL
-- [ ] Bootstrap GitOps: `kubectl apply -f infra/gitops/projects/resumaker.yaml && kubectl apply -f infra/gitops/root-app.yaml`
-- [ ] Populate Secrets Manager (see step 12 below)
-- [ ] Tag a release: `git tag v0.1.0 && git push --tags` → CI builds + ArgoCD syncs
-- [ ] Point Cloudflare A record at the resulting ALB
-- **Cost: ~$120-180/mo cluster + ~$40-80/mo data plane**
+```bash
+./scripts/validate-prerequisites.sh
+```
+
+If it reports `0 ✗ failures` you're good. Warnings (LS placeholders,
+GitHub Actions secrets, IAM role) are expected before first launch.
+
+#### 5b. Deployment sequence
+
+Each step depends on the previous one — execute top to bottom.
+
+1. **Bootstrap OpenTofu state** (one-time, idempotent):
+
+   ```bash
+   ./scripts/bootstrap-tofu-state.sh
+   ```
+
+2. **Issue ACM certificates** in the `il-central-1` region:
+   - `resumaker.co.il` (with `www.resumaker.co.il` as SAN)
+   - `argocd.resumaker.co.il`
+
+3. **Paste cert ARNs** into the right places:
+   - `resumaker.co.il` ARN → `infra/helm/resumaker/values.prod.yaml`
+   - `argocd.resumaker.co.il` ARN → `infra/tofu/environments/prod/terraform.tfvars`
+
+4. **Create IAM role for GitHub OIDC** — follow
+   `docs/runbooks/github-actions-oidc-setup.md` (Steps 1–6).
+
+5. **Set GitHub Actions secrets**:
+
+   ```bash
+   gh secret set AWS_DEPLOY_ROLE_ARN --body "arn:aws:iam::857812839967:role/resumaker-github-deploy"
+   gh secret set AWS_ACCOUNT_ID --body "857812839967"
+   gh secret set AWS_REGION --body "il-central-1"
+   gh secret set NEXT_PUBLIC_SENTRY_DSN --body "<your Sentry DSN>"
+   ```
+
+6. **`tofu apply`** — creates VPC, RDS, ElastiCache, S3, ECR, Secrets
+   Manager, EKS, IRSA roles, ALB Controller, External Secrets,
+   cert-manager, ArgoCD:
+
+   ```bash
+   cd infra/tofu/environments/prod && tofu apply
+   ```
+
+7. **Update kubeconfig**:
+
+   ```bash
+   eval "$(tofu output -raw eks_kubeconfig_command)"
+   kubectl -n argocd rollout status deploy/argocd-server
+   ```
+
+8. **Populate Secrets Manager** — fail-loud helper that reads the
+   local notepad and refuses to upload if any `<placeholder>` strings
+   remain:
+
+   ```bash
+   ./scripts/push-secrets.sh
+   ```
+
+9. **Bootstrap GitOps**:
+
+   ```bash
+   kubectl apply -f infra/gitops/projects/resumaker.yaml
+   kubectl apply -f infra/gitops/root-app.yaml
+   kubectl apply -f infra/gitops/network-policies/
+   ```
+
+10. **Tag the first release**:
+
+    ```bash
+    git tag v0.1.0 && git push --tags
+    ```
+
+    CI builds the container, scans with Trivy, pushes to ECR, bumps
+    `values.prod.image.yaml`, and ArgoCD syncs within ~3 min.
+
+11. **DNS** — point Cloudflare A records at the ALB hostnames
+    (`kubectl get ingress -n resumaker` for the app,
+    `kubectl get ingress -n argocd` for the ArgoCD UI).
 
 ### 6. Cloudflare configuration
 
