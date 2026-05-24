@@ -18,7 +18,7 @@ import { NextResponse } from 'next/server';
 export default async function EditResumePage({
   params,
 }: {
-  params: Promise<{ locale: 'he' | 'en'; id: string }>;
+  params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
   const guard = await requireActiveUser(await headers());

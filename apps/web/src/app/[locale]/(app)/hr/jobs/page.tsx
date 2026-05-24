@@ -17,7 +17,7 @@ import { NextResponse } from 'next/server';
  * to /dashboard. Lists this HR user's own posted jobs — they can never
  * see other HR users' jobs from the UI.
  */
-export default async function HrJobsPage({ params }: { params: Promise<{ locale: 'he' | 'en' }> }) {
+export default async function HrJobsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'jobs' });
 

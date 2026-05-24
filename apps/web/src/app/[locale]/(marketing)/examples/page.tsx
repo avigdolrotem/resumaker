@@ -62,8 +62,8 @@ const EXAMPLES = [
   },
 ];
 
-export default async function ExamplesPage({ params }: { params: Promise<{ locale: Locale }> }) {
-  const { locale } = await params;
+export default async function ExamplesPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = (await params) as { locale: Locale };
   setRequestLocale(locale);
   const isHebrew = locale === 'he';
 

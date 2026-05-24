@@ -31,9 +31,9 @@ export const dynamic = 'force-dynamic';
 export default async function AccountBillingPage({
   params,
 }: {
-  params: Promise<{ locale: 'he' | 'en' }>;
+  params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const { locale } = (await params) as { locale: 'he' | 'en' };
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect(`/${locale}/sign-in?next=/account/billing`);
 

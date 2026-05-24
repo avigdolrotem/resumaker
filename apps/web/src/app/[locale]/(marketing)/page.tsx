@@ -22,8 +22,8 @@ import {
   Linkedin,
 } from 'lucide-react';
 
-export default async function HomePage({ params }: { params: Promise<{ locale: Locale }> }) {
-  const { locale } = await params;
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = (await params) as { locale: Locale };
   setRequestLocale(locale);
   const t = await getTranslations('home');
   const isHebrew = locale === 'he';

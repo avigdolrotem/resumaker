@@ -13,7 +13,7 @@ import { requireJobHuntBetaPage } from '@/lib/beta-gate';
  *
  * Beta-gated: non-flagged users get redirected to /dashboard.
  */
-export default async function JobsPage({ params }: { params: Promise<{ locale: 'he' | 'en' }> }) {
+export default async function JobsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const guard = await requireJobHuntBetaPage();
   const t = await getTranslations({ locale, namespace: 'jobs' });

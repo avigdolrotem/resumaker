@@ -46,7 +46,7 @@ async function fetchHealth(): Promise<{ overall: boolean; deps: DepStatus[]; ts:
   }
 }
 
-export default async function StatusPage({ params }: { params: Promise<{ locale: 'he' | 'en' }> }) {
+export default async function StatusPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const isHe = locale === 'he';

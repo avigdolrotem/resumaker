@@ -78,7 +78,7 @@ const QUESTIONS_HE = [
   },
 ];
 
-export default async function FaqPage({ params }: { params: Promise<{ locale: 'he' | 'en' }> }) {
+export default async function FaqPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'faq' });

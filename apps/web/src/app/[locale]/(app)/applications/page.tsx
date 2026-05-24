@@ -12,9 +12,9 @@ import { ApplicationsList } from '@/components/applications-list';
 export default async function ApplicationsPage({
   params,
 }: {
-  params: Promise<{ locale: 'he' | 'en' }>;
+  params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const { locale } = (await params) as { locale: 'he' | 'en' };
   const guard = await requireJobHuntBetaPage();
   const t = await getTranslations({ locale, namespace: 'applications' });
 

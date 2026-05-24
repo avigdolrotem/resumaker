@@ -8,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import type { Metadata } from 'next';
 
 interface Props {
-  params: Promise<{ locale: Locale; slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }
 
 export async function generateStaticParams() {
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BlogPostPage({ params }: Props) {
-  const { locale, slug } = await params;
+  const { locale, slug } = (await params) as { locale: Locale; slug: string };
   setRequestLocale(locale);
   const t = await getTranslations('blog');
   const isHebrew = locale === 'he';

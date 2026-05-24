@@ -17,12 +17,8 @@ import { PricingClient } from './pricing-client';
 
 export const dynamic = 'force-dynamic';
 
-export default async function PricingPage({
-  params,
-}: {
-  params: Promise<{ locale: 'he' | 'en' }>;
-}) {
-  const { locale } = await params;
+export default async function PricingPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = (await params) as { locale: 'he' | 'en' };
   const t = await getTranslations({ locale, namespace: 'billing' });
 
   const session = await auth.api.getSession({ headers: await headers() });

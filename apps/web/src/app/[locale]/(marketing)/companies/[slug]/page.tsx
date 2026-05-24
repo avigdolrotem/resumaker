@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
 
 interface Props {
-  params: Promise<{ locale: 'he' | 'en'; slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }
 
 export default async function CompanyPublicPage({ params }: Props) {

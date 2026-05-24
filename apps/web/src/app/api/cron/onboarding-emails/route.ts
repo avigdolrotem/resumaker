@@ -54,7 +54,7 @@ interface EmailPayload {
   html: string;
 }
 
-function emailForDay(dayTag: string, locale: 'he' | 'en', name: string | null): EmailPayload {
+function emailForDay(dayTag: string, locale: string, name: string | null): EmailPayload {
   const first = name?.split(' ')[0] ?? '';
   if (locale === 'he') {
     if (dayTag === 'day1')

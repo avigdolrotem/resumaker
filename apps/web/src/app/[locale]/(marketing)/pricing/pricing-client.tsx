@@ -41,7 +41,7 @@ export function PricingClient({
   currentTier: Tier;
   checkoutReady: boolean;
   isAuthed: boolean;
-  locale: 'he' | 'en';
+  locale: string;
 }) {
   const t = useTranslations('billing');
   const [interval, setInterval] = useState<BillingInterval>('monthly');
@@ -114,7 +114,7 @@ function TierCard({
   isCurrent: boolean;
   checkoutReady: boolean;
   isAuthed: boolean;
-  locale: 'he' | 'en';
+  locale: string;
 }) {
   const t = useTranslations('billing');
   const [loading, setLoading] = useState(false);

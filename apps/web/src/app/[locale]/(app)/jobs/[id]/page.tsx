@@ -10,9 +10,9 @@ import { JobActions } from '@/components/job-actions';
 export default async function JobDetailPage({
   params,
 }: {
-  params: Promise<{ locale: 'he' | 'en'; id: string }>;
+  params: Promise<{ locale: string; id: string }>;
 }) {
-  const { locale, id } = await params;
+  const { locale, id } = (await params) as { locale: 'he' | 'en'; id: string };
   const guard = await requireJobHuntBetaPage();
   const t = await getTranslations({ locale, namespace: 'jobs' });
 

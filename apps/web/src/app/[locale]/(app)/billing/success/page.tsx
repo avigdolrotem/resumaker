@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export default async function BillingSuccessPage({
   params,
 }: {
-  params: Promise<{ locale: 'he' | 'en' }>;
+  params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'billing.success' });
