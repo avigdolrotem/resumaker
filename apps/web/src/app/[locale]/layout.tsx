@@ -141,27 +141,39 @@ export default async function LocaleLayout({
         </a>
 
         {/*
-          `locale` is REQUIRED in next-intl v4 — without it, the provider
-          throws `new Error(undefined)` on client hydration. That throw
-          produces an Error whose `.message` is "" which surfaces as
-          literally "Error" in stack traces and triggers Next.js's
-          built-in global-error UI ("This page couldn't load"). Easy to
-          miss because SSR works fine (server picks locale from request
-          context via setRequestLocale).
+          IMPORTANT: ALL components that consume next-intl context (directly
+          via useTranslations/useLocale, OR transitively via <Link> from
+          @/i18n/navigation, which calls useLocale internally) MUST be
+          children of NextIntlClientProvider.
+
+          History of this trap:
+            1. Original symptom: every page rendered as "Something went
+               wrong" because CookieConsent (rendered as a sibling of
+               the provider) used `<Link href="/privacy">` from
+               @/i18n/navigation. The Link's hidden `useLocale()` call
+               found no context and threw `new Error(undefined)` — which
+               surfaces as literally "Error" with no message because
+               next-intl's wrapper strips it.
+            2. The provider also REQUIRES the `locale` prop in v4 — passing
+               it explicitly so the SSR + hydration paths agree.
+
+          Anything that used to be a sibling of the provider (CookieConsent,
+          SWRegister, Toaster) now lives inside it. Safe even for the ones
+          that don't directly use intl — costs nothing.
         */}
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
+
+          <CookieConsent locale={locale} />
+          <SWRegister />
+
+          <Toaster
+            position={dir === 'rtl' ? 'top-left' : 'top-right'}
+            dir={dir}
+            richColors
+            closeButton
+          />
         </NextIntlClientProvider>
-
-        <CookieConsent locale={locale} />
-        <SWRegister />
-
-        <Toaster
-          position={dir === 'rtl' ? 'top-left' : 'top-right'}
-          dir={dir}
-          richColors
-          closeButton
-        />
       </body>
     </html>
   );

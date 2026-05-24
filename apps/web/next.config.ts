@@ -12,11 +12,9 @@ const nextConfig: NextConfig = {
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   reactStrictMode: true,
   poweredByHeader: false,
-  // Source maps temporarily ENABLED again — there's a residual hydration
-  // throw that surfaces as "Error" (next-intl's catch-and-rethrow wrapper
-  // strips the message). Source maps let Playwright + DevTools see the
-  // real function names so we can pin it. Revert once the bug is found.
-  productionBrowserSourceMaps: true,
+  // Source maps off in production to avoid leaking server-side logic (LLM
+  // prompts, security patterns) to client-side DevTools.
+  productionBrowserSourceMaps: false,
 
   // Strict security headers
   async headers() {
