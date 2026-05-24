@@ -18,7 +18,9 @@ import { redirect } from 'next/navigation';
 import { requireActiveUser } from '@/lib/auth-guards';
 
 /** True if the user has the job-hunt beta flag on. */
-export function hasJobHuntBeta(user: { featureFlags?: { jobHuntBeta?: boolean } | null }): boolean {
+export function hasJobHuntBeta(user: {
+  featureFlags?: { jobHuntBeta?: boolean | undefined } | null;
+}): boolean {
   return user.featureFlags?.jobHuntBeta === true;
 }
 

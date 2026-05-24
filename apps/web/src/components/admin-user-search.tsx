@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, ExternalLink } from 'lucide-react';
 import { AdminRoleSelect } from './admin-role-select';
 import { Input } from './ui/input';
+import { Link } from '@/i18n/navigation';
 
 interface AdminUser {
   id: string;
@@ -100,12 +101,16 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
               <th scope="col" className="pb-2 font-medium">
                 Joined
               </th>
+              <th scope="col" className="pb-2 font-medium">
+                {/* View link header — left blank intentionally to save horizontal space */}
+                <span className="sr-only">View</span>
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-sm text-neutral-500">
+                <td colSpan={6} className="py-8 text-center text-sm text-neutral-500">
                   No users match the filters
                 </td>
               </tr>
@@ -128,6 +133,19 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
                   </td>
                   <td className="py-2 text-xs text-neutral-500">
                     {new Date(u.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="py-2 pe-1 text-end">
+                    {/* The user-detail page is reachable via this link.
+                        Without this, the only way there was typing the
+                        URL manually — the page existed but was orphaned. */}
+                    <Link
+                      href={`/admin/users/${u.id}`}
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                      aria-label={`View user ${u.email}`}
+                    >
+                      View
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
                   </td>
                 </tr>
               ))

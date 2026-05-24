@@ -43,7 +43,7 @@ export const users = pgTable(
     featureFlags: jsonb('feature_flags')
       .notNull()
       .default(sql`'{}'::jsonb`)
-      .$type<{ jobHuntBeta?: boolean }>(),
+      .$type<{ jobHuntBeta?: boolean | undefined }>(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),

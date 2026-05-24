@@ -15,6 +15,7 @@ import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminRoleSelect } from '@/components/admin-role-select';
 import { AdminTierSelect } from '@/components/admin-tier-select';
+import { AdminFeatureFlags } from '@/components/admin-feature-flags';
 import { getUserTier } from '@/lib/billing/tier';
 import { requireAdminPage } from '@/lib/auth-guards';
 
@@ -29,7 +30,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   });
   if (!user) notFound();
 
-  const [userResumes, userGenerations, userAuditEvents, userCoverLetters, userTier] =
+  const [userResumes, userGenerations, userAuditEvents, userCoverLetters, userTier, subscription] =
     await Promise.all([
       db.query.resumes.findMany({
         where: and(eq(schema.resumes.userId, id), isNull(schema.resumes.deletedAt)),
@@ -52,6 +53,18 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         limit: 10,
       }),
       getUserTier(id),
+      db.query.subscriptions.findFirst({
+        where: eq(schema.subscriptions.userId, id),
+        columns: {
+          tier: true,
+          status: true,
+          provider: true,
+          currentPeriodEnd: true,
+          cancelAtPeriodEnd: true,
+          grantedBy: true,
+          notes: true,
+        },
+      }),
     ]);
 
   // Token total
@@ -128,6 +141,67 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <StatTile Icon={Mail} label="Cover letters" value={userCoverLetters.length} />
         <StatTile Icon={Sparkles} label="Generations" value={userGenerations.length} />
         <StatTile Icon={Clock} label="Tokens used" value={totalTokens.toLocaleString()} />
+      </div>
+
+      {/* Subscription detail + feature flags side-by-side */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Subscription</CardTitle>
+            <CardDescription>Current plan + lifecycle</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {subscription ? (
+              <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                <Field
+                  label="Tier"
+                  value={<span className="font-medium">{subscription.tier}</span>}
+                />
+                <Field
+                  label="Status"
+                  value={<span className="font-medium">{subscription.status}</span>}
+                />
+                <Field label="Provider" value={subscription.provider} />
+                <Field
+                  label="Renews / ends"
+                  value={
+                    subscription.currentPeriodEnd
+                      ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+                      : '—'
+                  }
+                />
+                <Field
+                  label="Cancel at period end"
+                  value={subscription.cancelAtPeriodEnd ? 'Yes' : 'No'}
+                />
+                <Field
+                  label="Granted by"
+                  value={subscription.grantedBy ? subscription.grantedBy.slice(0, 8) + '…' : '—'}
+                />
+                {subscription.notes && (
+                  <div className="sm:col-span-2">
+                    <dt className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+                      Notes
+                    </dt>
+                    <dd className="mt-1 text-neutral-700">{subscription.notes}</dd>
+                  </div>
+                )}
+              </dl>
+            ) : (
+              <p className="text-sm text-neutral-500">No subscription row (treated as free).</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Feature flags</CardTitle>
+            <CardDescription>Per-user feature toggles (job-hunt beta, etc.)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AdminFeatureFlags userId={user.id} initial={user.featureFlags ?? {}} />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Resumes + Cover letters side-by-side */}
