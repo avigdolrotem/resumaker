@@ -856,6 +856,41 @@ export const referrals = pgTable(
   }),
 );
 
+// ─── V2: SAVED SEARCHES (job-hunt alerts) ───────────────────────────
+
+/**
+ * Saved job-search queries that the user wants email alerts for.
+ * Query is opaque JSONB matching the shape /api/jobs accepts as query
+ * params (q, company, source, remote). The daily digest cron evaluates
+ * each saved search, finds new matching jobs since lastNotifiedAt, and
+ * emails the user a summary.
+ */
+export const savedSearches = pgTable(
+  'saved_searches',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    query: jsonb('query').notNull().$type<{
+      q?: string;
+      company?: string;
+      source?: string;
+      remote?: boolean;
+    }>(),
+    alertFrequency: varchar('alert_frequency', { length: 16 })
+      .notNull()
+      .default('daily')
+      .$type<'daily' | 'weekly' | 'off'>(),
+    lastNotifiedAt: timestamp('last_notified_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index('saved_searches_user_idx').on(t.userId),
+  }),
+);
+
 // ─── EXPORTS ────────────────────────────────────────────────────────
 
 export const schema = {
@@ -877,6 +912,7 @@ export const schema = {
   companyInvites,
   jobs,
   userJobs,
+  savedSearches,
   applications,
   emailChangeRequests,
   twoFactors,
