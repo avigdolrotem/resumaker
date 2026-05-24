@@ -20,7 +20,7 @@
  */
 
 import { createHash } from 'crypto';
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest, after } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { env } from '@/lib/env';
@@ -365,7 +365,10 @@ async function handleSubscriptionUpsert(payload: LsWebhookPayload): Promise<void
   // 'free' would only appear if variant mapping was misconfigured — in
   // which case the welcome email is irrelevant anyway.
   if (payload.meta.event_name === 'subscription_created' && status === 'active') {
-    void (async () => {
+    // Use Next's `after()` so the send completes even after the webhook
+    // response is returned (a bare `void IIFE` can be reaped mid-send
+    // when Vercel freezes the function).
+    after(async () => {
       try {
         const user = await db.query.users.findFirst({
           where: eq(schema.users.id, resolvedUserId),
@@ -379,7 +382,17 @@ async function handleSubscriptionUpsert(payload: LsWebhookPayload): Promise<void
           ...(user.name ? { name: user.name } : {}),
           tier: resolved.tier,
         });
-        await sendEmail({ to: user.email, subject: tmpl.subject, html: tmpl.html });
+        const result = await sendEmail({
+          to: user.email,
+          subject: tmpl.subject,
+          html: tmpl.html,
+        });
+        if (!result.ok) {
+          logger.warn(
+            { err: result.error, userId: resolvedUserId },
+            'lemonsqueezy.subscription.paid_welcome_failed',
+          );
+        }
       } catch (err) {
         // Non-fatal — never let an email send failure crash the webhook.
         logger.warn(
@@ -387,7 +400,7 @@ async function handleSubscriptionUpsert(payload: LsWebhookPayload): Promise<void
           'lemonsqueezy.subscription.paid_welcome_failed',
         );
       }
-    })();
+    });
   }
 }
 

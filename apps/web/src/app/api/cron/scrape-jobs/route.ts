@@ -1,5 +1,5 @@
 /**
- * POST /api/cron/scrape-jobs
+ * GET /api/cron/scrape-jobs
  *
  * Bearer-secret cron. Daily run that hits every wired scraper source
  * (Greenhouse, Lever, Workable, Ashby) and inserts new jobs deduped
@@ -8,17 +8,19 @@
  * The job-engine package handles the actual HTTP + parsing. Each
  * source's fetcher returns [] on error so one bad company won't kill
  * the whole run.
+ *
+ * NOTE: Vercel Cron sends GET, so this MUST be exported as GET.
+ * The route previously exported POST and never fired in production.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { eq, sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/observability';
 
 export const maxDuration = 300; // 5 minutes — scraping can take a while
 
-export async function POST(req: NextRequest): Promise<Response> {
+export async function GET(req: NextRequest): Promise<Response> {
   const auth = req.headers.get('authorization') ?? '';
   if (!env.CRON_SECRET || auth !== `Bearer ${env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -107,10 +109,16 @@ export async function POST(req: NextRequest): Promise<Response> {
               stats.deduped += 1;
             }
           } catch (insertErr) {
-            // Concurrent insert race or constraint mismatch — count as dedupe
-            // and move on rather than failing the whole batch.
-            stats.deduped += 1;
-            void insertErr;
+            // Real insert error: schema mismatch, FK violation, etc.
+            // Previously this was silently counted as dedupe, which
+            // hid catastrophic failures from a whole new scraper source.
+            // Log loudly + track separately so cron health check sees it.
+            const msg = (insertErr as Error).message;
+            stats.errors.push(`insert:${source}:${item.urlNormalized}:${msg}`);
+            logger.warn(
+              { err: msg, source, externalId: item.externalId, slug },
+              'cron.scrape_jobs.insert_failed',
+            );
           }
         }
       } catch (err) {
@@ -119,12 +127,10 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
   }
 
-  // Touch a no-op SQL so the connection pool registers cron activity.
-  void sql;
-  void eq;
-
   const durationMs = Date.now() - startedAt;
-  logger.info({ ...stats, durationMs }, 'cron.scrape_jobs.completed');
+  // Use error level if any failures so Vercel cron dashboard surfaces it.
+  const logFn = stats.errors.length > 0 ? logger.error : logger.info;
+  logFn.bind(logger)({ ...stats, durationMs }, 'cron.scrape_jobs.completed');
 
-  return NextResponse.json({ success: true, ...stats, durationMs });
+  return NextResponse.json({ success: stats.errors.length === 0, ...stats, durationMs });
 }

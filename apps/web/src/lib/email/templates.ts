@@ -73,7 +73,13 @@ function button(label: string, href: string): string {
 </table>`;
 }
 
-function escapeHtml(s: string): string {
+/**
+ * Escape HTML special chars. Exported so any route building user-supplied
+ * HTML email content (support inbox relay, admin broadcast, HR invites,
+ * onboarding drips) can use it. Covers &, <, >, ", ' — the full set
+ * needed to prevent attribute-context AND element-context XSS.
+ */
+export function escapeHtml(s: string): string {
   return s.replace(
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c,

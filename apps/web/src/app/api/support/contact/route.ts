@@ -6,13 +6,15 @@
  * relayed via Resend to support@resumaker.co.il.
  */
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest, after } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { db, schema } from '@/db';
 import { auth } from '@/lib/auth';
 import { sendEmail } from '@/lib/email/client';
+import { escapeHtml } from '@/lib/email/templates';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { extractClientIp } from '@/lib/ip';
 import { logger } from '@/lib/observability';
 
 const BodySchema = z.object({
@@ -24,8 +26,9 @@ const BodySchema = z.object({
 export async function POST(req: NextRequest): Promise<Response> {
   // Rate-limit anonymous submissions per-IP. Authenticated users get
   // the same limit per-user — abuse is rare and not worth two tiers.
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0] ?? req.headers.get('x-real-ip') ?? 'unknown';
+  // extractClientIp uses the rightmost public IP from x-forwarded-for
+  // so a spoofed leftmost entry can't bypass the limit.
+  const ip = extractClientIp(req);
   const rl = await checkRateLimit(`contact:${ip}`, 5, 3600);
   if (!rl.allowed) {
     return NextResponse.json(
@@ -57,27 +60,32 @@ export async function POST(req: NextRequest): Promise<Response> {
     })
     .returning({ id: schema.supportTickets.id });
 
-  // Relay to support inbox — fire-and-forget so a Resend hiccup doesn't
-  // break the user's submission.
-  void (async () => {
+  // Relay to support inbox. Use Next's `after()` so the send completes
+  // before Vercel freezes the function (a bare `void IIFE` can be reaped
+  // mid-flight). Every user-supplied value goes through escapeHtml so
+  // the support inbox can't be XSS'd via a crafted email/subject/body.
+  after(async () => {
     try {
-      await sendEmail({
+      const result = await sendEmail({
         to: 'support@resumaker.co.il',
         subject: `[support] ${body.subject}`,
         html: `
-          <p><strong>From:</strong> ${body.email}${session ? ` (user ${session.user.id.slice(0, 8)}…)` : ' (anonymous)'}</p>
-          <p><strong>Ticket:</strong> ${row?.id ?? '?'}</p>
+          <p><strong>From:</strong> ${escapeHtml(body.email)}${session ? ` (user ${escapeHtml(session.user.id.slice(0, 8))}…)` : ' (anonymous)'}</p>
+          <p><strong>Ticket:</strong> ${escapeHtml(row?.id ?? '?')}</p>
           <hr>
-          <pre style="white-space:pre-wrap;font-family:inherit;">${body.body.replace(/</g, '&lt;')}</pre>
+          <pre style="white-space:pre-wrap;font-family:inherit;">${escapeHtml(body.body)}</pre>
         `,
       });
+      if (!result.ok) {
+        logger.warn({ err: result.error, ticketId: row?.id }, 'support.contact.email_relay_failed');
+      }
     } catch (err) {
       logger.warn(
         { err: (err as Error).message, ticketId: row?.id },
         'support.contact.email_relay_failed',
       );
     }
-  })();
+  });
 
   return NextResponse.json({ success: true, ticketId: row?.id });
 }

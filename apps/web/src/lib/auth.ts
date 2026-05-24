@@ -9,6 +9,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { twoFactor } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
+import { after } from 'next/server';
 import { db } from '@/db';
 import { schema } from '@/db/schema';
 import { sendEmail, emailConfig } from '@/lib/email/client';
@@ -19,6 +20,33 @@ import { ensureSubscription } from '@/lib/billing/tier';
 
 const secret = env.BETTER_AUTH_SECRET;
 const baseUrl = env.BETTER_AUTH_URL;
+
+/**
+ * Compute the full set of origins Better Auth will trust for cross-origin
+ * requests. Defaults to both apex + www of `baseUrl` (auto-derived) plus
+ * any explicit `BETTER_AUTH_URL_ALT`. Without this, a deploy that serves
+ * traffic from both apex and www will silently reject auth from one of
+ * them, breaking sign-in for half of users.
+ */
+function computeTrustedOrigins(): string[] {
+  const origins = new Set<string>([baseUrl]);
+  try {
+    const u = new URL(baseUrl);
+    if (u.hostname.startsWith('www.')) {
+      const apex = `${u.protocol}//${u.hostname.slice(4)}${u.port ? `:${u.port}` : ''}`;
+      origins.add(apex);
+    } else if (!u.hostname.includes('localhost') && !u.hostname.match(/^\d+\.\d+\.\d+\.\d+$/)) {
+      const www = `${u.protocol}//www.${u.hostname}${u.port ? `:${u.port}` : ''}`;
+      origins.add(www);
+    }
+  } catch {
+    // BETTER_AUTH_URL was validated as URL at env parse time, so this
+    // is unreachable. Keep the guard so a future env-shape change can't
+    // crash auth bootstrap.
+  }
+  if (env.BETTER_AUTH_URL_ALT) origins.add(env.BETTER_AUTH_URL_ALT);
+  return Array.from(origins);
+}
 
 /**
  * Detect locale from BETTER_AUTH callback URL. Better Auth includes
@@ -80,7 +108,21 @@ export const auth = betterAuth({
     sendVerificationEmail: async ({ user, url }) => {
       const locale = detectLocale(url);
       const tmpl = emailVerification({ locale, verifyUrl: url });
-      await sendEmail({ to: user.email, subject: tmpl.subject, html: tmpl.html });
+      // Verification email failure is NOT silently OK: if the user never
+      // receives it, they can't sign in (requireEmailVerification=true
+      // when emailConfig.isLive). Throwing here makes Better Auth return
+      // an error response so the client shows "couldn't send verification
+      // email — please contact support" instead of a misleading
+      // "check your inbox" message.
+      const result = await sendEmail({ to: user.email, subject: tmpl.subject, html: tmpl.html });
+      if (!result.ok) {
+        auditEvent({
+          userId: user.id,
+          event: 'email_verification_send_failed',
+          metadata: { error: result.error },
+        });
+        throw new Error(`Failed to send verification email: ${result.error ?? 'unknown'}`);
+      }
     },
   },
 
@@ -151,7 +193,7 @@ export const auth = betterAuth({
   },
 
   // Security defaults
-  trustedOrigins: [baseUrl],
+  trustedOrigins: computeTrustedOrigins(),
   advanced: {
     cookiePrefix: 'resumaker',
     useSecureCookies: env.NODE_ENV === 'production',
@@ -175,11 +217,22 @@ export const auth = betterAuth({
             );
           }
 
-          // Welcome email is non-critical — fire and forget.
-          void (async () => {
+          // Welcome email is non-critical — schedule via Next's `after()`
+          // so the work runs after the response is sent BUT is guaranteed
+          // to complete before Vercel freezes the function (unlike a bare
+          // `void (async () => {})()` IIFE, which can be reaped mid-send).
+          after(async () => {
             const tmpl = welcome({ locale: env.DEFAULT_LOCALE, name: user.name ?? undefined });
-            await sendEmail({ to: user.email, subject: tmpl.subject, html: tmpl.html });
-          })();
+            const result = await sendEmail({
+              to: user.email,
+              subject: tmpl.subject,
+              html: tmpl.html,
+            });
+            if (!result.ok) {
+              const { logger } = await import('@/lib/observability');
+              logger.warn({ err: result.error, userId: user.id }, 'auth.welcome_email_send_failed');
+            }
+          });
           auditEvent({ userId: user.id, event: 'sign_up' });
         },
       },

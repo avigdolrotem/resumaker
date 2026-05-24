@@ -1,5 +1,5 @@
 /**
- * POST /api/cron/onboarding-emails
+ * GET /api/cron/onboarding-emails
  *
  * Bearer-secret cron. Drip-emails for new signups:
  *
@@ -14,6 +14,9 @@
  *
  * Idempotent via `notifications` row tagged `onboarding_dayN` (we
  * create one when the email is sent, so subsequent cron runs skip).
+ *
+ * NOTE: Vercel Cron sends GET, so this MUST be exported as GET.
+ * The route previously exported POST and never fired in production.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -98,9 +101,9 @@ function emailForDay(dayTag: string, locale: string, name: string | null): Email
   };
 }
 
-export async function POST(req: NextRequest): Promise<Response> {
-  const auth = req.headers.get('authorization') ?? '';
-  if (!env.CRON_SECRET || auth !== `Bearer ${env.CRON_SECRET}`) {
+export async function GET(req: NextRequest): Promise<Response> {
+  const authHeader = req.headers.get('authorization') ?? '';
+  if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
     return unauthorized();
   }
 
@@ -142,7 +145,14 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
     const tmpl = emailForDay('day1', u.locale === 'en' ? 'en' : 'he', u.name);
     try {
-      await sendEmail({ to: u.email, subject: tmpl.subject, html: tmpl.html });
+      // CRITICAL: sendEmail returns {ok:false} on Resend errors instead
+      // of throwing. We MUST check .ok before calling markSent — otherwise
+      // a failed send is recorded as sent and the user never gets retried.
+      const result = await sendEmail({ to: u.email, subject: tmpl.subject, html: tmpl.html });
+      if (!result.ok) {
+        errors.push(`day1:${u.id}:${result.error ?? 'send_failed'}`);
+        continue;
+      }
       await markSent(u.id, 'day1', tmpl.subject);
       sent++;
     } catch (err) {
@@ -175,7 +185,11 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
     const tmpl = emailForDay('day30', u.locale === 'en' ? 'en' : 'he', u.name);
     try {
-      await sendEmail({ to: u.email, subject: tmpl.subject, html: tmpl.html });
+      const result = await sendEmail({ to: u.email, subject: tmpl.subject, html: tmpl.html });
+      if (!result.ok) {
+        errors.push(`day30:${u.id}:${result.error ?? 'send_failed'}`);
+        continue;
+      }
       await markSent(u.id, 'day30', tmpl.subject);
       sent++;
     } catch (err) {
@@ -190,7 +204,11 @@ export async function POST(req: NextRequest): Promise<Response> {
   void day3;
   void day7;
 
-  logger.info({ sent, skipped, errors: errors.length }, 'cron.onboarding_emails');
+  // Use error level when there are failures so Vercel cron dashboard
+  // surfaces them; success:true was previously returned even with errors.
+  const ok = errors.length === 0;
+  const log = ok ? logger.info : logger.error;
+  log.bind(logger)({ sent, skipped, errorCount: errors.length, errors }, 'cron.onboarding_emails');
 
-  return NextResponse.json({ success: true, sent, skipped, errors });
+  return NextResponse.json({ success: ok, sent, skipped, errors });
 }

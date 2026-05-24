@@ -31,6 +31,7 @@ export type AuditEventName =
   | 'sign_in'
   | 'sign_in_failed'
   | 'sign_out'
+  | 'email_verification_send_failed'
   | 'password_reset_requested'
   | 'password_reset_completed'
   | 'password_changed'

@@ -1,11 +1,14 @@
 /**
- * POST /api/cron/push-notifications
+ * GET /api/cron/push-notifications
  *
  * Bearer-protected cron. Iterates push_subscriptions for users who have
  * unread notifications and sends a push digest.
  *
  * Requires VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT env vars.
- * Silently skips if VAPID keys are not configured.
+ * Skips with a logged warning if VAPID keys are not configured.
+ *
+ * NOTE: Vercel Cron sends GET, so this MUST be exported as GET.
+ * The route previously exported POST and never fired in production.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -17,7 +20,7 @@ import { logger } from '@/lib/observability';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest): Promise<Response> {
+export async function GET(req: NextRequest): Promise<Response> {
   const authHeader = req.headers.get('authorization');
   const cronSecret = env.CRON_SECRET;
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {

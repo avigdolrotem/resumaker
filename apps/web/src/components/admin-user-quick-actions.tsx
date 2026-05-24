@@ -38,15 +38,14 @@ export function AdminUserQuickActions({ userId, subscription }: Props) {
     if (!res.ok) throw new Error(data.error ?? 'Error');
   }
 
-  async function handleImpersonate() {
-    try {
-      setStatus('Starting impersonation…');
-      await post(`/api/admin/users/${userId}/impersonate`);
-      setStatus('Impersonation session created. Reload to switch context.');
-    } catch (e) {
-      setStatus(`Error: ${(e as Error).message}`);
-    }
-  }
+  // Impersonate was REMOVED in the pre-launch security pass: the original
+  // implementation wrote the wrong cookie name (`better-auth.session_token`
+  // instead of the configured `resumaker.session_token` prefix), so it
+  // never actually impersonated end-to-end. It also bypassed the
+  // session.create.before hook, meaning the suspended/deleted-user guard
+  // AND the IP HMAC hashing were skipped. Marked as deferred to v1.1 in
+  // PRE_LAUNCH.md anyway — re-add via Better Auth's official impersonation
+  // API when it's needed, not before.
 
   async function handleResendVerification() {
     try {
@@ -102,9 +101,6 @@ export function AdminUserQuickActions({ userId, subscription }: Props) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={() => void handleImpersonate()}>
-            Impersonate
-          </Button>
           <Button size="sm" variant="outline" onClick={() => void handleResendVerification()}>
             Resend verification
           </Button>
