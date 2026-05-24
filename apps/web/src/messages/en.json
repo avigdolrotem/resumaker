@@ -151,6 +151,112 @@
       "failed": "Couldn't import. Try the text option instead."
     }
   },
+  "cookies": {
+    "title": "Cookie preferences",
+    "description": "We use essential cookies for sign-in and theme. Analytics and marketing cookies are optional.",
+    "acceptAll": "Accept all",
+    "customize": "Customize",
+    "savePreferences": "Save preferences",
+    "rejectAll": "Reject non-essential",
+    "close": "Close",
+    "categories": {
+      "essential": {
+        "title": "Essential",
+        "description": "Sign-in, session, language and theme. Cannot be turned off."
+      },
+      "analytics": {
+        "title": "Analytics",
+        "description": "Aggregate usage stats. Helps us see which features work."
+      },
+      "marketing": {
+        "title": "Marketing",
+        "description": "Personalized offers and remarketing. Off by default."
+      }
+    }
+  },
+  "legal": {
+    "accessibility": {
+      "title": "Accessibility statement",
+      "lastUpdated": "Last updated: {date}",
+      "commitment": {
+        "title": "Our commitment",
+        "body": "Resumaker is committed to making this site usable by everyone, including people with disabilities. We aim to meet WCAG 2.1 Level AA and Israeli accessibility regulations."
+      },
+      "standards": {
+        "title": "Standards we follow",
+        "body": "We test against the following standards:",
+        "wcag": "WCAG 2.1 Level AA — Web Content Accessibility Guidelines",
+        "israeliLaw": "Israeli Equal Rights for Persons with Disabilities Regulations 5773-2013"
+      },
+      "features": {
+        "title": "Accessibility features",
+        "keyboard": "Full keyboard navigation throughout",
+        "contrast": "Color contrast at minimum AA ratio (4.5:1 for text, 3:1 for UI)",
+        "rtl": "Right-to-left support for Hebrew with mirrored layouts",
+        "focus": "Visible focus indicators on all interactive elements",
+        "reducedMotion": "Respects prefers-reduced-motion system setting",
+        "screenReader": "ARIA labels and semantic HTML throughout"
+      },
+      "known": {
+        "title": "Known limitations",
+        "body": "Some third-party content (embedded billing portal, payment provider checkout) may not fully meet our standards. We're working with our providers to improve this."
+      },
+      "contact": {
+        "title": "Contact us",
+        "body": "Email our accessibility team if you encounter any barrier or need help using the site."
+      }
+    },
+    "dataRetention": {
+      "title": "Data retention policy",
+      "lastUpdated": "Last updated: {date}",
+      "overview": {
+        "title": "Overview",
+        "body": "We retain personal data only as long as needed for the service or required by law. The table below reflects what the code actually does."
+      },
+      "table": {
+        "title": "Retention schedule",
+        "dataType": "Data type",
+        "duration": "Retention",
+        "basis": "Reason"
+      },
+      "rows": {
+        "profile": {
+          "type": "Account profile (name, email)",
+          "duration": "Until account deletion",
+          "basis": "Service operation"
+        },
+        "resumes": {
+          "type": "Resumes & cover letters",
+          "duration": "Until deleted by you (or 30d after account delete)",
+          "basis": "Your content"
+        },
+        "coverLetters": {
+          "type": "Generated AI outputs",
+          "duration": "Until deleted",
+          "basis": "Your content"
+        },
+        "sessions": {
+          "type": "Auth sessions",
+          "duration": "14 days max, deleted on sign-out",
+          "basis": "Security"
+        },
+        "audit": {
+          "type": "Audit log",
+          "duration": "1 year",
+          "basis": "Legal + security"
+        },
+        "softDeleted": {
+          "type": "Soft-deleted account data",
+          "duration": "30 days grace period, then hard-deleted",
+          "basis": "Right to be forgotten (GDPR Art. 17)"
+        }
+      },
+      "rights": {
+        "title": "Your rights",
+        "body": "Under GDPR and Israeli Privacy Law you can request access, rectification, restriction, objection, or deletion of your data. Use Settings → Your data, or email privacy@resumaker.co.il."
+      }
+    }
+  },
   "applications": {
     "title": "Applications",
     "subtitle": "Your tracked job applications",
