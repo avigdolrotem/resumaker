@@ -1,5 +1,7 @@
 default: true
 MD013: false # Line length — fine for prose
+MD024: # Allow same heading text across different sections (e.g. ### Changes under L1 and L2)
+  siblings_only: true
 MD033: false # Inline HTML allowed
 MD040: false # Fenced code language not required (we use ASCII diagrams)
 MD041: false # First line need not be h1
