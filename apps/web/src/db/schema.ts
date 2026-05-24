@@ -44,12 +44,68 @@ export const users = pgTable(
       .notNull()
       .default(sql`'{}'::jsonb`)
       .$type<{ jobHuntBeta?: boolean | undefined }>(),
+    /** UI theme: 'system' follows OS preference */
+    theme: varchar('theme', { length: 8 })
+      .notNull()
+      .default('system')
+      .$type<'light' | 'dark' | 'system'>(),
+    /** IANA timezone string, defaults to Israel */
+    timezone: varchar('timezone', { length: 64 }).notNull().default('Asia/Jerusalem'),
+    /** Date format preference for display */
+    dateFormat: varchar('date_format', { length: 16 }).notNull().default('DD/MM/YYYY'),
+    /** Explicit opt-in to marketing emails (transactional always allowed) */
+    marketingOptIn: boolean('marketing_opt_in').notNull().default(false),
+    /**
+     * Granular per-channel + per-event notification opt-ins. JSONB so we
+     * can add new event types without migrations. Defaults to {} which
+     * means "all transactional + opted-in marketing" — explicit `false`
+     * suppresses that specific channel/event.
+     */
+    notificationPrefs: jsonb('notification_prefs')
+      .notNull()
+      .default(sql`'{}'::jsonb`)
+      .$type<{
+        emailResumeGenerated?: boolean;
+        emailJobDigest?: boolean;
+        emailApplicationReminders?: boolean;
+        emailProductUpdates?: boolean;
+        pushAll?: boolean;
+      }>(),
+    /** Base64 data-URL avatar (<=2MB). Kept inline rather than S3 to avoid an extra bucket dep. */
+    avatar: text('avatar'),
+    /** Set true by the Better Auth twoFactor plugin once TOTP is enrolled and verified. */
+    twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (t) => ({
     emailIdx: index('users_email_idx').on(t.email),
+  }),
+);
+
+// ─── M1: EMAIL CHANGE FLOW ──────────────────────────────────────────
+
+/**
+ * Pending email-change requests. User submits new email → we email a
+ * verification link → on click, we swap `users.email` and delete the
+ * request. Token is a random URL-safe string; expires after 1h.
+ */
+export const emailChangeRequests = pgTable(
+  'email_change_requests',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    newEmail: varchar('new_email', { length: 320 }).notNull(),
+    token: varchar('token', { length: 64 }).notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    tokenIdx: index('email_change_token_idx').on(t.token),
+    userIdIdx: index('email_change_user_idx').on(t.userId),
   }),
 );
 
@@ -96,6 +152,28 @@ export const sessions = pgTable(
     userIdIdx: index('sessions_user_id_idx').on(t.userId),
     tokenIdx: index('sessions_token_idx').on(t.token),
     expiresIdx: index('sessions_expires_idx').on(t.expiresAt),
+  }),
+);
+
+/**
+ * Better Auth `twoFactor` plugin storage. One row per user when 2FA is
+ * enabled; deleted on disable. `secret` is the TOTP shared secret;
+ * `backupCodes` is a comma-joined hashed list (Better Auth hashes each
+ * code with the auth secret before storing).
+ */
+export const twoFactors = pgTable(
+  'two_factors',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' })
+      .unique(),
+    secret: text('secret').notNull(),
+    backupCodes: text('backup_codes').notNull(),
+  },
+  (t) => ({
+    userIdx: index('two_factors_user_idx').on(t.userId),
   }),
 );
 
@@ -499,6 +577,8 @@ export const schema = {
   jobs,
   userJobs,
   applications,
+  emailChangeRequests,
+  twoFactors,
 };
 
 export type User = typeof users.$inferSelect;

@@ -315,6 +315,15 @@
       "cancel": "ביטול",
       "deleted": "החשבון נמחק",
       "deleteFailed": "לא ניתן למחוק את החשבון. אנא צור קשר עם התמיכה."
+    },
+    "tabs": {
+      "profile": "פרופיל",
+      "security": "אבטחה",
+      "sessions": "חיבורים",
+      "notifications": "התראות",
+      "appearance": "מראה",
+      "data": "הנתונים שלך",
+      "danger": "אזור מסוכן"
     }
   },
   "import": {

@@ -57,6 +57,20 @@
       "when": 1779637000000,
       "tag": "0007_job_hunt_beta",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1779638000000,
+      "tag": "0008_account_settings_m1",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1748044800000,
+      "tag": "0009_add_two_factor",
+      "breakpoints": true
     }
   ]
 }

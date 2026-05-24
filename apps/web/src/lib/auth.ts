@@ -7,6 +7,7 @@
 
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { twoFactor } from 'better-auth/plugins';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { schema } from '@/db/schema';
@@ -39,8 +40,17 @@ export const auth = betterAuth({
       account: schema.accounts,
       session: schema.sessions,
       verification: schema.verifications,
+      twoFactor: schema.twoFactors,
     },
   }),
+
+  plugins: [
+    twoFactor({
+      issuer: 'Resumaker',
+      totpOptions: { digits: 6, period: 30 },
+      backupCodeOptions: { amount: 10, length: 10 },
+    }),
+  ],
 
   secret,
   baseURL: baseUrl,

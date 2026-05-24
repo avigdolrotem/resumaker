@@ -5,6 +5,7 @@
  */
 
 import { createAuthClient } from 'better-auth/react';
+import { twoFactorClient } from 'better-auth/client/plugins';
 
 // NEXT_PUBLIC_APP_URL is validated in src/lib/env.ts at build time, but
 // we can't import the server-side env module here — this file ships in
@@ -19,6 +20,7 @@ if (!baseURL) {
 
 export const authClient = createAuthClient({
   baseURL,
+  plugins: [twoFactorClient()],
 });
 
 export const { signIn, signUp, signOut, useSession } = authClient;
