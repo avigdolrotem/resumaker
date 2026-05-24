@@ -6,11 +6,13 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
-import { and, eq, isNull, desc } from 'drizzle-orm';
+import { and, eq, isNull, desc, gte } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { ResumeSchema } from '@resumaker/shared';
 import { auditEvent } from '@/lib/audit';
+import { getUserTier } from '@/lib/billing/tier';
+import { TIER_LIMITS } from '@/lib/billing/limits';
 
 async function ownsResume(resumeId: string, userId: string): Promise<boolean> {
   const row = await db.query.resumes.findFirst({
@@ -36,6 +38,20 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
+  // Tier-based retention. Free = 7 days, Plus = 90, Pro = unlimited (-1).
+  // We don't actually delete rows older than the window (so an upgrade
+  // re-exposes them); we just hide them from the response. The 30-day
+  // purge cron does the eventual cleanup for users on lower tiers.
+  const tier = await getUserTier(session.user.id);
+  const retentionDays = TIER_LIMITS[tier].versionHistoryDays;
+  const cutoff =
+    retentionDays === -1 ? null : new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+
+  const whereClause =
+    cutoff !== null
+      ? and(eq(schema.resumeVersions.resumeId, id), gte(schema.resumeVersions.createdAt, cutoff))
+      : eq(schema.resumeVersions.resumeId, id);
+
   const versions = await db
     .select({
       id: schema.resumeVersions.id,
@@ -45,10 +61,13 @@ export async function GET(
       createdAt: schema.resumeVersions.createdAt,
     })
     .from(schema.resumeVersions)
-    .where(eq(schema.resumeVersions.resumeId, id))
+    .where(whereClause)
     .orderBy(desc(schema.resumeVersions.versionNumber));
 
-  return NextResponse.json({ versions });
+  return NextResponse.json({
+    versions,
+    retention: { tier, days: retentionDays },
+  });
 }
 
 const RestoreBody = z.object({

@@ -3,6 +3,7 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { ResumeMockup } from '@/components/resume-mockup';
 import { ScrollReveal } from '@/components/scroll-reveal';
+import { getProviderInfo } from '@/lib/billing/provider';
 import {
   Sparkles,
   Target,
@@ -27,6 +28,19 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
   const t = await getTranslations('home');
   const isHebrew = locale === 'he';
   const ArrowIcon = isHebrew ? ArrowLeft : ArrowRight;
+
+  // Dynamic pricing CTA — when checkout is live ("get started" → /pricing
+  // to choose interval). When PAYMENT_PROVIDER=none ("coming soon" →
+  // /pricing → waitlist banner). The dedicated pricing page already
+  // handles both modes; we just need to swap copy on the teaser.
+  const checkoutReady = getProviderInfo().checkoutReady;
+  const paidCta = checkoutReady
+    ? isHebrew
+      ? 'התחל עכשיו'
+      : 'Get started'
+    : isHebrew
+      ? 'הצטרף לרשימת ההמתנה'
+      : 'Join the waitlist';
 
   const features = [
     { key: 'ats' as const, Icon: Target, gradient: 'from-purple-500 to-pink-500' },
@@ -244,49 +258,49 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
               isHebrew={isHebrew}
             />
             <PricingCard
-              tier={isHebrew ? 'פרו' : 'Pro'}
+              tier={isHebrew ? 'פלוס' : 'Plus'}
               price="₪29"
               period={isHebrew ? 'לחודש' : 'per month'}
               features={
                 isHebrew
-                  ? ['ללא הגבלה', '5 תבניות', 'ATS מתקדם + המלצות', 'ייבוא PDF', 'מכתבי הצעה']
+                  ? ['עד 10 קורות חיים', '3 תבניות', 'ATS מלא + המלצות', 'ייבוא PDF', 'מכתבי הצעה']
                   : [
-                      'Unlimited resumes',
-                      '5 templates',
-                      'Advanced ATS + tips',
+                      'Up to 10 resumes',
+                      '3 templates',
+                      'Full ATS + tips',
                       'PDF import',
                       'Cover letters',
                     ]
               }
-              cta={isHebrew ? 'בקרוב' : 'Coming soon'}
-              ctaHref="/sign-up"
+              cta={paidCta}
+              ctaHref="/pricing"
               featured
               badge={isHebrew ? 'הכי פופולרי' : 'Most popular'}
               isHebrew={isHebrew}
             />
             <PricingCard
-              tier={isHebrew ? 'פרימיום' : 'Premium'}
-              price="₪59"
+              tier={isHebrew ? 'פרו' : 'Pro'}
+              price="₪79"
               period={isHebrew ? 'לחודש' : 'per month'}
               features={
                 isHebrew
                   ? [
-                      'כל הפרו +',
+                      'כל מה שיש בפלוס +',
+                      'יצירות בלתי מוגבלות',
+                      'היסטוריית גרסאות לתמיד',
                       'בחירת מודל AI',
-                      'GPT-5 + Gemini',
-                      'תמיכה במייל מועדפת',
-                      'API גישה',
+                      'תמיכת VIP',
                     ]
                   : [
-                      'Everything in Pro +',
+                      'Everything in Plus +',
+                      'Unlimited generations',
+                      'Unlimited version history',
                       'Choose your AI model',
-                      'GPT-5 + Gemini',
                       'Priority support',
-                      'API access',
                     ]
               }
-              cta={isHebrew ? 'בקרוב' : 'Coming soon'}
-              ctaHref="/sign-up"
+              cta={paidCta}
+              ctaHref="/pricing"
               isHebrew={isHebrew}
             />
           </div>
@@ -465,7 +479,7 @@ function PricingCard({
   period: string;
   features: string[];
   cta: string;
-  ctaHref: '/sign-up' | '/sign-in';
+  ctaHref: '/sign-up' | '/sign-in' | '/pricing';
   featured?: boolean;
   badge?: string;
   isHebrew: boolean;

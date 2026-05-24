@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Copy, RefreshCw, Save, Sparkles } from 'lucide-react';
@@ -24,6 +24,27 @@ export default function NewCoverLetterPage() {
   const [savedId, setSavedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [detectedLocale, setDetectedLocale] = useState<'he' | 'en'>('en');
+  /**
+   * Snapshot of the user's profile fetched once on mount. Was previously
+   * sent to the generator as `userProfile: {}`, producing letters that
+   * referenced neither the user's name nor their skills — generic to the
+   * point of useless. We now hydrate it from /api/account/profile.
+   */
+  const [userProfile, setUserProfile] = useState<Record<string, unknown>>({});
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/account/profile');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.profile) setUserProfile(data.profile);
+      } catch {
+        // Non-fatal — fall back to empty profile (degraded letter quality
+        // is better than blocking the page on a transient network error).
+      }
+    })();
+  }, []);
 
   async function generate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -39,7 +60,7 @@ export default function NewCoverLetterPage() {
           companyName: company || undefined,
           recipientName: recipient || undefined,
           tone,
-          userProfile: {},
+          userProfile,
           locale: 'auto',
         }),
       });

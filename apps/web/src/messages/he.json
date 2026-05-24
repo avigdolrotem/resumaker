@@ -101,7 +101,40 @@
       "lastUsed": "פעילות אחרונה"
     },
     "noResumes": "עדיין אין לך קורות חיים. בוא נתחיל!",
-    "recent": "קורות חיים אחרונים"
+    "recent": "קורות חיים אחרונים",
+    "actions": {
+      "edit": "עריכה",
+      "duplicate": "שכפול",
+      "delete": "מחיקה",
+      "downloadPdf": "הורד PDF",
+      "confirmDelete": "למחוק?",
+      "cancel": "ביטול"
+    }
+  },
+  "templates": {
+    "modern": { "name": "מודרני", "subtitle": "ידידותי להייטק" },
+    "classic": { "name": "קלאסי", "subtitle": "סטנדרט HR ישראלי" },
+    "minimal": { "name": "מינימלי", "subtitle": "נקי ומרווח" }
+  },
+  "profile": {
+    "title": "פרופיל",
+    "subtitle": "ניהול העדפות החשבון",
+    "personalTitle": "פרטים אישיים",
+    "personalDescription": "איך אנחנו מציגים אותך באפליקציה ובאימיילים",
+    "fullName": "שם מלא",
+    "emailLabel": "אימייל",
+    "emailHint": "שינוי אימייל מצריך שלב אימות.",
+    "languageLabel": "שפת ברירת מחדל",
+    "languageHint": "משמש לאימיילים (אימות, ברוכים הבאים). הממשק נקבע לפי הכתובת.",
+    "save": "שמור שינויים",
+    "saving": "שומר…",
+    "saved": "הפרופיל עודכן",
+    "saveFailed": "העדכון נכשל",
+    "statsTitle": "נתוני חשבון",
+    "emailVerified": "אימייל מאומת",
+    "emailVerifiedYes": "כן",
+    "emailVerifiedNo": "עדיין לא",
+    "memberSince": "חבר מתאריך"
   },
   "builder": {
     "title": "בונה קורות חיים",
@@ -146,6 +179,8 @@
       "backToDashboard": "חזרה לאזור האישי",
       "saveFailed": "השמירה נכשלה",
       "generateFailed": "היצירה נכשלה",
+      "loadFailed": "טעינת קורות החיים נכשלה",
+      "loadingExisting": "טוען את קורות החיים שלך…",
       "titleFormat": "{name} — {industry}",
       "titleFallback": "קורות חיים — {date}"
     },

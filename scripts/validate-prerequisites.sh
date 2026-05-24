@@ -145,6 +145,39 @@ else
   warn "role missing — follow docs/runbooks/github-actions-oidc-setup.md"
 fi
 
+# ─── 9. Payment provider configured ─────────────────────────────────
+# `PAYMENT_PROVIDER=none` is the safe default for previews + tests but
+# means the pricing page CTA is a waitlist link, not Checkout. Warn so
+# we don't ship to prod with payments accidentally disabled.
+section "Payment provider"
+PROVIDER_VALUE="$(jq -r '.PAYMENT_PROVIDER // "none"' "$NOTEPAD" 2>/dev/null || echo "none")"
+case "$PROVIDER_VALUE" in
+  lemonsqueezy)
+    ok "PAYMENT_PROVIDER=lemonsqueezy"
+    for f in LEMONSQUEEZY_API_KEY LEMONSQUEEZY_STORE_ID LEMONSQUEEZY_WEBHOOK_SECRET; do
+      VAL="$(jq -r ".$f // \"\"" "$NOTEPAD" 2>/dev/null)"
+      if [[ -z "$VAL" || "$VAL" == "<pending>" ]]; then
+        fail "$f is empty in notepad — LS checkout will fail"
+      fi
+    done
+    ;;
+  stripe)
+    ok "PAYMENT_PROVIDER=stripe"
+    for f in STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET; do
+      VAL="$(jq -r ".$f // \"\"" "$NOTEPAD" 2>/dev/null)"
+      if [[ -z "$VAL" || "$VAL" == "<pending>" ]]; then
+        fail "$f is empty in notepad — Stripe checkout will fail"
+      fi
+    done
+    ;;
+  none|"")
+    warn "PAYMENT_PROVIDER=none — pricing page will show waitlist CTA (no revenue path)"
+    ;;
+  *)
+    fail "PAYMENT_PROVIDER='$PROVIDER_VALUE' is not one of: lemonsqueezy, stripe, none"
+    ;;
+esac
+
 # ─── Summary ────────────────────────────────────────────────────────
 printf "\n\033[1mSummary:\033[0m %d ✗ failures, %d ⚠ warnings\n" "$FAIL_COUNT" "$WARN_COUNT"
 if [[ "$FAIL_COUNT" -gt 0 ]]; then

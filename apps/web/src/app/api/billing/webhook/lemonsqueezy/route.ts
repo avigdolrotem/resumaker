@@ -358,6 +358,37 @@ async function handleSubscriptionUpsert(payload: LsWebhookPayload): Promise<void
       status: attrs.status,
     },
   });
+
+  // Send a payment-confirmation email on the FIRST subscription_created
+  // for this user. Renewals/updates skip this branch so we don't spam.
+  // Tier resolution from a real LS variant always yields 'plus' or 'pro';
+  // 'free' would only appear if variant mapping was misconfigured — in
+  // which case the welcome email is irrelevant anyway.
+  if (payload.meta.event_name === 'subscription_created' && status === 'active') {
+    void (async () => {
+      try {
+        const user = await db.query.users.findFirst({
+          where: eq(schema.users.id, resolvedUserId),
+          columns: { email: true, name: true, locale: true },
+        });
+        if (!user) return;
+        const { sendEmail } = await import('@/lib/email/client');
+        const { paidWelcome } = await import('@/lib/email/templates');
+        const tmpl = paidWelcome({
+          locale: user.locale === 'en' ? 'en' : 'he',
+          ...(user.name ? { name: user.name } : {}),
+          tier: resolved.tier,
+        });
+        await sendEmail({ to: user.email, subject: tmpl.subject, html: tmpl.html });
+      } catch (err) {
+        // Non-fatal — never let an email send failure crash the webhook.
+        logger.warn(
+          { err: (err as Error).message, userId: resolvedUserId },
+          'lemonsqueezy.subscription.paid_welcome_failed',
+        );
+      }
+    })();
+  }
 }
 
 async function handleSubscriptionCancelled(payload: LsWebhookPayload): Promise<void> {

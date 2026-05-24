@@ -161,6 +161,61 @@ export function passwordReset({ locale, resetUrl }: { locale: Locale; resetUrl: 
   };
 }
 
+export function paidWelcome({
+  locale,
+  name,
+  tier,
+}: {
+  locale: Locale;
+  name?: string;
+  tier: 'plus' | 'pro';
+}) {
+  const tierLabel =
+    locale === 'he' ? (tier === 'plus' ? 'פלוס' : 'פרו') : tier === 'plus' ? 'Plus' : 'Pro';
+  if (locale === 'he') {
+    return {
+      subject: `התשלום אושר — הצטרפת ל-${tierLabel} 🎉`,
+      html: layout({
+        title: 'התשלום אושר',
+        preview: `המנוי ${tierLabel} שלך פעיל`,
+        dir: 'rtl',
+        body: `
+          <h1 style="margin:0 0 16px 0;font-size:22px;">תודה ${escapeHtml(name ?? '')} 🚀</h1>
+          <p style="margin:0 0 16px 0;line-height:1.6;color:#475569;">
+            התשלום עבור מסלול <strong>${tierLabel}</strong> אושר. המנוי שלך פעיל מעכשיו.
+          </p>
+          <p style="margin:0 0 16px 0;line-height:1.6;color:#475569;">
+            את החשבונית תקבל ישירות מ-LemonSqueezy (ספק הסליקה שלנו). ניתן לנהל את המנוי, להוריד חשבוניות, או לבטל בכל רגע מתוך אזור החיוב.
+          </p>
+          ${button('פתח את אזור החיוב', `${env.APP_URL}/he/account/billing`)}
+          <p style="margin:24px 0 0 0;font-size:12px;color:#94a3b8;">
+            שאלות? פשוט תענה למייל הזה — אנחנו עונים תוך 24 שעות.
+          </p>`,
+      }),
+    };
+  }
+  return {
+    subject: `Payment confirmed — welcome to ${tierLabel} 🎉`,
+    html: layout({
+      title: 'Payment confirmed',
+      preview: `Your ${tierLabel} subscription is active`,
+      dir: 'ltr',
+      body: `
+        <h1 style="margin:0 0 16px 0;font-size:22px;">Thanks ${escapeHtml(name ?? '')} 🚀</h1>
+        <p style="margin:0 0 16px 0;line-height:1.6;color:#475569;">
+          Your <strong>${tierLabel}</strong> subscription is now active.
+        </p>
+        <p style="margin:0 0 16px 0;line-height:1.6;color:#475569;">
+          You'll receive an invoice directly from LemonSqueezy (our payment provider). You can manage your subscription, download invoices, or cancel any time from the billing dashboard.
+        </p>
+        ${button('Open billing dashboard', `${env.APP_URL}/en/account/billing`)}
+        <p style="margin:24px 0 0 0;font-size:12px;color:#94a3b8;">
+          Questions? Just reply to this email — we answer within 24h.
+        </p>`,
+    }),
+  };
+}
+
 export function welcome({ locale, name }: { locale: Locale; name?: string }) {
   if (locale === 'he') {
     return {

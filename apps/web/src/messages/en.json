@@ -101,7 +101,40 @@
       "lastUsed": "Last activity"
     },
     "noResumes": "No resumes yet. Let's get started!",
-    "recent": "Recent resumes"
+    "recent": "Recent resumes",
+    "actions": {
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "downloadPdf": "Download PDF",
+      "confirmDelete": "Delete?",
+      "cancel": "Cancel"
+    }
+  },
+  "templates": {
+    "modern": { "name": "Modern", "subtitle": "Tech-friendly" },
+    "classic": { "name": "Classic", "subtitle": "Traditional Israeli HR" },
+    "minimal": { "name": "Minimal", "subtitle": "Clean & spacious" }
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your account preferences",
+    "personalTitle": "Personal info",
+    "personalDescription": "How we display you in the app and emails",
+    "fullName": "Full name",
+    "emailLabel": "Email",
+    "emailHint": "Changing your email requires a verification step.",
+    "languageLabel": "Default language",
+    "languageHint": "Used for emails (verification, welcome). The UI follows the URL.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Profile updated",
+    "saveFailed": "Update failed",
+    "statsTitle": "Account stats",
+    "emailVerified": "Email verified",
+    "emailVerifiedYes": "Yes",
+    "emailVerifiedNo": "Not yet",
+    "memberSince": "Member since"
   },
   "builder": {
     "title": "Resume Builder",
@@ -146,6 +179,8 @@
       "backToDashboard": "Back to dashboard",
       "saveFailed": "Save failed",
       "generateFailed": "Generation failed",
+      "loadFailed": "Couldn't load this resume",
+      "loadingExisting": "Loading your resume…",
       "titleFormat": "{name} — {industry}",
       "titleFallback": "Resume — {date}"
     },

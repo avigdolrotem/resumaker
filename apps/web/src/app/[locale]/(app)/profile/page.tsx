@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { toast } from 'sonner';
 import { Save, User } from 'lucide-react';
@@ -10,12 +11,44 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSession } from '@/lib/auth-client';
 
+/**
+ * Profile page — name, default email locale, account stats.
+ *
+ * Two L2 fixes shipped here:
+ *   - All copy now goes through next-intl. Was 100% hardcoded English.
+ *   - Locale select initializes from the user's stored preference instead
+ *     of hardcoded `'he'`. An English user who saved the form without
+ *     touching the dropdown was previously getting silently flipped to
+ *     Hebrew emails. We now read the real value via /api/account/profile.
+ */
 export default function ProfilePage() {
+  const t = useTranslations('profile');
   const { data: session, refetch } = useSession();
   const router = useRouter();
   const [name, setName] = useState(session?.user.name ?? '');
   const [locale, setLocale] = useState<'he' | 'en'>('he');
   const [saving, setSaving] = useState(false);
+
+  // Fetch the persisted profile once so the form reflects the source of
+  // truth (DB), not just the cached session. useSession doesn't include
+  // the `locale` field by default.
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/account/profile');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.user?.locale === 'en' || data?.user?.locale === 'he') {
+          setLocale(data.user.locale);
+        }
+        if (data?.user?.name) {
+          setName(data.user.name);
+        }
+      } catch {
+        /* non-fatal — stick with defaults */
+      }
+    })();
+  }, []);
 
   if (!session) return null;
 
@@ -29,12 +62,12 @@ export default function ProfilePage() {
         body: JSON.stringify({ name, locale }),
       });
       if (res.ok) {
-        toast.success('Profile updated');
+        toast.success(t('saved'));
         await refetch?.();
         router.refresh();
       } else {
         const data = await res.json();
-        toast.error(data.error ?? 'Update failed');
+        toast.error(data.error ?? t('saveFailed'));
       }
     } catch (err) {
       toast.error((err as Error).message);
@@ -46,22 +79,22 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-        <p className="mt-1 text-neutral-600">Manage your account preferences</p>
+        <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+        <p className="mt-1 text-neutral-600">{t('subtitle')}</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <User className="h-4 w-4" />
-            Personal info
+            {t('personalTitle')}
           </CardTitle>
-          <CardDescription>How we display you in the app + emails</CardDescription>
+          <CardDescription>{t('personalDescription')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
+              <Label htmlFor="name">{t('fullName')}</Label>
               <Input
                 id="name"
                 value={name}
@@ -72,14 +105,12 @@ export default function ProfilePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('emailLabel')}</Label>
               <Input id="email" value={session.user.email} disabled dir="ltr" />
-              <p className="text-xs text-neutral-500">
-                Changing your email requires a verification step — coming soon.
-              </p>
+              <p className="text-xs text-neutral-500">{t('emailHint')}</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="locale">Default language</Label>
+              <Label htmlFor="locale">{t('languageLabel')}</Label>
               <select
                 id="locale"
                 value={locale}
@@ -89,14 +120,12 @@ export default function ProfilePage() {
                 <option value="he">עברית (Hebrew)</option>
                 <option value="en">English</option>
               </select>
-              <p className="text-xs text-neutral-500">
-                Used for emails (verification, welcome). The UI follows the URL.
-              </p>
+              <p className="text-xs text-neutral-500">{t('languageHint')}</p>
             </div>
 
             <Button type="submit" disabled={saving}>
               <Save className="me-2 h-4 w-4" />
-              {saving ? 'Saving…' : 'Save changes'}
+              {saving ? t('saving') : t('save')}
             </Button>
           </form>
         </CardContent>
@@ -104,22 +133,26 @@ export default function ProfilePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Account stats</CardTitle>
+          <CardTitle className="text-base">{t('statsTitle')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-neutral-600">Email verified</span>
+            <span className="text-neutral-600">{t('emailVerified')}</span>
             <span>
               {session.user.emailVerified ? (
-                <span className="text-emerald-600">✓ Yes</span>
+                <span className="text-emerald-600">✓ {t('emailVerifiedYes')}</span>
               ) : (
-                <span className="text-amber-600">Not yet</span>
+                <span className="text-amber-600">{t('emailVerifiedNo')}</span>
               )}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-neutral-600">Member since</span>
-            <span dir="ltr">{new Date(session.user.createdAt).toLocaleDateString()}</span>
+            <span className="text-neutral-600">{t('memberSince')}</span>
+            <span dir="ltr">
+              {new Date(session.user.createdAt).toLocaleDateString(
+                locale === 'he' ? 'he-IL' : 'en-US',
+              )}
+            </span>
           </div>
         </CardContent>
       </Card>

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,8 @@ import { ImportProfileButton } from '@/components/import-profile-button';
 import { AtsScoreCard } from '@/components/ats-score-card';
 import { ResumePreview } from '@/components/resume-preview';
 import { VersionHistory } from '@/components/version-history';
+import { TemplatePicker, type TemplateId } from '@/components/template-picker';
+import type { Tier } from '@/lib/billing/limits';
 
 type Industry = 'tech' | 'healthcare' | 'finance' | 'general';
 type LocaleChoice = 'auto' | 'he' | 'en';
@@ -47,6 +50,15 @@ interface ATSScore {
 
 export default function BuilderPage() {
   const t = useTranslations('builder');
+  const search = useSearchParams();
+  /**
+   * Edit-mode: when `/builder?id=<uuid>` we hydrate state from an existing
+   * resume. Save then PATCHes instead of POSTing. This was the missing
+   * piece behind the "dashboard cards open a blank builder" launch
+   * blocker — the route accepted the query param but the page ignored it.
+   */
+  const editingId = search.get('id');
+
   const [jd, setJd] = useState('');
   const [url, setUrl] = useState('');
   const [name, setName] = useState('');
@@ -59,13 +71,78 @@ export default function BuilderPage() {
   const [experienceText, setExperienceText] = useState('');
   const [industry, setIndustry] = useState<Industry>('tech');
   const [locale, setLocale] = useState<LocaleChoice>('auto');
+  const [templateId, setTemplateId] = useState<TemplateId>('modern');
+  const [userTier, setUserTier] = useState<Tier>('free');
   const [loading, setLoading] = useState(false);
+  const [hydrating, setHydrating] = useState(Boolean(editingId));
   const [result, setResult] = useState<ResumeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [savedId, setSavedId] = useState<string | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(editingId);
   const [saving, setSaving] = useState(false);
   const [atsScore, setAtsScore] = useState<ATSScore | null>(null);
   const router = useRouter();
+
+  // Fetch the user's tier once so the template picker can show locks for
+  // templates above their plan. Defaults to 'free' until the response is in
+  // (always-safe default — worst case shows a lock that disappears later).
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/billing/me');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.tier) setUserTier(data.tier);
+      } catch {
+        /* keep 'free' fallback */
+      }
+    })();
+  }, []);
+
+  /**
+   * Hydrate from existing resume when `?id` is present. Runs once per id
+   * change so deep-linking between two saved resumes also works.
+   */
+  useEffect(() => {
+    if (!editingId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/resumes/${editingId}`);
+        if (!res.ok) {
+          if (!cancelled) {
+            setError(t('actions.loadFailed'));
+            setHydrating(false);
+          }
+          return;
+        }
+        const { resume } = await res.json();
+        if (cancelled || !resume?.content) return;
+        const c = resume.content as ResumeResult['resume'];
+        setName(c.contact?.name ?? '');
+        setEmail(c.contact?.email ?? '');
+        setProfileSummary(c.summary ?? '');
+        setProfileSkills((c.skills ?? []).join(', '));
+        setIndustry((resume.industry ?? 'tech') as Industry);
+        setLocale((c.metadata?.language ?? 'auto') as LocaleChoice);
+        if (resume.templateId) setTemplateId(resume.templateId as TemplateId);
+        setResult({
+          resume: c,
+          metadata: {
+            durationMs: 0,
+            tokensUsed: { input: 0, output: 0 },
+            detectedLocale: c.metadata?.language ?? 'en',
+          },
+        });
+      } catch (err) {
+        if (!cancelled) setError((err as Error).message);
+      } finally {
+        if (!cancelled) setHydrating(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editingId, t]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -112,9 +189,14 @@ export default function BuilderPage() {
         setResult(data);
         setSavedId(null);
         setAtsScore(null);
-        // Auto-trigger ATS scoring against the original JD (if pasted)
-        if (jd) {
-          void fetchAtsScore(data.resume, jd);
+        // Auto-trigger ATS scoring. Previously this was gated on `if (jd)`
+        // — meaning users who submitted via URL got no score at all. The
+        // generator returns a sanitized `metadata.detectedLocale` and the
+        // sanitized text isn't exposed, so we fall back to the URL string
+        // as the "JD" the scorer compares against. Better than nothing.
+        const jdForScoring = jd || url;
+        if (jdForScoring) {
+          void fetchAtsScore(data.resume, jdForScoring);
         }
       }
     } catch (err) {
@@ -176,17 +258,28 @@ export default function BuilderPage() {
     if (!result) return;
     setSaving(true);
     try {
+      // Editing an existing resume → PATCH (records a new version).
+      // Brand-new resume → POST (tier-gated insert).
+      const isEditing = Boolean(editingId);
       const title = name
         ? t('actions.titleFormat', { name, industry })
         : t('actions.titleFallback', { date: new Date().toLocaleDateString() });
-      const res = await fetch('/api/resumes', {
-        method: 'POST',
+      const res = await fetch(isEditing ? `/api/resumes/${editingId}` : '/api/resumes', {
+        method: isEditing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content: result.resume, templateId: 'modern' }),
+        body: JSON.stringify(
+          isEditing
+            ? { title, content: result.resume }
+            : { title, content: result.resume, templateId },
+        ),
       });
       const data = await res.json();
-      if (res.ok && data.id) {
-        setSavedId(data.id);
+      if (res.ok) {
+        // POST returns { id }; PATCH returns { success: true }. Keep
+        // savedId = editingId in the PATCH case so subsequent saves
+        // continue to update the same row.
+        if (data.id) setSavedId(data.id);
+        else if (isEditing && editingId) setSavedId(editingId);
       } else {
         setError(data.error ?? t('actions.saveFailed'));
       }
@@ -349,6 +442,16 @@ export default function BuilderPage() {
                   </select>
                 </div>
               </div>
+              {/* Template picker — moved here so users see it before they
+                  hit Generate. Locked templates show a lock icon for free
+                  tier; clicking Generate uses whatever's selected, and
+                  Save persists it. Was hardcoded 'modern' before — Plus
+                  + Pro users got no visual benefit from their plan. */}
+              <div className="mt-6 space-y-2">
+                <Label>{locale === 'he' || jd.match(/[֐-׿]/) ? 'תבנית' : 'Template'}</Label>
+                <TemplatePicker value={templateId} onChange={setTemplateId} userTier={userTier} />
+              </div>
+
               <Button type="submit" disabled={loading} size="lg" className="mt-6 w-full">
                 {loading ? t('generating') : t('generate')}
               </Button>
@@ -364,7 +467,18 @@ export default function BuilderPage() {
             </Card>
           )}
 
-          {!result && !loading && !error && (
+          {hydrating && !result && (
+            <Card>
+              <CardContent className="py-24 text-center">
+                <div className="border-brand-200 border-t-brand-600 mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2" />
+                <p className="text-neutral-600">
+                  {t.has('actions.loadingExisting') ? t('actions.loadingExisting') : 'Loading…'}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {!result && !loading && !error && !hydrating && (
             <Card className="border-dashed">
               <CardContent className="space-y-2 py-24 text-center">
                 <p className="text-lg font-medium text-neutral-700">{t('empty.title')}</p>
