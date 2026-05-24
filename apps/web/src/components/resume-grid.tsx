@@ -101,7 +101,11 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
     }
   }
 
-  if (resumes.length === 0) {
+  // Empty-state check uses `localList` (the optimistic copy) not the
+  // original `resumes` prop. Without this, deleting the last resume
+  // would keep showing the grid until `router.refresh()` lands —
+  // a confusing flash for the user.
+  if (localList.length === 0) {
     return (
       <Card className="border-dashed">
         <CardContent className="py-16 text-center">

@@ -270,10 +270,19 @@ export const auth = betterAuth({
           };
         },
         after: async (session) => {
+          // IMPORTANT: `session.ipAddress` at this point is ALREADY HASHED
+          // by the `before` hook above. Passing it to auditEvent would
+          // hash it AGAIN (hashIp(hashIp(rawIp))) which yields a value
+          // that doesn't correlate with anything in either table.
+          //
+          // Omit ipAddress here so audit_log.ipHash is null for sign_in
+          // events. The raw-IP-derived hash is still in the sessions
+          // table (set by the `before` hook). Cross-referencing for
+          // abuse investigation is via userId + timestamp + sessions
+          // join, which is what the admin tooling already does.
           auditEvent({
             userId: session.userId,
             event: 'sign_in',
-            ipAddress: session.ipAddress,
             userAgent: session.userAgent,
           });
         },

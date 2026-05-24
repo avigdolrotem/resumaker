@@ -19,9 +19,13 @@ if (DSN) {
     dsn: DSN,
     environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? process.env.NODE_ENV,
     tracesSampleRate: 0.1,
-    // 0.1 = sample 10% of sessions for replay; 1.0 of any session that errors
-    replaysSessionSampleRate: 0.0, // off by default — opt in if needed
-    replaysOnErrorSampleRate: 1.0,
+    // Replay is OFF by default and downsampled on errors. The original
+    // `replaysOnErrorSampleRate: 1.0` would record EVERY client error
+    // as a full session replay — on a buggy launch day a single bad
+    // deploy can blow Sentry quota in hours. 0.1 still catches most
+    // user-visible repros while keeping cost predictable.
+    replaysSessionSampleRate: 0.0,
+    replaysOnErrorSampleRate: 0.1,
     sendDefaultPii: false,
   });
 }
