@@ -10,6 +10,7 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import { env } from '@/lib/env';
 import { schema } from './schema';
+import * as relations from './relations';
 
 // Cache on globalThis so test isolation + hot reload don't leak connections.
 const globalForDb = globalThis as unknown as { _pg?: ReturnType<typeof postgres> };
@@ -26,5 +27,5 @@ if (env.NODE_ENV !== 'production') {
   globalForDb._pg = client;
 }
 
-export const db = drizzle(client, { schema });
+export const db = drizzle(client, { schema: { ...schema, ...relations } });
 export { schema };

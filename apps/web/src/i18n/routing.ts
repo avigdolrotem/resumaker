@@ -5,8 +5,10 @@ export const routing = defineRouting({
    * Supported locales
    * - `he`: Hebrew (RTL, primary)
    * - `en`: English (LTR, secondary)
+   * - `ar`: Arabic (RTL)
+   * - `ru`: Russian (LTR)
    */
-  locales: ['he', 'en'] as const,
+  locales: ['he', 'en', 'ar', 'ru'] as const,
   defaultLocale: 'he',
 
   /**
@@ -22,5 +24,5 @@ export type Locale = (typeof routing.locales)[number];
  * Get reading direction for a locale.
  */
 export function getDirection(locale: Locale): 'rtl' | 'ltr' {
-  return locale === 'he' ? 'rtl' : 'ltr';
+  return locale === 'he' || locale === 'ar' ? 'rtl' : 'ltr';
 }

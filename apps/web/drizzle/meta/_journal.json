@@ -78,6 +78,34 @@
       "when": 1779641800000,
       "tag": "0010_notifications_support",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1748217600000,
+      "tag": "0011_hr_teams",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1748131200000,
+      "tag": "0012_admin_ops",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1748304000000,
+      "tag": "0013_pwa_push",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1748304060000,
+      "tag": "0014_referrals",
+      "breakpoints": true
     }
   ]
 }

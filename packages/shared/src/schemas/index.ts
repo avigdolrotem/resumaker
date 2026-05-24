@@ -5,7 +5,11 @@
 
 import { z } from 'zod';
 
-export const LocaleSchema = z.enum(['he', 'en']);
+// Locales the resume PDF templates can render. Hebrew + English are the
+// primary languages of the app; Arabic + Russian are supported as second
+// tier (Israeli market includes large Arab and Russian-speaking
+// populations). PDF templates handle font selection per locale.
+export const LocaleSchema = z.enum(['he', 'en', 'ar', 'ru']);
 export type Locale = z.infer<typeof LocaleSchema>;
 
 export const IndustrySchema = z.enum(['tech', 'healthcare', 'finance', 'general']);

@@ -507,6 +507,131 @@
     },
     "canceled": "התשלום בוטל. אפשר לנסות שוב מתי שתרצה."
   },
+  "hr": {
+    "teams": {
+      "title": "צוות",
+      "invite": "הזמן חבר צוות",
+      "inviteEmail": "כתובת דוא״ל",
+      "inviteRole": "תפקיד",
+      "inviteSend": "שלח הזמנה",
+      "inviteSending": "שולח…",
+      "inviteSent": "ההזמנה נשלחה",
+      "roles": {
+        "owner": "בעלים",
+        "recruiter": "מגייס",
+        "viewer": "צופה"
+      },
+      "removeMember": "הסר",
+      "cannotKickSelf": "לא ניתן להסיר את עצמך כבעלים"
+    },
+    "company": {
+      "title": "חברות",
+      "create": "צור חברה",
+      "manage": "נהל",
+      "empty": "אין חברות עדיין. לחץ \"צור חברה\" כדי להתחיל.",
+      "name": "שם החברה",
+      "slug": "כתובת URL",
+      "description": "תיאור",
+      "website": "אתר האינטרנט",
+      "logo": "לינק לוגו",
+      "save": "שמור שינויים",
+      "saved": "נשמר",
+      "saveFailed": "השמירה נכשלה",
+      "members": "חברי הצוות",
+      "noMembers": "אין חברי צוות עדיין."
+    },
+    "bulkImport": {
+      "title": "ייבוא משרות בכמות",
+      "subtitle": "העלה CSV עם עמודות: title, company, location, description, remote, seniority, applyUrl",
+      "fileLabel": "קובץ CSV (עד 500 שורות)",
+      "import": "ייבא משרות",
+      "importing": "מייבא…",
+      "success": "{count} משרה/ות יובאו בהצלחה.",
+      "skipped": "שורות שדולגו:",
+      "error": "הייבוא נכשל"
+    },
+    "applicants": {
+      "title": "מועמדים",
+      "subtitle": "מועמדים שנתנו הסכמה לשיתוף הפרופיל שלהם",
+      "empty": "אין מועמדים שנתנו הסכמה עדיין.",
+      "name": "שם",
+      "email": "דוא״ל",
+      "status": "סטטוס",
+      "appliedAt": "הגיש/ה ב"
+    }
+  },
+  "blog": {
+    "title": "בלוג",
+    "subtitle": "טיפים, מדריכים וחדשות לקריירה שלך בישראל",
+    "readMore": "קרא עוד",
+    "backToBlog": "חזרה לבלוג",
+    "noPosts": "אין פוסטים עדיין. חזור בקרוב."
+  },
+  "tools": {
+    "title": "כלים חינמיים לקריירה",
+    "subtitle": "ללא צורך בחשבון. שימושי מיד.",
+    "tryFree": "נסה בחינם",
+    "salaryEstimator": {
+      "title": "מחשבון שכר",
+      "description": "קבל טווח שכר מבוסס AI לכל תפקיד בשוק הישראלי.",
+      "fields": {
+        "role": "תואר תפקיד",
+        "rolePlaceholder": "לדוגמה: מהנדס backend בכיר",
+        "years": "שנות ניסיון",
+        "location": "מיקום",
+        "locationPlaceholder": "לדוגמה: תל אביב",
+        "industry": "תחום (אופציונלי)",
+        "industryPlaceholder": "לדוגמה: פינטק"
+      },
+      "estimate": "חשב שכר",
+      "estimating": "מחשב…",
+      "result": {
+        "title": "טווח שכר משוער"
+      }
+    },
+    "atsScanner": {
+      "title": "סורק ATS לקורות חיים",
+      "description": "הדבק תיאור משרה וקורות חיים — קבל ציון ATS ומילות מפתח חסרות מיד.",
+      "noAuthRequired": "ללא צורך בחשבון — 10 סריקות חינמיות לשעה",
+      "fields": {
+        "jobDescription": "תיאור המשרה",
+        "jdPlaceholder": "הדבק את מודעת המשרה כאן…",
+        "resumeText": "טקסט קורות החיים שלך",
+        "resumePlaceholder": "הדבק את קורות החיים שלך כטקסט רגיל כאן…"
+      },
+      "scan": "סרוק קורות חיים",
+      "scanning": "סורק…",
+      "result": {
+        "atsScore": "ציון התאמה ל-ATS",
+        "missingKeywords": "מילות מפתח חסרות",
+        "matchedKeywords": "מילות מפתח שנמצאו"
+      }
+    }
+  },
+  "referral": {
+    "title": "הפנה חבר",
+    "subtitle": "שתף את Resumaker וקבל תגמולים כשחבריך נרשמים",
+    "yourCode": "קוד ההפניה שלך",
+    "copy": "העתק",
+    "copyLink": "העתק קישור",
+    "shareEmail": "שתף באימייל",
+    "linkLabel": "או שתף קישור זה",
+    "linkCopied": "הקישור הועתק!",
+    "stats": {
+      "referred": "חברים שהופנו",
+      "qualified": "כשירים"
+    },
+    "emailSubject": "נסה את Resumaker — בונה קורות חיים בעזרת AI",
+    "emailBody": "היי! אני משתמש ב-Resumaker לבניית קורות חיים מותאמים ATS בעזרת AI. נסה עם הקישור שלי:",
+    "whatsappText": "אני משתמש ב-Resumaker לבניית קורות חיים מבוססי AI. נסה בחינם:",
+    "loading": "טוען את פרטי ההפניה שלך…",
+    "loadFailed": "לא ניתן לטעון נתוני הפניה."
+  },
+  "pwa": {
+    "offlineTitle": "אתה לא מחובר",
+    "offlineDescription": "אין חיבור לאינטרנט. בדוק את החיבור ונסה שוב.",
+    "retry": "נסה שוב"
+  },
   "coverLetter": {
     "title": "מכתב הצעה",
     "newTitle": "מכתב הצעה חדש",
@@ -527,5 +652,87 @@
     "copied": "הועתק",
     "regenerate": "נסה גרסה אחרת",
     "empty": "הדבק תיאור משרה כדי לקבל מכתב מותאם אישית."
+  },
+  "admin": {
+    "audit": {
+      "title": "יומן ביקורת",
+      "description": "חיפוש וסינון אירועי מערכת",
+      "from": "מתאריך",
+      "to": "עד תאריך",
+      "event": "סוג אירוע",
+      "userId": "מזהה משתמש",
+      "search": "חיפוש",
+      "when": "מתי",
+      "metadata": "מטא-דאטה",
+      "noResults": "אין תוצאות"
+    },
+    "analytics": {
+      "title": "אנליטיקה",
+      "dau": "משתמשים פעילים יומיים",
+      "dauDescription": "כניסות ייחודיות ליום (30 ימים אחרונים)",
+      "mrr": "MRR",
+      "subscribers": "מנויים",
+      "funnel": "משפך (30 יום)",
+      "signups": "הרשמות",
+      "firstResume": "קורות חיים ראשונים",
+      "paid": "שולמו",
+      "cohort": "שימור קבוצות",
+      "cohortDescription": "% קבוצה פעילה בכל שבוע"
+    },
+    "broadcast": {
+      "title": "מיילים לכלל המשתמשים",
+      "compose": "כתיבה",
+      "composeDescription": "צור טיוטת מייל לשליחה המונית",
+      "subject": "נושא",
+      "body": "תוכן",
+      "locale": "שפה",
+      "saveDraft": "שמור טיוטה",
+      "saving": "שומר…",
+      "draftSaved": "הטיוטה נשמרה.",
+      "past": "שליחות קודמות",
+      "sendNow": "שלח עכשיו",
+      "sent": "נשלח",
+      "draft": "טיוטה",
+      "recipients": "נמענים",
+      "noBroadcasts": "אין שליחות עדיין."
+    },
+    "coupons": {
+      "title": "קופונים",
+      "create": "צור קופון",
+      "code": "קוד",
+      "discount": "אחוז הנחה",
+      "usageLimit": "מגבלת שימוש (אופציונלי)",
+      "expiresAt": "תפוגה (אופציונלי)",
+      "creating": "יוצר…",
+      "createCta": "צור קופון",
+      "all": "כל הקופונים",
+      "used": "בשימוש / מגבלה",
+      "expires": "תפוגה",
+      "delete": "מחק",
+      "noCoupons": "אין קופונים עדיין."
+    },
+    "maintenance": {
+      "title": "מצב תחזוקה",
+      "description": "כשמופעל, המבקרים יראו עמוד תחזוקה במקום האפליקציה.",
+      "settings": "הגדרות תחזוקה",
+      "enabled": "מצב תחזוקה פעיל",
+      "message": "הודעה (תוצג למבקרים)",
+      "scheduledStart": "התחלה מתוכננת (אופציונלי)",
+      "scheduledEnd": "סיום מתוכנן (אופציונלי)",
+      "save": "שמור",
+      "saving": "שומר…",
+      "saved": "נשמר!",
+      "live": "האתר פעיל",
+      "on": "מצב תחזוקה פועל"
+    },
+    "impersonation": {
+      "banner": "מתחזה למשתמש",
+      "exit": "צא מהתחזות",
+      "exiting": "יוצא…",
+      "start": "התחזה",
+      "cannotImpersonateAdmin": "לא ניתן להתחזות למנהל",
+      "sessionCreated": "סשן התחזות נוצר. רענן כדי לעבור להקשר.",
+      "exitSuccess": "ההתחזות הסתיימה."
+    }
   }
 }

@@ -18,6 +18,7 @@ import { AdminTierSelect } from '@/components/admin-tier-select';
 import { AdminFeatureFlags } from '@/components/admin-feature-flags';
 import { getUserTier } from '@/lib/billing/tier';
 import { requireAdminPage } from '@/lib/auth-guards';
+import { AdminUserQuickActions } from '@/components/admin-user-quick-actions';
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -142,6 +143,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         <StatTile Icon={Sparkles} label="Generations" value={userGenerations.length} />
         <StatTile Icon={Clock} label="Tokens used" value={totalTokens.toLocaleString()} />
       </div>
+
+      {/* Quick admin actions */}
+      <AdminUserQuickActions userId={user.id} subscription={subscription ?? null} />
 
       {/* Subscription detail + feature flags side-by-side */}
       <div className="grid gap-4 lg:grid-cols-2">

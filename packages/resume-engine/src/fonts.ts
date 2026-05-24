@@ -22,6 +22,9 @@ const HEEBO_BASE = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/heebo/stat
 
 const INTER_BASE = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/inter/static';
 
+const NOTO_ARABIC_BASE =
+  'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosansarabic/static';
+
 export function ensureFontsRegistered(): void {
   if (registered) return;
   registered = true;
@@ -39,6 +42,7 @@ export function ensureFontsRegistered(): void {
 
   // Inter — English-only fallback / classic template body. Used for the
   // Minimalist template which targets English-language tech roles.
+  // Inter also covers Cyrillic for Russian resumes.
   Font.register({
     family: 'Inter',
     fonts: [
@@ -46,6 +50,17 @@ export function ensureFontsRegistered(): void {
       { src: `${INTER_BASE}/Inter-Medium.ttf`, fontWeight: 500 },
       { src: `${INTER_BASE}/Inter-SemiBold.ttf`, fontWeight: 600 },
       { src: `${INTER_BASE}/Inter-Bold.ttf`, fontWeight: 700 },
+    ],
+  });
+
+  // Noto Sans Arabic — Arabic RTL face for ar-locale PDF templates.
+  Font.register({
+    family: 'NotoSansArabic',
+    fonts: [
+      { src: `${NOTO_ARABIC_BASE}/NotoSansArabic-Regular.ttf`, fontWeight: 400 },
+      { src: `${NOTO_ARABIC_BASE}/NotoSansArabic-Medium.ttf`, fontWeight: 500 },
+      { src: `${NOTO_ARABIC_BASE}/NotoSansArabic-SemiBold.ttf`, fontWeight: 600 },
+      { src: `${NOTO_ARABIC_BASE}/NotoSansArabic-Bold.ttf`, fontWeight: 700 },
     ],
   });
 }

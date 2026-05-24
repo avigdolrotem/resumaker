@@ -101,50 +101,72 @@ const styles = StyleSheet.create({
 });
 
 export function MinimalTemplate({ resume }: ResumePdfProps) {
-  const isHebrew = resume.metadata.language === 'he';
+  const lang = resume.metadata.language;
+  const isRtl = lang === 'he' || lang === 'ar';
+  // Pick font: Arabic → NotoSansArabic, Hebrew → Heebo (via pageHe), others → Inter
+  const rtlFontOverride = lang === 'ar' ? { fontFamily: 'NotoSansArabic' } : styles.pageHe;
   // RTL pass parallel to modern.tsx + classic.tsx — react-pdf has no
   // `direction: 'rtl'` cascade, so flex rows + text alignment have to be
-  // mirrored explicitly when Hebrew. Without these flips the experience
-  // header would render with title-left/date-right in Hebrew, which is
-  // visually wrong (Hebrew readers expect dates on the LEFT).
+  // mirrored explicitly when RTL. Without these flips the experience
+  // header would render with title-left/date-right in RTL locales, which is
+  // visually wrong (RTL readers expect dates on the LEFT).
   const pageStyle = {
     ...styles.page,
-    ...(isHebrew ? { ...styles.pageHe, textAlign: 'right' as const } : {}),
+    ...(isRtl ? { ...rtlFontOverride, textAlign: 'right' as const } : {}),
   };
-  const experienceHeaderStyle = isHebrew
+  const experienceHeaderStyle = isRtl
     ? { ...styles.experienceHeader, flexDirection: 'row-reverse' as const }
     : styles.experienceHeader;
-  const highlightRowStyle = isHebrew
+  const highlightRowStyle = isRtl
     ? { ...styles.highlightRow, flexDirection: 'row-reverse' as const }
     : styles.highlightRow;
-  const contactRowStyle = isHebrew
+  const contactRowStyle = isRtl
     ? {
         ...styles.contactRow,
         flexDirection: 'row-reverse' as const,
         justifyContent: 'flex-start' as const,
       }
     : styles.contactRow;
-  const highlightStyle = isHebrew
+  const highlightStyle = isRtl
     ? { ...styles.highlight, textAlign: 'right' as const }
     : styles.highlight;
 
-  const labels = isHebrew
-    ? {
-        summary: 'תקציר',
-        experience: 'ניסיון',
-        education: 'השכלה',
-        skills: 'כישורים',
-        languages: 'שפות',
-        present: 'היום',
-      }
-    : {
-        summary: 'About',
-        experience: 'Experience',
-        education: 'Education',
-        skills: 'Skills',
-        languages: 'Languages',
-        present: 'Present',
-      };
+  const labels =
+    lang === 'he'
+      ? {
+          summary: 'תקציר',
+          experience: 'ניסיון',
+          education: 'השכלה',
+          skills: 'כישורים',
+          languages: 'שפות',
+          present: 'היום',
+        }
+      : lang === 'ar'
+        ? {
+            summary: 'نبذة',
+            experience: 'الخبرة',
+            education: 'التعليم',
+            skills: 'المهارات',
+            languages: 'اللغات',
+            present: 'الآن',
+          }
+        : lang === 'ru'
+          ? {
+              summary: 'О себе',
+              experience: 'Опыт',
+              education: 'Образование',
+              skills: 'Навыки',
+              languages: 'Языки',
+              present: 'настоящее время',
+            }
+          : {
+              summary: 'About',
+              experience: 'Experience',
+              education: 'Education',
+              skills: 'Skills',
+              languages: 'Languages',
+              present: 'Present',
+            };
 
   return (
     <Document>

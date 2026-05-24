@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { Toaster } from 'sonner';
 import { routing, getDirection, type Locale } from '@/i18n/routing';
 import { CookieConsent } from '@/components/cookie-consent';
+import { SWRegister } from '@/components/sw-register';
 import '../globals.css';
 
 const heebo = Heebo({
@@ -15,7 +16,7 @@ const heebo = Heebo({
 });
 
 const inter = Inter({
-  subsets: ['latin'],
+  subsets: ['latin', 'cyrillic'],
   variable: '--font-inter',
   display: 'swap',
 });
@@ -70,12 +71,15 @@ export async function generateMetadata({
       languages: {
         he: '/he',
         en: '/en',
+        ar: '/ar',
+        ru: '/ru',
         'x-default': '/he',
       },
     },
     openGraph: {
       type: 'website',
-      locale: locale === 'he' ? 'he_IL' : 'en_US',
+      locale:
+        locale === 'he' ? 'he_IL' : locale === 'ar' ? 'ar_IL' : locale === 'ru' ? 'ru_IL' : 'en_US',
       url: `${appUrl}/${locale}`,
       title: t('title'),
       description: t('description'),
@@ -133,12 +137,19 @@ export default async function LocaleLayout({
           href="#main"
           className="focus:bg-brand-600 sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-50 focus:rounded-md focus:px-4 focus:py-2 focus:text-white"
         >
-          {locale === 'he' ? 'דלג לתוכן הראשי' : 'Skip to main content'}
+          {locale === 'he'
+            ? 'דלג לתוכן הראשי'
+            : locale === 'ar'
+              ? 'انتقل إلى المحتوى الرئيسي'
+              : locale === 'ru'
+                ? 'Перейти к основному содержимому'
+                : 'Skip to main content'}
         </a>
 
         <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
 
         <CookieConsent locale={locale} />
+        <SWRegister />
 
         <Toaster
           position={dir === 'rtl' ? 'top-left' : 'top-right'}

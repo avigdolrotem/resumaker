@@ -117,37 +117,60 @@ const styles = StyleSheet.create({
 });
 
 export function ClassicTemplate({ resume }: ResumePdfProps) {
-  const isHebrew = resume.metadata.language === 'he';
+  const lang = resume.metadata.language;
+  const isRtl = lang === 'he' || lang === 'ar';
+  const fontFamily = lang === 'ar' ? 'NotoSansArabic' : lang === 'ru' ? 'Inter' : 'Heebo';
   // See modern.tsx for the rationale — react-pdf has no direction cascade,
-  // so we apply textAlign + flexDirection per-element when Hebrew.
-  const pageStyle = isHebrew ? { ...styles.page, textAlign: 'right' as const } : styles.page;
-  const experienceHeaderStyle = isHebrew
+  // so we apply textAlign + flexDirection per-element when RTL.
+  const pageStyle = isRtl
+    ? { ...styles.page, fontFamily, textAlign: 'right' as const }
+    : { ...styles.page, fontFamily };
+  const experienceHeaderStyle = isRtl
     ? { ...styles.experienceHeader, flexDirection: 'row-reverse' as const }
     : styles.experienceHeader;
-  const highlightRowStyle = isHebrew
+  const highlightRowStyle = isRtl
     ? { ...styles.highlightRow, flexDirection: 'row-reverse' as const }
     : styles.highlightRow;
-  const highlightStyle = isHebrew
+  const highlightStyle = isRtl
     ? { ...styles.highlight, paddingLeft: 0, paddingRight: 12 }
     : styles.highlight;
 
-  const labels = isHebrew
-    ? {
-        summary: 'תקציר מקצועי',
-        experience: 'ניסיון תעסוקתי',
-        education: 'השכלה',
-        skills: 'כישורים',
-        languages: 'שפות',
-        present: 'היום',
-      }
-    : {
-        summary: 'Professional Summary',
-        experience: 'Professional Experience',
-        education: 'Education',
-        skills: 'Skills',
-        languages: 'Languages',
-        present: 'Present',
-      };
+  const labels =
+    lang === 'he'
+      ? {
+          summary: 'תקציר מקצועי',
+          experience: 'ניסיון תעסוקתי',
+          education: 'השכלה',
+          skills: 'כישורים',
+          languages: 'שפות',
+          present: 'היום',
+        }
+      : lang === 'ar'
+        ? {
+            summary: 'الملخص المهني',
+            experience: 'الخبرة المهنية',
+            education: 'التعليم',
+            skills: 'المهارات',
+            languages: 'اللغات',
+            present: 'الآن',
+          }
+        : lang === 'ru'
+          ? {
+              summary: 'Профессиональное резюме',
+              experience: 'Опыт работы',
+              education: 'Образование',
+              skills: 'Навыки',
+              languages: 'Языки',
+              present: 'настоящее время',
+            }
+          : {
+              summary: 'Professional Summary',
+              experience: 'Professional Experience',
+              education: 'Education',
+              skills: 'Skills',
+              languages: 'Languages',
+              present: 'Present',
+            };
 
   return (
     <Document>

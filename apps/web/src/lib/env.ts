@@ -116,6 +116,11 @@ const EnvSchema = z.object({
     .transform((v) => v === 'true')
     .default('true'),
 
+  // Web Push (VAPID) — optional. Required for push notification cron.
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().email().optional(),
+
   // Feature flags: currently no flags are gating anything in the app.
   // Add them here (with `default('false')`) once you wire a flag check
   // in the code so the env contract stays meaningful.

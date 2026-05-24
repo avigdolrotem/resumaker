@@ -8,7 +8,7 @@ import { CheckCircle2, Sparkles } from 'lucide-react';
  * Animated resume preview mockup for the landing page hero.
  * Shows a fake resume building up with ATS score ticking from 0 → 92.
  */
-export function ResumeMockup({ locale }: { locale: 'he' | 'en' }) {
+export function ResumeMockup({ locale }: { locale: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: '-100px' });
   const [score, setScore] = useState(0);

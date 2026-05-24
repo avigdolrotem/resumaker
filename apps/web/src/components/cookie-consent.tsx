@@ -25,7 +25,7 @@ import { Link } from '@/i18n/navigation';
 
 const STORAGE_KEY = 'resumaker.cookieConsent';
 
-export function CookieConsent({ locale }: { locale: 'he' | 'en' }) {
+export function CookieConsent({ locale }: { locale: string }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {

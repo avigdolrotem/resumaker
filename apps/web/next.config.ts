@@ -1,10 +1,13 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 import { withSentryConfig } from '@sentry/nextjs';
+import createMDX from '@next/mdx';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+const withMDX = createMDX({});
 
 const nextConfig: NextConfig = {
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
   reactStrictMode: true,
   poweredByHeader: false,
   // Source maps off in production to avoid leaking server-side logic (LLM
@@ -83,7 +86,7 @@ const nextConfig: NextConfig = {
 // isn't set (local + CI without the secret), so this wrapper is safe
 // in every environment. See:
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
-export default withSentryConfig(withNextIntl(nextConfig), {
+export default withSentryConfig(withNextIntl(withMDX(nextConfig)), {
   org: 'resumaker-yc',
   project: 'javascript-nextjs',
 

@@ -507,6 +507,131 @@
     },
     "canceled": "Checkout canceled. Try again whenever you're ready."
   },
+  "hr": {
+    "teams": {
+      "title": "Team",
+      "invite": "Invite member",
+      "inviteEmail": "Email address",
+      "inviteRole": "Role",
+      "inviteSend": "Send invite",
+      "inviteSending": "Sending…",
+      "inviteSent": "Invite sent",
+      "roles": {
+        "owner": "Owner",
+        "recruiter": "Recruiter",
+        "viewer": "Viewer"
+      },
+      "removeMember": "Remove",
+      "cannotKickSelf": "Cannot remove yourself as owner"
+    },
+    "company": {
+      "title": "Companies",
+      "create": "Create company",
+      "manage": "Manage",
+      "empty": "No companies yet. Click \"Create company\" to get started.",
+      "name": "Company name",
+      "slug": "URL slug",
+      "description": "Description",
+      "website": "Website URL",
+      "logo": "Logo URL",
+      "save": "Save changes",
+      "saved": "Saved",
+      "saveFailed": "Save failed",
+      "members": "Team members",
+      "noMembers": "No members yet."
+    },
+    "bulkImport": {
+      "title": "Bulk import jobs",
+      "subtitle": "Upload a CSV with columns: title, company, location, description, remote, seniority, applyUrl",
+      "fileLabel": "CSV file (max 500 rows)",
+      "import": "Import jobs",
+      "importing": "Importing…",
+      "success": "{count} job(s) imported successfully.",
+      "skipped": "Skipped rows:",
+      "error": "Import failed"
+    },
+    "applicants": {
+      "title": "Applicants",
+      "subtitle": "Applicants who opted in to share their profile",
+      "empty": "No opted-in applicants yet.",
+      "name": "Name",
+      "email": "Email",
+      "status": "Status",
+      "appliedAt": "Applied"
+    }
+  },
+  "blog": {
+    "title": "Blog",
+    "subtitle": "Tips, guides, and news for your career in Israel",
+    "readMore": "Read more",
+    "backToBlog": "Back to blog",
+    "noPosts": "No posts yet. Check back soon."
+  },
+  "tools": {
+    "title": "Free Career Tools",
+    "subtitle": "No account required. Instantly useful.",
+    "tryFree": "Try for free",
+    "salaryEstimator": {
+      "title": "Salary Estimator",
+      "description": "Get an AI-powered salary range for any role in the Israeli market.",
+      "fields": {
+        "role": "Job title / role",
+        "rolePlaceholder": "e.g. Senior Backend Engineer",
+        "years": "Years of experience",
+        "location": "Location",
+        "locationPlaceholder": "e.g. Tel Aviv",
+        "industry": "Industry (optional)",
+        "industryPlaceholder": "e.g. Fintech"
+      },
+      "estimate": "Estimate salary",
+      "estimating": "Estimating…",
+      "result": {
+        "title": "Estimated salary range"
+      }
+    },
+    "atsScanner": {
+      "title": "ATS Resume Scanner",
+      "description": "Paste a job description and your resume — see your ATS score and missing keywords instantly.",
+      "noAuthRequired": "No account needed — 10 free scans per hour",
+      "fields": {
+        "jobDescription": "Job description",
+        "jdPlaceholder": "Paste the job posting here…",
+        "resumeText": "Your resume text",
+        "resumePlaceholder": "Paste your resume as plain text here…"
+      },
+      "scan": "Scan resume",
+      "scanning": "Scanning…",
+      "result": {
+        "atsScore": "ATS Match Score",
+        "missingKeywords": "Missing keywords",
+        "matchedKeywords": "Matched keywords"
+      }
+    }
+  },
+  "referral": {
+    "title": "Refer a Friend",
+    "subtitle": "Share Resumaker and earn rewards when your friends subscribe",
+    "yourCode": "Your referral code",
+    "copy": "Copy",
+    "copyLink": "Copy link",
+    "shareEmail": "Share via email",
+    "linkLabel": "Or share this link",
+    "linkCopied": "Link copied!",
+    "stats": {
+      "referred": "Friends referred",
+      "qualified": "Qualified"
+    },
+    "emailSubject": "Try Resumaker — AI resume builder",
+    "emailBody": "Hey! I've been using Resumaker to build ATS-optimized resumes with AI. Try it with my referral link:",
+    "whatsappText": "I've been using Resumaker to build AI-powered resumes. Try it free:",
+    "loading": "Loading your referral info…",
+    "loadFailed": "Could not load referral data."
+  },
+  "pwa": {
+    "offlineTitle": "You are offline",
+    "offlineDescription": "No internet connection. Check your connection and try again.",
+    "retry": "Try again"
+  },
   "coverLetter": {
     "title": "Cover letter",
     "newTitle": "New cover letter",
@@ -527,5 +652,87 @@
     "copied": "Copied",
     "regenerate": "Try another version",
     "empty": "Paste a job description to generate a tailored cover letter."
+  },
+  "admin": {
+    "audit": {
+      "title": "Audit Log",
+      "description": "Search and filter system events",
+      "from": "From",
+      "to": "To",
+      "event": "Event type",
+      "userId": "User ID",
+      "search": "Search",
+      "when": "When",
+      "metadata": "Metadata",
+      "noResults": "No results"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "dau": "Daily Active Users",
+      "dauDescription": "Distinct sign-ins per day (last 30 days)",
+      "mrr": "MRR",
+      "subscribers": "subscribers",
+      "funnel": "Funnel (30d)",
+      "signups": "signups",
+      "firstResume": "first resume",
+      "paid": "paid",
+      "cohort": "Cohort Retention",
+      "cohortDescription": "% of cohort active each week"
+    },
+    "broadcast": {
+      "title": "Broadcast Emails",
+      "compose": "Compose",
+      "composeDescription": "Create a draft broadcast email",
+      "subject": "Subject",
+      "body": "Body",
+      "locale": "Locale",
+      "saveDraft": "Save draft",
+      "saving": "Saving…",
+      "draftSaved": "Draft saved.",
+      "past": "Past broadcasts",
+      "sendNow": "Send now",
+      "sent": "sent",
+      "draft": "draft",
+      "recipients": "Recipients",
+      "noBroadcasts": "No broadcasts yet."
+    },
+    "coupons": {
+      "title": "Coupons",
+      "create": "Create coupon",
+      "code": "Code",
+      "discount": "Discount %",
+      "usageLimit": "Usage limit (optional)",
+      "expiresAt": "Expires at (optional)",
+      "creating": "Creating…",
+      "createCta": "Create coupon",
+      "all": "All coupons",
+      "used": "Used / Limit",
+      "expires": "Expires",
+      "delete": "Delete",
+      "noCoupons": "No coupons yet."
+    },
+    "maintenance": {
+      "title": "Maintenance Mode",
+      "description": "When enabled, visitors see a maintenance page instead of the app.",
+      "settings": "Maintenance settings",
+      "enabled": "Maintenance mode enabled",
+      "message": "Message (shown to visitors)",
+      "scheduledStart": "Scheduled start (optional)",
+      "scheduledEnd": "Scheduled end (optional)",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved!",
+      "live": "Site is live",
+      "on": "Maintenance mode is ON"
+    },
+    "impersonation": {
+      "banner": "Impersonating user",
+      "exit": "Exit impersonation",
+      "exiting": "Exiting…",
+      "start": "Impersonate",
+      "cannotImpersonateAdmin": "Cannot impersonate admin users",
+      "sessionCreated": "Impersonation session created. Reload to switch context.",
+      "exitSuccess": "Impersonation ended."
+    }
   }
 }

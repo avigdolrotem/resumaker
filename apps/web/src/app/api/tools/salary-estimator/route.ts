@@ -1,0 +1,80 @@
+/**
+ * POST /api/tools/salary-estimator
+ *
+ * Public tool — no auth required. Rate-limited 10/hr/IP.
+ * Uses Claude Haiku to estimate salary range.
+ */
+
+import { NextResponse, type NextRequest } from 'next/server';
+import { z } from 'zod';
+import Anthropic from '@anthropic-ai/sdk';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { env } from '@/lib/env';
+
+export const runtime = 'nodejs';
+
+const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+
+const Body = z.object({
+  role: z.string().min(1).max(200),
+  years: z.number().int().min(0).max(50),
+  location: z.string().min(1).max(200),
+  industry: z.string().max(100).optional(),
+});
+
+export async function POST(req: NextRequest): Promise<Response> {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const rl = await checkRateLimit(`tools:salary:${ip}`, 10, 3600);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Try again later.' }, { status: 429 });
+  }
+
+  let body: z.infer<typeof Body>;
+  try {
+    body = Body.parse(await req.json());
+  } catch {
+    return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+  }
+
+  const prompt = `You are a compensation analyst for the Israeli tech market.
+
+Given this job profile, provide a realistic salary range:
+- Role: ${body.role}
+- Years of experience: ${body.years}
+- Location: ${body.location}
+- Industry: ${body.industry ?? 'tech'}
+
+Respond with ONLY a JSON object (no markdown):
+{
+  "min": <number in ILS per month>,
+  "max": <number in ILS per month>,
+  "currency": "₪",
+  "rationale": "<2-3 sentence explanation in the language of the input>"
+}`;
+
+  try {
+    const response = await client.messages.create({
+      model: env.FALLBACK_LLM_MODEL,
+      max_tokens: 256,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const text = response.content.find((b) => b.type === 'text')?.text ?? '{}';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No JSON in response');
+
+    const result = JSON.parse(jsonMatch[0]) as {
+      min: number;
+      max: number;
+      currency: string;
+      rationale: string;
+    };
+
+    return NextResponse.json(result);
+  } catch (err) {
+    return NextResponse.json(
+      { error: 'Failed to estimate salary. Please try again.' },
+      { status: 500 },
+    );
+  }
+}

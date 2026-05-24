@@ -77,30 +77,33 @@ const styles = StyleSheet.create({
 // branding, but the unbranded look reads as indigo→violet, not the old
 // blue-700 (#1d4ed8) from the pre-L4 palette.
 export function ModernTemplate({ resume, accentColor = '#6d28d9' }: ResumePdfProps) {
-  const isHebrew = resume.metadata.language === 'he';
+  const lang = resume.metadata.language;
+  const isRtl = lang === 'he' || lang === 'ar';
+  const fontFamily = lang === 'ar' ? 'NotoSansArabic' : lang === 'he' ? 'Heebo' : 'Inter';
   // RTL adjustments — react-pdf has no `direction: 'rtl'` cascade, so we
-  // mirror flex rows + flip text-align on every text node when Hebrew.
+  // mirror flex rows + flip text-align on every text node when RTL.
   // Without this the dates column lands on the wrong side and section
-  // headers feel left-anchored, which Hebrew readers immediately notice.
+  // headers feel left-anchored, which RTL readers immediately notice.
   const pageStyle = {
     ...styles.page,
-    ...(isHebrew ? { textAlign: 'right' as const } : {}),
+    fontFamily,
+    ...(isRtl ? { textAlign: 'right' as const } : {}),
   };
   const headerStyle = { ...styles.header, borderBottomColor: accentColor };
   const titleStyle = { ...styles.sectionTitle, color: accentColor };
   const skillStyle = { ...styles.skill, color: accentColor };
   const experienceHeaderStyle = {
     ...styles.experienceHeader,
-    ...(isHebrew ? { flexDirection: 'row-reverse' as const } : {}),
+    ...(isRtl ? { flexDirection: 'row-reverse' as const } : {}),
   };
   const highlightRowStyle = {
     ...styles.highlightRow,
-    ...(isHebrew ? { flexDirection: 'row-reverse' as const } : {}),
+    ...(isRtl ? { flexDirection: 'row-reverse' as const } : {}),
   };
-  const highlightStyle = isHebrew
+  const highlightStyle = isRtl
     ? { ...styles.highlight, paddingLeft: 0, paddingRight: 8, textAlign: 'right' as const }
     : styles.highlight;
-  const contactRowStyle = isHebrew
+  const contactRowStyle = isRtl
     ? {
         ...styles.contactRow,
         flexDirection: 'row-reverse' as const,
@@ -125,7 +128,7 @@ export function ModernTemplate({ resume, accentColor = '#6d28d9' }: ResumePdfPro
         {/* Summary */}
         {resume.summary && (
           <View style={styles.section}>
-            <Text style={titleStyle}>{isHebrew ? 'תקציר' : 'Summary'}</Text>
+            <Text style={titleStyle}>{lang === 'he' ? 'תקציר' : lang === 'ar' ? 'الملخص' : lang === 'ru' ? 'Резюме' : 'Summary'}</Text>
             <Text style={styles.summary}>{resume.summary}</Text>
           </View>
         )}
@@ -133,13 +136,13 @@ export function ModernTemplate({ resume, accentColor = '#6d28d9' }: ResumePdfPro
         {/* Experience */}
         {resume.experience.length > 0 && (
           <View style={styles.section}>
-            <Text style={titleStyle}>{isHebrew ? 'ניסיון תעסוקתי' : 'Experience'}</Text>
+            <Text style={titleStyle}>{lang === 'he' ? 'ניסיון תעסוקתי' : lang === 'ar' ? 'الخبرة المهنية' : lang === 'ru' ? 'Опыт работы' : 'Experience'}</Text>
             {resume.experience.map((exp, i) => (
               <View key={i} style={styles.experienceItem} wrap={false}>
                 <View style={experienceHeaderStyle}>
                   <Text style={styles.experienceTitle}>{exp.title}</Text>
                   <Text style={styles.experienceDates}>
-                    {exp.start_date} – {exp.end_date ?? (isHebrew ? 'היום' : 'Present')}
+                    {exp.start_date} – {exp.end_date ?? (lang === 'he' ? 'היום' : lang === 'ar' ? 'الآن' : lang === 'ru' ? 'настоящее время' : 'Present')}
                   </Text>
                 </View>
                 <Text style={styles.experienceCompany}>{exp.company}</Text>
@@ -157,10 +160,10 @@ export function ModernTemplate({ resume, accentColor = '#6d28d9' }: ResumePdfPro
         {/* Skills */}
         {resume.skills.length > 0 && (
           <View style={styles.section}>
-            <Text style={titleStyle}>{isHebrew ? 'מיומנויות' : 'Skills'}</Text>
+            <Text style={titleStyle}>{lang === 'he' ? 'מיומנויות' : lang === 'ar' ? 'المهارات' : lang === 'ru' ? 'Навыки' : 'Skills'}</Text>
             <View
               style={
-                isHebrew
+                isRtl
                   ? {
                       ...styles.skillsContainer,
                       flexDirection: 'row-reverse',
@@ -181,7 +184,7 @@ export function ModernTemplate({ resume, accentColor = '#6d28d9' }: ResumePdfPro
         {/* Education */}
         {resume.education.length > 0 && (
           <View style={styles.section}>
-            <Text style={titleStyle}>{isHebrew ? 'השכלה' : 'Education'}</Text>
+            <Text style={titleStyle}>{lang === 'he' ? 'השכלה' : lang === 'ar' ? 'التعليم' : lang === 'ru' ? 'Образование' : 'Education'}</Text>
             {resume.education.map((edu, i) => (
               <View key={i} style={styles.education}>
                 <Text style={{ fontWeight: 700 }}>{edu.degree}</Text>

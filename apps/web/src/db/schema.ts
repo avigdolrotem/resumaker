@@ -20,6 +20,8 @@ import {
   uuid,
   varchar,
   index,
+  unique,
+  check,
 } from 'drizzle-orm/pg-core';
 
 // ─── BETTER AUTH TABLES ─────────────────────────────────────────────
@@ -445,6 +447,83 @@ export const lsWebhookEvents = pgTable(
   }),
 );
 
+// ─── M5: HR COMPANIES + TEAMS ────────────────────────────────────────
+
+/**
+ * Company profiles created by HR users. Each company has a slug for
+ * the public landing page and an owner (the creating HR user).
+ */
+export const companies = pgTable(
+  'companies',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: varchar('name', { length: 200 }).notNull(),
+    slug: varchar('slug', { length: 80 }).notNull().unique(),
+    logoUrl: text('logo_url'),
+    description: text('description'),
+    websiteUrl: text('website_url'),
+    ownerUserId: text('owner_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    slugIdx: index('companies_slug_idx').on(t.slug),
+    ownerIdx: index('companies_owner_idx').on(t.ownerUserId),
+  }),
+);
+
+/**
+ * Team members of a company. Roles: owner | recruiter | viewer.
+ * UNIQUE (companyId, userId) enforced at DB level.
+ */
+export const companyMembers = pgTable(
+  'company_members',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    companyId: uuid('company_id')
+      .notNull()
+      .references(() => companies.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: varchar('role', { length: 16 }).notNull().default('recruiter'),
+    invitedBy: text('invited_by').references(() => users.id, { onDelete: 'set null' }),
+    invitedAt: timestamp('invited_at', { withTimezone: true }),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    companyUserUnique: unique('company_members_company_user_unique').on(t.companyId, t.userId),
+    companyIdx: index('company_members_company_idx').on(t.companyId),
+    userIdx: index('company_members_user_idx').on(t.userId),
+  }),
+);
+
+/**
+ * Pending company invitations sent to an email. On accept, a
+ * company_members row is created and this row is deleted.
+ */
+export const companyInvites = pgTable(
+  'company_invites',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    companyId: uuid('company_id')
+      .notNull()
+      .references(() => companies.id, { onDelete: 'cascade' }),
+    email: varchar('email', { length: 320 }),
+    token: varchar('token', { length: 64 }).notNull().unique(),
+    role: varchar('role', { length: 16 }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    tokenIdx: index('company_invites_token_idx').on(t.token),
+    companyIdx: index('company_invites_company_idx').on(t.companyId),
+  }),
+);
+
 // ─── JOB HUNT (L5 BETA) ─────────────────────────────────────────────
 
 /**
@@ -476,6 +555,8 @@ export const jobs = pgTable(
     seniority: varchar('seniority', { length: 50 }),
     /** HR-posted jobs: the HR user who owns this row (null otherwise) */
     hrUserId: text('hr_user_id').references(() => users.id, { onDelete: 'set null' }),
+    /** Company that posted this job (null for scraped jobs) */
+    companyId: uuid('company_id').references(() => companies.id, { onDelete: 'set null' }),
     postedAt: timestamp('posted_at', { withTimezone: true }),
     scrapedAt: timestamp('scraped_at', { withTimezone: true }).notNull().defaultNow(),
     rawData: jsonb('raw_data'),
@@ -599,6 +680,182 @@ export const supportTickets = pgTable(
   }),
 );
 
+// ─── M6: ADMIN OPERATIONS ────────────────────────────────────────────
+
+/** Promotional coupon codes. */
+export const coupons = pgTable(
+  'coupons',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    code: varchar('code', { length: 40 }).notNull().unique(),
+    discountPercent: integer('discount_percent').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+    usageLimit: integer('usage_limit'),
+    usageCount: integer('usage_count').notNull().default(0),
+    notes: text('notes'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+  },
+  (t) => ({
+    codeIdx: index('coupons_code_idx').on(t.code),
+    discountCheck: check('coupons_discount_check', sql`${t.discountPercent} BETWEEN 1 AND 100`),
+  }),
+);
+
+/** Records of which user redeemed which coupon. */
+export const couponRedemptions = pgTable(
+  'coupon_redemptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    couponId: uuid('coupon_id')
+      .notNull()
+      .references(() => coupons.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    redeemedAt: timestamp('redeemed_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    uniqueCouponUser: unique('coupon_redemptions_coupon_user_unique').on(t.couponId, t.userId),
+    couponIdx: index('coupon_redemptions_coupon_idx').on(t.couponId),
+    userIdx: index('coupon_redemptions_user_idx').on(t.userId),
+  }),
+);
+
+/** Admin-sent broadcast email records. */
+export const broadcastEmails = pgTable(
+  'broadcast_emails',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    subject: varchar('subject', { length: 200 }).notNull(),
+    body: text('body').notNull(),
+    locale: varchar('locale', { length: 8 }).notNull().default('he'),
+    sentBy: text('sent_by').references(() => users.id, { onDelete: 'set null' }),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+    recipientCount: integer('recipient_count'),
+    status: varchar('status', { length: 16 }).notNull().default('draft'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    statusIdx: index('broadcast_emails_status_idx').on(t.status),
+    createdAtIdx: index('broadcast_emails_created_at_idx').on(t.createdAt.desc()),
+  }),
+);
+
+/** Admin impersonation session audit trail. */
+export const impersonationSessions = pgTable(
+  'impersonation_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    adminUserId: text('admin_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    targetUserId: text('target_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+    endedAt: timestamp('ended_at', { withTimezone: true }),
+    reason: text('reason'),
+  },
+  (t) => ({
+    adminIdx: index('impersonation_admin_idx').on(t.adminUserId),
+    targetIdx: index('impersonation_target_idx').on(t.targetUserId),
+  }),
+);
+
+/** Singleton maintenance-mode state (id always = 1). */
+export const maintenanceMode = pgTable(
+  'maintenance_mode',
+  {
+    id: integer('id').primaryKey().default(1),
+    enabled: boolean('enabled').notNull().default(false),
+    message: text('message'),
+    scheduledStart: timestamp('scheduled_start', { withTimezone: true }),
+    scheduledEnd: timestamp('scheduled_end', { withTimezone: true }),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedBy: text('updated_by').references(() => users.id, { onDelete: 'set null' }),
+  },
+  (t) => ({
+    idCheck: check('maintenance_mode_singleton', sql`${t.id} = 1`),
+  }),
+);
+
+// ─── M8: PWA PUSH SUBSCRIPTIONS ─────────────────────────────────────
+
+/**
+ * Browser Web Push subscriptions. One row per (userId, endpoint) pair.
+ * Endpoint is unique globally — browsers issue one per SW registration.
+ */
+export const pushSubscriptions = pgTable(
+  'push_subscriptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    endpoint: text('endpoint').notNull().unique(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index('push_subscriptions_user_idx').on(t.userId),
+  }),
+);
+
+// ─── M8: REFERRAL PROGRAM ────────────────────────────────────────────
+
+/**
+ * One referral code per user. Auto-created on first /referral visit.
+ * `usageCount` is incremented each time someone signs up with this code.
+ */
+export const referralCodes = pgTable(
+  'referral_codes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    code: varchar('code', { length: 20 }).notNull().unique(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    usageCount: integer('usage_count').notNull().default(0),
+    maxUses: integer('max_uses'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    codeIdx: index('referral_codes_code_idx').on(t.code),
+    ownerIdx: index('referral_codes_owner_idx').on(t.ownerId),
+  }),
+);
+
+/**
+ * One row per referred user. UNIQUE (referredId) ensures a user can
+ * only be referred once. Status pipeline: pending → qualified → rewarded.
+ */
+export const referrals = pgTable(
+  'referrals',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    referrerId: text('referrer_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    referredId: text('referred_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' })
+      .unique(),
+    status: varchar('status', { length: 16 })
+      .notNull()
+      .default('pending')
+      .$type<'pending' | 'qualified' | 'rewarded'>(),
+    qualifiedAt: timestamp('qualified_at', { withTimezone: true }),
+    rewardClaimedAt: timestamp('reward_claimed_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    referrerIdx: index('referrals_referrer_idx').on(t.referrerId),
+    referredIdx: index('referrals_referred_idx').on(t.referredId),
+  }),
+);
+
 // ─── EXPORTS ────────────────────────────────────────────────────────
 
 export const schema = {
@@ -615,6 +872,9 @@ export const schema = {
   subscriptions,
   stripeWebhookEvents,
   lsWebhookEvents,
+  companies,
+  companyMembers,
+  companyInvites,
   jobs,
   userJobs,
   applications,
@@ -622,6 +882,14 @@ export const schema = {
   twoFactors,
   notifications,
   supportTickets,
+  coupons,
+  couponRedemptions,
+  broadcastEmails,
+  impersonationSessions,
+  maintenanceMode,
+  pushSubscriptions,
+  referralCodes,
+  referrals,
 };
 
 export type User = typeof users.$inferSelect;
@@ -642,3 +910,22 @@ export type NewApplication = typeof applications.$inferInsert;
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
 export type SupportTicket = typeof supportTickets.$inferSelect;
+export type Coupon = typeof coupons.$inferSelect;
+export type NewCoupon = typeof coupons.$inferInsert;
+export type CouponRedemption = typeof couponRedemptions.$inferSelect;
+export type BroadcastEmail = typeof broadcastEmails.$inferSelect;
+export type NewBroadcastEmail = typeof broadcastEmails.$inferInsert;
+export type ImpersonationSession = typeof impersonationSessions.$inferSelect;
+export type MaintenanceMode = typeof maintenanceMode.$inferSelect;
+export type Company = typeof companies.$inferSelect;
+export type NewCompany = typeof companies.$inferInsert;
+export type CompanyMember = typeof companyMembers.$inferSelect;
+export type NewCompanyMember = typeof companyMembers.$inferInsert;
+export type CompanyInvite = typeof companyInvites.$inferSelect;
+export type NewCompanyInvite = typeof companyInvites.$inferInsert;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
+export type ReferralCode = typeof referralCodes.$inferSelect;
+export type NewReferralCode = typeof referralCodes.$inferInsert;
+export type Referral = typeof referrals.$inferSelect;
+export type NewReferral = typeof referrals.$inferInsert;
