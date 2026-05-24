@@ -151,6 +151,16 @@
       "failed": "Couldn't import. Try the text option instead."
     }
   },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Nothing yet — we'll ping you when something happens.",
+    "markAllRead": "Mark all read",
+    "bellLabel": "Notifications — {count} unread"
+  },
+  "faq": {
+    "title": "FAQ",
+    "subtitle": "Common questions about Resumaker."
+  },
   "cookies": {
     "title": "Cookie preferences",
     "description": "We use essential cookies for sign-in and theme. Analytics and marketing cookies are optional.",

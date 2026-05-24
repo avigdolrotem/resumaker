@@ -558,6 +558,47 @@ export const applications = pgTable(
   }),
 );
 
+// ─── M9: NOTIFICATIONS + SUPPORT ────────────────────────────────────
+
+/** In-app notifications shown in the header bell dropdown. */
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    type: varchar('type', { length: 48 }).notNull(),
+    title: text('title').notNull(),
+    body: text('body'),
+    link: text('link'),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userUnreadIdx: index('notifications_user_unread_idx').on(t.userId, t.readAt),
+    userCreatedIdx: index('notifications_user_created_idx').on(t.userId, t.createdAt.desc()),
+  }),
+);
+
+/** Support contact form submissions. */
+export const supportTickets = pgTable(
+  'support_tickets',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+    email: varchar('email', { length: 320 }).notNull(),
+    subject: varchar('subject', { length: 200 }).notNull(),
+    body: text('body').notNull(),
+    status: varchar('status', { length: 16 }).notNull().default('open'),
+    repliedAt: timestamp('replied_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    statusCreatedIdx: index('support_tickets_status_created_idx').on(t.status, t.createdAt.desc()),
+  }),
+);
+
 // ─── EXPORTS ────────────────────────────────────────────────────────
 
 export const schema = {
@@ -579,6 +620,8 @@ export const schema = {
   applications,
   emailChangeRequests,
   twoFactors,
+  notifications,
+  supportTickets,
 };
 
 export type User = typeof users.$inferSelect;
@@ -596,3 +639,6 @@ export type NewJob = typeof jobs.$inferInsert;
 export type UserJob = typeof userJobs.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 export type NewApplication = typeof applications.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;
+export type SupportTicket = typeof supportTickets.$inferSelect;

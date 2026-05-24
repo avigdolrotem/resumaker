@@ -71,6 +71,13 @@
       "when": 1748044800000,
       "tag": "0009_add_two_factor",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1779641800000,
+      "tag": "0010_notifications_support",
+      "breakpoints": true
     }
   ]
 }
