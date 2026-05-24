@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { auditEvent } from '@/lib/audit';
-import { requireActiveUser } from '@/lib/auth-guards';
+import { requireFreshSession } from '@/lib/auth-guards';
 
 const BodySchema = z.object({
   currentPassword: z.string().min(1),
@@ -22,7 +22,13 @@ const BodySchema = z.object({
 });
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const guard = await requireActiveUser(await headers());
+  // Fresh-session gate even though Better Auth verifies currentPassword:
+  // defense-in-depth against credential stuffing. If an attacker has the
+  // user's password from another breach AND a stolen cookie, they can
+  // rotate the password without ever re-authenticating. The 15-min
+  // freshness gate forces them through Better Auth's sign-in flow first,
+  // which is rate-limited (5/min) and gets the user a sign-in audit row.
+  const guard = await requireFreshSession(await headers(), 15 * 60);
   if (guard instanceof NextResponse) return guard;
 
   let body: z.infer<typeof BodySchema>;

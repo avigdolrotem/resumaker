@@ -10,6 +10,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { headers } from 'next/headers';
+import { and, eq, inArray } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { auditEvent } from '@/lib/audit';
@@ -85,6 +86,36 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   if (validRows.length === 0) {
     return NextResponse.json({ imported: 0, errors }, { status: 422 });
+  }
+
+  // SECURITY: validate every companyId in the CSV actually belongs to a
+  // company this HR user is a member of (or admin). Without this, anyone
+  // with role=hr can attach their bulk-imported jobs to ANY company's
+  // companyId — attribution-jacking ("Apple is hiring", says random HR).
+  const companyIds = Array.from(
+    new Set(
+      validRows.map((r) => r.companyId).filter((v): v is string => Boolean(v) && v !== 'null'),
+    ),
+  );
+  if (companyIds.length > 0 && guard.user.role !== 'admin') {
+    const memberships = await db.query.companyMembers.findMany({
+      where: and(
+        eq(schema.companyMembers.userId, guard.user.id),
+        inArray(schema.companyMembers.companyId, companyIds),
+      ),
+      columns: { companyId: true },
+    });
+    const allowedSet = new Set(memberships.map((m) => m.companyId));
+    const bad = companyIds.filter((c) => !allowedSet.has(c));
+    if (bad.length > 0) {
+      return NextResponse.json(
+        {
+          error: 'CSV references companies you are not a member of',
+          unauthorizedCompanyIds: bad,
+        },
+        { status: 403 },
+      );
+    }
   }
 
   const now = Date.now();

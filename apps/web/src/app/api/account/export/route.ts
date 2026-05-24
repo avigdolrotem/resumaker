@@ -27,19 +27,22 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { eq, desc, inArray } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
+import { requireFreshSession } from '@/lib/auth-guards';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // Fresh-session gate (15 min). The export is the single most sensitive
+  // payload we ever return to a client — full PII, all resumes, OAuth
+  // links, 1000 audit events. A stolen 14-day cookie used to be able to
+  // dump everything; now the attacker also needs the current password
+  // (re-auth within 15 min).
+  const guard = await requireFreshSession(await headers(), 15 * 60);
+  if (guard instanceof NextResponse) return guard;
 
-  const userId = session.user.id;
+  const userId = guard.user.id;
 
   // First wave — everything keyed directly on userId.
   const [user, subscription, resumes, coverLetters, generations, accounts, sessions, auditEvents] =

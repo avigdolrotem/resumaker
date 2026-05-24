@@ -10,7 +10,7 @@ import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
-import { requireAdmin } from '@/lib/auth-guards';
+import { requireAdmin, requireFreshSession } from '@/lib/auth-guards';
 
 const BodySchema = z.object({
   // `hr` is wired in L6: HR users post their own jobs and see only their
@@ -23,7 +23,12 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  const guard = await requireAdmin(await headers());
+  const h = await headers();
+  // Admin role grants — re-auth gate so a stolen admin cookie can't
+  // silently elevate another user or suspend a real admin.
+  const fresh = await requireFreshSession(h, 15 * 60);
+  if (fresh instanceof NextResponse) return fresh;
+  const guard = await requireAdmin(h);
   if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;

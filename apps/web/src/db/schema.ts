@@ -312,7 +312,15 @@ export const resumeVersions = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
-    resumeIdx: index('resume_versions_resume_idx').on(t.resumeId, t.versionNumber),
+    // UNIQUE rather than plain index: the version-bump logic in
+    // /api/resumes/[id] PATCH does SELECT MAX(versionNumber)+1 → INSERT.
+    // Without a unique constraint, two concurrent PATCHes can both pick
+    // the same versionNumber. The constraint turns the race into a
+    // retry-able conflict instead of silent duplicate rows.
+    resumeVersionUnique: unique('resume_versions_resume_version_unique').on(
+      t.resumeId,
+      t.versionNumber,
+    ),
   }),
 );
 
@@ -562,7 +570,11 @@ export const jobs = pgTable(
     rawData: jsonb('raw_data'),
   },
   (t) => ({
-    urlNormIdx: index('jobs_url_norm_idx').on(t.urlNormalized),
+    // UNIQUE so the cron's onConflictDoNothing({target: urlNormalized})
+    // actually has a constraint to conflict on. Previously a plain index
+    // meant every duplicate threw, fell into the inner catch, and was
+    // miscounted as "deduped" — masking real failures from new scrapers.
+    urlNormUnique: unique('jobs_url_norm_unique').on(t.urlNormalized),
     sourceCompanyIdx: index('jobs_source_company_idx').on(t.source, t.companySlug),
     scrapedAtIdx: index('jobs_scraped_at_idx').on(t.scrapedAt.desc()),
     hrUserIdx: index('jobs_hr_user_idx').on(t.hrUserId),
@@ -593,7 +605,11 @@ export const userJobs = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
-    userJobIdx: index('user_jobs_user_job_idx').on(t.userId, t.jobId),
+    // UNIQUE: one row per (user, job). The comment says "A row is
+    // upserted when the user first interacts" — without unique, a
+    // concurrent favorite-toggle creates a second row and the upsert
+    // pattern silently drifts to a SELECT-and-pick-first.
+    userJobUnique: unique('user_jobs_user_job_unique').on(t.userId, t.jobId),
   }),
 );
 
@@ -633,6 +649,10 @@ export const applications = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
+    // UNIQUE: one application per (user, job). Without this, a user
+    // can accidentally double-click "Apply" and create two pipeline
+    // rows for the same job, then have ambiguous state.
+    userJobUnique: unique('applications_user_job_unique').on(t.userId, t.jobId),
     userUpdatedIdx: index('applications_user_updated_idx').on(t.userId, t.updatedAt.desc()),
     jobIdx: index('applications_job_idx').on(t.jobId),
     statusIdx: index('applications_status_idx').on(t.status),
