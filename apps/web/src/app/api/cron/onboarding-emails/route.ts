@@ -24,6 +24,7 @@ import { and, eq, gte, isNull, lt, sql, isNotNull } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { env } from '@/lib/env';
 import { sendEmail } from '@/lib/email/client';
+import { escapeHtml } from '@/lib/email/templates';
 import { logger } from '@/lib/observability';
 
 function unauthorized() {
@@ -58,7 +59,11 @@ interface EmailPayload {
 }
 
 function emailForDay(dayTag: string, locale: string, name: string | null): EmailPayload {
-  const first = name?.split(' ')[0] ?? '';
+  // user.name is user-controlled. Anything that lands in `${first}` could
+  // include <script>...</script> or HTML attribute breakouts and self-XSS
+  // (or worse, if the same template gets re-rendered server-side in a
+  // future admin "preview drip" tool). Escape before interpolating.
+  const first = escapeHtml(name?.split(' ')[0] ?? '');
   if (locale === 'he') {
     if (dayTag === 'day1')
       return {

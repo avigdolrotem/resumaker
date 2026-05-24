@@ -12,6 +12,8 @@ import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
 import { requireAdmin } from '@/lib/auth-guards';
 import { sendEmail } from '@/lib/email/client';
+import { escapeHtml } from '@/lib/email/templates';
+import { logger } from '@/lib/observability';
 
 const CreateSchema = z.object({
   subject: z.string().min(1).max(200),
@@ -67,15 +69,30 @@ export async function POST(req: NextRequest): Promise<Response> {
     });
     const recipients = users.filter((u) => u.locale === broadcast.locale);
 
+    // Admin-authored body is escaped so a compromised admin account
+    // can't push raw <script> tags into every opted-in user's inbox.
+    // Newlines preserved as <br> so the body still renders as prose;
+    // anything beyond that needs a real WYSIWYG editor + DOMPurify.
+    const escapedBody = escapeHtml(broadcast.body).replace(/\n/g, '<br>');
+
     let sent = 0;
+    const failures: Array<{ userId: string; error: string }> = [];
     for (const user of recipients) {
       const result = await sendEmail({
         to: user.email,
         subject: broadcast.subject,
-        html: `<div>${broadcast.body}</div>`,
+        html: `<div>${escapedBody}</div>`,
         text: broadcast.body,
       });
       if (result.ok) sent++;
+      else failures.push({ userId: user.id, error: result.error ?? 'send_failed' });
+    }
+
+    if (failures.length > 0) {
+      logger.error(
+        { broadcastId: body.id, total: recipients.length, sent, failed: failures.length, failures },
+        'admin.broadcast.partial_failures',
+      );
     }
 
     await db
@@ -91,10 +108,19 @@ export async function POST(req: NextRequest): Promise<Response> {
     auditEvent({
       userId: guard.user.id,
       event: 'admin_action',
-      metadata: { kind: 'broadcast_sent', broadcastId: body.id, recipientCount: sent },
+      metadata: {
+        kind: 'broadcast_sent',
+        broadcastId: body.id,
+        recipientCount: sent,
+        failedCount: failures.length,
+      },
     });
 
-    return NextResponse.json({ success: true, recipientCount: sent });
+    return NextResponse.json({
+      success: failures.length === 0,
+      recipientCount: sent,
+      failedCount: failures.length,
+    });
   }
 
   let body: z.infer<typeof CreateSchema>;

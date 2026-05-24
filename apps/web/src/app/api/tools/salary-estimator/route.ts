@@ -8,8 +8,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
+import { sanitizeInput } from '@resumaker/ai-safety';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { extractClientIp } from '@/lib/ip';
 import { env } from '@/lib/env';
+import { logger } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 
@@ -23,7 +26,7 @@ const Body = z.object({
 });
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const ip = extractClientIp(req);
   const rl = await checkRateLimit(`tools:salary:${ip}`, 10, 3600);
   if (!rl.allowed) {
     return NextResponse.json({ error: 'Rate limit exceeded. Try again later.' }, { status: 429 });
@@ -36,13 +39,26 @@ export async function POST(req: NextRequest): Promise<Response> {
     return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
   }
 
+  // Sanitize the free-text fields so an attacker can't inject prompt
+  // tags into the Claude request. `years` is a number so it's safe.
+  const sanitizedRole = sanitizeInput(body.role);
+  const sanitizedLocation = sanitizeInput(body.location);
+  const sanitizedIndustry = body.industry ? sanitizeInput(body.industry) : null;
+  if (
+    sanitizedRole.rejected ||
+    sanitizedLocation.rejected ||
+    (sanitizedIndustry && sanitizedIndustry.rejected)
+  ) {
+    return NextResponse.json({ error: 'Input contains suspicious content.' }, { status: 400 });
+  }
+
   const prompt = `You are a compensation analyst for the Israeli tech market.
 
 Given this job profile, provide a realistic salary range:
-- Role: ${body.role}
+- Role: ${sanitizedRole.cleaned}
 - Years of experience: ${body.years}
-- Location: ${body.location}
-- Industry: ${body.industry ?? 'tech'}
+- Location: ${sanitizedLocation.cleaned}
+- Industry: ${sanitizedIndustry?.cleaned ?? 'tech'}
 
 Respond with ONLY a JSON object (no markdown):
 {
@@ -72,6 +88,7 @@ Respond with ONLY a JSON object (no markdown):
 
     return NextResponse.json(result);
   } catch (err) {
+    logger.error({ err: (err as Error).message, ip }, 'tools.salary_estimator.failed');
     return NextResponse.json(
       { error: 'Failed to estimate salary. Please try again.' },
       { status: 500 },
