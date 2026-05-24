@@ -3,12 +3,14 @@ import { defineRouting } from 'next-intl/routing';
 export const routing = defineRouting({
   /**
    * Supported locales
-   * - `he`: Hebrew (RTL, primary)
+   * - `he`: Hebrew (RTL, primary, default)
    * - `en`: English (LTR, secondary)
-   * - `ar`: Arabic (RTL)
-   * - `ru`: Russian (LTR)
+   *
+   * Arabic and Russian were stubbed at V7 but never professionally
+   * audited and were never in the launch plan. They were removed so we
+   * don't ship machine-translated UI as a polished product.
    */
-  locales: ['he', 'en', 'ar', 'ru'] as const,
+  locales: ['he', 'en'] as const,
   defaultLocale: 'he',
 
   /**
@@ -24,5 +26,5 @@ export type Locale = (typeof routing.locales)[number];
  * Get reading direction for a locale.
  */
 export function getDirection(locale: Locale): 'rtl' | 'ltr' {
-  return locale === 'he' || locale === 'ar' ? 'rtl' : 'ltr';
+  return locale === 'he' ? 'rtl' : 'ltr';
 }

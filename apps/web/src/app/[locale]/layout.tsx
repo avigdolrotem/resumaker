@@ -49,6 +49,8 @@ export async function generateMetadata({
       locale === 'he'
         ? ['קורות חיים', 'AI', 'בינה מלאכותית', 'עבודה', 'הייטק', 'ATS', 'מותאם אישית', 'ישראל']
         : ['resume', 'CV', 'AI', 'ATS', 'job application', 'cover letter', 'Israel', 'Hebrew'],
+    // Future: re-add ar/ru locales when translations are professionally
+    // audited (current translations are LLM-generated stubs).
     formatDetection: {
       email: false,
       address: false,
@@ -71,15 +73,12 @@ export async function generateMetadata({
       languages: {
         he: '/he',
         en: '/en',
-        ar: '/ar',
-        ru: '/ru',
         'x-default': '/he',
       },
     },
     openGraph: {
       type: 'website',
-      locale:
-        locale === 'he' ? 'he_IL' : locale === 'ar' ? 'ar_IL' : locale === 'ru' ? 'ru_IL' : 'en_US',
+      locale: locale === 'he' ? 'he_IL' : 'en_US',
       url: `${appUrl}/${locale}`,
       title: t('title'),
       description: t('description'),
@@ -138,16 +137,21 @@ export default async function LocaleLayout({
           href="#main"
           className="focus:bg-brand-600 sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-50 focus:rounded-md focus:px-4 focus:py-2 focus:text-white"
         >
-          {locale === 'he'
-            ? 'דלג לתוכן הראשי'
-            : locale === 'ar'
-              ? 'انتقل إلى المحتوى الرئيسي'
-              : locale === 'ru'
-                ? 'Перейти к основному содержимому'
-                : 'Skip to main content'}
+          {locale === 'he' ? 'דלג לתוכן הראשי' : 'Skip to main content'}
         </a>
 
-        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        {/*
+          `locale` is REQUIRED in next-intl v4 — without it, the provider
+          throws `new Error(undefined)` on client hydration. That throw
+          produces an Error whose `.message` is "" which surfaces as
+          literally "Error" in stack traces and triggers Next.js's
+          built-in global-error UI ("This page couldn't load"). Easy to
+          miss because SSR works fine (server picks locale from request
+          context via setRequestLocale).
+        */}
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          {children}
+        </NextIntlClientProvider>
 
         <CookieConsent locale={locale} />
         <SWRegister />
