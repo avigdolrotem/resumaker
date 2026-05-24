@@ -21,9 +21,9 @@ interface AdminUser {
  */
 export function AdminUserSearch({ users }: { users: AdminUser[] }) {
   const [query, setQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'user' | 'admin' | 'support' | 'suspended'>(
-    'all',
-  );
+  const [roleFilter, setRoleFilter] = useState<
+    'all' | 'user' | 'admin' | 'support' | 'suspended' | 'hr'
+  >('all');
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -72,6 +72,7 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
           <option value="admin">admin</option>
           <option value="support">support</option>
           <option value="suspended">suspended</option>
+          <option value="hr">hr</option>
         </select>
         <span className="text-sm text-neutral-500">
           {filtered.length} / {users.length}

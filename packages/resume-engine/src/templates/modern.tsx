@@ -74,17 +74,43 @@ const styles = StyleSheet.create({
 
 export function ModernTemplate({ resume, accentColor = '#1d4ed8' }: ResumePdfProps) {
   const isHebrew = resume.metadata.language === 'he';
+  // RTL adjustments — react-pdf has no `direction: 'rtl'` cascade, so we
+  // mirror flex rows + flip text-align on every text node when Hebrew.
+  // Without this the dates column lands on the wrong side and section
+  // headers feel left-anchored, which Hebrew readers immediately notice.
+  const pageStyle = {
+    ...styles.page,
+    ...(isHebrew ? { textAlign: 'right' as const } : {}),
+  };
   const headerStyle = { ...styles.header, borderBottomColor: accentColor };
   const titleStyle = { ...styles.sectionTitle, color: accentColor };
   const skillStyle = { ...styles.skill, color: accentColor };
+  const experienceHeaderStyle = {
+    ...styles.experienceHeader,
+    ...(isHebrew ? { flexDirection: 'row-reverse' as const } : {}),
+  };
+  const highlightRowStyle = {
+    ...styles.highlightRow,
+    ...(isHebrew ? { flexDirection: 'row-reverse' as const } : {}),
+  };
+  const highlightStyle = isHebrew
+    ? { ...styles.highlight, paddingLeft: 0, paddingRight: 8, textAlign: 'right' as const }
+    : styles.highlight;
+  const contactRowStyle = isHebrew
+    ? {
+        ...styles.contactRow,
+        flexDirection: 'row-reverse' as const,
+        justifyContent: 'flex-start' as const,
+      }
+    : styles.contactRow;
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={pageStyle}>
         {/* Header */}
         <View style={headerStyle}>
           <Text style={styles.name}>{resume.contact.name}</Text>
-          <View style={styles.contactRow}>
+          <View style={contactRowStyle}>
             {resume.contact.email && <Text>{resume.contact.email}</Text>}
             {resume.contact.phone && <Text>{resume.contact.phone}</Text>}
             {resume.contact.location && <Text>{resume.contact.location}</Text>}
@@ -106,7 +132,7 @@ export function ModernTemplate({ resume, accentColor = '#1d4ed8' }: ResumePdfPro
             <Text style={titleStyle}>{isHebrew ? 'ניסיון תעסוקתי' : 'Experience'}</Text>
             {resume.experience.map((exp, i) => (
               <View key={i} style={styles.experienceItem} wrap={false}>
-                <View style={styles.experienceHeader}>
+                <View style={experienceHeaderStyle}>
                   <Text style={styles.experienceTitle}>{exp.title}</Text>
                   <Text style={styles.experienceDates}>
                     {exp.start_date} – {exp.end_date ?? (isHebrew ? 'היום' : 'Present')}
@@ -114,9 +140,9 @@ export function ModernTemplate({ resume, accentColor = '#1d4ed8' }: ResumePdfPro
                 </View>
                 <Text style={styles.experienceCompany}>{exp.company}</Text>
                 {exp.highlights?.map((h, j) => (
-                  <View key={j} style={styles.highlightRow}>
+                  <View key={j} style={highlightRowStyle}>
                     <Text style={styles.bullet}>•</Text>
-                    <Text style={styles.highlight}>{h}</Text>
+                    <Text style={highlightStyle}>{h}</Text>
                   </View>
                 ))}
               </View>
@@ -128,7 +154,17 @@ export function ModernTemplate({ resume, accentColor = '#1d4ed8' }: ResumePdfPro
         {resume.skills.length > 0 && (
           <View style={styles.section}>
             <Text style={titleStyle}>{isHebrew ? 'מיומנויות' : 'Skills'}</Text>
-            <View style={styles.skillsContainer}>
+            <View
+              style={
+                isHebrew
+                  ? {
+                      ...styles.skillsContainer,
+                      flexDirection: 'row-reverse',
+                      justifyContent: 'flex-start',
+                    }
+                  : styles.skillsContainer
+              }
+            >
               {resume.skills.map((s, i) => (
                 <Text key={i} style={skillStyle}>
                   {s}

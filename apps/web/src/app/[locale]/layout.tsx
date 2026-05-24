@@ -53,11 +53,16 @@ export async function generateMetadata({
       address: false,
       telephone: false,
     },
-    // Only icon.svg exists today. Add favicon.ico + apple-touch-icon.png
-    // to apps/web/public/ when a real logo is designed, then add them
-    // back to the icons array.
+    // Multi-format favicon set. SVG for modern browsers (Chrome, FF,
+    // Safari 16+); PNGs as fallback + for the iOS home screen +
+    // Android PWA install.
     icons: {
-      icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+      icon: [
+        { url: '/icon.svg', type: 'image/svg+xml' },
+        { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+        { url: '/favicon-512.png', type: 'image/png', sizes: '512x512' },
+      ],
+      apple: '/apple-touch-icon.png',
     },
     manifest: '/site.webmanifest',
     alternates: {
@@ -75,14 +80,20 @@ export async function generateMetadata({
       title: t('title'),
       description: t('description'),
       siteName: 'Resumaker',
-      // og-image.png intentionally omitted until a designed image lands
-      // in apps/web/public/. Twitter / OG previews will fall back to the
-      // page title + description — fine for soft launch.
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: 'Resumaker — AI-powered resume builder',
+        },
+      ],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title: t('title'),
       description: t('description'),
+      images: ['/og-image.png'],
     },
     robots: {
       index: true,

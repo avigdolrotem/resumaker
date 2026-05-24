@@ -118,6 +118,19 @@ const styles = StyleSheet.create({
 
 export function ClassicTemplate({ resume }: ResumePdfProps) {
   const isHebrew = resume.metadata.language === 'he';
+  // See modern.tsx for the rationale — react-pdf has no direction cascade,
+  // so we apply textAlign + flexDirection per-element when Hebrew.
+  const pageStyle = isHebrew ? { ...styles.page, textAlign: 'right' as const } : styles.page;
+  const experienceHeaderStyle = isHebrew
+    ? { ...styles.experienceHeader, flexDirection: 'row-reverse' as const }
+    : styles.experienceHeader;
+  const highlightRowStyle = isHebrew
+    ? { ...styles.highlightRow, flexDirection: 'row-reverse' as const }
+    : styles.highlightRow;
+  const highlightStyle = isHebrew
+    ? { ...styles.highlight, paddingLeft: 0, paddingRight: 12 }
+    : styles.highlight;
+
   const labels = isHebrew
     ? {
         summary: 'תקציר מקצועי',
@@ -138,7 +151,7 @@ export function ClassicTemplate({ resume }: ResumePdfProps) {
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      <Page size="A4" style={pageStyle}>
         {/* Header — centered, traditional */}
         <View style={styles.header}>
           <Text style={styles.name}>{resume.contact.name}</Text>
@@ -164,7 +177,7 @@ export function ClassicTemplate({ resume }: ResumePdfProps) {
             <Text style={styles.sectionTitle}>{labels.experience}</Text>
             {resume.experience.map((exp, i) => (
               <View key={i} style={styles.experienceItem} wrap={false}>
-                <View style={styles.experienceHeader}>
+                <View style={experienceHeaderStyle}>
                   <Text style={styles.experienceTitle}>{exp.title}</Text>
                   <Text style={styles.experienceDates}>
                     {exp.start_date} – {exp.end_date ?? labels.present}
@@ -172,9 +185,9 @@ export function ClassicTemplate({ resume }: ResumePdfProps) {
                 </View>
                 <Text style={styles.experienceCompany}>{exp.company}</Text>
                 {exp.highlights?.map((h, j) => (
-                  <View key={j} style={styles.highlightRow}>
+                  <View key={j} style={highlightRowStyle}>
                     <Text style={styles.bullet}>•</Text>
-                    <Text style={styles.highlight}>{h}</Text>
+                    <Text style={highlightStyle}>{h}</Text>
                   </View>
                 ))}
               </View>
@@ -188,7 +201,7 @@ export function ClassicTemplate({ resume }: ResumePdfProps) {
             <Text style={styles.sectionTitle}>{labels.education}</Text>
             {resume.education.map((edu, i) => (
               <View key={i} style={styles.educationItem} wrap={false}>
-                <View style={styles.experienceHeader}>
+                <View style={experienceHeaderStyle}>
                   <Text style={styles.educationDegree}>{edu.degree}</Text>
                   <Text style={styles.educationDates}>
                     {edu.start_date} – {edu.end_date ?? labels.present}

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
-type Role = 'user' | 'admin' | 'support' | 'suspended';
+type Role = 'user' | 'admin' | 'support' | 'suspended' | 'hr';
 
 /**
  * Inline role selector for the admin users table.
@@ -45,6 +45,7 @@ export function AdminRoleSelect({ userId, currentRole }: { userId: string; curre
     support: 'bg-blue-100 text-blue-700',
     user: 'bg-neutral-100 text-neutral-700',
     suspended: 'bg-red-100 text-red-700',
+    hr: 'bg-emerald-100 text-emerald-700',
   };
 
   return (
@@ -59,6 +60,7 @@ export function AdminRoleSelect({ userId, currentRole }: { userId: string; curre
         <option value="admin">admin</option>
         <option value="support">support</option>
         <option value="suspended">suspended</option>
+        <option value="hr">hr (reserved)</option>
       </select>
       {pending && <Loader2 className="h-3 w-3 animate-spin text-neutral-400" />}
     </div>

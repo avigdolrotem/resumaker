@@ -64,6 +64,27 @@
       "noAccount": "Don't have an account?",
       "forgotPassword": "Forgot password?"
     },
+    "forgot": {
+      "title": "Reset your password",
+      "subtitle": "We'll email you a reset link",
+      "cta": "Send reset link",
+      "sentTitle": "Check your email",
+      "sentSubtitle": "If an account exists, a reset link will arrive in a few minutes.",
+      "checkEmail": "Don't see the email? Check your spam folder.",
+      "backToSignIn": "← Back to sign in"
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "subtitle": "Your new password replaces the old one immediately.",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "cta": "Reset password",
+      "noToken": "Reset link is invalid or expired. Request a new one.",
+      "mismatch": "Passwords don't match",
+      "successTitle": "Password reset",
+      "successSubtitle": "You can now sign in with your new password",
+      "goToSignIn": "Sign in →"
+    },
     "errors": {
       "generic": "Something went wrong. Please try again.",
       "passwordTooShort": "Password must be at least 12 characters.",
