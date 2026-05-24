@@ -249,6 +249,3 @@ export function Security2FACard({ initialEnabled = false }: Security2FACardProps
     </Card>
   );
 }
-
-/** Alias for the settings page import which uses camelCase 'fa'. */
-export { Security2FACard as Security2faCard };

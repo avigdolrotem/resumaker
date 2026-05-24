@@ -1,13 +1,15 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 import { withSentryConfig } from '@sentry/nextjs';
-import createMDX from '@next/mdx';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
-const withMDX = createMDX({});
 
 const nextConfig: NextConfig = {
-  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
+  // Standard Next page extensions only. The blog uses .mdx files but
+  // processes them via gray-matter + react-markdown at runtime — not as
+  // Next pages — so @next/mdx is not needed and was pulling deadweight
+  // into the bundle.
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   reactStrictMode: true,
   poweredByHeader: false,
   // Source maps off in production to avoid leaking server-side logic (LLM
@@ -86,7 +88,7 @@ const nextConfig: NextConfig = {
 // isn't set (local + CI without the secret), so this wrapper is safe
 // in every environment. See:
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
-export default withSentryConfig(withNextIntl(withMDX(nextConfig)), {
+export default withSentryConfig(withNextIntl(nextConfig), {
   org: 'resumaker-yc',
   project: 'javascript-nextjs',
 

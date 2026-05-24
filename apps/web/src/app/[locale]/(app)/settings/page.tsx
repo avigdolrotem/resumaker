@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSession, signOut } from '@/lib/auth-client';
 import { useRouter, Link } from '@/i18n/navigation';
-import { Security2faCard } from '@/components/security-2fa-card';
+import { Security2FACard } from '@/components/security-2fa-card';
 
 type Tab = 'profile' | 'security' | 'sessions' | 'notifications' | 'appearance' | 'data' | 'danger';
 
@@ -210,7 +210,7 @@ function SecurityTab() {
         </CardContent>
       </Card>
 
-      <Security2faCard />
+      <Security2FACard />
 
       <Card>
         <CardHeader>
