@@ -2,6 +2,52 @@
 
 > Run through this top-to-bottom before pushing to production for the first time.
 
+## 🟢 Completeness sweep (L1–L7) landed 2026-05-24
+
+Tag: pre-launch readiness pass per
+`docs/superpowers/specs/2026-05-24-completeness-design.md`.
+
+- [x] **L1 — Security CRITICAL+HIGH**: OAuth account-linking allowlist,
+      suspended-role re-login block, session IP HMAC, GDPR export now
+      complete (6 missing tables added), 14d absolute session lifetime + `requireFreshSession` on destructive routes, `targetEmail`
+      purged from audit metadata, `requireAdmin()` helper + per-page
+      checks, env-validation for `NEXT_PUBLIC_APP_URL` +
+      `RATE_LIMIT_PER_USER_PER_HOUR`.
+- [x] **L2 — Core flow bugs**: resume edit/delete UI (hover menu +
+      two-stage confirm), `/builder?id=` actually loads + PATCHes,
+      cover-letter sends real userProfile, TemplatePicker with tier
+      locks, ATS scoring fires on URL submissions, profile locale
+      initialises from session, version-history retention enforced
+      (7/90/∞ for free/plus/pro), pricing teaser reads `checkoutReady`,
+      paid-welcome email on first LS subscription_created, payment
+      validator section in pre-flight script.
+- [x] **L3 — Hebrew/RTL finishing**: settings + profile pages wired to
+      `useTranslations`, error boundary + not-found pages translated,
+      `minimal.tsx` PDF template RTL-flipped (matches modern + classic).
+- [x] **L4 — Theme refresh**: indigo→violet @theme block (hue 252),
+      slate neutrals, brand-_+ accent-_ token ramps, logo/icons
+      regenerated, email BRAND constants updated, marketing pages
+      migrated off `from-blue-*`/`to-cyan-*` literals.
+- [x] **L5 — Job-hunt beta**: schema (`jobs`, `user_jobs`,
+      `applications`, `users.feature_flags`), `@resumaker/job-engine`
+      package (sources: greenhouse/lever/workable/ashby; importer +
+      fit-score via Claude haiku), API routes (list/import/detail/
+      favorite/fit + applications CRUD), UI pages (/jobs, /jobs/paste,
+      /jobs/[id], /applications), `requireJobHuntBeta*` gates default
+      to 404/redirect.
+- [x] **L6 — HR role + admin polish**: /hr/jobs + /hr/jobs/new (HR
+      sees only their own posted jobs), admin user-detail shows
+      subscription tile + per-user feature-flag toggle, users table
+      rows clickable, PATCH /api/admin/users/[id]/flags route.
+- [x] **L7 — Verification**: full monorepo typecheck clean, 76 tests
+      passing (15 web + 48 ai-safety + 13 ats-scorer), this PRE_LAUNCH
+      updated, ready for Vercel preview per
+      `docs/runbooks/vercel-preview-deploy.md`.
+
+Deferred to v1.1 (documented in commit messages): admin impersonate,
+resend verification, audit-log search page, cancel-subscription-with-
+upstream-sync, daily scrape cron, AI-prompt-to-paste profile import.
+
 ## ✅ Already Done (no action needed)
 
 - [x] BUSL-1.1 license applied
