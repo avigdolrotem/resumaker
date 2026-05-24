@@ -3,8 +3,13 @@ import { desc, count, sum, gte, sql } from 'drizzle-orm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminUserSearch } from '@/components/admin-user-search';
 import { Users, FileText, Coins, Activity, AlertTriangle } from 'lucide-react';
+import { requireAdminPage } from '@/lib/auth-guards';
 
 export default async function AdminPage() {
+  // Page-level admin gate — defense in depth so a layout refactor can't
+  // quietly leak the queries below.
+  await requireAdminPage();
+
   // ─── Stats ───
   const day = new Date(Date.now() - 24 * 60 * 60 * 1000);
 

@@ -8,29 +8,23 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
+import { requireAdmin } from '@/lib/auth-guards';
 
 const BodySchema = z.object({
-  role: z.enum(['user', 'admin', 'support', 'suspended']),
+  // `hr` is wired in L6: HR users post their own jobs and see only their
+  // own applicants. Accepted here so the role enum stays stable across
+  // migrations even before the HR surface ships.
+  role: z.enum(['user', 'admin', 'support', 'suspended', 'hr']),
 });
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  // Caller must be admin
-  const caller = await db.query.users.findFirst({
-    where: eq(schema.users.id, session.user.id),
-    columns: { role: true },
-  });
-  if (caller?.role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const guard = await requireAdmin(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
 
@@ -45,7 +39,7 @@ export async function POST(
   }
 
   // Don't allow demoting self (avoid lock-out)
-  if (id === session.user.id && body.role !== 'admin') {
+  if (id === guard.user.id && body.role !== 'admin') {
     return NextResponse.json(
       { error: 'Cannot remove your own admin role. Ask another admin.' },
       { status: 400 },
@@ -54,7 +48,7 @@ export async function POST(
 
   const target = await db.query.users.findFirst({
     where: eq(schema.users.id, id),
-    columns: { email: true, role: true },
+    columns: { role: true },
   });
   if (!target) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
@@ -63,18 +57,23 @@ export async function POST(
     .set({ role: body.role, updatedAt: new Date() })
     .where(eq(schema.users.id, id));
 
-  // If suspending, also expire all sessions so they get kicked out
+  // If suspending, also expire all sessions so they get kicked out.
+  // The auth.ts session.create.before hook then prevents them from
+  // signing back in until their role is restored.
   if (body.role === 'suspended') {
     await db.delete(schema.sessions).where(eq(schema.sessions.userId, id));
   }
 
+  // Audit log stores only userId, never email — so when the target user
+  // deletes their account, their email doesn't linger in our retention
+  // (GDPR Art. 17). Operator can still resolve userId → user via the
+  // admin panel if the user still exists.
   auditEvent({
-    userId: session.user.id,
+    userId: guard.user.id,
     event: 'admin_action',
     metadata: {
       kind: 'role_change',
       targetUserId: id,
-      targetEmail: target.email,
       previousRole: target.role,
       newRole: body.role,
     },

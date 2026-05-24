@@ -25,6 +25,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { sanitizeInput } from '@resumaker/ai-safety';
 import { PromptInjectionError, ValidationError, LLMError } from '@resumaker/shared';
 import { canGenerate, getGenerationsToday, getUserTier } from '@/lib/billing/tier';
+import { env } from '@/lib/env';
 
 const BodySchema = z
   .object({
@@ -66,7 +67,10 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   // ─── 3. Rate limit (abuse-defense, shorter window than tier cap) ───
-  const limit = parseInt(process.env.RATE_LIMIT_PER_USER_PER_HOUR ?? '10', 10);
+  // Source: validated env. Earlier read of `process.env.RATE_LIMIT_*` directly
+  // could return `NaN` when the var was set to garbage, turning the limit
+  // check into `current > NaN` (always false → all requests allowed).
+  const limit = env.RATE_LIMIT_PER_USER_PER_HOUR;
   const rl = await checkRateLimit(`gen:user:${session.user.id}`, limit, 3600);
   if (!rl.allowed) {
     return NextResponse.json(

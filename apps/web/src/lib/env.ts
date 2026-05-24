@@ -16,6 +16,11 @@ const EnvSchema = z.object({
 
   // App
   APP_URL: z.string().url().default('http://localhost:3000'),
+  // Client-side baseURL for Better Auth (auth-client.ts). Same value
+  // as APP_URL in normal deployments; broken out as NEXT_PUBLIC_* so
+  // it ends up in the client bundle. Validated here so a typo at
+  // build time crashes fast instead of producing an empty baseURL.
+  NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
   APP_NAME: z.string().default('Resumaker'),
   DEFAULT_LOCALE: z.enum(['he', 'en']).default('he'),
   SUPPORTED_LOCALES: z.string().default('he,en'),

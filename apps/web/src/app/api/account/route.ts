@@ -9,18 +9,20 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/observability';
+import { requireFreshSession } from '@/lib/auth-guards';
 
 export async function DELETE(): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // Re-auth gate: deletion is irreversible and clears every external
+  // subscription, so we require the session to have been created within
+  // the last 15 minutes. A stolen 13-day-old cookie cannot wipe the
+  // account; the attacker would need the password too.
+  const guard = await requireFreshSession(await headers(), 15 * 60);
+  if (guard instanceof NextResponse) return guard;
 
-  const userId = session.user.id;
+  const userId = guard.user.id;
 
   // 1. Cancel external subscription FIRST — if this fails, we want to
   //    bail rather than soft-delete the user and keep billing them. The

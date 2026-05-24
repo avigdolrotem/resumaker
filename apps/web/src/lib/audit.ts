@@ -19,7 +19,7 @@ import { db, schema } from '@/db';
  * IP_HASH_SALT and rotate it yearly (audit_log rows pre-rotation become
  * un-correlatable to post-rotation rows — that's by design).
  */
-function hashIp(ip: string | null | undefined): string | null {
+export function hashIp(ip: string | null | undefined): string | null {
   if (!ip) return null;
   const secret = process.env.IP_HASH_SALT ?? process.env.BETTER_AUTH_SECRET ?? '';
   if (!secret) return null; // never store an unsalted hash

@@ -8,20 +8,22 @@
 
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { openCustomerPortal } from '@/lib/billing/provider';
 import { auditEvent } from '@/lib/audit';
 import { logger } from '@/lib/observability';
+import { requireFreshSession } from '@/lib/auth-guards';
 
 export const runtime = 'nodejs';
 
 export async function POST(): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Re-auth gate: the billing portal lets a user cancel, swap plans, and
+  // see card details. A stolen old cookie shouldn't grant that access.
+  const guard = await requireFreshSession(await headers(), 15 * 60);
+  if (guard instanceof NextResponse) return guard;
 
   const result = await openCustomerPortal({
-    userId: session.user.id,
+    userId: guard.user.id,
     returnUrl: `${env.APP_URL}/account/billing`,
   });
 
@@ -32,7 +34,7 @@ export async function POST(): Promise<Response> {
       PROVIDER_ERROR: 502,
     };
     logger.error(
-      { code: result.code, userId: session.user.id, message: result.message },
+      { code: result.code, userId: guard.user.id, message: result.message },
       'billing.portal.failed',
     );
     return NextResponse.json(
@@ -42,7 +44,7 @@ export async function POST(): Promise<Response> {
   }
 
   auditEvent({
-    userId: session.user.id,
+    userId: guard.user.id,
     event: 'billing_portal_opened',
   });
 

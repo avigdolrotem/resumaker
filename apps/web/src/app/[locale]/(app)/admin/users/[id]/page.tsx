@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import { headers } from 'next/headers';
 import { and, eq, desc, isNull } from 'drizzle-orm';
 import {
   ArrowLeft,
@@ -11,25 +10,18 @@ import {
   XCircle,
   ShieldAlert,
 } from 'lucide-react';
-import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminRoleSelect } from '@/components/admin-role-select';
 import { AdminTierSelect } from '@/components/admin-tier-select';
 import { getUserTier } from '@/lib/billing/tier';
+import { requireAdminPage } from '@/lib/auth-guards';
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return null;
-
-  // Admin gate
-  const caller = await db.query.users.findFirst({
-    where: eq(schema.users.id, session.user.id),
-    columns: { role: true },
-  });
-  if (caller?.role !== 'admin') notFound();
+  // Defense-in-depth admin gate (the layout also checks)
+  await requireAdminPage();
 
   // Fetch target + their data
   const user = await db.query.users.findFirst({

@@ -7,11 +7,12 @@
 
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { schema } from '@/db/schema';
 import { sendEmail, emailConfig } from '@/lib/email/client';
 import { emailVerification, passwordReset, welcome } from '@/lib/email/templates';
-import { auditEvent } from '@/lib/audit';
+import { auditEvent, hashIp } from '@/lib/audit';
 import { env } from '@/lib/env';
 import { ensureSubscription } from '@/lib/billing/tier';
 
@@ -95,8 +96,30 @@ export const auth = betterAuth({
       : {}),
   },
 
+  // Account-linking policy.
+  //
+  // Default Better Auth behavior: same-email accounts auto-link across
+  // providers. That's the takeover vector — GitHub allows unverified
+  // primary emails, so a malicious GitHub signup with victim@example.com
+  // could attach to the victim's email/password account.
+  //
+  // We enable linking only for `google` (verified email is mandatory on
+  // Google's side) and refuse cross-email linking entirely.
+  account: {
+    accountLinking: {
+      enabled: true,
+      trustedProviders: ['google'],
+      allowDifferentEmails: false,
+    },
+  },
+
   session: {
-    expiresIn: 60 * 60 * 24 * 30, // 30 days
+    // Down from 30d → 14d absolute. Stolen cookies are now bounded to
+    // 14 days max regardless of activity. Combined with the freshness
+    // gate (requireFreshSession in auth-guards.ts) used on destructive
+    // routes, an attacker who steals a cookie cannot delete the account
+    // or open the billing portal without re-authenticating.
+    expiresIn: 60 * 60 * 24 * 14, // 14 days
     updateAge: 60 * 60 * 24, // refresh once per day
     cookieCache: { enabled: true, maxAge: 60 * 5 },
   },
@@ -153,6 +176,36 @@ export const auth = betterAuth({
     },
     session: {
       create: {
+        // Runs before the row hits the DB. Two jobs:
+        //   1. Block suspended / soft-deleted users from getting a fresh
+        //      session even though Better Auth happily authenticated
+        //      them. Throwing here aborts the sign-in flow.
+        //   2. HMAC-hash the captured IP so plaintext IPs never land
+        //      in the `sessions` table (parity with audit_log.ipHash).
+        before: async (session) => {
+          const user = await db.query.users.findFirst({
+            where: eq(schema.users.id, session.userId),
+            columns: { role: true, deletedAt: true },
+          });
+          if (user?.role === 'suspended' || user?.deletedAt) {
+            // Audit the rejected sign-in attempt so support can see it.
+            auditEvent({
+              userId: session.userId,
+              event: 'sign_in_failed',
+              metadata: { reason: 'suspended_or_deleted' },
+            });
+            throw new Error('ACCOUNT_SUSPENDED');
+          }
+          // Replace raw IP with hash. `hashIp` returns null when there
+          // is no secret configured; we'd rather store nothing than a
+          // plain IP, so the null fallthrough is intentional.
+          return {
+            data: {
+              ...session,
+              ipAddress: hashIp(session.ipAddress) ?? null,
+            },
+          };
+        },
         after: async (session) => {
           auditEvent({
             userId: session.userId,

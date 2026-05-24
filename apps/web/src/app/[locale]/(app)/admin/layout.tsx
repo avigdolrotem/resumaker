@@ -1,27 +1,16 @@
 import type { ReactNode } from 'react';
-import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
-import { eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
-import { db, schema } from '@/db';
+import { requireAdminPage } from '@/lib/auth-guards';
 
 /**
- * Admin-only layout. 404 (not 403) if the user is not admin —
- * we don't reveal that an admin path even exists to non-admins.
+ * Admin-only layout. Defense in depth: every admin Server Component
+ * also calls `requireAdminPage()` directly so a refactor of this layout
+ * (or a new admin route that forgets to nest under it) doesn't quietly
+ * leak data.
+ *
+ * `requireAdminPage()` 404s for non-admins so URLs don't reveal which
+ * paths are admin-gated.
  */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) redirect('/sign-in');
-
-  const user = await db.query.users.findFirst({
-    where: eq(schema.users.id, session.user.id),
-    columns: { role: true },
-  });
-
-  if (!user || user.role !== 'admin') {
-    // Pretend the page doesn't exist
-    redirect('/dashboard');
-  }
-
+  await requireAdminPage();
   return <>{children}</>;
 }
