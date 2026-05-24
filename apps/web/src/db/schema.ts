@@ -34,6 +34,16 @@ export const users = pgTable(
     image: text('image'),
     locale: varchar('locale', { length: 8 }).notNull().default('he'),
     role: varchar('role', { length: 32 }).notNull().default('user'),
+    /**
+     * Per-user feature flags. JSONB so we can add flags without migrations.
+     * Currently consumed: `jobHuntBeta` (gates /jobs + /applications routes).
+     * Default `{}` so existing users have no flags enabled — admins
+     * opt-in users one-at-a-time via /admin/users/[id].
+     */
+    featureFlags: jsonb('feature_flags')
+      .notNull()
+      .default(sql`'{}'::jsonb`)
+      .$type<{ jobHuntBeta?: boolean }>(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -357,6 +367,119 @@ export const lsWebhookEvents = pgTable(
   }),
 );
 
+// ─── JOB HUNT (L5 BETA) ─────────────────────────────────────────────
+
+/**
+ * Scraped + manually-imported job postings. One row per unique posting.
+ * Source-of-truth for the job content (title, description, url).
+ *
+ * Deduped by `(source, externalId)` for scraper rows; `urlNormalized`
+ * gets a unique index so manual imports of the same URL twice don't
+ * create dupes.
+ *
+ * Per-user state (favorite, fit-score, application tracking) lives in
+ * the joined `userJobs` and `applications` tables. Jobs are shared
+ * across users.
+ */
+export const jobs = pgTable(
+  'jobs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    externalId: text('external_id'),
+    source: varchar('source', { length: 32 }).notNull(),
+    company: varchar('company', { length: 200 }).notNull(),
+    companySlug: varchar('company_slug', { length: 200 }),
+    title: varchar('title', { length: 300 }).notNull(),
+    location: varchar('location', { length: 200 }),
+    description: text('description').notNull(),
+    url: text('url').notNull(),
+    urlNormalized: text('url_normalized').notNull(),
+    remote: boolean('remote').notNull().default(false),
+    seniority: varchar('seniority', { length: 50 }),
+    /** HR-posted jobs: the HR user who owns this row (null otherwise) */
+    hrUserId: text('hr_user_id').references(() => users.id, { onDelete: 'set null' }),
+    postedAt: timestamp('posted_at', { withTimezone: true }),
+    scrapedAt: timestamp('scraped_at', { withTimezone: true }).notNull().defaultNow(),
+    rawData: jsonb('raw_data'),
+  },
+  (t) => ({
+    urlNormIdx: index('jobs_url_norm_idx').on(t.urlNormalized),
+    sourceCompanyIdx: index('jobs_source_company_idx').on(t.source, t.companySlug),
+    scrapedAtIdx: index('jobs_scraped_at_idx').on(t.scrapedAt.desc()),
+    hrUserIdx: index('jobs_hr_user_idx').on(t.hrUserId),
+  }),
+);
+
+/**
+ * Per-user state on a job (favorite + fit-score). A row is upserted
+ * when the user first interacts with the job. Without a row, the job
+ * is "unseen" by that user.
+ */
+export const userJobs = pgTable(
+  'user_jobs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    jobId: uuid('job_id')
+      .notNull()
+      .references(() => jobs.id, { onDelete: 'cascade' }),
+    isFavorite: boolean('is_favorite').notNull().default(false),
+    fitScore: integer('fit_score'),
+    fitRationale: text('fit_rationale'),
+    fitStrengths: jsonb('fit_strengths').$type<string[]>(),
+    fitGaps: jsonb('fit_gaps').$type<string[]>(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userJobIdx: index('user_jobs_user_job_idx').on(t.userId, t.jobId),
+  }),
+);
+
+/**
+ * Application tracker. One row per (user, job) the user is tracking.
+ * Status pipeline: interested → applied → recruiter_screen → tech_interview
+ * → onsite → offer / rejected / ghosted. `appliedAt` set when status
+ * crosses into 'applied' or beyond.
+ *
+ * `notifyRecruiter` is the explicit GDPR-consent checkbox: if true and
+ * the job is HR-posted, the HR user gets to see this applicant in their
+ * applicants list. Defaults false (privacy-by-default).
+ */
+export const applications = pgTable(
+  'applications',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    jobId: uuid('job_id')
+      .notNull()
+      .references(() => jobs.id, { onDelete: 'cascade' }),
+    resumeId: uuid('resume_id').references(() => resumes.id, { onDelete: 'set null' }),
+    coverLetterId: uuid('cover_letter_id').references(() => coverLetters.id, {
+      onDelete: 'set null',
+    }),
+    status: varchar('status', { length: 32 }).notNull().default('interested'),
+    contactName: varchar('contact_name', { length: 200 }),
+    contactEmail: varchar('contact_email', { length: 320 }),
+    notes: text('notes'),
+    nextActionAt: timestamp('next_action_at', { withTimezone: true }),
+    appliedAt: timestamp('applied_at', { withTimezone: true }),
+    /** Explicit opt-in for HR to see this applicant. Default false. */
+    notifyRecruiter: boolean('notify_recruiter').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userUpdatedIdx: index('applications_user_updated_idx').on(t.userId, t.updatedAt.desc()),
+    jobIdx: index('applications_job_idx').on(t.jobId),
+    statusIdx: index('applications_status_idx').on(t.status),
+  }),
+);
+
 // ─── EXPORTS ────────────────────────────────────────────────────────
 
 export const schema = {
@@ -373,6 +496,9 @@ export const schema = {
   subscriptions,
   stripeWebhookEvents,
   lsWebhookEvents,
+  jobs,
+  userJobs,
+  applications,
 };
 
 export type User = typeof users.$inferSelect;
@@ -385,3 +511,8 @@ export type ResumeVersion = typeof resumeVersions.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type NewSubscription = typeof subscriptions.$inferInsert;
 export type StripeWebhookEvent = typeof stripeWebhookEvents.$inferSelect;
+export type Job = typeof jobs.$inferSelect;
+export type NewJob = typeof jobs.$inferInsert;
+export type UserJob = typeof userJobs.$inferSelect;
+export type Application = typeof applications.$inferSelect;
+export type NewApplication = typeof applications.$inferInsert;

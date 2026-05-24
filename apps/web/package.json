@@ -36,6 +36,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@react-pdf/renderer": "^4.5.1",
     "@resumaker/ats-scorer": "workspace:*",
+    "@resumaker/job-engine": "workspace:*",
     "@resumaker/resume-engine": "workspace:*",
     "@sentry/nextjs": "^10.53.1",
     "@tailwindcss/typography": "^0.5.19",

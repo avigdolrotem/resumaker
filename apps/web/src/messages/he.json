@@ -116,6 +116,63 @@
     "classic": { "name": "קלאסי", "subtitle": "סטנדרט HR ישראלי" },
     "minimal": { "name": "מינימלי", "subtitle": "נקי ומרווח" }
   },
+  "jobs": {
+    "title": "משרות",
+    "subtitle": "הדבק מודעת משרה, קבל ציון התאמה, עקוב אחר הגשות",
+    "betaBadge": "ביתא",
+    "empty": "עדיין אין משרות. הדבק מודעה כדי להתחיל.",
+    "addJob": "הוסף משרה",
+    "scoreFit": "חשב התאמה",
+    "scoring": "מחשב…",
+    "trackApplication": "עקוב אחר הגשה",
+    "tracked": "במעקב",
+    "favorite": "מועדף",
+    "unfavorite": "הסר מהמועדפים",
+    "fitScore": "ציון התאמה",
+    "strengths": "חוזקות",
+    "gaps": "פערים",
+    "rationale": "למה",
+    "viewOriginal": "צפה במודעה המקורית",
+    "loadMore": "טען עוד",
+    "filters": {
+      "all": "הכל",
+      "favorites": "מועדפים",
+      "remote": "רק עבודה מרחוק"
+    },
+    "paste": {
+      "title": "הוסף משרה",
+      "subtitle": "הדבק כתובת מודעה או את הטקסט המלא",
+      "urlLabel": "כתובת המשרה",
+      "urlPlaceholder": "https://boards.greenhouse.io/...",
+      "textLabel": "או הדבק את הטקסט המלא",
+      "textPlaceholder": "אנחנו מחפשים…",
+      "submit": "ייבא",
+      "importing": "מייבא…",
+      "failed": "הייבוא נכשל. נסה את אופציית הטקסט."
+    }
+  },
+  "applications": {
+    "title": "הגשות",
+    "subtitle": "המשרות שאתה עוקב אחריהן",
+    "empty": "עדיין אין הגשות. עקוב אחרי משרה כדי לראות אותה כאן.",
+    "statuses": {
+      "interested": "מתעניין",
+      "applied": "הגשתי",
+      "recruiter_screen": "ראיון HR",
+      "tech_interview": "ראיון טכני",
+      "onsite": "אונסייט",
+      "offer": "הצעת עבודה",
+      "rejected": "נדחיתי",
+      "ghosted": "אין מענה"
+    },
+    "notes": "הערות",
+    "contactName": "איש קשר",
+    "contactEmail": "אימייל איש קשר",
+    "nextActionAt": "פעולה הבאה",
+    "appliedAt": "הוגש בתאריך",
+    "delete": "מחק",
+    "deleted": "נמחק"
+  },
   "profile": {
     "title": "פרופיל",
     "subtitle": "ניהול העדפות החשבון",

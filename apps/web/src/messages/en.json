@@ -116,6 +116,63 @@
     "classic": { "name": "Classic", "subtitle": "Traditional Israeli HR" },
     "minimal": { "name": "Minimal", "subtitle": "Clean & spacious" }
   },
+  "jobs": {
+    "title": "Jobs",
+    "subtitle": "Paste a posting, get a fit score, track applications",
+    "betaBadge": "Beta",
+    "empty": "No jobs yet. Paste a posting to get started.",
+    "addJob": "Add a job",
+    "scoreFit": "Score fit",
+    "scoring": "Scoring…",
+    "trackApplication": "Track application",
+    "tracked": "Tracked",
+    "favorite": "Favorite",
+    "unfavorite": "Unfavorite",
+    "fitScore": "Fit score",
+    "strengths": "Strengths",
+    "gaps": "Gaps",
+    "rationale": "Why",
+    "viewOriginal": "View original posting",
+    "loadMore": "Load more",
+    "filters": {
+      "all": "All",
+      "favorites": "Favorites",
+      "remote": "Remote only"
+    },
+    "paste": {
+      "title": "Add a job",
+      "subtitle": "Paste a posting URL or the full text",
+      "urlLabel": "Job URL",
+      "urlPlaceholder": "https://boards.greenhouse.io/...",
+      "textLabel": "Or paste the full text",
+      "textPlaceholder": "We are looking for…",
+      "submit": "Import",
+      "importing": "Importing…",
+      "failed": "Couldn't import. Try the text option instead."
+    }
+  },
+  "applications": {
+    "title": "Applications",
+    "subtitle": "Your tracked job applications",
+    "empty": "No applications yet. Track a job to see it here.",
+    "statuses": {
+      "interested": "Interested",
+      "applied": "Applied",
+      "recruiter_screen": "Recruiter screen",
+      "tech_interview": "Tech interview",
+      "onsite": "Onsite",
+      "offer": "Offer",
+      "rejected": "Rejected",
+      "ghosted": "Ghosted"
+    },
+    "notes": "Notes",
+    "contactName": "Contact name",
+    "contactEmail": "Contact email",
+    "nextActionAt": "Next action",
+    "appliedAt": "Applied",
+    "delete": "Delete",
+    "deleted": "Deleted"
+  },
   "profile": {
     "title": "Profile",
     "subtitle": "Manage your account preferences",
