@@ -17,9 +17,9 @@ autoscaling:
 ingress:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
-    # ACM certificate ARN for resumaker.co.il + www.resumaker.co.il
-    # Issued in il-central-1; replace with your real ARN before applying.
-    alb.ingress.kubernetes.io/certificate-arn: 'REPLACE_WITH_ACM_CERT_ARN'
+    # ACM certificate ARN for resumaker.co.il (+ www. if SANs were added).
+    # Issued in il-central-1.
+    alb.ingress.kubernetes.io/certificate-arn: 'arn:aws:acm:il-central-1:857812839967:certificate/5866e9a6-d8fa-4ce3-b4b6-e52353836872'
     # Strong SSL policy (TLS 1.2+ only)
     alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
     # ssl-redirect annotation needs a matching action — declare both.
