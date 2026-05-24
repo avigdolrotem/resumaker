@@ -198,7 +198,16 @@
     "generic": "Something went wrong. Please try again.",
     "rate_limit": "Too many requests. Please try again later.",
     "invalid_input": "Invalid or missing input.",
-    "unauthorized": "Please sign in to perform this action."
+    "unauthorized": "Please sign in to perform this action.",
+    "notFound": "Page not found",
+    "backHome": "Back home",
+    "boundary": {
+      "title": "Something went wrong",
+      "description": "We hit an unexpected error. Try again, or contact us if it keeps happening.",
+      "errorIdLabel": "Error ID",
+      "tryAgain": "Try again",
+      "backHome": "Back home"
+    }
   },
   "common": {
     "loading": "Loading…",
@@ -226,6 +235,11 @@
       "description": "Sign out from all devices",
       "signOutAll": "Sign out everywhere"
     },
+    "billing": {
+      "title": "Billing",
+      "description": "Manage your subscription and view usage",
+      "open": "Open billing settings"
+    },
     "yourData": {
       "title": "Your data",
       "description": "Download a copy of everything we have about your account (GDPR + Israeli Privacy Law)",
@@ -240,6 +254,8 @@
       "confirmTitle": "Are you sure?",
       "confirmDescription": "This will permanently delete your account, resumes, and history.",
       "confirmYes": "Yes, delete my account",
+      "deleting": "Deleting…",
+      "cancel": "Cancel",
       "deleted": "Account deleted",
       "deleteFailed": "Could not delete account. Please contact support."
     }
