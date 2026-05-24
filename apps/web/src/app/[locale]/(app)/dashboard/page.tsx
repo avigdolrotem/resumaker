@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ResumeGrid } from '@/components/resume-grid';
 import { OnboardingChecklist } from '@/components/onboarding-checklist';
+import { MagicCard } from '@/components/ui-effects/magic-card';
+import { CountUp } from '@/components/ui-effects/count-up';
 import {
   FileText,
   Sparkles,
@@ -206,6 +208,7 @@ export default async function DashboardPage() {
           href="/builder"
           gradient="from-brand-500/10 to-brand-700/10"
           iconColor="text-brand-600"
+          glow="rgba(109, 40, 217, 0.2)"
         />
         <QuickAction
           Icon={Mail}
@@ -214,6 +217,7 @@ export default async function DashboardPage() {
           href="/cover-letters/new"
           gradient="from-purple-500/10 to-purple-700/10"
           iconColor="text-purple-600"
+          glow="rgba(168, 85, 247, 0.2)"
         />
         <QuickAction
           Icon={Briefcase}
@@ -222,6 +226,7 @@ export default async function DashboardPage() {
           href="/examples"
           gradient="from-emerald-500/10 to-emerald-700/10"
           iconColor="text-emerald-600"
+          glow="rgba(16, 185, 129, 0.2)"
         />
       </div>
 
@@ -326,7 +331,9 @@ function StatCard({
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">{label}</p>
-            <p className="mt-1 text-3xl font-bold">{value}</p>
+            <p className="mt-1 text-3xl font-bold">
+              <CountUp value={value} />
+            </p>
             {delta && <p className="mt-1 text-xs text-emerald-600">{delta}</p>}
           </div>
           <div
@@ -347,6 +354,7 @@ function QuickAction({
   href,
   gradient,
   iconColor,
+  glow,
 }: {
   Icon: typeof FileText;
   title: string;
@@ -354,15 +362,14 @@ function QuickAction({
   href: '/builder' | '/cover-letters/new' | '/examples';
   gradient: string;
   iconColor: string;
+  glow: string;
 }) {
   return (
-    <Link href={href} className="group block">
-      <Card
-        className={`relative h-full overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md`}
-      >
+    <Link href={href} className="block">
+      <MagicCard glowColor={glow} className="h-full">
         <div
           aria-hidden
-          className={`absolute inset-0 bg-gradient-to-br opacity-50 transition group-hover:opacity-100 ${gradient}`}
+          className={`absolute inset-0 bg-gradient-to-br opacity-40 transition group-hover:opacity-70 ${gradient}`}
         />
         <CardContent className="relative pt-6">
           <div className="flex items-start justify-between">
@@ -372,7 +379,7 @@ function QuickAction({
           <h3 className="mt-4 text-base font-semibold">{title}</h3>
           <p className="mt-1 text-sm text-neutral-600">{description}</p>
         </CardContent>
-      </Card>
+      </MagicCard>
     </Link>
   );
 }
