@@ -40,7 +40,12 @@ export function AtsScoreCard({ score, isHebrew }: { score: ATSScore; isHebrew: b
           border: 'border-emerald-200',
         }
       : score.overall >= 60
-        ? { ring: '#3b82f6', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' }
+        ? {
+            ring: '#6366f1',
+            bg: 'bg-indigo-50',
+            text: 'text-indigo-700',
+            border: 'border-indigo-200',
+          }
         : score.overall >= 40
           ? {
               ring: '#f59e0b',

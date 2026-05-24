@@ -72,7 +72,11 @@ const styles = StyleSheet.create({
   education: { fontSize: 10 },
 });
 
-export function ModernTemplate({ resume, accentColor = '#1d4ed8' }: ResumePdfProps) {
+// Default accent matches the L4 brand-600 (hsl(252 70% 47%) ≈ #6d28d9
+// when converted to hex). Callers can override per-render for personal
+// branding, but the unbranded look reads as indigo→violet, not the old
+// blue-700 (#1d4ed8) from the pre-L4 palette.
+export function ModernTemplate({ resume, accentColor = '#6d28d9' }: ResumePdfProps) {
   const isHebrew = resume.metadata.language === 'he';
   // RTL adjustments — react-pdf has no `direction: 'rtl'` cascade, so we
   // mirror flex rows + flip text-align on every text node when Hebrew.

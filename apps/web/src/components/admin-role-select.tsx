@@ -42,7 +42,7 @@ export function AdminRoleSelect({ userId, currentRole }: { userId: string; curre
 
   const colorMap: Record<Role, string> = {
     admin: 'bg-purple-100 text-purple-700',
-    support: 'bg-blue-100 text-blue-700',
+    support: 'bg-indigo-100 text-indigo-700',
     user: 'bg-neutral-100 text-neutral-700',
     suspended: 'bg-red-100 text-red-700',
     hr: 'bg-emerald-100 text-emerald-700',

@@ -68,7 +68,7 @@ export default async function AdminPage() {
           label="Users"
           value={(usersStat?.value ?? 0).toLocaleString()}
           delta={usersTodayStat?.value ? `+${usersTodayStat.value} today` : undefined}
-          color="from-blue-500 to-blue-700"
+          color="from-indigo-500 to-violet-600"
         />
         <MetricCard
           Icon={FileText}

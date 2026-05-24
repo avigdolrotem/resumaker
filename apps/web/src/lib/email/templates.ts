@@ -9,8 +9,11 @@ import { env } from '@/lib/env';
 
 type Locale = 'he' | 'en';
 
-const BRAND = '#1d4ed8';
-const BRAND_DARK = '#1e40af';
+// L4 palette swap — indigo-violet midpoint to match the in-app
+// brand-600 token (hsl(252 70% 47%)). Email clients don't read our
+// CSS, so we keep the hex literal here and just bump the value.
+const BRAND = '#6d28d9';
+const BRAND_DARK = '#5b21b6';
 
 function layout({
   title,

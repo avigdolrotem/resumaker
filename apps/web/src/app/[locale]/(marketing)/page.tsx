@@ -45,7 +45,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: L
   const features = [
     { key: 'ats' as const, Icon: Target, gradient: 'from-purple-500 to-pink-500' },
     { key: 'templates' as const, Icon: Palette, gradient: 'from-orange-500 to-red-500' },
-    { key: 'rtl' as const, Icon: Languages, gradient: 'from-blue-500 to-cyan-500' },
+    { key: 'rtl' as const, Icon: Languages, gradient: 'from-indigo-500 to-violet-500' },
     { key: 'secure' as const, Icon: ShieldCheck, gradient: 'from-emerald-500 to-teal-500' },
   ];
 

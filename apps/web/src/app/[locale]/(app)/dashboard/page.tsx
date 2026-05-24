@@ -160,7 +160,7 @@ export default async function DashboardPage() {
           Icon={FileText}
           label={t('stats.resumes')}
           value={stats.resumes.toString()}
-          gradient="from-blue-500 to-blue-700"
+          gradient="from-indigo-500 to-violet-600"
         />
         <StatCard
           Icon={Sparkles}
