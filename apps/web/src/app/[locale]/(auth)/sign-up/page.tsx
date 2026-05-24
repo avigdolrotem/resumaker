@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,9 +57,13 @@ export default function SignUpPage() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('signUp.title')}</CardTitle>
+    <Card className="border-brand-200/50 shadow-brand-500/10 relative overflow-hidden bg-white/80 shadow-2xl backdrop-blur-xl">
+      <div
+        aria-hidden
+        className="from-brand-500 to-brand-500 absolute inset-x-0 top-0 h-1 bg-gradient-to-r via-purple-500"
+      />
+      <CardHeader className="pt-8">
+        <CardTitle className="text-2xl">{t('signUp.title')}</CardTitle>
         <CardDescription>{t('signUp.subtitle')}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -93,9 +96,34 @@ export default function SignUpPage() {
             </div>
           )}
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? t('common.loading') : t('signUp.cta')}
-          </Button>
+          {/* Matches the sign-in CTA style — gradient + glow + shine. */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-md text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span
+              aria-hidden
+              className="from-brand-500 to-brand-500 absolute -inset-0.5 rounded-md bg-gradient-to-r via-purple-500 opacity-75 blur-md transition group-hover:opacity-100 group-disabled:opacity-30"
+            />
+            <span
+              aria-hidden
+              className="from-brand-600 to-brand-800 absolute inset-0 rounded-md bg-gradient-to-br"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-0 -translate-x-full rounded-md bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+            />
+            <span className="relative z-10 inline-flex items-center gap-2">
+              {loading && (
+                <span
+                  aria-hidden
+                  className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                />
+              )}
+              {loading ? t('common.loading') : t('signUp.cta')}
+            </span>
+          </button>
         </form>
 
         <OAuthButtons showGoogle={providers.google} showGitHub={providers.github} />
