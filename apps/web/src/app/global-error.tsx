@@ -32,11 +32,18 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log to the console so DevTools shows what fell through. Sentry has
-    // it via the page-error listener; this is for the developer
-    // reproducing locally.
+    // Log everything we can extract from the error object. next-intl's
+    // wrapper strips the original message (`catch{throw new Error(void 0)}`),
+    // so the only forensic info we have is the stack, the digest (React's
+    // hashed signature for the original throw), and any preserved `.cause`.
     // eslint-disable-next-line no-console
-    console.error('[global-error]', error);
+    console.error('[global-error]', {
+      message: error.message,
+      name: error.name,
+      digest: error.digest,
+      cause: (error as Error & { cause?: unknown }).cause,
+      stack: error.stack,
+    });
   }, [error]);
 
   return (
