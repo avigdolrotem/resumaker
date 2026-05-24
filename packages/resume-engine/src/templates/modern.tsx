@@ -128,7 +128,15 @@ export function ModernTemplate({ resume, accentColor = '#6d28d9' }: ResumePdfPro
         {/* Summary */}
         {resume.summary && (
           <View style={styles.section}>
-            <Text style={titleStyle}>{lang === 'he' ? 'תקציר' : lang === 'ar' ? 'الملخص' : lang === 'ru' ? 'Резюме' : 'Summary'}</Text>
+            <Text style={titleStyle}>
+              {lang === 'he'
+                ? 'תקציר'
+                : lang === 'ar'
+                  ? 'الملخص'
+                  : lang === 'ru'
+                    ? 'Резюме'
+                    : 'Summary'}
+            </Text>
             <Text style={styles.summary}>{resume.summary}</Text>
           </View>
         )}
@@ -136,13 +144,29 @@ export function ModernTemplate({ resume, accentColor = '#6d28d9' }: ResumePdfPro
         {/* Experience */}
         {resume.experience.length > 0 && (
           <View style={styles.section}>
-            <Text style={titleStyle}>{lang === 'he' ? 'ניסיון תעסוקתי' : lang === 'ar' ? 'الخبرة المهنية' : lang === 'ru' ? 'Опыт работы' : 'Experience'}</Text>
+            <Text style={titleStyle}>
+              {lang === 'he'
+                ? 'ניסיון תעסוקתי'
+                : lang === 'ar'
+                  ? 'الخبرة المهنية'
+                  : lang === 'ru'
+                    ? 'Опыт работы'
+                    : 'Experience'}
+            </Text>
             {resume.experience.map((exp, i) => (
               <View key={i} style={styles.experienceItem} wrap={false}>
                 <View style={experienceHeaderStyle}>
                   <Text style={styles.experienceTitle}>{exp.title}</Text>
                   <Text style={styles.experienceDates}>
-                    {exp.start_date} – {exp.end_date ?? (lang === 'he' ? 'היום' : lang === 'ar' ? 'الآن' : lang === 'ru' ? 'настоящее время' : 'Present')}
+                    {exp.start_date} –{' '}
+                    {exp.end_date ??
+                      (lang === 'he'
+                        ? 'היום'
+                        : lang === 'ar'
+                          ? 'الآن'
+                          : lang === 'ru'
+                            ? 'настоящее время'
+                            : 'Present')}
                   </Text>
                 </View>
                 <Text style={styles.experienceCompany}>{exp.company}</Text>
@@ -160,7 +184,15 @@ export function ModernTemplate({ resume, accentColor = '#6d28d9' }: ResumePdfPro
         {/* Skills */}
         {resume.skills.length > 0 && (
           <View style={styles.section}>
-            <Text style={titleStyle}>{lang === 'he' ? 'מיומנויות' : lang === 'ar' ? 'المهارات' : lang === 'ru' ? 'Навыки' : 'Skills'}</Text>
+            <Text style={titleStyle}>
+              {lang === 'he'
+                ? 'מיומנויות'
+                : lang === 'ar'
+                  ? 'المهارات'
+                  : lang === 'ru'
+                    ? 'Навыки'
+                    : 'Skills'}
+            </Text>
             <View
               style={
                 isRtl
@@ -184,7 +216,15 @@ export function ModernTemplate({ resume, accentColor = '#6d28d9' }: ResumePdfPro
         {/* Education */}
         {resume.education.length > 0 && (
           <View style={styles.section}>
-            <Text style={titleStyle}>{lang === 'he' ? 'השכלה' : lang === 'ar' ? 'التعليم' : lang === 'ru' ? 'Образование' : 'Education'}</Text>
+            <Text style={titleStyle}>
+              {lang === 'he'
+                ? 'השכלה'
+                : lang === 'ar'
+                  ? 'التعليم'
+                  : lang === 'ru'
+                    ? 'Образование'
+                    : 'Education'}
+            </Text>
             {resume.education.map((edu, i) => (
               <View key={i} style={styles.education}>
                 <Text style={{ fontWeight: 700 }}>{edu.degree}</Text>

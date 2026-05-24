@@ -138,11 +138,21 @@ export default function AdminCouponsPage() {
               <caption className="sr-only">Coupons list</caption>
               <thead className="text-start text-xs uppercase text-neutral-500">
                 <tr className="border-b border-neutral-200">
-                  <th scope="col" className="pb-2 font-medium">Code</th>
-                  <th scope="col" className="pb-2 font-medium">Discount</th>
-                  <th scope="col" className="pb-2 font-medium">Used / Limit</th>
-                  <th scope="col" className="pb-2 font-medium">Expires</th>
-                  <th scope="col" className="pb-2 font-medium">Actions</th>
+                  <th scope="col" className="pb-2 font-medium">
+                    Code
+                  </th>
+                  <th scope="col" className="pb-2 font-medium">
+                    Discount
+                  </th>
+                  <th scope="col" className="pb-2 font-medium">
+                    Used / Limit
+                  </th>
+                  <th scope="col" className="pb-2 font-medium">
+                    Expires
+                  </th>
+                  <th scope="col" className="pb-2 font-medium">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">

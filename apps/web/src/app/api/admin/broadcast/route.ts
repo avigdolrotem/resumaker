@@ -46,7 +46,10 @@ export async function POST(req: NextRequest): Promise<Response> {
     try {
       body = SendSchema.parse(await req.json());
     } catch (err) {
-      return NextResponse.json({ error: 'Invalid body', detail: (err as Error).message }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid body', detail: (err as Error).message },
+        { status: 400 },
+      );
     }
 
     const broadcast = await db.query.broadcastEmails.findFirst({
@@ -98,7 +101,10 @@ export async function POST(req: NextRequest): Promise<Response> {
   try {
     body = CreateSchema.parse(await req.json());
   } catch (err) {
-    return NextResponse.json({ error: 'Invalid body', detail: (err as Error).message }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid body', detail: (err as Error).message },
+      { status: 400 },
+    );
   }
 
   const rows = await db

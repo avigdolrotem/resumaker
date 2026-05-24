@@ -54,11 +54,7 @@ interface EmailPayload {
   html: string;
 }
 
-function emailForDay(
-  dayTag: string,
-  locale: 'he' | 'en',
-  name: string | null,
-): EmailPayload {
+function emailForDay(dayTag: string, locale: 'he' | 'en', name: string | null): EmailPayload {
   const first = name?.split(' ')[0] ?? '';
   if (locale === 'he') {
     if (dayTag === 'day1')
@@ -88,7 +84,7 @@ function emailForDay(
     };
   if (dayTag === 'day3')
     return {
-      subject: 'Stuck? Here\'s how to start',
+      subject: "Stuck? Here's how to start",
       html: `<p>Hi ${first},</p><p>We noticed you haven\'t created a resume yet. Our sample template will give you a quick feel.</p><p><a href="${env.APP_URL}/en/builder">Build your first →</a></p>`,
     };
   if (dayTag === 'day7')

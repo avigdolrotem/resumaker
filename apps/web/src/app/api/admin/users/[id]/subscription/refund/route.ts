@@ -33,7 +33,10 @@ export async function POST(
   try {
     body = BodySchema.parse(await req.json());
   } catch (err) {
-    return NextResponse.json({ error: 'Invalid body', detail: (err as Error).message }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid body', detail: (err as Error).message },
+      { status: 400 },
+    );
   }
 
   const sub = await db.query.subscriptions.findFirst({
@@ -56,7 +59,8 @@ export async function POST(
       });
       const invoice = invoices.data[0];
       const paymentIntentId =
-        invoice && typeof (invoice as unknown as { payment_intent?: unknown }).payment_intent === 'string'
+        invoice &&
+        typeof (invoice as unknown as { payment_intent?: unknown }).payment_intent === 'string'
           ? (invoice as unknown as { payment_intent: string }).payment_intent
           : null;
       if (!paymentIntentId) {

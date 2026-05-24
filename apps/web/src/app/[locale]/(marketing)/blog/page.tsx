@@ -72,9 +72,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: L
           ))}
         </div>
 
-        {posts.length === 0 && (
-          <p className="py-16 text-center text-neutral-500">{t('noPosts')}</p>
-        )}
+        {posts.length === 0 && <p className="py-16 text-center text-neutral-500">{t('noPosts')}</p>}
       </section>
     </main>
   );

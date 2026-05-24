@@ -75,14 +75,18 @@ export default function ReferralPage() {
               <Users className="h-4 w-4" />
               <span className="text-sm">{t('stats.referred')}</span>
             </div>
-            <div className="mt-2 text-3xl font-bold text-neutral-900">{data?.referredCount ?? 0}</div>
+            <div className="mt-2 text-3xl font-bold text-neutral-900">
+              {data?.referredCount ?? 0}
+            </div>
           </div>
           <div className="rounded-xl border border-neutral-200 bg-white p-6 text-center shadow-sm">
             <div className="flex items-center justify-center gap-2 text-neutral-500">
               <Check className="h-4 w-4" />
               <span className="text-sm">{t('stats.qualified')}</span>
             </div>
-            <div className="mt-2 text-3xl font-bold text-emerald-600">{data?.qualifiedCount ?? 0}</div>
+            <div className="mt-2 text-3xl font-bold text-emerald-600">
+              {data?.qualifiedCount ?? 0}
+            </div>
           </div>
         </div>
 
@@ -101,12 +105,16 @@ export default function ReferralPage() {
                   className="flex h-11 w-11 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 transition hover:bg-neutral-50"
                   aria-label={t('copy')}
                 >
-                  {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                  {copied ? (
+                    <Check className="h-4 w-4 text-emerald-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
                 </button>
               </div>
 
               <p className="mb-4 text-sm text-neutral-500">{t('linkLabel')}</p>
-              <div className="mb-6 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600 break-all">
+              <div className="mb-6 break-all rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
                 {refLink}
               </div>
 

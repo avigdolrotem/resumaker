@@ -78,7 +78,7 @@ export default async function AdminAuditPage({ searchParams }: Props) {
               name="userId"
               defaultValue={sp.userId ?? ''}
               placeholder="User ID"
-              className="rounded-md border border-neutral-200 px-3 py-2 text-sm font-mono"
+              className="rounded-md border border-neutral-200 px-3 py-2 font-mono text-sm"
             />
             <button
               type="submit"
@@ -93,16 +93,24 @@ export default async function AdminAuditPage({ searchParams }: Props) {
               <caption className="sr-only">Audit log events</caption>
               <thead className="text-start text-xs uppercase text-neutral-500">
                 <tr className="border-b border-neutral-200">
-                  <th scope="col" className="pb-2 ps-1 font-medium">When</th>
-                  <th scope="col" className="pb-2 font-medium">Event</th>
-                  <th scope="col" className="pb-2 font-medium">User ID</th>
-                  <th scope="col" className="pb-2 font-medium">Metadata</th>
+                  <th scope="col" className="pb-2 ps-1 font-medium">
+                    When
+                  </th>
+                  <th scope="col" className="pb-2 font-medium">
+                    Event
+                  </th>
+                  <th scope="col" className="pb-2 font-medium">
+                    User ID
+                  </th>
+                  <th scope="col" className="pb-2 font-medium">
+                    Metadata
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
                 {rows.map((row) => (
                   <tr key={row.id}>
-                    <td className="py-2 ps-1 text-xs text-neutral-500 whitespace-nowrap" dir="ltr">
+                    <td className="whitespace-nowrap py-2 ps-1 text-xs text-neutral-500" dir="ltr">
                       {new Date(row.createdAt).toLocaleString()}
                     </td>
                     <td className="py-2">
@@ -121,7 +129,9 @@ export default async function AdminAuditPage({ searchParams }: Props) {
                             {JSON.stringify(row.metadata, null, 2)}
                           </pre>
                         </details>
-                      ) : '—'}
+                      ) : (
+                        '—'
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -135,13 +145,17 @@ export default async function AdminAuditPage({ searchParams }: Props) {
 
           <div className="mt-4 flex justify-between text-sm text-neutral-500">
             {page > 1 && (
-              <Link href={`?page=${page - 1}${sp.event ? `&event=${sp.event}` : ''}${sp.userId ? `&userId=${sp.userId}` : ''}`}>
+              <Link
+                href={`?page=${page - 1}${sp.event ? `&event=${sp.event}` : ''}${sp.userId ? `&userId=${sp.userId}` : ''}`}
+              >
                 Previous
               </Link>
             )}
             <span>Page {page}</span>
             {rows.length === pageSize && (
-              <Link href={`?page=${page + 1}${sp.event ? `&event=${sp.event}` : ''}${sp.userId ? `&userId=${sp.userId}` : ''}`}>
+              <Link
+                href={`?page=${page + 1}${sp.event ? `&event=${sp.event}` : ''}${sp.userId ? `&userId=${sp.userId}` : ''}`}
+              >
                 Next
               </Link>
             )}

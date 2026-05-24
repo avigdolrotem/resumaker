@@ -31,12 +31,7 @@ export async function GET(_req: NextRequest): Promise<Response> {
   const [paidRow] = await db
     .select({ count: count() })
     .from(schema.subscriptions)
-    .where(
-      and(
-        ne(schema.subscriptions.tier, 'free'),
-        gte(schema.subscriptions.createdAt, since),
-      ),
-    );
+    .where(and(ne(schema.subscriptions.tier, 'free'), gte(schema.subscriptions.createdAt, since)));
 
   return NextResponse.json({
     signups: signupsRow?.count ?? 0,

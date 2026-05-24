@@ -27,9 +27,7 @@ export default async function CompanyPublicPage({ params }: Props) {
       postedAt: schema.jobs.postedAt,
     })
     .from(schema.jobs)
-    .where(
-      and(eq(schema.jobs.companyId, company.id), eq(schema.jobs.source, 'hr')),
-    );
+    .where(and(eq(schema.jobs.companyId, company.id), eq(schema.jobs.source, 'hr')));
 
   const isHe = locale === 'he';
 
@@ -60,13 +58,11 @@ export default async function CompanyPublicPage({ params }: Props) {
       </div>
 
       {company.description && (
-        <p className="text-neutral-600 leading-relaxed">{company.description}</p>
+        <p className="leading-relaxed text-neutral-600">{company.description}</p>
       )}
 
       <section>
-        <h2 className="mb-4 text-2xl font-semibold">
-          {isHe ? 'משרות פתוחות' : 'Open positions'}
-        </h2>
+        <h2 className="mb-4 text-2xl font-semibold">{isHe ? 'משרות פתוחות' : 'Open positions'}</h2>
 
         {activeJobs.length === 0 ? (
           <p className="text-neutral-500">

@@ -47,10 +47,7 @@ export async function PATCH(
   }
 
   const member = await db.query.companyMembers.findFirst({
-    where: and(
-      eq(schema.companyMembers.id, memberId),
-      eq(schema.companyMembers.companyId, id),
-    ),
+    where: and(eq(schema.companyMembers.id, memberId), eq(schema.companyMembers.companyId, id)),
   });
   if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (member.role === 'owner') {
@@ -83,10 +80,7 @@ export async function DELETE(
   if (check instanceof NextResponse) return check;
 
   const member = await db.query.companyMembers.findFirst({
-    where: and(
-      eq(schema.companyMembers.id, memberId),
-      eq(schema.companyMembers.companyId, id),
-    ),
+    where: and(eq(schema.companyMembers.id, memberId), eq(schema.companyMembers.companyId, id)),
   });
   if (!member) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (member.userId === guard.user.id) {

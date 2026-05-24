@@ -4,13 +4,7 @@
  */
 
 import { relations } from 'drizzle-orm';
-import {
-  users,
-  companies,
-  companyMembers,
-  companyInvites,
-  jobs,
-} from './schema';
+import { users, companies, companyMembers, companyInvites, jobs } from './schema';
 
 export const companiesRelations = relations(companies, ({ many, one }) => ({
   companyMembers: many(companyMembers),

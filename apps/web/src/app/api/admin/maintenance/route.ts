@@ -37,7 +37,10 @@ export async function POST(req: NextRequest): Promise<Response> {
   try {
     body = UpdateSchema.parse(await req.json());
   } catch (err) {
-    return NextResponse.json({ error: 'Invalid body', detail: (err as Error).message }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid body', detail: (err as Error).message },
+      { status: 400 },
+    );
   }
 
   await db

@@ -450,11 +450,7 @@ function Field({
   return (
     <div className="space-y-1">
       <Label>{label}</Label>
-      <Input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        {...(dir ? { dir } : {})}
-      />
+      <Input value={value} onChange={(e) => onChange(e.target.value)} {...(dir ? { dir } : {})} />
     </div>
   );
 }
@@ -496,12 +492,7 @@ function StringArrayEditor({
           </li>
         ))}
       </ul>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => onChange([...values, ''])}
-      >
+      <Button type="button" variant="outline" size="sm" onClick={() => onChange([...values, ''])}>
         <Plus className="me-1 h-3.5 w-3.5" />
         {placeholder}
       </Button>
@@ -538,14 +529,10 @@ function ListSection<T>({
           </p>
         )}
         {items.map((item, i) => (
-          <div
-            key={i}
-            className="rounded-lg border border-neutral-200 p-3"
-          >
+          <div key={i} className="rounded-lg border border-neutral-200 p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="flex items-center gap-2 text-xs text-neutral-500">
-                <GripVertical className="h-3.5 w-3.5" />
-                #{i + 1}
+                <GripVertical className="h-3.5 w-3.5" />#{i + 1}
               </span>
               <div className="flex gap-1">
                 <Button

@@ -35,7 +35,9 @@ export async function GET(
 
   const company = await db.query.companies.findFirst({
     where: eq(schema.companies.id, id),
-    with: { companyMembers: { with: { user: { columns: { id: true, email: true, name: true } } } } },
+    with: {
+      companyMembers: { with: { user: { columns: { id: true, email: true, name: true } } } },
+    },
   });
 
   if (!company) return NextResponse.json({ error: 'Not found' }, { status: 404 });

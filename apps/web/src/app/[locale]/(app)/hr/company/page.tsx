@@ -33,7 +33,9 @@ export default async function HrCompanyListPage({
         <div>
           <h1 className="text-3xl font-bold">{isHe ? 'החברות שלי' : 'My companies'}</h1>
           <p className="mt-1 text-neutral-600">
-            {isHe ? 'נהל את פרופיל החברה וצוות הגיוס' : 'Manage your company profile and recruitment team'}
+            {isHe
+              ? 'נהל את פרופיל החברה וצוות הגיוס'
+              : 'Manage your company profile and recruitment team'}
           </p>
         </div>
         <Button asChild>
@@ -47,7 +49,9 @@ export default async function HrCompanyListPage({
       {memberships.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-16 text-center text-neutral-500">
-            {isHe ? 'אין חברות עדיין. לחץ "צור חברה" כדי להתחיל.' : 'No companies yet. Click "Create company" to get started.'}
+            {isHe
+              ? 'אין חברות עדיין. לחץ "צור חברה" כדי להתחיל.'
+              : 'No companies yet. Click "Create company" to get started.'}
           </CardContent>
         </Card>
       ) : (
@@ -63,9 +67,7 @@ export default async function HrCompanyListPage({
                   </p>
                 </div>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href={`/hr/company/${m.companyId}`}>
-                    {isHe ? 'נהל' : 'Manage'}
-                  </Link>
+                  <Link href={`/hr/company/${m.companyId}`}>{isHe ? 'נהל' : 'Manage'}</Link>
                 </Button>
               </CardContent>
             </Card>

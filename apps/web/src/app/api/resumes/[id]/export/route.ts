@@ -183,12 +183,7 @@ function renderDoc(c: ResumeContent): string {
 <body>`);
 
   if (c.contact?.name) parts.push(`<h1>${escapeHtml(c.contact.name)}</h1>`);
-  const contactBits = [
-    c.contact?.email,
-    c.contact?.phone,
-    c.contact?.location,
-    c.contact?.linkedin,
-  ]
+  const contactBits = [c.contact?.email, c.contact?.phone, c.contact?.location, c.contact?.linkedin]
     .filter(Boolean)
     .map((s) => escapeHtml(s));
   if (contactBits.length) parts.push(`<p class="contact">${contactBits.join(' &middot; ')}</p>`);

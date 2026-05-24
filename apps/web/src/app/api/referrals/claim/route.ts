@@ -48,7 +48,10 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   // Check max uses
   if (codeRow.maxUses !== null && codeRow.usageCount >= codeRow.maxUses) {
-    return NextResponse.json({ error: 'This referral code has reached its limit' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'This referral code has reached its limit' },
+      { status: 400 },
+    );
   }
 
   // Check if this user was already referred

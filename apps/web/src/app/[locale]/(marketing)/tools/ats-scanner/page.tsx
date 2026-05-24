@@ -44,11 +44,13 @@ export default function ATSScannerPage() {
     }
   }
 
-  const scoreColor =
-    !result ? ''
-    : result.score >= 75 ? 'text-emerald-600'
-    : result.score >= 50 ? 'text-amber-600'
-    : 'text-red-600';
+  const scoreColor = !result
+    ? ''
+    : result.score >= 75
+      ? 'text-emerald-600'
+      : result.score >= 50
+        ? 'text-amber-600'
+        : 'text-red-600';
 
   return (
     <main id="main" className="min-h-screen bg-gradient-to-b from-neutral-50 to-white py-20">
@@ -121,7 +123,10 @@ export default function ATSScannerPage() {
                 <h3 className="mb-3 font-semibold text-red-900">{t('result.missingKeywords')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {result.missing.map((kw) => (
-                    <span key={kw} className="rounded-full bg-red-100 px-3 py-1 text-xs text-red-800">
+                    <span
+                      key={kw}
+                      className="rounded-full bg-red-100 px-3 py-1 text-xs text-red-800"
+                    >
                       {kw}
                     </span>
                   ))}
@@ -131,10 +136,15 @@ export default function ATSScannerPage() {
 
             {result.matched.length > 0 && (
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6">
-                <h3 className="mb-3 font-semibold text-emerald-900">{t('result.matchedKeywords')}</h3>
+                <h3 className="mb-3 font-semibold text-emerald-900">
+                  {t('result.matchedKeywords')}
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {result.matched.map((kw) => (
-                    <span key={kw} className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-800">
+                    <span
+                      key={kw}
+                      className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-800"
+                    >
                       {kw}
                     </span>
                   ))}

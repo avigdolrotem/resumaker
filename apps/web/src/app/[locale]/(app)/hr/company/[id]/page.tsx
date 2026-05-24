@@ -89,7 +89,12 @@ export default function CompanyDetailPage() {
       <h1 className="text-3xl font-bold">{company.name}</h1>
       {company.description && <p className="text-neutral-600">{company.description}</p>}
       {company.websiteUrl && (
-        <a href={company.websiteUrl} className="text-blue-600 underline text-sm" target="_blank" rel="noreferrer">
+        <a
+          href={company.websiteUrl}
+          className="text-sm text-blue-600 underline"
+          target="_blank"
+          rel="noreferrer"
+        >
           {company.websiteUrl}
         </a>
       )}
@@ -137,7 +142,7 @@ export default function CompanyDetailPage() {
                 id="role"
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as 'recruiter' | 'viewer')}
-                className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="border-input bg-background block w-full rounded-md border px-3 py-2 text-sm"
               >
                 <option value="recruiter">Recruiter</option>
                 <option value="viewer">Viewer</option>

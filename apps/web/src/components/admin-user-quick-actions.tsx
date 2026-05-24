@@ -69,7 +69,7 @@ export function AdminUserQuickActions({ userId, subscription }: Props) {
   }
 
   async function handleCancelSub() {
-    if (!confirm('Cancel this user\'s subscription at period end?')) return;
+    if (!confirm("Cancel this user's subscription at period end?")) return;
     try {
       setStatus('Canceling subscription…');
       await post(`/api/admin/users/${userId}/subscription/cancel`);

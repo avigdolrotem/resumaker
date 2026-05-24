@@ -25,10 +25,7 @@ export async function GET(
 
   // Verify this job belongs to the caller (or admin)
   const job = await db.query.jobs.findFirst({
-    where: and(
-      eq(schema.jobs.id, id),
-      eq(schema.jobs.source, 'hr'),
-    ),
+    where: and(eq(schema.jobs.id, id), eq(schema.jobs.source, 'hr')),
   });
   if (!job) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (guard.user.role !== 'admin' && job.hrUserId !== guard.user.id) {
@@ -46,12 +43,7 @@ export async function GET(
     })
     .from(schema.applications)
     .innerJoin(schema.users, eq(schema.applications.userId, schema.users.id))
-    .where(
-      and(
-        eq(schema.applications.jobId, id),
-        eq(schema.applications.notifyRecruiter, true),
-      ),
-    );
+    .where(and(eq(schema.applications.jobId, id), eq(schema.applications.notifyRecruiter, true)));
 
   return NextResponse.json({ applicants });
 }

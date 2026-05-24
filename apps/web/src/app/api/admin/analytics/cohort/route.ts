@@ -35,10 +35,7 @@ export async function GET(_req: NextRequest): Promise<Response> {
 
     // Users who signed up this week
     const cohortUsers = await db.query.users.findMany({
-      where: and(
-        gte(schema.users.createdAt, cohortStart),
-        lte(schema.users.createdAt, cohortEnd),
-      ),
+      where: and(gte(schema.users.createdAt, cohortStart), lte(schema.users.createdAt, cohortEnd)),
       columns: { id: true },
     });
 

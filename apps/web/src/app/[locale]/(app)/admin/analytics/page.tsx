@@ -8,10 +8,23 @@ async function fetchJson<T>(url: string, baseUrl: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-interface DauRow { date: string; count: number }
-interface FunnelData { signups: number; firstResume: number; paid: number }
-interface MrrData { mrrIls: number; subscriberCount: number }
-interface CohortRow { cohortWeek: string; weeks: number[] }
+interface DauRow {
+  date: string;
+  count: number;
+}
+interface FunnelData {
+  signups: number;
+  firstResume: number;
+  paid: number;
+}
+interface MrrData {
+  mrrIls: number;
+  subscriberCount: number;
+}
+interface CohortRow {
+  cohortWeek: string;
+  weeks: number[];
+}
 
 export default async function AdminAnalyticsPage() {
   await requireAdminPage();
@@ -41,7 +54,9 @@ export default async function AdminAnalyticsPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">Signups (30d)</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+              Signups (30d)
+            </p>
             <p className="text-3xl font-bold">{funnelData.signups}</p>
           </CardContent>
         </Card>
@@ -54,9 +69,12 @@ export default async function AdminAnalyticsPage() {
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">Funnel (30d)</p>
+            <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+              Funnel (30d)
+            </p>
             <p className="text-sm">
-              {funnelData.signups} signups → {funnelData.firstResume} resumes → {funnelData.paid} paid
+              {funnelData.signups} signups → {funnelData.firstResume} resumes → {funnelData.paid}{' '}
+              paid
             </p>
           </CardContent>
         </Card>
@@ -82,7 +100,9 @@ export default async function AdminAnalyticsPage() {
                     className="fill-blue-500"
                     rx={2}
                   />
-                  <title>{row.date}: {row.count}</title>
+                  <title>
+                    {row.date}: {row.count}
+                  </title>
                 </g>
               );
             })}
@@ -106,7 +126,9 @@ export default async function AdminAnalyticsPage() {
               <tr>
                 <th className="pb-2 pe-4 text-start font-medium text-neutral-500">Cohort</th>
                 {Array.from({ length: 8 }, (_, i) => (
-                  <th key={i} className="pb-2 px-2 font-medium text-neutral-500">W{i}</th>
+                  <th key={i} className="px-2 pb-2 font-medium text-neutral-500">
+                    W{i}
+                  </th>
                 ))}
               </tr>
             </thead>

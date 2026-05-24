@@ -5,7 +5,7 @@
 export default function OfflinePage() {
   return (
     <html lang="he" dir="rtl">
-      <body className="flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-50 p-8 font-sans text-center">
+      <body className="flex min-h-screen flex-col items-center justify-center gap-6 bg-neutral-50 p-8 text-center font-sans">
         <div className="text-6xl">offline</div>
         <h1 className="text-2xl font-bold text-neutral-800">אין חיבור לאינטרנט</h1>
         <p className="max-w-sm text-neutral-600">

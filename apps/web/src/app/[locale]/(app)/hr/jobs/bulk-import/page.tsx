@@ -48,11 +48,12 @@ export default function BulkImportPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Bulk import jobs</h1>
         <p className="mt-1 text-neutral-600">
-          Upload a CSV file with columns: title, company, location, description, remote, seniority, applyUrl
+          Upload a CSV file with columns: title, company, location, description, remote, seniority,
+          applyUrl
         </p>
       </div>
 
@@ -83,14 +84,14 @@ export default function BulkImportPage() {
       {error && (
         <Card className="border-red-200">
           <CardContent className="pt-5">
-            <p className="text-red-600 text-sm">{error}</p>
+            <p className="text-sm text-red-600">{error}</p>
           </CardContent>
         </Card>
       )}
 
       {result && (
         <Card>
-          <CardContent className="pt-5 space-y-2">
+          <CardContent className="space-y-2 pt-5">
             <p className="font-medium text-green-700">
               {result.imported} job{result.imported !== 1 ? 's' : ''} imported successfully.
             </p>

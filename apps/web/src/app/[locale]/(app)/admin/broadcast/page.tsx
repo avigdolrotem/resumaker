@@ -60,7 +60,9 @@ export default function AdminBroadcastPage() {
     const data = (await res.json()) as { recipientCount: number };
     setMessage(`Sent to ${data.recipientCount} recipients.`);
     setRows((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: 'sent', recipientCount: data.recipientCount } : r)),
+      prev.map((r) =>
+        r.id === id ? { ...r, status: 'sent', recipientCount: data.recipientCount } : r,
+      ),
     );
   }
 
@@ -127,11 +129,21 @@ export default function AdminBroadcastPage() {
               <caption className="sr-only">Broadcast emails list</caption>
               <thead className="text-start text-xs uppercase text-neutral-500">
                 <tr className="border-b border-neutral-200">
-                  <th scope="col" className="pb-2 font-medium">Subject</th>
-                  <th scope="col" className="pb-2 font-medium">Locale</th>
-                  <th scope="col" className="pb-2 font-medium">Status</th>
-                  <th scope="col" className="pb-2 font-medium">Recipients</th>
-                  <th scope="col" className="pb-2 font-medium">Action</th>
+                  <th scope="col" className="pb-2 font-medium">
+                    Subject
+                  </th>
+                  <th scope="col" className="pb-2 font-medium">
+                    Locale
+                  </th>
+                  <th scope="col" className="pb-2 font-medium">
+                    Status
+                  </th>
+                  <th scope="col" className="pb-2 font-medium">
+                    Recipients
+                  </th>
+                  <th scope="col" className="pb-2 font-medium">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
@@ -140,7 +152,9 @@ export default function AdminBroadcastPage() {
                     <td className="py-2">{row.subject}</td>
                     <td className="py-2 uppercase">{row.locale}</td>
                     <td className="py-2">
-                      <span className={`rounded px-2 py-0.5 text-xs font-medium ${row.status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                      <span
+                        className={`rounded px-2 py-0.5 text-xs font-medium ${row.status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
+                      >
                         {row.status}
                       </span>
                     </td>

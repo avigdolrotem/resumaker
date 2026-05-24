@@ -14,7 +14,7 @@ import { requireAdmin } from '@/lib/auth-guards';
 // Approximate tier prices in ILS (agorot = cents)
 const TIER_PRICE_ILS: Record<string, number> = {
   plus: 3900, // ₪39
-  pro: 9900,  // ₪99
+  pro: 9900, // ₪99
 };
 
 export async function GET(_req: NextRequest): Promise<Response> {
@@ -22,10 +22,7 @@ export async function GET(_req: NextRequest): Promise<Response> {
   if (guard instanceof NextResponse) return guard;
 
   const activeSubs = await db.query.subscriptions.findMany({
-    where: and(
-      ne(schema.subscriptions.tier, 'free'),
-      eq(schema.subscriptions.status, 'active'),
-    ),
+    where: and(ne(schema.subscriptions.tier, 'free'), eq(schema.subscriptions.status, 'active')),
     columns: { tier: true },
   });
 

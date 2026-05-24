@@ -36,9 +36,7 @@ export default async function ApplicantsPage({
     })
     .from(schema.applications)
     .innerJoin(schema.users, eq(schema.applications.userId, schema.users.id))
-    .where(
-      and(eq(schema.applications.jobId, id), eq(schema.applications.notifyRecruiter, true)),
-    );
+    .where(and(eq(schema.applications.jobId, id), eq(schema.applications.notifyRecruiter, true)));
 
   const isHe = locale === 'he';
 
@@ -46,7 +44,7 @@ export default async function ApplicantsPage({
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{isHe ? 'מועמדים' : 'Applicants'}</h1>
-        <p className="text-neutral-600 mt-1">
+        <p className="mt-1 text-neutral-600">
           {job.title} — {isHe ? 'מועמדים שנתנו הסכמה' : 'applicants who opted in'}
         </p>
       </div>
@@ -61,8 +59,8 @@ export default async function ApplicantsPage({
         <div className="space-y-3">
           {applicants.map((a) => (
             <Card key={a.applicationId}>
-              <CardContent className="pt-5 space-y-1">
-                <p className="font-medium">{a.name ?? isHe ? 'ללא שם' : 'No name'}</p>
+              <CardContent className="space-y-1 pt-5">
+                <p className="font-medium">{(a.name ?? isHe) ? 'ללא שם' : 'No name'}</p>
                 <p className="text-sm text-neutral-600">{a.email}</p>
                 <p className="text-xs text-neutral-400">
                   {isHe ? 'סטטוס: ' : 'Status: '}

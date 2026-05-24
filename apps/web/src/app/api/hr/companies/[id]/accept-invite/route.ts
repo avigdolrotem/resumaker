@@ -58,9 +58,7 @@ export async function POST(
   });
   if (existing) {
     // Already member — just clean up invite and return ok
-    await db
-      .delete(schema.companyInvites)
-      .where(eq(schema.companyInvites.id, invite.id));
+    await db.delete(schema.companyInvites).where(eq(schema.companyInvites.id, invite.id));
     return NextResponse.json({ success: true, alreadyMember: true });
   }
 

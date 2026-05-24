@@ -54,7 +54,10 @@ export async function PATCH(
   try {
     body = PatchSchema.parse(await req.json());
   } catch (err) {
-    return NextResponse.json({ error: 'Invalid body', detail: (err as Error).message }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Invalid body', detail: (err as Error).message },
+      { status: 400 },
+    );
   }
 
   const coupon = await db.query.coupons.findFirst({
@@ -64,7 +67,8 @@ export async function PATCH(
 
   const updates: Partial<typeof schema.coupons.$inferInsert> = {};
   if (body.discountPercent !== undefined) updates.discountPercent = body.discountPercent;
-  if (body.expiresAt !== undefined) updates.expiresAt = body.expiresAt ? new Date(body.expiresAt) : null;
+  if (body.expiresAt !== undefined)
+    updates.expiresAt = body.expiresAt ? new Date(body.expiresAt) : null;
   if (body.usageLimit !== undefined) updates.usageLimit = body.usageLimit;
   if (body.notes !== undefined) updates.notes = body.notes;
 

@@ -31,9 +31,12 @@ export async function POST(req: NextRequest): Promise<Response> {
   try {
     body = Body.parse(await req.json());
   } catch {
-    return NextResponse.json({ error: 'Invalid input. Provide jobDescription and resumeText.' }, {
-      status: 400,
-    });
+    return NextResponse.json(
+      { error: 'Invalid input. Provide jobDescription and resumeText.' },
+      {
+        status: 400,
+      },
+    );
   }
 
   const prompt = `You are an ATS (Applicant Tracking System) analyzer.
@@ -74,9 +77,6 @@ Respond with ONLY a JSON object (no markdown):
 
     return NextResponse.json(result);
   } catch {
-    return NextResponse.json(
-      { error: 'Scan failed. Please try again.' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Scan failed. Please try again.' }, { status: 500 });
   }
 }

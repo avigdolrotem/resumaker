@@ -14,7 +14,18 @@ const PAGES_CACHE = `resumaker-pages-${CACHE_VERSION}`;
 
 const OFFLINE_URL = '/offline';
 
-const STATIC_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.avif', '.svg', '.ico', '.woff', '.woff2', '.ttf'];
+const STATIC_EXTENSIONS = [
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.webp',
+  '.avif',
+  '.svg',
+  '.ico',
+  '.woff',
+  '.woff2',
+  '.ttf',
+];
 
 function isStaticAsset(url) {
   return STATIC_EXTENSIONS.some((ext) => url.pathname.endsWith(ext));
@@ -30,7 +41,10 @@ function isNavigationRequest(request) {
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(PAGES_CACHE).then((cache) => cache.add(OFFLINE_URL)).then(() => self.skipWaiting()),
+    caches
+      .open(PAGES_CACHE)
+      .then((cache) => cache.add(OFFLINE_URL))
+      .then(() => self.skipWaiting()),
   );
 });
 
@@ -40,9 +54,7 @@ self.addEventListener('activate', (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys
-            .filter((k) => k !== STATIC_CACHE && k !== PAGES_CACHE)
-            .map((k) => caches.delete(k)),
+          keys.filter((k) => k !== STATIC_CACHE && k !== PAGES_CACHE).map((k) => caches.delete(k)),
         ),
       )
       .then(() => self.clients.claim()),

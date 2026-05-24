@@ -22,8 +22,7 @@ const HEEBO_BASE = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/heebo/stat
 
 const INTER_BASE = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/inter/static';
 
-const NOTO_ARABIC_BASE =
-  'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosansarabic/static';
+const NOTO_ARABIC_BASE = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosansarabic/static';
 
 export function ensureFontsRegistered(): void {
   if (registered) return;
