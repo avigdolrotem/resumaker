@@ -8,7 +8,11 @@
  * - Offline fallback: /offline page
  */
 
-const CACHE_VERSION = 'v1';
+// Bump CACHE_VERSION on every SW behavioral change. The activate handler
+// deletes any cache that doesn't match the current STATIC_CACHE / PAGES_CACHE
+// names, so bumping forces a full cache wipe + reinstall and supersedes any
+// stuck SW left over from a previous deploy.
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `resumaker-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `resumaker-pages-${CACHE_VERSION}`;
 
@@ -40,10 +44,21 @@ function isNavigationRequest(request) {
 }
 
 self.addEventListener('install', (event) => {
+  // Non-blocking install: if /offline can't be cached (network blip, 404,
+  // anything), we STILL want the SW to install. Otherwise it gets stuck in
+  // "installing" forever and the activate handler never runs, leaving any
+  // previous SW in control of the page. That's how an old broken SW takes
+  // a site hostage.
   event.waitUntil(
-    caches
-      .open(PAGES_CACHE)
-      .then((cache) => cache.add(OFFLINE_URL))
+    Promise.resolve()
+      .then(() =>
+        caches
+          .open(PAGES_CACHE)
+          .then((cache) => cache.add(OFFLINE_URL))
+          .catch(() => {
+            // Swallow — install must succeed regardless.
+          }),
+      )
       .then(() => self.skipWaiting()),
   );
 });
@@ -84,7 +99,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Page navigations: stale-while-revalidate
+  // Page navigations: stale-while-revalidate.
+  //
+  // CRITICAL: never return Response.error() — Safari renders that as its
+  // generic "this page couldn't load" page. If both cache and network miss,
+  // re-throw so the browser surfaces its OWN error UI (which the user can
+  // recover from) instead of a poisoned Response object from us.
   if (isNavigationRequest(event.request)) {
     event.respondWith(
       caches.open(PAGES_CACHE).then(async (cache) => {
@@ -94,9 +114,11 @@ self.addEventListener('fetch', (event) => {
             if (response.ok) cache.put(event.request, response.clone());
             return response;
           })
-          .catch(async () => {
+          .catch(async (err) => {
             const offline = await caches.match(OFFLINE_URL);
-            return offline ?? Response.error();
+            if (offline) return offline;
+            // Re-throw so the browser handles it natively.
+            throw err;
           });
         return cached ?? fetchPromise;
       }),
