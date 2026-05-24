@@ -1,9 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm -C apps/web build",
   "crons": [
-    {
-      "path": "/api/cron/purge",
-      "schedule": "0 3 * * *"
-    }
+    { "path": "/api/cron/purge", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/onboarding-emails", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/scrape-jobs", "schedule": "0 6 * * *" },
+    { "path": "/api/cron/push-notifications", "schedule": "0 18 * * *" }
   ]
 }

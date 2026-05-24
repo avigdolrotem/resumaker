@@ -1,6 +1,6 @@
-import type { NormalizedJob } from '../types.js';
-import { normalizeUrl } from '../url-normalize.js';
-import { stripHtml, inferSeniority, parseIsoDate } from '../html-utils.js';
+import type { NormalizedJob } from '../types';
+import { normalizeUrl } from '../url-normalize';
+import { stripHtml, inferSeniority, parseIsoDate } from '../html-utils';
 
 const BASE = 'https://jobs.ashbyhq.com/api/non-user-facing/job-board/job-list';
 

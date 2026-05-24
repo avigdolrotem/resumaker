@@ -1,5 +1,5 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import type { FitScore, NormalizedJob, UserProfile } from './types.js';
+import type { FitScore, NormalizedJob, UserProfile } from './types';
 
 const FIT_SCORE_SYSTEM = `You are a technical recruiter evaluating candidate-job fit.
 

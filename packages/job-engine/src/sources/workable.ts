@@ -1,6 +1,6 @@
-import type { NormalizedJob } from '../types.js';
-import { normalizeUrl } from '../url-normalize.js';
-import { stripHtml, inferSeniority } from '../html-utils.js';
+import type { NormalizedJob } from '../types';
+import { normalizeUrl } from '../url-normalize';
+import { stripHtml, inferSeniority } from '../html-utils';
 
 const BASE = 'https://apply.workable.com/api/v3/accounts/{slug}/jobs';
 

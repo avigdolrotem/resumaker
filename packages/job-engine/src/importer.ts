@@ -1,7 +1,7 @@
 import type Anthropic from '@anthropic-ai/sdk';
-import type { NormalizedJob } from './types.js';
-import { normalizeUrl } from './url-normalize.js';
-import { stripHtml, inferSeniority, parseIsoDate } from './html-utils.js';
+import type { NormalizedJob } from './types';
+import { normalizeUrl } from './url-normalize';
+import { stripHtml, inferSeniority, parseIsoDate } from './html-utils';
 
 const EXTRACT_JD_SYSTEM = `You are a job description parser. Extract structured information from the given job description text or URL content.
 

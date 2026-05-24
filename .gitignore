@@ -130,3 +130,4 @@ agentdb.rvf
 *.rvf.lock
 
 .terraform.lock.hcl
+.vercel

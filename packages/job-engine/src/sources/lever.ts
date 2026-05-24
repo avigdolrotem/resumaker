@@ -1,6 +1,6 @@
-import type { NormalizedJob } from '../types.js';
-import { normalizeUrl } from '../url-normalize.js';
-import { stripHtml, inferSeniority, parseIsoDate } from '../html-utils.js';
+import type { NormalizedJob } from '../types';
+import { normalizeUrl } from '../url-normalize';
+import { stripHtml, inferSeniority, parseIsoDate } from '../html-utils';
 
 const BASE = 'https://api.lever.co/v0/postings/{slug}?mode=json';
 

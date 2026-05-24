@@ -1,4 +1,4 @@
-import type { Source } from '../types.js';
+import type { Source } from '../types';
 
 /**
  * Company slugs grouped by ATS source.
