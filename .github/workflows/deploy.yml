@@ -103,6 +103,12 @@ jobs:
           push: true
           provenance: true
           sbom: true
+          # NEXT_PUBLIC_* values must be present at build time to be
+          # baked into the client bundle. Sentry DSN is public-by-design
+          # (Sentry rate-limits per project) — fine to pass through CI.
+          build-args: |
+            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+            NEXT_PUBLIC_SENTRY_ENVIRONMENT=production
           tags: |
             ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.image_tag }}
             ${{ env.ECR_REGISTRY }}/${{ env.IMAGE_NAME }}:latest

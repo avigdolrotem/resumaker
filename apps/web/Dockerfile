@@ -17,6 +17,15 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 
 # Build the app
 FROM base AS builder
+# NEXT_PUBLIC_* env vars are inlined at build time into the client bundle —
+# the Sentry DSN is public-by-design (rate-limited per project at Sentry's
+# end) so passing it here is the canonical way to enable browser-side
+# error capture. CI sets this via `docker build --build-arg`.
+ARG NEXT_PUBLIC_SENTRY_DSN
+ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
+ARG NEXT_PUBLIC_SENTRY_ENVIRONMENT=production
+ENV NEXT_PUBLIC_SENTRY_ENVIRONMENT=${NEXT_PUBLIC_SENTRY_ENVIRONMENT}
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY . .
