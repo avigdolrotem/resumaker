@@ -10,9 +10,13 @@ const nextConfig: NextConfig = {
   pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
   reactStrictMode: true,
   poweredByHeader: false,
-  // Source maps off in production to avoid leaking server-side logic (LLM
-  // prompts, security patterns) to client-side DevTools.
-  productionBrowserSourceMaps: false,
+  // Source maps temporarily ENABLED to diagnose a client-side hydration
+  // error that crashes the marketing page. Will flip back to false once
+  // the bug is identified and fixed.
+  // TODO(rotem): revert to false before public launch — production source
+  // maps expose server-side logic (LLM prompts, security patterns) to
+  // client-side DevTools.
+  productionBrowserSourceMaps: true,
 
   // Strict security headers
   async headers() {
