@@ -1,6 +1,12 @@
+'use client';
+
 /**
  * /offline — shown by the service worker when the user navigates
  * to a page that has no cached version and no network.
+ *
+ * Client component because the "Try again" button needs an onClick
+ * handler. The page still prerenders to static HTML at build time —
+ * Next.js does that for client components too, then hydrates on load.
  */
 export default function OfflinePage() {
   return (
