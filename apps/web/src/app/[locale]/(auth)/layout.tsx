@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { Link } from '@/i18n/navigation';
 import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
 import { GridPattern } from '@/components/ui-effects/grid-pattern';
+import { Logo } from '@/components/logo';
 
 /**
  * Auth layout: sign-in / sign-up / forgot-password / reset-password
@@ -29,15 +29,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       <header className="relative z-10">
         <div className="container mx-auto flex h-16 items-center px-4">
-          <Link
-            href="/"
-            className="group text-2xl font-bold tracking-tight"
-            aria-label="Resumaker home"
-          >
-            <span className="from-brand-700 via-brand-500 to-brand-700 bg-gradient-to-r bg-[length:200%_100%] bg-clip-text text-transparent transition-[background-position] duration-500 group-hover:bg-right">
-              Resumaker
-            </span>
-          </Link>
+          <Logo size="md" href="/" />
         </div>
       </header>
 

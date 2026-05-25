@@ -6,6 +6,7 @@ import { useRouter } from '@/i18n/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
 import { LayoutDashboard, FilePlus2, Settings, LogOut, UserCircle } from 'lucide-react';
 import { LocaleSwitcher } from './locale-switcher';
+import { Logo } from './logo';
 import { Button } from './ui/button';
 
 /**
@@ -26,12 +27,7 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-neutral-200/60 bg-white/80 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link
-          href="/dashboard"
-          className="from-brand-600 to-brand-800 bg-gradient-to-br bg-clip-text text-2xl font-bold text-transparent"
-        >
-          Resumaker
-        </Link>
+        <Logo size="md" href="/dashboard" />
 
         <nav className="flex items-center gap-1">
           <NavLink
