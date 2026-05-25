@@ -1,5 +1,7 @@
 import type { Tier } from '@/lib/billing/limits';
-import { canChooseLLM } from '@/lib/billing/tier';
+import { canChooseLLM, getUserTier } from '@/lib/billing/tier';
+import { eq } from 'drizzle-orm';
+import { db, schema } from '@/db';
 import { getModelById, getTierDefault } from './models';
 
 interface ResolveArgs {
@@ -26,4 +28,18 @@ export function resolveModel({ tier, preference }: ResolveArgs): string {
   const tierOrder = { free: 0, plus: 1, pro: 2 } as const;
   if (tierOrder[tier] < tierOrder[entry.minTier]) return getTierDefault(tier);
   return preference;
+}
+
+/**
+ * Full resolution for a given userId: look up their tier, look up
+ * their stored preference, run it through the pure `resolveModel`,
+ * and return the gateway-format model string the LLM call should use.
+ */
+export async function resolveModelForUser(userId: string): Promise<string> {
+  const tier = await getUserTier(userId);
+  const row = await db.query.users.findFirst({
+    where: eq(schema.users.id, userId),
+    columns: { llmModel: true },
+  });
+  return resolveModel({ tier, preference: row?.llmModel ?? null });
 }
