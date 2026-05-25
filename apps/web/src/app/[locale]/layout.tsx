@@ -8,6 +8,7 @@ import { Toaster } from 'sonner';
 import { routing, getDirection, type Locale } from '@/i18n/routing';
 import { CookieConsent } from '@/components/cookie-consent';
 import { SWRegister } from '@/components/sw-register';
+import { CommandPalette } from '@/components/command-palette';
 import {
   DEFAULT_THEME,
   THEME_COOKIE,
@@ -196,6 +197,10 @@ export default async function LocaleLayout({
         */}
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
+
+          {/* Global cmd+K palette — always mounted, listens for the
+              keystroke anywhere on the page */}
+          <CommandPalette />
 
           <CookieConsent locale={locale} />
           <SWRegister />

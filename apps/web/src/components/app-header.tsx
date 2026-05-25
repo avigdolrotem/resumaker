@@ -8,6 +8,8 @@ import { LayoutDashboard, FilePlus2, Settings, LogOut, UserCircle } from 'lucide
 import { LocaleSwitcher } from './locale-switcher';
 import { Logo } from './logo';
 import { ThemeToggle } from './theme-toggle';
+import { CommandPaletteTrigger } from './command-palette';
+import { MobileDrawer } from './mobile-drawer';
 import { Button } from './ui/button';
 
 /**
@@ -30,6 +32,13 @@ export function AppHeader() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Logo size="md" href="/dashboard" />
 
+        {/* Center column: command-palette trigger replaces the old
+            horizontal nav links on desktop. The pill is more
+            discoverable + supports keyboard nav (⌘K). The old
+            individual nav buttons are still there for muscle memory
+            but reduced visually. */}
+        <CommandPaletteTrigger className="mx-4 hidden max-w-xs flex-1 md:inline-flex" />
+
         <nav className="flex items-center gap-1">
           <NavLink
             href="/dashboard"
@@ -43,7 +52,7 @@ export function AppHeader() {
           />
           <NavLink href="/settings" icon={<Settings className="h-4 w-4" />} label={t('settings')} />
 
-          <div className="mx-2 h-6 w-px bg-neutral-200" />
+          <div className="bg-border mx-2 hidden h-6 w-px md:block" />
 
           <LocaleSwitcher />
           <ThemeToggle />
@@ -68,6 +77,7 @@ export function AppHeader() {
               <Link href="/sign-in">{t('signIn')}</Link>
             </Button>
           )}
+          <MobileDrawer />
         </nav>
       </div>
     </header>
@@ -86,10 +96,10 @@ function NavLink({
   return (
     <Link
       href={href}
-      className="hover:text-brand-700 hover:bg-brand-50 inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-neutral-700 transition"
+      className="text-foreground hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 hidden items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition md:inline-flex"
     >
       {icon}
-      <span className="hidden md:inline">{label}</span>
+      <span className="hidden lg:inline">{label}</span>
     </Link>
   );
 }

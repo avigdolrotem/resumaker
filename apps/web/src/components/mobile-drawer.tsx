@@ -1,0 +1,224 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import {
+  Menu,
+  X,
+  LayoutDashboard,
+  FilePlus2,
+  Settings,
+  UserCircle,
+  LogIn,
+  UserPlus,
+  Briefcase,
+  Mail,
+  Home,
+  CreditCard,
+  Palette,
+  TrendingUp,
+  LogOut,
+} from 'lucide-react';
+import { Link } from '@/i18n/navigation';
+import { useSession, signOut } from '@/lib/auth-client';
+import { useRouter } from '@/i18n/navigation';
+import { Logo } from './logo';
+
+/**
+ * Mobile-only sliding drawer with primary nav. On viewports < md we hide
+ * the horizontal pill nav and show only a hamburger button; tapping it
+ * slides this drawer in from the trailing edge (RTL-aware via `inset-end`).
+ *
+ * Backdrop click + Escape close the drawer. Body scroll locks while open
+ * so the page underneath doesn't shift around.
+ *
+ * Hidden on md+ via `md:hidden` — desktop users see the pill nav instead.
+ */
+type LinkHref =
+  | '/dashboard'
+  | '/builder'
+  | '/cover-letters'
+  | '/cover-letters/new'
+  | '/applications'
+  | '/jobs'
+  | '/settings'
+  | '/profile'
+  | '/account/billing'
+  | '/examples'
+  | '/pricing'
+  | '/'
+  | '/sign-in'
+  | '/sign-up';
+
+type Item =
+  | { kind: 'link'; href: LinkHref; label: string; Icon: typeof Menu }
+  | { kind: 'action'; action: 'sign-out'; label: string; Icon: typeof Menu };
+
+function authedItems(): Item[] {
+  return [
+    { kind: 'link', href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+    { kind: 'link', href: '/builder', label: 'New resume', Icon: FilePlus2 },
+    { kind: 'link', href: '/cover-letters', label: 'Cover letters', Icon: Mail },
+    { kind: 'link', href: '/applications', label: 'Applications', Icon: TrendingUp },
+    { kind: 'link', href: '/jobs', label: 'Job hunt', Icon: Briefcase },
+    { kind: 'link', href: '/examples', label: 'Examples', Icon: Palette },
+    { kind: 'link', href: '/profile', label: 'Profile', Icon: UserCircle },
+    { kind: 'link', href: '/settings', label: 'Settings', Icon: Settings },
+    { kind: 'link', href: '/account/billing', label: 'Billing', Icon: CreditCard },
+    { kind: 'action', action: 'sign-out', label: 'Sign out', Icon: LogOut },
+  ];
+}
+
+function publicItems(): Item[] {
+  return [
+    { kind: 'link', href: '/', label: 'Home', Icon: Home },
+    { kind: 'link', href: '/examples', label: 'Examples', Icon: Palette },
+    { kind: 'link', href: '/pricing', label: 'Pricing', Icon: CreditCard },
+    { kind: 'link', href: '/sign-in', label: 'Sign in', Icon: LogIn },
+    { kind: 'link', href: '/sign-up', label: 'Sign up', Icon: UserPlus },
+  ];
+}
+
+export function MobileDrawer() {
+  const [open, setOpen] = useState(false);
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  // Lock scroll on body while open. Restore on close.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  // Escape closes.
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  const items = session ? authedItems() : publicItems();
+
+  async function handleSignOut() {
+    setOpen(false);
+    await signOut();
+    router.push('/');
+    router.refresh();
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Open menu"
+        aria-expanded={open}
+        className="text-foreground hover:bg-muted inline-flex h-9 w-9 items-center justify-center rounded-md transition md:hidden"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
+      {/* Backdrop + panel */}
+      {open && (
+        <div
+          className="fixed inset-0 z-[90] md:hidden"
+          aria-modal="true"
+          role="dialog"
+          aria-label="Navigation menu"
+        >
+          {/* Click-outside backdrop */}
+          <div
+            className="absolute inset-0 bg-neutral-950/60 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
+          />
+
+          {/* Sliding panel — slides in from trailing edge (right in LTR, left in RTL) */}
+          <div
+            className="bg-card absolute inset-y-0 end-0 flex w-[85%] max-w-sm flex-col shadow-2xl"
+            style={{
+              animation: 'slideInRight 0.25s ease-out',
+            }}
+          >
+            <div className="border-border flex items-center justify-between border-b px-4 py-3">
+              <Logo size="sm" href={session ? '/dashboard' : '/'} />
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close menu"
+                className="text-foreground hover:bg-muted inline-flex h-9 w-9 items-center justify-center rounded-md transition"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto py-2">
+              {items.map((it) => {
+                if (it.kind === 'action') {
+                  return (
+                    <button
+                      key={it.label}
+                      type="button"
+                      onClick={() => void handleSignOut()}
+                      className="text-foreground hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-start text-sm font-medium transition"
+                    >
+                      <it.Icon className="text-muted-foreground h-4 w-4" />
+                      {it.label}
+                    </button>
+                  );
+                }
+                return (
+                  <Link
+                    key={it.href}
+                    href={it.href}
+                    onClick={() => setOpen(false)}
+                    className="text-foreground hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition"
+                  >
+                    <it.Icon className="text-muted-foreground h-4 w-4" />
+                    {it.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {session && (
+              <div className="border-border border-t px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="bg-brand-100 dark:bg-brand-900/40 flex h-9 w-9 items-center justify-center rounded-full">
+                    <UserCircle className="text-brand-700 dark:text-brand-200 h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-foreground truncate text-sm font-medium">
+                      {session.user.name}
+                    </div>
+                    <div className="text-muted-foreground truncate text-xs" dir="ltr">
+                      {session.user.email}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* slide-in keyframe — scoped to this drawer so it doesn't
+              leak into the global animation registry */}
+          <style>{`
+            @keyframes slideInRight {
+              from { transform: translateX(100%); }
+              to { transform: translateX(0); }
+            }
+            [dir='rtl'] @keyframes slideInRight {
+              from { transform: translateX(-100%); }
+              to { transform: translateX(0); }
+            }
+          `}</style>
+        </div>
+      )}
+    </>
+  );
+}

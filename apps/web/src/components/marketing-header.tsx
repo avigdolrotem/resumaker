@@ -6,6 +6,8 @@ import { LocaleSwitcher } from './locale-switcher';
 import { GlowButton } from './ui-effects/glow-button';
 import { Logo } from './logo';
 import { ThemeToggle } from './theme-toggle';
+import { CommandPaletteTrigger } from './command-palette';
+import { MobileDrawer } from './mobile-drawer';
 import { auth } from '@/lib/auth';
 import { LayoutDashboard } from 'lucide-react';
 
@@ -42,16 +44,20 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Logo size="md" href={isAuthed ? '/dashboard' : '/'} />
 
-          <nav className="flex items-center gap-2 sm:gap-5">
+          {/* Desktop cmd+K trigger — center column, hidden on mobile
+              where the hamburger drawer is the equivalent. */}
+          <CommandPaletteTrigger className="mx-4 hidden max-w-xs flex-1 md:inline-flex" />
+
+          <nav className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/examples"
-              className="hover:bg-brand-50 hover:text-brand-700 hidden rounded-md px-2 py-1 text-sm font-medium text-neutral-700 transition sm:inline"
+              className="hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 text-foreground hidden rounded-md px-2 py-1 text-sm font-medium transition md:inline"
             >
               {t('home')}
             </Link>
             <Link
               href="/pricing"
-              className="hover:bg-brand-50 hover:text-brand-700 hidden rounded-md px-2 py-1 text-sm font-medium text-neutral-700 transition sm:inline"
+              className="hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 text-foreground hidden rounded-md px-2 py-1 text-sm font-medium transition md:inline"
             >
               {t('pricing')}
             </Link>
@@ -71,7 +77,7 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
               <>
                 <Link
                   href="/sign-in"
-                  className="hover:bg-brand-50 hover:text-brand-700 hidden rounded-md px-2 py-1 text-sm font-medium text-neutral-700 transition sm:inline"
+                  className="hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 text-foreground hidden rounded-md px-2 py-1 text-sm font-medium transition md:inline"
                 >
                   {t('signIn')}
                 </Link>
@@ -80,6 +86,7 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
                 </GlowButton>
               </>
             )}
+            <MobileDrawer />
           </nav>
         </div>
       </div>
