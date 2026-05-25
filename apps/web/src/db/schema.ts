@@ -75,6 +75,15 @@ export const users = pgTable(
       }>(),
     /** Base64 data-URL avatar (<=2MB). Kept inline rather than S3 to avoid an extra bucket dep. */
     avatar: text('avatar'),
+    /**
+     * User-selected LLM for resume generation. Gateway-format string
+     * (e.g. `anthropic/claude-sonnet-4-6`). NULL = use tier default.
+     * Only Plus/Pro tiers can set this; Free is locked to Haiku.
+     * Resolved at request time by `resolveModelForUser` — never trust
+     * this field without re-checking the tier gate, since users can
+     * downgrade after setting a Pro-only model.
+     */
+    llmModel: text('llm_model'),
     /** Set true by the Better Auth twoFactor plugin once TOTP is enrolled and verified. */
     twoFactorEnabled: boolean('two_factor_enabled').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
