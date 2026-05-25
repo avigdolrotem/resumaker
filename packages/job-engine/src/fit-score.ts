@@ -1,4 +1,6 @@
-import type Anthropic from '@anthropic-ai/sdk';
+import { generateObject } from 'ai';
+import { gateway } from '@ai-sdk/gateway';
+import { z } from 'zod';
 import type { FitScore, NormalizedJob, UserProfile } from './types';
 
 const FIT_SCORE_SYSTEM = `You are a technical recruiter evaluating candidate-job fit.
@@ -14,26 +16,17 @@ Scoring guide:
 
 Be honest. A lower score helps filter, not hurts.`;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const FIT_TOOL: any = {
-  name: 'score_fit',
-  description: 'Output the candidate-job fit evaluation',
-  input_schema: {
-    type: 'object',
-    required: ['score', 'rationale', 'strengths', 'gaps'],
-    properties: {
-      score: { type: 'number', minimum: 1, maximum: 10 },
-      rationale: { type: 'string', description: 'One sentence explanation' },
-      strengths: { type: 'array', items: { type: 'string' } },
-      gaps: { type: 'array', items: { type: 'string' } },
-    },
-  },
-};
+const FitScoreSchema = z.object({
+  score: z.number().min(1).max(10),
+  rationale: z.string().describe('One sentence explanation'),
+  strengths: z.array(z.string()),
+  gaps: z.array(z.string()),
+});
 
 export interface ComputeFitScoreOpts {
   profile: UserProfile;
   job: NormalizedJob;
-  anthropic: Anthropic;
+  modelString?: string;
 }
 
 function profileToText(profile: UserProfile): string {
@@ -44,11 +37,11 @@ function profileToText(profile: UserProfile): string {
 }
 
 /**
- * Use Claude haiku to score how well a candidate profile fits a job.
- * Returns a FitScore — never throws.
+ * Use an LLM (default: anthropic/claude-haiku-4-5) to score how well a
+ * candidate profile fits a job.  Returns a FitScore — never throws.
  */
 export async function computeFitScore(opts: ComputeFitScoreOpts): Promise<FitScore> {
-  const { profile, job, anthropic } = opts;
+  const { profile, job, modelString = 'anthropic/claude-haiku-4-5' } = opts;
   const profileText = profileToText(profile).slice(0, 4_000);
   const jdText = `Company: ${job.company}\nTitle: ${job.title}\n\n${job.description}`.slice(
     0,
@@ -56,38 +49,19 @@ export async function computeFitScore(opts: ComputeFitScoreOpts): Promise<FitSco
   );
 
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 512,
+    const result = await generateObject({
+      model: gateway(modelString),
+      schema: FitScoreSchema,
+      maxOutputTokens: 512,
       system: FIT_SCORE_SYSTEM,
-      tools: [FIT_TOOL],
-      tool_choice: { type: 'tool', name: 'score_fit' },
-      messages: [
-        {
-          role: 'user',
-          content: `CANDIDATE:\n${profileText}\n\nJOB:\n${jdText}`,
-        },
-      ],
+      prompt: `CANDIDATE:\n${profileText}\n\nJOB:\n${jdText}`,
     });
 
-    const toolUse = response.content.find(
-      (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'score_fit',
-    );
-
-    if (!toolUse) return fallback();
-
-    const data = toolUse.input as {
-      score: number;
-      rationale: string;
-      strengths: string[];
-      gaps: string[];
-    };
-
     return {
-      score: data.score,
-      rationale: data.rationale,
-      strengths: data.strengths ?? [],
-      gaps: data.gaps ?? [],
+      score: result.object.score,
+      rationale: result.object.rationale,
+      strengths: result.object.strengths ?? [],
+      gaps: result.object.gaps ?? [],
     };
   } catch {
     return fallback();
