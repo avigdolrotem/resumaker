@@ -31,6 +31,13 @@ const EnvSchema = z
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
     DATABASE_POOL_MAX: z.coerce.number().int().positive().default(10),
 
+    // GCP Cloud SQL — opt-in. When `GCP_CLOUD_SQL_INSTANCE` is set,
+    // the DB layer uses Cloud SQL Connector + IAM auth instead of the
+    // raw DATABASE_URL. Leave unset to keep using Neon.
+    GCP_CLOUD_SQL_INSTANCE: z.string().optional(), // "project:region:instance"
+    GCP_CLOUD_SQL_IAM_USER: z.string().optional(),
+    GCP_CLOUD_SQL_DATABASE: z.string().optional().default('resumaker'),
+
     // Redis
     REDIS_URL: z.string().optional(),
 
