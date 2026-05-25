@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { useSession, signOut } from '@/lib/auth-client';
 import { useRouter, Link } from '@/i18n/navigation';
 import { Security2FACard } from '@/components/security-2fa-card';
+import { LinkedAccountsCard } from '@/components/linked-accounts-card';
 
 type Tab = 'profile' | 'security' | 'sessions' | 'notifications' | 'appearance' | 'data' | 'danger';
 
@@ -211,6 +212,8 @@ function SecurityTab() {
       </Card>
 
       <Security2FACard />
+
+      <LinkedAccountsCard />
 
       <Card>
         <CardHeader>
