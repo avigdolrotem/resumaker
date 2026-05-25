@@ -42,7 +42,10 @@ export function ImportProfileButton({ onImport }: { onImport: (p: ImportedProfil
         toast.error(t('failed'), { description: data.error });
         return;
       }
-      onImport(data);
+      // The route returns `{ profile, extractedChars }` — onImport expects
+      // the inner profile, NOT the envelope. Passing `data` here used to
+      // silently no-op every import because `data.name` etc. were undefined.
+      onImport(data.profile);
       toast.success(t('success'));
     } catch (err) {
       toast.error(t('failed'), { description: (err as Error).message });

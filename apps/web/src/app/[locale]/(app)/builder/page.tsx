@@ -14,38 +14,27 @@ import { AtsScoreCard } from '@/components/ats-score-card';
 import { ResumePreview } from '@/components/resume-preview';
 import { VersionHistory } from '@/components/version-history';
 import { TemplatePicker, type TemplateId } from '@/components/template-picker';
+import { BuilderModeToggle, type BuilderMode } from '@/components/builder/builder-mode-toggle';
 import type { Tier } from '@/lib/billing/limits';
+import { Hammer, Sparkles } from 'lucide-react';
+import type { Resume, ATSScore } from '@resumaker/shared';
 
 type Industry = 'tech' | 'healthcare' | 'finance' | 'general';
 type LocaleChoice = 'auto' | 'he' | 'en';
 
+/**
+ * The shape returned by /api/resumes/generate. `resume` is the canonical
+ * {@link Resume} (full schema), not a subset — using the canonical type
+ * keeps this component honest: any field present in the schema is
+ * available here, including projects/awards/certifications/languages.
+ */
 interface ResumeResult {
-  resume: {
-    metadata: { language: 'he' | 'en'; generated_at: string; template: string };
-    contact: { name: string; email?: string };
-    summary: string;
-    experience: Array<{
-      company: string;
-      title: string;
-      start_date: string;
-      end_date: string | null;
-      highlights?: string[];
-    }>;
-    education: Array<{ institution: string; degree: string }>;
-    skills: string[];
-  };
+  resume: Resume;
   metadata: {
     durationMs: number;
     tokensUsed: { input: number; output: number };
-    detectedLocale: 'he' | 'en';
+    detectedLocale: string;
   };
-}
-
-interface ATSScore {
-  overall: number;
-  matched_keywords: string[];
-  missing_keywords: string[];
-  suggestions: Array<{ type: string; severity: string; message: string }>;
 }
 
 export default function BuilderPage() {
@@ -58,6 +47,25 @@ export default function BuilderPage() {
    * blocker — the route accepted the query param but the page ignored it.
    */
   const editingId = search.get('id');
+  // URL-driven mode so reload + share-link work. Default to basic so
+  // first-timers see the AI-assisted flow; users who want the full
+  // section-card editor can switch (or land on `?mode=advanced`).
+  const modeParam = search.get('mode');
+  const mode: BuilderMode = modeParam === 'advanced' ? 'advanced' : 'basic';
+  function setMode(next: BuilderMode) {
+    const params = new URLSearchParams(search.toString());
+    if (next === 'advanced') params.set('mode', 'advanced');
+    else params.delete('mode');
+    const qs = params.toString();
+    // Use history.replaceState to avoid a Next.js navigation cycle —
+    // we just want the URL to reflect the toggle.
+    window.history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''));
+    // Force re-render via a hack: trigger React by setting state. The
+    // searchParams hook re-reads on next render because we're using
+    // Next's useSearchParams which subscribes to the navigation entry.
+    // Workaround: force navigation via router.replace below.
+    router.replace(`/builder${qs ? `?${qs}` : ''}` as '/builder');
+  }
 
   const [jd, setJd] = useState('');
   const [url, setUrl] = useState('');
@@ -120,8 +128,27 @@ export default function BuilderPage() {
         const c = resume.content as ResumeResult['resume'];
         setName(c.contact?.name ?? '');
         setEmail(c.contact?.email ?? '');
+        setPhone(c.contact?.phone ?? '');
+        setLocation(c.contact?.location ?? '');
+        setLinkedin(c.contact?.linkedin ?? '');
         setProfileSummary(c.summary ?? '');
         setProfileSkills((c.skills ?? []).join(', '));
+        // Rehydrate the experience textarea as a best-effort flattening of
+        // structured entries — keeps the basic-mode form recognizable on
+        // re-edit. Advanced mode reads structured experience directly.
+        setExperienceText(
+          (c.experience ?? [])
+            .map((e) => {
+              const dates = e.is_current
+                ? `${e.start_date} – Present`
+                : `${e.start_date} – ${e.end_date ?? ''}`;
+              const lines = [`${e.title} at ${e.company} (${dates})`];
+              if (e.description) lines.push(e.description);
+              if (e.highlights?.length) lines.push(...e.highlights.map((h) => `• ${h}`));
+              return lines.join('\n');
+            })
+            .join('\n\n'),
+        );
         setIndustry((resume.industry ?? 'tech') as Industry);
         setLocale((c.metadata?.language ?? 'auto') as LocaleChoice);
         if (resume.templateId) setTemplateId(resume.templateId as TemplateId);
@@ -292,9 +319,44 @@ export default function BuilderPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">{t('title')}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
+        <BuilderModeToggle mode={mode} onChange={setMode} />
+      </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      {mode === 'advanced' && (
+        <div className="border-border bg-card rounded-2xl border border-dashed p-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <div className="from-brand-500 to-brand-700 shadow-brand-500/30 mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg">
+              <Hammer className="h-6 w-6" />
+            </div>
+            <h2 className="text-foreground text-xl font-bold">Advanced builder — in progress</h2>
+            <p className="text-muted-foreground mt-2 text-sm">
+              The full section-card editor (with MM/YYYY date pickers, drag-to-reorder, projects,
+              awards, skill categories, and PDF/TXT upload) is the next big ship. For now use Basic
+              mode — it&apos;s AI-assisted and produces the same underlying resume data, so nothing
+              you build here is wasted.
+            </p>
+            <ul className="text-muted-foreground mx-auto mt-6 grid max-w-md gap-1 text-start text-xs">
+              <li>· MM/YYYY date picker with &ldquo;Present&rdquo; toggle</li>
+              <li>· Per-entry add/edit/delete (each as its own card)</li>
+              <li>· Projects + awards + grouped skills</li>
+              <li>· PDF/TXT upload with preview-before-apply</li>
+              <li>· Live preview pane</li>
+            </ul>
+            <button
+              type="button"
+              onClick={() => setMode('basic')}
+              className="bg-brand-600 hover:bg-brand-700 mt-6 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-md transition"
+            >
+              <Sparkles className="h-4 w-4" />
+              Use Basic mode for now
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className={`grid gap-8 lg:grid-cols-2 ${mode === 'advanced' ? 'hidden' : ''}`}>
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card>
