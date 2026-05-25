@@ -35,11 +35,18 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
 
   return (
     <header className="sticky top-0 z-40">
-      <div className="relative border-b border-white/40 bg-white/60 backdrop-blur-xl supports-[backdrop-filter]:bg-white/50">
-        {/* Subtle gradient line at the bottom edge */}
+      <div
+        className="border-border/50 bg-background/80 supports-[backdrop-filter]:bg-background/70 relative border-b backdrop-blur-xl"
+        style={{
+          // Same brand-tinted lift used in the app header — keeps both
+          // shells visually consistent across signed-in / signed-out.
+          boxShadow: 'inset 0 1px 0 hsl(252 75% 55% / 0.08), 0 1px 0 0 hsl(252 75% 55% / 0.04)',
+        }}
+      >
+        {/* Brand-tinted gradient line at the bottom edge */}
         <div
           aria-hidden
-          className="via-brand-300/50 absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent to-transparent"
+          className="from-brand-500/0 via-brand-500/40 to-brand-500/0 absolute inset-x-0 bottom-0 h-px bg-gradient-to-r"
         />
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Logo size="md" href={isAuthed ? '/dashboard' : '/'} />
@@ -51,13 +58,13 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
           <nav className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/examples"
-              className="hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 text-foreground hidden rounded-md px-2 py-1 text-sm font-medium transition md:inline"
+              className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 hidden rounded-md px-2 py-1 text-sm font-medium transition-colors md:inline"
             >
               {t('home')}
             </Link>
             <Link
               href="/pricing"
-              className="hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 text-foreground hidden rounded-md px-2 py-1 text-sm font-medium transition md:inline"
+              className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 hidden rounded-md px-2 py-1 text-sm font-medium transition-colors md:inline"
             >
               {t('pricing')}
             </Link>
@@ -77,7 +84,7 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
               <>
                 <Link
                   href="/sign-in"
-                  className="hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 text-foreground hidden rounded-md px-2 py-1 text-sm font-medium transition md:inline"
+                  className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 hidden rounded-md px-2 py-1 text-sm font-medium transition-colors md:inline"
                 >
                   {t('signIn')}
                 </Link>
