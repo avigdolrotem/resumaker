@@ -39,7 +39,7 @@ export function OnboardingChecklist({
   if (isComplete) return null;
 
   return (
-    <Card className="border-brand-200 from-brand-50/40 bg-gradient-to-br to-white">
+    <Card className="border-brand-200 dark:border-brand-800/60 from-brand-50/40 to-card dark:from-brand-950/30 dark:to-card bg-gradient-to-br">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <Sparkles className="text-brand-500 h-5 w-5" />
@@ -89,7 +89,7 @@ export function OnboardingChecklist({
                 {item.href && !item.done ? (
                   <Link
                     href={item.href}
-                    className="hover:bg-brand-50/40 -mx-2 block rounded-md px-2 py-1.5 transition"
+                    className="hover:bg-brand-50/40 dark:hover:bg-brand-950/30 -mx-2 block rounded-md px-2 py-1.5 transition"
                   >
                     {content}
                   </Link>

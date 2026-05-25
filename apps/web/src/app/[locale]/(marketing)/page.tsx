@@ -486,8 +486,8 @@ function PricingCard({
     <div
       className={`group relative rounded-2xl border p-8 transition hover:-translate-y-1 hover:shadow-xl ${
         featured
-          ? 'border-brand-300 to-brand-50 shadow-brand-500/10 bg-gradient-to-b from-white shadow-xl'
-          : 'hover:border-brand-200 border-border bg-card'
+          ? 'border-brand-300 dark:border-brand-700 to-brand-50 dark:from-card dark:to-brand-950/30 shadow-brand-500/10 bg-gradient-to-b from-white shadow-xl'
+          : 'hover:border-brand-200 dark:hover:border-brand-700 border-border bg-card'
       }`}
     >
       {/* Featured cards get an outer glow ring on hover */}
@@ -522,7 +522,7 @@ function PricingCard({
           className={`mt-8 inline-flex h-11 w-full items-center justify-center rounded-md text-sm font-medium transition ${
             featured
               ? 'bg-brand-600 hover:bg-brand-700 text-white shadow-md'
-              : 'hover:border-brand-300 hover:bg-brand-50 border-border text-foreground border bg-white'
+              : 'hover:border-brand-300 hover:bg-brand-50 dark:hover:border-brand-700 dark:hover:bg-brand-950/40 border-border text-foreground bg-card border'
           }`}
         >
           {cta}
