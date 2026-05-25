@@ -56,11 +56,26 @@ const EnvSchema = z
     GITHUB_CLIENT_ID: z.string().optional(),
     GITHUB_CLIENT_SECRET: z.string().optional(),
 
-    // LLM
-    ANTHROPIC_API_KEY: z.string().regex(/^sk-ant-/, 'Invalid Anthropic API key'),
-    DEFAULT_LLM_MODEL: z.string().default('claude-sonnet-4-6'),
-    FALLBACK_LLM_MODEL: z.string().default('claude-haiku-4-5'),
-    PARSE_LLM_MODEL: z.string().default('claude-haiku-4-5'),
+    // LLM — model strings use AI Gateway format `provider/model`.
+    // ANTHROPIC_API_KEY stays optional during the migration; remove once
+    // all call-sites use the gateway-backed provider (Phase 3 of this plan).
+    ANTHROPIC_API_KEY: z
+      .string()
+      .regex(/^sk-ant-/, 'Invalid Anthropic API key')
+      .optional(),
+    AI_GATEWAY_API_KEY: z.string().min(1).optional(),
+    DEFAULT_LLM_MODEL: z
+      .string()
+      .regex(/^[a-z]+\/[a-z0-9.\-]+$/, 'Must be provider/model format')
+      .default('anthropic/claude-sonnet-4-6'),
+    FALLBACK_LLM_MODEL: z
+      .string()
+      .regex(/^[a-z]+\/[a-z0-9.\-]+$/, 'Must be provider/model format')
+      .default('anthropic/claude-haiku-4-5'),
+    PARSE_LLM_MODEL: z
+      .string()
+      .regex(/^[a-z]+\/[a-z0-9.\-]+$/, 'Must be provider/model format')
+      .default('anthropic/claude-haiku-4-5'),
     LLM_MAX_TOKENS: z.coerce.number().int().positive().default(4096),
     LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
     LLM_CONCURRENCY_LIMIT: z.coerce.number().int().positive().default(20),
@@ -151,6 +166,9 @@ const EnvSchema = z
   })
   .refine((e) => e.NODE_ENV !== 'production' || Boolean(e.CRON_SECRET), {
     message: 'CRON_SECRET is required in production so Vercel Cron can authenticate',
+  })
+  .refine((e) => e.NODE_ENV !== 'production' || Boolean(e.AI_GATEWAY_API_KEY), {
+    message: 'AI_GATEWAY_API_KEY is required in production once Phase 3A lands',
   });
 
 function parseEnv() {
