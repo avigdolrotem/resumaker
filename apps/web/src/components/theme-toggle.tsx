@@ -22,6 +22,9 @@ export function ThemeToggle() {
 
   // Hydrate from the cookie on mount. Falling back to 'system' if no
   // cookie yet keeps the menu in a known state on first visit.
+  // We DON'T re-apply the DOM here — the server already rendered with
+  // the right cookie-based class, and the inline init script handled
+  // `system`. Doing it again would cause a layout thrash.
   useEffect(() => {
     const m = document.cookie.match(/(?:^|;\s*)resumaker\.theme=([^;]+)/);
     const v = m && m[1] ? decodeURIComponent(m[1]) : null;
@@ -46,17 +49,22 @@ export function ThemeToggle() {
     };
   }, [open]);
 
-  function applyTheme(next: Theme) {
-    setTheme(next);
-    setOpen(false);
-    // 1y persistence — short enough that the user can change preference
-    // forever, long enough that they don't need to re-pick after a few
-    // weeks. `SameSite=Lax` so it ships with same-site requests.
+  /**
+   * Write the cookie + flip the html class/data-theme in a single
+   * synchronous step. Called from the menu-item click handler with
+   * the picked Theme. Kept as a plain function (not an effect) so
+   * the change happens BEFORE React's commit phase finishes — no
+   * flash, no double-render.
+   *
+   * Earlier version was inlined in the click handler; pulling it out
+   * makes it easier to call from system-pref change listener too.
+   */
+  function writeTheme(next: Theme) {
     document.cookie = `${THEME_COOKIE}=${encodeURIComponent(next)}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
-    // Apply immediately — no waiting for next request.
     const html = document.documentElement;
     if (next === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const prefersDark =
+        typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches;
       html.classList.toggle('dark', prefersDark);
       html.setAttribute('data-theme', prefersDark ? 'dark-purple' : 'light');
     } else if (next === 'light') {
@@ -66,6 +74,12 @@ export function ThemeToggle() {
       html.classList.add('dark');
       html.setAttribute('data-theme', next);
     }
+  }
+
+  function applyTheme(next: Theme) {
+    writeTheme(next);
+    setTheme(next);
+    setOpen(false);
   }
 
   const options: Array<{ value: Theme; label: string; Icon: typeof Sun; desc: string }> = [
@@ -103,7 +117,14 @@ export function ThemeToggle() {
       {open && (
         <div
           role="menu"
-          className="border-border bg-card absolute end-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-xl border shadow-2xl"
+          // Bumped z-index from 50 to 100 so the dropdown sits above
+          // sticky headers and the auth shell's frosted card. Stopping
+          // propagation on inner clicks keeps the document-level
+          // outside-click handler from interfering with the radio
+          // selection (some browsers fire document handlers ahead of
+          // React's synthetic event in certain scenarios).
+          className="border-border bg-card absolute end-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-xl border shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="border-border text-muted-foreground border-b px-3 py-2 text-xs font-semibold uppercase tracking-wider">
             Theme
@@ -116,7 +137,11 @@ export function ThemeToggle() {
                 role="menuitemradio"
                 aria-checked={active}
                 type="button"
-                onClick={() => applyTheme(o.value)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  applyTheme(o.value);
+                }}
                 className="hover:bg-muted flex w-full items-start gap-3 px-3 py-2.5 text-start text-sm transition"
               >
                 <o.Icon className="text-brand-600 dark:text-brand-300 mt-0.5 h-4 w-4 shrink-0" />
