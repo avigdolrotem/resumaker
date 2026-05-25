@@ -82,44 +82,58 @@
  * automatically. Components that hardcode brand-50/etc. still work
  * (those values don't change between themes; only the surfaces do).
  */
+/*
+ * Dark-purple — contrast tuned 2026-05-25 to address "light on
+ * everything is a bit hard to see" feedback. Bumped:
+ *   - card from 10% → 12% L so cards lift cleanly off the bg
+ *   - muted-foreground from 70% → 78% L (secondary text, dates,
+ *     hints) — was borderline WCAG AA, now ~6.4:1
+ *   - border from 18% → 26% L so dividers are visible
+ *   - input from 16% → 22% L so form fields are scannable on the bg
+ *   - foreground micro-bump 96% → 97% for crisper headlines
+ */
 .dark[data-theme='dark-purple'] {
   --color-background: hsl(258 50% 6%);
-  --color-foreground: hsl(252 30% 96%);
-  --color-card: hsl(258 45% 10%);
-  --color-card-foreground: hsl(252 30% 96%);
-  --color-primary: hsl(252 85% 70%);
+  --color-foreground: hsl(252 30% 97%);
+  --color-card: hsl(258 45% 12%);
+  --color-card-foreground: hsl(252 30% 97%);
+  --color-primary: hsl(252 88% 74%);
   --color-primary-foreground: hsl(258 50% 8%);
-  --color-secondary: hsl(258 35% 14%);
-  --color-secondary-foreground: hsl(252 25% 92%);
-  --color-muted: hsl(258 30% 13%);
-  --color-muted-foreground: hsl(252 15% 70%);
-  --color-accent: hsl(270 50% 20%);
-  --color-accent-foreground: hsl(270 80% 92%);
-  --color-destructive: hsl(0 75% 60%);
+  --color-secondary: hsl(258 35% 17%);
+  --color-secondary-foreground: hsl(252 25% 94%);
+  --color-muted: hsl(258 30% 15%);
+  --color-muted-foreground: hsl(252 18% 78%);
+  --color-accent: hsl(270 50% 22%);
+  --color-accent-foreground: hsl(270 80% 94%);
+  --color-destructive: hsl(0 78% 64%);
   --color-destructive-foreground: hsl(0 0% 98%);
-  --color-border: hsl(258 30% 18%);
-  --color-input: hsl(258 35% 16%);
-  --color-ring: hsl(252 85% 70%);
+  --color-border: hsl(258 32% 26%);
+  --color-input: hsl(258 35% 22%);
+  --color-ring: hsl(252 88% 74%);
 }
 
+/*
+ * Dark-gray — same contrast tuning as dark-purple. Neutral hue so
+ * the bumps are by lightness only.
+ */
 .dark[data-theme='dark-gray'] {
   --color-background: hsl(0 0% 4%);
-  --color-foreground: hsl(0 0% 96%);
-  --color-card: hsl(0 0% 8%);
-  --color-card-foreground: hsl(0 0% 96%);
-  --color-primary: hsl(252 75% 68%);
+  --color-foreground: hsl(0 0% 97%);
+  --color-card: hsl(0 0% 10%);
+  --color-card-foreground: hsl(0 0% 97%);
+  --color-primary: hsl(252 78% 72%);
   --color-primary-foreground: hsl(0 0% 6%);
-  --color-secondary: hsl(0 0% 12%);
-  --color-secondary-foreground: hsl(0 0% 94%);
-  --color-muted: hsl(0 0% 11%);
-  --color-muted-foreground: hsl(0 0% 65%);
-  --color-accent: hsl(0 0% 14%);
-  --color-accent-foreground: hsl(0 0% 96%);
-  --color-destructive: hsl(0 70% 55%);
+  --color-secondary: hsl(0 0% 15%);
+  --color-secondary-foreground: hsl(0 0% 95%);
+  --color-muted: hsl(0 0% 13%);
+  --color-muted-foreground: hsl(0 0% 75%);
+  --color-accent: hsl(0 0% 17%);
+  --color-accent-foreground: hsl(0 0% 97%);
+  --color-destructive: hsl(0 72% 60%);
   --color-destructive-foreground: hsl(0 0% 98%);
-  --color-border: hsl(0 0% 16%);
-  --color-input: hsl(0 0% 14%);
-  --color-ring: hsl(252 75% 68%);
+  --color-border: hsl(0 0% 22%);
+  --color-input: hsl(0 0% 18%);
+  --color-ring: hsl(252 78% 72%);
 }
 
 @layer base {

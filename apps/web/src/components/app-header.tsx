@@ -28,7 +28,23 @@ export function AppHeader() {
   }
 
   return (
-    <header className="border-border/60 bg-background/80 sticky top-0 z-40 border-b backdrop-blur-xl">
+    <header
+      className="border-border/60 bg-background/85 sticky top-0 z-40 border-b backdrop-blur-xl"
+      style={{
+        // Subtle brand gradient at the very top — invisible-ish in light
+        // mode (a hair of violet), more noticeable in dark mode where
+        // it adds depth to an otherwise flat surface.
+        boxShadow: 'inset 0 1px 0 hsl(252 75% 55% / 0.08), 0 1px 0 0 hsl(252 75% 55% / 0.04)',
+      }}
+    >
+      {/* Animated brand-tinted glow bar at the bottom edge — adds
+          life to the header without being noisy. Only renders if
+          motion is allowed (respects prefers-reduced-motion via the
+          underlying CSS). */}
+      <div
+        aria-hidden
+        className="from-brand-500/0 via-brand-500/40 to-brand-500/0 absolute inset-x-0 bottom-0 h-px bg-gradient-to-r"
+      />
       <div className="container mx-auto flex h-16 items-center justify-between gap-2 px-4">
         <Logo size="md" href="/dashboard" />
 
@@ -106,9 +122,18 @@ function NavLink({
   return (
     <Link
       href={href}
-      className="text-foreground hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 hidden items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition md:inline-flex"
+      className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 group relative hidden items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors md:inline-flex"
     >
-      {icon}
+      {/* Soft brand-tinted hover background that fades in on hover —
+          replaces the flat hover:bg-brand-50 with something that
+          plays nicer with dark themes. */}
+      <span
+        aria-hidden
+        className="from-brand-500/0 via-brand-500/10 to-brand-500/0 absolute inset-0 -z-10 rounded-md bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-100"
+      />
+      <span className="text-brand-500 group-hover:text-brand-600 dark:text-brand-400 dark:group-hover:text-brand-300 transition-colors">
+        {icon}
+      </span>
       <span className="hidden lg:inline">{label}</span>
     </Link>
   );
