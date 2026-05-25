@@ -4,19 +4,28 @@ import { FileText } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { SectionCard } from '../section-card';
+import { AiRewriteButton } from '../ai-rewrite-button';
 
-/** Summary card — single SectionCard with a textarea. */
+/** Summary card — single SectionCard with a textarea + AI rewrite button. */
 
 export interface SummaryCardProps {
   summary: string;
   onChange: (next: string) => void;
   editingId: string | null;
   onSetEditingId: (id: string | null) => void;
+  /** When set, enables the "Rewrite for this JD" button in edit mode. */
+  jobDescription?: string | undefined;
 }
 
 const CARD_ID = 'summary';
 
-export function SummaryCard({ summary, onChange, editingId, onSetEditingId }: SummaryCardProps) {
+export function SummaryCard({
+  summary,
+  onChange,
+  editingId,
+  onSetEditingId,
+  jobDescription,
+}: SummaryCardProps) {
   return (
     <section className="space-y-3">
       <header>
@@ -39,7 +48,7 @@ export function SummaryCard({ summary, onChange, editingId, onSetEditingId }: Su
           onSetEditingId(null);
         }}
         renderRead={readSummary}
-        renderEdit={editSummary}
+        renderEdit={(s, onChangeDraft) => editSummary(s, onChangeDraft, jobDescription)}
         deleteConfirmText="Clear the summary?"
       />
     </section>
@@ -57,7 +66,7 @@ function readSummary(s: string) {
   return <p className="text-foreground/90 line-clamp-4 text-sm leading-relaxed">{s}</p>;
 }
 
-function editSummary(s: string, onChange: (next: string) => void) {
+function editSummary(s: string, onChange: (next: string) => void, jobDescription?: string) {
   return (
     <div>
       <Label htmlFor="summary-text" className="sr-only">
@@ -71,7 +80,12 @@ function editSummary(s: string, onChange: (next: string) => void) {
         placeholder="A brief professional summary — 2-4 sentences describing your strengths, focus, and what you're looking for."
         maxLength={2000}
       />
-      <p className="text-muted-foreground mt-1 text-xs">{s.length} / 2000 characters</p>
+      <div className="mt-1 flex items-center justify-between">
+        <p className="text-muted-foreground text-xs">{s.length} / 2000 characters</p>
+        {s.trim() && (
+          <AiRewriteButton value={s} jobDescription={jobDescription} onReplace={onChange} />
+        )}
+      </div>
     </div>
   );
 }

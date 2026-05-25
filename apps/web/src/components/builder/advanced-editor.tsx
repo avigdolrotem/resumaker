@@ -26,9 +26,11 @@ import { LanguagesSection } from './sections/languages-section';
 export interface AdvancedEditorProps {
   resume: Resume;
   onChange: (next: Resume) => void;
+  /** Optional JD context — when set, enables "Rewrite for this JD" affordances. */
+  jobDescription?: string | undefined;
 }
 
-export function AdvancedEditor({ resume, onChange }: AdvancedEditorProps) {
+export function AdvancedEditor({ resume, onChange, jobDescription }: AdvancedEditorProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   function trySetEditingId(next: string | null) {
@@ -58,12 +60,14 @@ export function AdvancedEditor({ resume, onChange }: AdvancedEditorProps) {
         onChange={(s) => patch('summary', s)}
         editingId={editingId}
         onSetEditingId={trySetEditingId}
+        jobDescription={jobDescription ?? ''}
       />
       <ExperienceSection
         entries={resume.experience}
         onChange={(e) => patch('experience', e)}
         editingId={editingId}
         onSetEditingId={trySetEditingId}
+        jobDescription={jobDescription ?? ''}
       />
       <EducationSection
         entries={resume.education}

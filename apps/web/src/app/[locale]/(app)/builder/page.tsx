@@ -17,6 +17,7 @@ import { TemplatePicker, type TemplateId } from '@/components/template-picker';
 import { BuilderModeToggle, type BuilderMode } from '@/components/builder/builder-mode-toggle';
 import { AdvancedEditor } from '@/components/builder/advanced-editor';
 import { ImportModal } from '@/components/builder/import-modal';
+import { FitScorePanel } from '@/components/builder/fit-score-panel';
 import { applyImportedProfile } from '@/lib/builder/apply-import';
 import type { Tier } from '@/lib/billing/limits';
 import { Sparkles, Save as SaveIcon, Check as CheckIcon, Loader2, Upload } from 'lucide-react';
@@ -428,8 +429,13 @@ export default function BuilderPage() {
             </div>
           </div>
           <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
-            <AdvancedEditor resume={advancedResume} onChange={setAdvancedContent} />
+            <AdvancedEditor
+              resume={advancedResume}
+              onChange={setAdvancedContent}
+              jobDescription={jd || url}
+            />
             <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+              {(jd || url) && <FitScorePanel resume={advancedResume} jobDescription={jd || url} />}
               <ResumePreview resume={advancedResume} />
             </div>
           </div>

@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { SectionCard } from '../section-card';
 import { MonthYearPicker, formatMonthYear } from '../month-year-picker';
+import { AiRewriteButton } from '../ai-rewrite-button';
 
 /**
  * Work Experience section — list of inline-editable cards.
@@ -29,6 +30,8 @@ export interface ExperienceSectionProps {
   onChange: (entries: Experience[]) => void;
   editingId: string | null;
   onSetEditingId: (id: string | null) => void;
+  /** Optional JD context — enables per-highlight "Rewrite with AI" button. */
+  jobDescription?: string | undefined;
 }
 
 const EMPTY: Experience = {
@@ -47,6 +50,7 @@ export function ExperienceSection({
   onChange,
   editingId,
   onSetEditingId,
+  jobDescription,
 }: ExperienceSectionProps) {
   const [pendingNew, setPendingNew] = useState<Experience | null>(null);
 
@@ -113,7 +117,7 @@ export function ExperienceSection({
             onSetEditingId(null);
           }}
           renderRead={readExperience}
-          renderEdit={editExperience}
+          renderEdit={(d, onChangeDraft) => editExperience(d, onChangeDraft, jobDescription)}
         />
       )}
 
@@ -135,7 +139,7 @@ export function ExperienceSection({
           onCancel={() => onSetEditingId(null)}
           onDelete={() => handleDelete(i)}
           renderRead={readExperience}
-          renderEdit={editExperience}
+          renderEdit={(d, onChangeDraft) => editExperience(d, onChangeDraft, jobDescription)}
           deleteConfirmText={`Delete experience at ${e.company || 'this company'}?`}
         />
       ))}
@@ -167,7 +171,11 @@ function readExperience(e: Experience) {
   );
 }
 
-function editExperience(e: Experience, onChange: (next: Experience) => void) {
+function editExperience(
+  e: Experience,
+  onChange: (next: Experience) => void,
+  jobDescription?: string,
+) {
   const set = <K extends keyof Experience>(k: K, v: Experience[K]) => onChange({ ...e, [k]: v });
 
   return (
@@ -235,7 +243,11 @@ function editExperience(e: Experience, onChange: (next: Experience) => void) {
       </div>
       <div className="sm:col-span-2">
         <Label>Highlights</Label>
-        <HighlightsEditor highlights={e.highlights ?? []} onChange={(h) => set('highlights', h)} />
+        <HighlightsEditor
+          highlights={e.highlights ?? []}
+          onChange={(h) => set('highlights', h)}
+          jobDescription={jobDescription}
+        />
       </div>
     </div>
   );
@@ -244,30 +256,43 @@ function editExperience(e: Experience, onChange: (next: Experience) => void) {
 function HighlightsEditor({
   highlights,
   onChange,
+  jobDescription,
 }: {
   highlights: string[];
   onChange: (h: string[]) => void;
+  jobDescription?: string | undefined;
 }) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       {highlights.map((h, i) => (
-        <div key={i} className="flex gap-2">
-          <Input
-            value={h}
-            onChange={(ev) =>
-              onChange(highlights.map((x, idx) => (idx === i ? ev.target.value : x)))
-            }
-            placeholder="• Built a thing that did a thing"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => onChange(highlights.filter((_, idx) => idx !== i))}
-            aria-label="Remove highlight"
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
+        <div key={i}>
+          <div className="flex gap-2">
+            <Input
+              value={h}
+              onChange={(ev) =>
+                onChange(highlights.map((x, idx) => (idx === i ? ev.target.value : x)))
+              }
+              placeholder="• Built a thing that did a thing"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onChange(highlights.filter((_, idx) => idx !== i))}
+              aria-label="Remove highlight"
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          {h.trim().length > 0 && (
+            <div className="ms-1 mt-0.5">
+              <AiRewriteButton
+                value={h}
+                jobDescription={jobDescription || ''}
+                onReplace={(next) => onChange(highlights.map((x, idx) => (idx === i ? next : x)))}
+              />
+            </div>
+          )}
         </div>
       ))}
       <Button
