@@ -70,12 +70,12 @@ export function PricingClient({
             >
               {t(intv)}
               {intv === 'yearly' && (
-                <span className="ms-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                <span className="ms-2 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200">
                   -17%
                 </span>
               )}
               {intv === 'quarterly' && (
-                <span className="ms-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                <span className="ms-2 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-950/60 dark:text-amber-200">
                   {locale === 'he' ? 'חד פעמי' : 'one-time'}
                 </span>
               )}
@@ -176,7 +176,9 @@ function TierCard({
   return (
     <div
       className={`bg-card relative flex flex-col rounded-2xl border p-6 shadow-sm ${
-        isFeatured ? 'border-brand-500 ring-brand-200 ring-4' : 'border-border'
+        isFeatured
+          ? 'border-brand-500 ring-brand-200 dark:ring-brand-700/40 ring-4'
+          : 'border-border'
       }`}
     >
       {isFeatured && (
@@ -242,7 +244,7 @@ function TierCard({
         ) : !checkoutReady ? (
           <a
             href="mailto:hello@resumaker.co.il?subject=Waitlist%20-%20Pricing"
-            className="block w-full rounded-lg border-2 border-amber-300 bg-amber-50 px-4 py-2.5 text-center text-sm font-medium text-amber-900 transition hover:bg-amber-100"
+            className="block w-full rounded-lg border-2 border-amber-300 bg-amber-50 px-4 py-2.5 text-center text-sm font-medium text-amber-900 transition hover:bg-amber-100 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-100 dark:hover:bg-amber-900/40"
           >
             {t('joinWaitlist')}
           </a>

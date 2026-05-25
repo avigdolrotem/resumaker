@@ -78,13 +78,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <GridPattern size={40} />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/0 via-white/60 to-white"
+          className="dark:from-background/0 dark:via-background/60 dark:to-background pointer-events-none absolute inset-0 bg-gradient-to-b from-white/0 via-white/60 to-white"
         />
 
         <div className="container relative mx-auto grid items-center gap-12 px-4 lg:grid-cols-2 lg:gap-16">
           <div className="text-center lg:text-start">
             <ScrollReveal>
-              <div className="border-brand-200/60 text-brand-700 inline-flex items-center gap-2 rounded-full border bg-white/70 px-4 py-1.5 text-xs font-medium shadow-sm backdrop-blur">
+              <div className="border-brand-200/60 dark:border-brand-800/60 text-brand-700 dark:text-brand-200 dark:bg-card/70 inline-flex items-center gap-2 rounded-full border bg-white/70 px-4 py-1.5 text-xs font-medium shadow-sm backdrop-blur">
                 <span className="relative flex h-2 w-2">
                   <span className="bg-brand-400 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
                   <span className="bg-brand-500 relative inline-flex h-2 w-2 rounded-full" />
@@ -95,8 +95,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </ScrollReveal>
 
             <ScrollReveal delay={0.1}>
-              <h1 className="mt-6 text-5xl font-bold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
-                <AnimatedGradientText from="from-neutral-900" via="via-brand-700" to="to-brand-500">
+              <h1 className="text-foreground mt-6 text-5xl font-bold leading-[1.05] tracking-tight md:text-6xl lg:text-7xl">
+                <AnimatedGradientText
+                  from="from-foreground dark:from-neutral-100"
+                  via="via-brand-700 dark:via-brand-300"
+                  to="to-brand-500 dark:to-brand-400"
+                >
                   {t('hero.title')}
                 </AnimatedGradientText>
               </h1>
@@ -159,16 +163,16 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ─── FEATURES ─── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-neutral-50 to-white py-24">
-        <GridPattern size={48} className="opacity-50" />
+      <section className="dark:from-background dark:to-card/30 relative overflow-hidden bg-gradient-to-b from-neutral-50 to-white py-24">
+        <GridPattern size={48} className="opacity-50 dark:opacity-20" />
         <div className="container relative mx-auto px-4">
           <ScrollReveal>
             <div className="mx-auto mb-16 max-w-2xl text-center">
-              <h2 className="text-4xl font-bold tracking-tight md:text-5xl">
+              <h2 className="text-foreground text-4xl font-bold tracking-tight md:text-5xl">
                 <AnimatedGradientText
-                  from="from-neutral-900"
-                  via="via-brand-700"
-                  to="to-neutral-900"
+                  from="from-foreground dark:from-neutral-100"
+                  via="via-brand-700 dark:via-brand-300"
+                  to="to-foreground dark:to-neutral-100"
                 >
                   {isHebrew ? 'למה Resumaker?' : 'Why Resumaker'}
                 </AnimatedGradientText>
@@ -211,9 +215,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </ScrollReveal>
 
           <div className="relative mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
+            {/* Centered connector line. Uses physical `left-1/2`
+                (not logical `start-1/2`) because the `-translate-x-1/2`
+                is physical too — mixing logical positioning with
+                physical translation broke centering in RTL (Hebrew),
+                pushing the line off to one side. */}
             <div
               aria-hidden
-              className="from-brand-200 via-brand-400 to-brand-200 absolute start-1/2 top-12 hidden h-0.5 w-2/3 -translate-x-1/2 bg-gradient-to-r md:block"
+              className="from-brand-200 via-brand-400 to-brand-200 dark:from-brand-800 dark:via-brand-500 dark:to-brand-800 absolute left-1/2 top-12 hidden h-0.5 w-2/3 -translate-x-1/2 bg-gradient-to-r md:block"
             />
             {steps.map((s, i) => (
               <ScrollReveal key={i} delay={i * 0.15}>
@@ -236,7 +245,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ─── PRICING TEASER ─── */}
-      <section className="relative bg-neutral-50 py-24">
+      <section className="bg-muted/40 dark:bg-card/40 relative py-24">
         <div className="container relative mx-auto px-4">
           <ScrollReveal>
             <div className="mx-auto mb-16 max-w-2xl text-center">

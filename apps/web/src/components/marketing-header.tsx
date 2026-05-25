@@ -81,15 +81,19 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
                 {t('dashboard')}
               </GlowButton>
             ) : (
+              // Sign-in is now the primary (glowing) CTA, sign-up the
+              // secondary text link. Per user request — they're an
+              // existing user testing repeatedly and sign-in is the
+              // common-path action.
               <>
                 <Link
-                  href="/sign-in"
+                  href="/sign-up"
                   className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 hidden rounded-md px-2 py-1 text-sm font-medium transition-colors md:inline"
                 >
-                  {t('signIn')}
-                </Link>
-                <GlowButton href="/sign-up" size="md">
                   {t('signUp')}
+                </Link>
+                <GlowButton href="/sign-in" size="md">
+                  {t('signIn')}
                 </GlowButton>
               </>
             )}
