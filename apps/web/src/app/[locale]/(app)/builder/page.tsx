@@ -15,8 +15,9 @@ import { ResumePreview } from '@/components/resume-preview';
 import { VersionHistory } from '@/components/version-history';
 import { TemplatePicker, type TemplateId } from '@/components/template-picker';
 import { BuilderModeToggle, type BuilderMode } from '@/components/builder/builder-mode-toggle';
+import { AdvancedEditor } from '@/components/builder/advanced-editor';
 import type { Tier } from '@/lib/billing/limits';
-import { Hammer, Sparkles } from 'lucide-react';
+import { Sparkles, Save as SaveIcon, Check as CheckIcon, Loader2 } from 'lucide-react';
 import type { Resume, ATSScore } from '@resumaker/shared';
 
 type Industry = 'tech' | 'healthcare' | 'finance' | 'general';
@@ -88,7 +89,74 @@ export default function BuilderPage() {
   const [savedId, setSavedId] = useState<string | null>(editingId);
   const [saving, setSaving] = useState(false);
   const [atsScore, setAtsScore] = useState<ATSScore | null>(null);
+  const [advancedContent, setAdvancedContent] = useState<Resume | null>(null);
   const router = useRouter();
+
+  /**
+   * Resolve the Resume the advanced editor should display: prefer
+   * explicit advanced edits, then any AI-generated result, then a
+   * minimal Resume built from current basic-mode form fields so the
+   * editor always has something coherent to show on first open.
+   */
+  const advancedResume: Resume =
+    advancedContent ??
+    result?.resume ??
+    ({
+      metadata: {
+        language: locale === 'auto' ? 'en' : locale,
+        generated_at: new Date().toISOString(),
+        template: templateId,
+      },
+      contact: {
+        name: name || 'Your name',
+        ...(email && { email }),
+        ...(phone && { phone }),
+        ...(location && { location }),
+        ...(linkedin && { linkedin }),
+      },
+      summary: profileSummary,
+      experience: [],
+      education: [],
+      skills: profileSkills
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    } satisfies Resume);
+
+  /**
+   * Save the advanced-mode resume — PATCH if `?id=` is present,
+   * POST otherwise. Same save semantics as basic-mode `handleSave`
+   * but reads from `advancedResume` (resolved) instead of `result`.
+   */
+  async function handleAdvancedSave() {
+    setSaving(true);
+    try {
+      const isEditing = Boolean(editingId);
+      const title = name
+        ? t('actions.titleFormat', { name, industry })
+        : t('actions.titleFallback', { date: new Date().toLocaleDateString() });
+      const res = await fetch(isEditing ? `/api/resumes/${editingId}` : '/api/resumes', {
+        method: isEditing ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(
+          isEditing
+            ? { title, content: advancedResume }
+            : { title, content: advancedResume, templateId },
+        ),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.id) setSavedId(data.id);
+        else if (isEditing && editingId) setSavedId(editingId);
+      } else {
+        setError(data.error ?? t('actions.saveFailed'));
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   // Fetch the user's tier once so the template picker can show locks for
   // templates above their plan. Defaults to 'free' until the response is in
@@ -325,33 +393,31 @@ export default function BuilderPage() {
       </div>
 
       {mode === 'advanced' && (
-        <div className="border-border bg-card rounded-2xl border border-dashed p-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <div className="from-brand-500 to-brand-700 shadow-brand-500/30 mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg">
-              <Hammer className="h-6 w-6" />
+        <div className="space-y-4">
+          <div className="border-border bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Sparkles className="text-brand-500 h-4 w-4" />
+              <span className="text-foreground text-sm font-medium">Advanced editor</span>
+              {savedId && (
+                <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+                  <CheckIcon className="h-3 w-3 text-green-500" /> Saved
+                </span>
+              )}
             </div>
-            <h2 className="text-foreground text-xl font-bold">Advanced builder — in progress</h2>
-            <p className="text-muted-foreground mt-2 text-sm">
-              The full section-card editor (with MM/YYYY date pickers, drag-to-reorder, projects,
-              awards, skill categories, and PDF/TXT upload) is the next big ship. For now use Basic
-              mode — it&apos;s AI-assisted and produces the same underlying resume data, so nothing
-              you build here is wasted.
-            </p>
-            <ul className="text-muted-foreground mx-auto mt-6 grid max-w-md gap-1 text-start text-xs">
-              <li>· MM/YYYY date picker with &ldquo;Present&rdquo; toggle</li>
-              <li>· Per-entry add/edit/delete (each as its own card)</li>
-              <li>· Projects + awards + grouped skills</li>
-              <li>· PDF/TXT upload with preview-before-apply</li>
-              <li>· Live preview pane</li>
-            </ul>
-            <button
-              type="button"
-              onClick={() => setMode('basic')}
-              className="bg-brand-600 hover:bg-brand-700 mt-6 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white shadow-md transition"
-            >
-              <Sparkles className="h-4 w-4" />
-              Use Basic mode for now
-            </button>
+            <Button type="button" size="sm" onClick={handleAdvancedSave} disabled={saving}>
+              {saving ? (
+                <Loader2 className="me-1 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <SaveIcon className="me-1 h-3.5 w-3.5" />
+              )}
+              {saving ? 'Saving…' : 'Save resume'}
+            </Button>
+          </div>
+          <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+            <AdvancedEditor resume={advancedResume} onChange={setAdvancedContent} />
+            <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+              <ResumePreview resume={advancedResume} />
+            </div>
           </div>
         </div>
       )}
