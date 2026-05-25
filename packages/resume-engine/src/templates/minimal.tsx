@@ -1,22 +1,19 @@
 /**
  * Minimal Template — extreme white-space, single column, sans-serif.
  *
- * Best for:
- *   - Tech / design / startup roles (the "Read Stripe Atlas docs" crowd)
- *   - English-language resumes targeting international companies
- *   - Anyone who wants the resume itself to feel like a portfolio piece
+ * Best for tech / design / startup roles. English-language resumes
+ * targeting international companies. Anyone who wants the resume itself
+ * to feel like a portfolio piece.
  *
- * Design choices:
- *   - Inter for body text (cleaner Latin letterforms than Heebo)
- *   - Heebo retained for Hebrew passages (mixed-language resumes still work)
- *   - No section borders, no background colors — pure typographic hierarchy
- *   - Name in light weight (the opposite of the loud Classic template)
- *   - Skills as inline pill-less list with mid-dot separator
+ * Section order matches the on-screen editor:
+ *   Header → Summary → Experience → Education → Projects → Skills →
+ *   Certifications → Awards → Languages
  */
 
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Link } from '@react-pdf/renderer';
 import type { ResumePdfProps } from './types';
 import { ensureFontsRegistered } from '../fonts';
+import { formatMonthYear, presentLabel, localizedSectionTitle } from '../utils/format';
 
 ensureFontsRegistered();
 
@@ -28,16 +25,11 @@ const styles = StyleSheet.create({
     color: '#1f2937',
     lineHeight: 1.6,
   },
-  pageHe: {
-    // Hebrew face when locale is he
-    fontFamily: 'Heebo',
-  },
-  header: {
-    marginBottom: 28,
-  },
+  pageHe: { fontFamily: 'Heebo' },
+  header: { marginBottom: 28 },
   name: {
     fontSize: 28,
-    fontWeight: 500, // intentionally not bold — minimalist signature
+    fontWeight: 500,
     letterSpacing: -0.5,
     marginBottom: 8,
   },
@@ -57,66 +49,45 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 2,
   },
-  summary: {
-    fontSize: 10,
-    lineHeight: 1.7,
-  },
-  experienceItem: { marginBottom: 14 },
-  experienceHeader: {
+  summary: { fontSize: 10, lineHeight: 1.7 },
+  entry: { marginBottom: 14 },
+  entryHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
     marginBottom: 2,
   },
-  experienceTitle: {
-    fontSize: 10.5,
-    fontWeight: 600,
-  },
-  experienceCompany: {
-    fontSize: 10,
-    color: '#4b5563',
-    marginBottom: 4,
-  },
-  experienceDates: {
-    fontSize: 9,
-    color: '#9ca3af',
-    fontWeight: 400,
-  },
-  highlightRow: {
-    flexDirection: 'row',
-    marginTop: 2,
-  },
+  entryTitle: { fontSize: 10.5, fontWeight: 600 },
+  entrySubtitle: { fontSize: 10, color: '#4b5563', marginBottom: 4 },
+  entryDates: { fontSize: 9, color: '#9ca3af', fontWeight: 400 },
+  entryBody: { fontSize: 9.5, marginTop: 3 },
+  entryMeta: { fontSize: 9, color: '#9ca3af', marginTop: 1 },
+  highlightRow: { flexDirection: 'row', marginTop: 2 },
   highlightBullet: { width: 8, fontSize: 9.5, color: '#9ca3af' },
   highlight: { fontSize: 9.5, flex: 1 },
-  inlineList: {
+  inlineList: { fontSize: 9.5, lineHeight: 1.7, color: '#374151' },
+  certRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
     fontSize: 9.5,
-    lineHeight: 1.7,
-    color: '#374151',
   },
-  educationItem: {
-    marginBottom: 8,
-  },
-  educationDegree: { fontSize: 10, fontWeight: 600 },
-  educationInstitution: { fontSize: 9.5, color: '#4b5563' },
+  link: { color: '#4b5563', textDecoration: 'underline' },
 });
 
 export function MinimalTemplate({ resume }: ResumePdfProps) {
   const lang = resume.metadata.language;
   const isRtl = lang === 'he' || lang === 'ar';
-  // Pick font: Arabic → NotoSansArabic, Hebrew → Heebo (via pageHe), others → Inter
   const rtlFontOverride = lang === 'ar' ? { fontFamily: 'NotoSansArabic' } : styles.pageHe;
-  // RTL pass parallel to modern.tsx + classic.tsx — react-pdf has no
-  // `direction: 'rtl'` cascade, so flex rows + text alignment have to be
-  // mirrored explicitly when RTL. Without these flips the experience
-  // header would render with title-left/date-right in RTL locales, which is
-  // visually wrong (RTL readers expect dates on the LEFT).
+  const present = presentLabel(lang);
+
   const pageStyle = {
     ...styles.page,
     ...(isRtl ? { ...rtlFontOverride, textAlign: 'right' as const } : {}),
   };
-  const experienceHeaderStyle = isRtl
-    ? { ...styles.experienceHeader, flexDirection: 'row-reverse' as const }
-    : styles.experienceHeader;
+  const entryHeaderStyle = isRtl
+    ? { ...styles.entryHeader, flexDirection: 'row-reverse' as const }
+    : styles.entryHeader;
   const highlightRowStyle = isRtl
     ? { ...styles.highlightRow, flexDirection: 'row-reverse' as const }
     : styles.highlightRow;
@@ -131,43 +102,6 @@ export function MinimalTemplate({ resume }: ResumePdfProps) {
     ? { ...styles.highlight, textAlign: 'right' as const }
     : styles.highlight;
 
-  const labels =
-    lang === 'he'
-      ? {
-          summary: 'תקציר',
-          experience: 'ניסיון',
-          education: 'השכלה',
-          skills: 'כישורים',
-          languages: 'שפות',
-          present: 'היום',
-        }
-      : lang === 'ar'
-        ? {
-            summary: 'نبذة',
-            experience: 'الخبرة',
-            education: 'التعليم',
-            skills: 'المهارات',
-            languages: 'اللغات',
-            present: 'الآن',
-          }
-        : lang === 'ru'
-          ? {
-              summary: 'О себе',
-              experience: 'Опыт',
-              education: 'Образование',
-              skills: 'Навыки',
-              languages: 'Языки',
-              present: 'настоящее время',
-            }
-          : {
-              summary: 'About',
-              experience: 'Experience',
-              education: 'Education',
-              skills: 'Skills',
-              languages: 'Languages',
-              present: 'Present',
-            };
-
   return (
     <Document>
       <Page size="A4" style={pageStyle}>
@@ -179,6 +113,7 @@ export function MinimalTemplate({ resume }: ResumePdfProps) {
             {resume.contact.phone && <Text>{resume.contact.phone}</Text>}
             {resume.contact.location && <Text>{resume.contact.location}</Text>}
             {resume.contact.linkedin && <Text>{resume.contact.linkedin}</Text>}
+            {resume.contact.github && <Text>{resume.contact.github}</Text>}
             {resume.contact.website && <Text>{resume.contact.website}</Text>}
           </View>
         </View>
@@ -186,7 +121,7 @@ export function MinimalTemplate({ resume }: ResumePdfProps) {
         {/* Summary */}
         {resume.summary && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{labels.summary}</Text>
+            <Text style={styles.sectionTitle}>{localizedSectionTitle(lang, 'summary')}</Text>
             <Text style={styles.summary}>{resume.summary}</Text>
           </View>
         )}
@@ -194,16 +129,21 @@ export function MinimalTemplate({ resume }: ResumePdfProps) {
         {/* Experience */}
         {resume.experience.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{labels.experience}</Text>
+            <Text style={styles.sectionTitle}>{localizedSectionTitle(lang, 'experience')}</Text>
             {resume.experience.map((exp, i) => (
-              <View key={i} style={styles.experienceItem} wrap={false}>
-                <View style={experienceHeaderStyle}>
-                  <Text style={styles.experienceTitle}>{exp.title}</Text>
-                  <Text style={styles.experienceDates}>
-                    {exp.start_date} – {exp.end_date ?? labels.present}
+              <View key={i} style={styles.entry} wrap={false}>
+                <View style={entryHeaderStyle}>
+                  <Text style={styles.entryTitle}>{exp.title}</Text>
+                  <Text style={styles.entryDates}>
+                    {formatMonthYear(exp.start_date)} –{' '}
+                    {exp.is_current || !exp.end_date ? present : formatMonthYear(exp.end_date)}
                   </Text>
                 </View>
-                <Text style={styles.experienceCompany}>{exp.company}</Text>
+                <Text style={styles.entrySubtitle}>
+                  {exp.company}
+                  {exp.location ? ` · ${exp.location}` : ''}
+                </Text>
+                {exp.description && <Text style={styles.entryBody}>{exp.description}</Text>}
                 {exp.highlights?.map((h, j) => (
                   <View key={j} style={highlightRowStyle}>
                     <Text style={styles.highlightBullet}>·</Text>
@@ -218,13 +158,54 @@ export function MinimalTemplate({ resume }: ResumePdfProps) {
         {/* Education */}
         {resume.education.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{labels.education}</Text>
+            <Text style={styles.sectionTitle}>{localizedSectionTitle(lang, 'education')}</Text>
             {resume.education.map((edu, i) => (
-              <View key={i} style={styles.educationItem} wrap={false}>
-                <Text style={styles.educationDegree}>{edu.degree}</Text>
-                <Text style={styles.educationInstitution}>
-                  {edu.institution} · {edu.start_date} – {edu.end_date ?? labels.present}
+              <View key={i} style={styles.entry} wrap={false}>
+                <View style={entryHeaderStyle}>
+                  <Text style={styles.entryTitle}>
+                    {edu.degree}
+                    {edu.field ? ` · ${edu.field}` : ''}
+                  </Text>
+                  {(edu.start_date || edu.end_date) && (
+                    <Text style={styles.entryDates}>
+                      {formatMonthYear(edu.start_date)} –{' '}
+                      {edu.is_current || !edu.end_date ? present : formatMonthYear(edu.end_date)}
+                    </Text>
+                  )}
+                </View>
+                <Text style={styles.entrySubtitle}>
+                  {edu.institution}
+                  {edu.gpa ? ` · GPA: ${edu.gpa}` : ''}
                 </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Projects */}
+        {resume.projects && resume.projects.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{localizedSectionTitle(lang, 'projects')}</Text>
+            {resume.projects.map((p, i) => (
+              <View key={i} style={styles.entry} wrap={false}>
+                <View style={entryHeaderStyle}>
+                  <Text style={styles.entryTitle}>{p.name}</Text>
+                  {(p.start_date || p.end_date || p.is_ongoing) && (
+                    <Text style={styles.entryDates}>
+                      {formatMonthYear(p.start_date ?? '')} –{' '}
+                      {p.is_ongoing ? present : formatMonthYear(p.end_date ?? '')}
+                    </Text>
+                  )}
+                </View>
+                {p.url && (
+                  <Link src={p.url} style={styles.link}>
+                    {p.url.replace(/^https?:\/\//, '')}
+                  </Link>
+                )}
+                {p.technologies && p.technologies.length > 0 && (
+                  <Text style={styles.entryMeta}>{p.technologies.join(', ')}</Text>
+                )}
+                {p.description && <Text style={styles.entryBody}>{p.description}</Text>}
               </View>
             ))}
           </View>
@@ -233,15 +214,68 @@ export function MinimalTemplate({ resume }: ResumePdfProps) {
         {/* Skills */}
         {resume.skills.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{labels.skills}</Text>
+            <Text style={styles.sectionTitle}>{localizedSectionTitle(lang, 'skills')}</Text>
             <Text style={styles.inlineList}>{resume.skills.join(' · ')}</Text>
+          </View>
+        )}
+
+        {/* Certifications */}
+        {resume.certifications && resume.certifications.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{localizedSectionTitle(lang, 'certifications')}</Text>
+            {resume.certifications.map((c, i) => (
+              <View key={i} style={styles.certRow}>
+                <Text>
+                  <Text style={{ fontWeight: 600 }}>{c.name}</Text>
+                  {c.issuer ? ` · ${c.issuer}` : ''}
+                </Text>
+                <Text style={styles.entryDates}>
+                  {c.date ? formatMonthYear(c.date) : ''}
+                  {c.credential_url && (
+                    <>
+                      {c.date ? '  ' : ''}
+                      <Link src={c.credential_url} style={styles.link}>
+                        view
+                      </Link>
+                    </>
+                  )}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Awards */}
+        {resume.awards && resume.awards.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>{localizedSectionTitle(lang, 'awards')}</Text>
+            {resume.awards.map((a, i) => (
+              <View key={i} style={styles.entry} wrap={false}>
+                <View style={entryHeaderStyle}>
+                  <Text style={styles.entryTitle}>
+                    {a.title}
+                    {a.issuer ? ` · ${a.issuer}` : ''}
+                  </Text>
+                  {a.date && <Text style={styles.entryDates}>{formatMonthYear(a.date)}</Text>}
+                </View>
+                {a.description && <Text style={styles.entryBody}>{a.description}</Text>}
+              </View>
+            ))}
           </View>
         )}
 
         {/* Languages */}
         {resume.languages && resume.languages.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{labels.languages}</Text>
+            <Text style={styles.sectionTitle}>
+              {lang === 'he'
+                ? 'שפות'
+                : lang === 'ar'
+                  ? 'اللغات'
+                  : lang === 'ru'
+                    ? 'Языки'
+                    : 'Languages'}
+            </Text>
             <Text style={styles.inlineList}>
               {resume.languages.map((l) => `${l.name} — ${l.level}`).join(' · ')}
             </Text>
