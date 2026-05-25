@@ -12,7 +12,7 @@ module "network" {
   subnet_cidr           = "10.0.1.0/24"
   pods_cidr             = "10.0.16.0/20"
   services_cidr         = "10.0.32.0/20"
-  private_services_cidr = "10.0.128.0/16"
+  private_services_cidr = "10.128.0.0/16"
 }
 
 module "workload_identity" {
