@@ -27,6 +27,14 @@ const baseUrl = env.BETTER_AUTH_URL;
  * any explicit `BETTER_AUTH_URL_ALT`. Without this, a deploy that serves
  * traffic from both apex and www will silently reject auth from one of
  * them, breaking sign-in for half of users.
+ *
+ * Also includes Vercel-provided system URLs so preview / branch /
+ * deployment URLs work without manual env config:
+ *   - VERCEL_URL                    — current deployment (preview)
+ *   - VERCEL_PROJECT_PRODUCTION_URL — production alias
+ *   - VERCEL_BRANCH_URL             — current branch's preview alias
+ * These are auto-populated by Vercel; they have no protocol, so we
+ * prefix `https://`. On non-Vercel hosts they're undefined and skipped.
  */
 function computeTrustedOrigins(): string[] {
   const origins = new Set<string>([baseUrl]);
@@ -45,6 +53,17 @@ function computeTrustedOrigins(): string[] {
     // crash auth bootstrap.
   }
   if (env.BETTER_AUTH_URL_ALT) origins.add(env.BETTER_AUTH_URL_ALT);
+
+  // Vercel system URLs — only present on Vercel, undefined elsewhere.
+  for (const v of [
+    process.env.VERCEL_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.VERCEL_BRANCH_URL,
+  ]) {
+    if (v && !v.startsWith('http')) origins.add(`https://${v}`);
+    else if (v) origins.add(v);
+  }
+
   return Array.from(origins);
 }
 
