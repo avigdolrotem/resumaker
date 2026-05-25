@@ -25,11 +25,20 @@ export const ContactSchema = z.object({
   website: z.string().url().optional(),
 });
 
+/**
+ * Dates throughout the resume are stored as strings. Two formats are
+ * accepted:
+ *   - `YYYY-MM`   — preferred. Emitted by the new MM/YYYY date picker
+ *                   in the builder. Sortable, displayable.
+ *   - free text   — for older resumes or unusual cases ("Summer 2019",
+ *                   "Spring 2022"). The PDF templates render as-is.
+ * `null` end_date = currently held / ongoing.
+ */
 export const ExperienceSchema = z.object({
   company: z.string().min(1).max(200),
   title: z.string().min(1).max(200),
-  start_date: z.string(), // ISO date
-  end_date: z.string().nullable(), // null = current
+  start_date: z.string(),
+  end_date: z.string().nullable(),
   location: z.string().max(200).optional(),
   description: z.string().max(2000).optional(),
   highlights: z.array(z.string().max(500)).max(10).default([]),
@@ -43,6 +52,32 @@ export const EducationSchema = z.object({
   end_date: z.string().nullable(),
   gpa: z.string().max(20).optional(),
   description: z.string().max(1000).optional(),
+});
+
+/**
+ * Project entry — a portfolio item, side project, or significant work
+ * deliverable distinct from a job. Useful for new grads + engineers
+ * with open-source contributions + freelancers showcasing client work.
+ */
+export const ProjectSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(1000),
+  technologies: z.array(z.string().max(50)).max(20).optional(),
+  url: z.string().url().max(500).optional(),
+  start_date: z.string().optional(),
+  end_date: z.string().nullable().optional(),
+});
+
+/**
+ * Award / recognition / publication. Single line per entry with optional
+ * issuer and date. Use for: company awards, conference talks, published
+ * papers, hackathon wins, scholarships, etc.
+ */
+export const AwardSchema = z.object({
+  title: z.string().min(1).max(200),
+  issuer: z.string().max(200).optional(),
+  date: z.string().optional(),
+  description: z.string().max(500).optional(),
 });
 
 export const ResumeSchema = z.object({
@@ -76,6 +111,10 @@ export const ResumeSchema = z.object({
     )
     .max(10)
     .optional(),
+  /** Portfolio items / open-source / freelance work distinct from jobs. */
+  projects: z.array(ProjectSchema).max(15).optional(),
+  /** Awards, talks, publications, scholarships, hackathon wins. */
+  awards: z.array(AwardSchema).max(15).optional(),
 });
 
 export type Resume = z.infer<typeof ResumeSchema>;
