@@ -115,7 +115,7 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
           <h3 className="mb-2 text-lg font-semibold">
             {isHebrew ? 'עוד אין לך קורות חיים' : 'No resumes yet'}
           </h3>
-          <p className="mb-6 text-sm text-neutral-600">
+          <p className="text-muted-foreground mb-6 text-sm">
             {isHebrew ? 'בנה את הראשונים תוך דקות' : 'Build your first in minutes'}
           </p>
           <Button asChild>
@@ -133,7 +133,7 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
     <div className="space-y-4">
       {resumes.length >= 4 && (
         <div className="relative max-w-md">
-          <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <Search className="text-muted-foreground absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -144,7 +144,7 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700"
+              className="text-muted-foreground hover:text-foreground absolute end-3 top-1/2 -translate-y-1/2"
               aria-label="Clear"
             >
               <X className="h-4 w-4" />
@@ -154,7 +154,7 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
       )}
 
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-neutral-500">
+        <p className="text-muted-foreground py-8 text-center text-sm">
           {isHebrew ? 'אין תוצאות מתאימות' : 'No matches'}
         </p>
       ) : (
@@ -184,11 +184,11 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
                         {r.locale.toUpperCase()}
                       </span>
                       {r.industry && (
-                        <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-medium text-neutral-600">
+                        <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-medium">
                           {r.industry}
                         </span>
                       )}
-                      <span className="ms-auto text-neutral-500">
+                      <span className="text-muted-foreground ms-auto">
                         {new Date(r.updatedAt).toLocaleDateString(isHebrew ? 'he-IL' : 'en-US', {
                           month: 'short',
                           day: 'numeric',
@@ -266,7 +266,7 @@ function CardActionsMenu({
   if (isConfirming) {
     return (
       <div
-        className="absolute end-2 top-2 z-10 flex items-center gap-1 rounded-md border bg-white p-1 shadow-md"
+        className="bg-card absolute end-2 top-2 z-10 flex items-center gap-1 rounded-md border p-1 shadow-md"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
@@ -277,7 +277,7 @@ function CardActionsMenu({
         role="alertdialog"
         aria-label={labelConfirmDelete}
       >
-        <span className="px-2 text-xs text-neutral-600">{labelConfirmDelete}</span>
+        <span className="text-muted-foreground px-2 text-xs">{labelConfirmDelete}</span>
         <Button
           variant="destructive"
           size="sm"
@@ -318,7 +318,7 @@ function CardActionsMenu({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="rounded-md p-1 text-neutral-400 opacity-0 transition hover:bg-neutral-100 hover:text-neutral-700 focus:opacity-100 group-hover:opacity-100"
+        className="text-muted-foreground hover:bg-accent hover:text-foreground rounded-md p-1 opacity-0 transition focus:opacity-100 group-hover:opacity-100"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={isHebrew ? 'תפריט פעולות' : 'Actions menu'}
@@ -328,12 +328,12 @@ function CardActionsMenu({
       {open && (
         <div
           role="menu"
-          className="absolute end-0 top-full mt-1 min-w-[10rem] rounded-md border bg-white py-1 text-sm shadow-md"
+          className="bg-card absolute end-0 top-full mt-1 min-w-[10rem] rounded-md border py-1 text-sm shadow-md"
         >
           <Link
             role="menuitem"
             href={{ pathname: '/builder', query: { id: resumeId } }}
-            className="flex w-full items-center gap-2 px-3 py-1.5 hover:bg-neutral-50"
+            className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5"
             onClick={() => setOpen(false)}
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -342,7 +342,7 @@ function CardActionsMenu({
           <button
             type="button"
             role="menuitem"
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-start hover:bg-neutral-50"
+            className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5 text-start"
             onClick={() => {
               setOpen(false);
               onDuplicate();
@@ -356,7 +356,7 @@ function CardActionsMenu({
             href={`/api/resumes/${resumeId}/pdf`}
             target="_blank"
             rel="noreferrer"
-            className="flex w-full items-center gap-2 px-3 py-1.5 hover:bg-neutral-50"
+            className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5"
             onClick={() => setOpen(false)}
           >
             <Download className="h-3.5 w-3.5" />

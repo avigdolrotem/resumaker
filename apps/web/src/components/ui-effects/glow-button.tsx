@@ -29,7 +29,7 @@ export function GlowButton({
     return (
       <Link
         href={href}
-        className={`hover:border-brand-300/60 hover:text-brand-700 group relative inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/5 font-medium text-neutral-700 backdrop-blur transition hover:bg-white ${sizeClass}`}
+        className={`hover:border-brand-300/60 hover:text-brand-700 text-foreground group relative inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/5 font-medium backdrop-blur transition hover:bg-white ${sizeClass}`}
       >
         {children}
       </Link>

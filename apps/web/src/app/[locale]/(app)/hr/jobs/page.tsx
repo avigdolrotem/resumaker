@@ -49,7 +49,7 @@ export default async function HrJobsPage({ params }: { params: Promise<{ locale:
           <h1 className="text-3xl font-bold">
             {locale === 'he' ? 'המשרות שפרסמתי' : 'My posted jobs'}
           </h1>
-          <p className="mt-1 text-neutral-600">
+          <p className="text-muted-foreground mt-1">
             {locale === 'he'
               ? 'מצב המשרות שפרסמת. רק אתה רואה את אלה.'
               : 'Jobs you posted. Only you see these.'}
@@ -65,7 +65,7 @@ export default async function HrJobsPage({ params }: { params: Promise<{ locale:
 
       {myJobs.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="py-16 text-center text-neutral-500">
+          <CardContent className="text-muted-foreground py-16 text-center">
             {locale === 'he'
               ? 'לא פרסמת עדיין משרות. לחץ "פרסם משרה" כדי להתחיל.'
               : 'You haven\'t posted any jobs yet. Click "Post a job" to start.'}
@@ -77,12 +77,12 @@ export default async function HrJobsPage({ params }: { params: Promise<{ locale:
             <Card key={j.id}>
               <CardContent className="space-y-1 pt-5">
                 <h3 className="font-semibold">{j.title}</h3>
-                <p className="text-sm text-neutral-600">
+                <p className="text-muted-foreground text-sm">
                   {j.company}
                   {j.location ? ` · ${j.location}` : ''}
                   {j.remote ? ` · ${locale === 'he' ? 'מרחוק' : 'Remote'}` : ''}
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-muted-foreground text-xs">
                   {locale === 'he' ? 'פורסם ב-' : 'Posted '}
                   {j.postedAt ? new Date(j.postedAt).toLocaleDateString() : '—'}
                 </p>

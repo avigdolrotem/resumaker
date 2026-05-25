@@ -84,8 +84,8 @@ export function VersionHistory({
       </Button>
 
       {open && (
-        <div className="absolute end-0 z-20 mt-2 w-80 rounded-lg border border-neutral-200 bg-white shadow-xl">
-          <div className="border-b border-neutral-200 p-3">
+        <div className="border-border bg-card absolute end-0 z-20 mt-2 w-80 rounded-lg border shadow-xl">
+          <div className="border-border border-b p-3">
             <h3 className="text-sm font-semibold">
               {isHebrew ? 'גרסאות קודמות' : 'Previous versions'}
             </h3>
@@ -93,23 +93,23 @@ export function VersionHistory({
 
           <div className="max-h-80 overflow-y-auto">
             {loading ? (
-              <div className="flex items-center justify-center p-6 text-sm text-neutral-500">
+              <div className="text-muted-foreground flex items-center justify-center p-6 text-sm">
                 <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 {isHebrew ? 'טוען…' : 'Loading…'}
               </div>
             ) : !versions || versions.length === 0 ? (
-              <p className="p-6 text-center text-sm text-neutral-500">
+              <p className="text-muted-foreground p-6 text-center text-sm">
                 {isHebrew
                   ? 'אין גרסאות קודמות עדיין. כל עריכה תשמור גרסה.'
                   : 'No previous versions yet. Each edit saves one.'}
               </p>
             ) : (
-              <ul className="divide-y divide-neutral-100">
+              <ul className="divide-border divide-y">
                 {versions.map((v) => (
                   <li key={v.id} className="flex items-center justify-between p-3 text-sm">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-neutral-500">
+                        <span className="text-muted-foreground font-mono text-xs">
                           v{v.versionNumber}
                         </span>
                         {v.label && (
@@ -118,7 +118,7 @@ export function VersionHistory({
                           </span>
                         )}
                       </div>
-                      <p className="mt-0.5 text-xs text-neutral-500" dir="ltr">
+                      <p className="text-muted-foreground mt-0.5 text-xs" dir="ltr">
                         {new Date(v.createdAt).toLocaleString(isHebrew ? 'he-IL' : 'en-US', {
                           month: 'short',
                           day: 'numeric',

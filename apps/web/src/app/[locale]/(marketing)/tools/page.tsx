@@ -45,7 +45,7 @@ export default async function ToolsPage({ params }: { params: Promise<{ locale: 
         <ScrollReveal>
           <div className="mb-16 text-center">
             <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{t('title')}</h1>
-            <p className="mt-4 text-lg text-neutral-600">{t('subtitle')}</p>
+            <p className="text-muted-foreground mt-4 text-lg">{t('subtitle')}</p>
           </div>
         </ScrollReveal>
 
@@ -53,14 +53,14 @@ export default async function ToolsPage({ params }: { params: Promise<{ locale: 
           {tools.map(({ href, Icon, gradient, titleKey, descKey }, i) => (
             <ScrollReveal key={href} delay={i * 0.1}>
               <Link href={href}>
-                <div className="hover:border-brand-200 hover:shadow-brand-500/10 group cursor-pointer rounded-2xl border border-neutral-200 bg-white p-8 transition hover:-translate-y-1 hover:shadow-xl">
+                <div className="hover:border-brand-200 hover:shadow-brand-500/10 border-border group cursor-pointer rounded-2xl border bg-white p-8 transition hover:-translate-y-1 hover:shadow-xl">
                   <div
                     className={`mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg ${gradient}`}
                   >
                     <Icon className="h-7 w-7" />
                   </div>
                   <h2 className="text-xl font-bold">{t(titleKey)}</h2>
-                  <p className="mt-2 text-neutral-600">{t(descKey)}</p>
+                  <p className="text-muted-foreground mt-2">{t(descKey)}</p>
                   <span className="text-brand-700 group-hover:text-brand-900 mt-6 inline-flex items-center gap-1.5 text-sm font-medium">
                     {t('tryFree')}
                     <ArrowIcon className="h-4 w-4 transition group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />

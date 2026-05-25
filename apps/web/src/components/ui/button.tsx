@@ -9,10 +9,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-brand-600 hover:bg-brand-700 text-white shadow',
-        destructive: 'bg-red-600 text-white shadow-sm hover:bg-red-700 focus-visible:ring-red-500',
-        outline: 'border-brand-200 text-brand-700 hover:bg-brand-50 border bg-white shadow-sm',
-        secondary: 'bg-neutral-100 text-neutral-900 shadow-sm hover:bg-neutral-200',
-        ghost: 'text-neutral-700 hover:bg-neutral-100',
+        destructive:
+          'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive shadow-sm',
+        // Outline uses semantic tokens so it's readable on dark surfaces.
+        outline:
+          'border-border bg-background text-foreground hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 dark:hover:border-brand-700/60 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 border shadow-sm',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 shadow-sm',
+        ghost: 'text-foreground hover:bg-accent hover:text-accent-foreground',
         link: 'text-brand-600 underline-offset-4 hover:underline',
       },
       size: {

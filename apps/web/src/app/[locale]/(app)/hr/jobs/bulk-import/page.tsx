@@ -51,7 +51,7 @@ export default function BulkImportPage() {
     <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Bulk import jobs</h1>
-        <p className="mt-1 text-neutral-600">
+        <p className="text-muted-foreground mt-1">
           Upload a CSV file with columns: title, company, location, description, remote, seniority,
           applyUrl
         </p>
@@ -70,7 +70,7 @@ export default function BulkImportPage() {
                 type="file"
                 accept=".csv,text/csv"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="mt-1 block w-full text-sm text-neutral-600 file:mr-4 file:rounded-md file:border-0 file:bg-neutral-100 file:px-4 file:py-2 file:text-sm file:font-medium hover:file:bg-neutral-200"
+                className="text-muted-foreground file:bg-muted hover:file:bg-muted mt-1 block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:px-4 file:py-2 file:text-sm file:font-medium"
               />
             </div>
 
@@ -97,7 +97,7 @@ export default function BulkImportPage() {
             </p>
             {result.errors.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-neutral-700">Skipped rows:</p>
+                <p className="text-foreground text-sm font-medium">Skipped rows:</p>
                 <ul className="mt-1 space-y-1">
                   {result.errors.map((e, i) => (
                     <li key={i} className="text-sm text-red-600">

@@ -30,7 +30,7 @@ export default async function CoverLettersPage() {
           <h1 className="text-3xl font-bold tracking-tight">
             {isHebrew ? 'מכתבי הצעה' : 'Cover letters'}
           </h1>
-          <p className="mt-1 text-neutral-600">
+          <p className="text-muted-foreground mt-1">
             {isHebrew ? `${letters.length} מכתבים שמורים` : `${letters.length} saved`}
           </p>
         </div>
@@ -51,7 +51,7 @@ export default async function CoverLettersPage() {
             <h3 className="mb-2 text-lg font-semibold">
               {isHebrew ? 'עוד אין לך מכתבים' : 'No cover letters yet'}
             </h3>
-            <p className="mb-6 text-sm text-neutral-600">
+            <p className="text-muted-foreground mb-6 text-sm">
               {isHebrew
                 ? 'צור מכתב הצעה מותאם לכל משרה תוך שניות'
                 : 'Generate a tailored cover letter for any job in seconds'}
@@ -81,22 +81,22 @@ export default async function CoverLettersPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="line-clamp-3 text-sm text-neutral-600">
+                  <p className="text-muted-foreground line-clamp-3 text-sm">
                     {l.content.slice(0, 200)}…
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2 text-xs">
                     <span className="rounded-full bg-purple-50 px-2 py-0.5 font-medium text-purple-700">
                       {l.locale.toUpperCase()}
                     </span>
-                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-medium text-neutral-600">
+                    <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-medium">
                       {l.tone}
                     </span>
                     {l.companyName && (
-                      <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-medium text-neutral-600">
+                      <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-medium">
                         {l.companyName}
                       </span>
                     )}
-                    <span className="ms-auto text-neutral-500">
+                    <span className="text-muted-foreground ms-auto">
                       {new Date(l.updatedAt).toLocaleDateString(isHebrew ? 'he-IL' : 'en-US', {
                         month: 'short',
                         day: 'numeric',

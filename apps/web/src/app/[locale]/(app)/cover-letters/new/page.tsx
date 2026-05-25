@@ -122,7 +122,7 @@ export default function NewCoverLetterPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold">{t('newTitle')}</h1>
-        <p className="mt-2 text-neutral-600">{t('subtitle')}</p>
+        <p className="text-muted-foreground mt-2">{t('subtitle')}</p>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
@@ -164,7 +164,7 @@ export default function NewCoverLetterPage() {
                   id="tone"
                   value={tone}
                   onChange={(e) => setTone(e.target.value as Tone)}
-                  className="focus-visible:ring-brand-500 flex h-10 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                  className="focus-visible:ring-brand-500 border-input bg-card flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                 >
                   <option value="formal">{t('tones.formal')}</option>
                   <option value="friendly">{t('tones.friendly')}</option>
@@ -189,7 +189,9 @@ export default function NewCoverLetterPage() {
 
           {!letter && !loading && !error && (
             <Card className="border-dashed">
-              <CardContent className="py-24 text-center text-neutral-500">{t('empty')}</CardContent>
+              <CardContent className="text-muted-foreground py-24 text-center">
+                {t('empty')}
+              </CardContent>
             </Card>
           )}
 
@@ -197,7 +199,7 @@ export default function NewCoverLetterPage() {
             <Card>
               <CardContent className="py-24 text-center" role="status" aria-live="polite">
                 <div className="border-brand-200 border-t-brand-600 mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2" />
-                <p className="text-neutral-600">{t('generating')}</p>
+                <p className="text-muted-foreground">{t('generating')}</p>
               </CardContent>
             </Card>
           )}
@@ -236,7 +238,7 @@ export default function NewCoverLetterPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-800">
+                <div className="text-foreground whitespace-pre-wrap text-sm leading-relaxed">
                   {letter}
                 </div>
               </CardContent>

@@ -56,7 +56,7 @@ export function TemplatePicker({ value, onChange, userTier }: Props) {
               'group relative aspect-[3/4] overflow-hidden rounded-lg border-2 transition',
               selected
                 ? 'border-violet-600 ring-2 ring-violet-200'
-                : 'border-neutral-200 hover:border-violet-400',
+                : 'border-border hover:border-violet-400',
               locked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
             ].join(' ')}
           >

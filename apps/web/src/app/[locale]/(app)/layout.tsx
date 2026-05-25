@@ -14,9 +14,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-neutral-50">
+    <div className="bg-background flex min-h-screen flex-col">
       <AppHeader />
-      <main id="main" className="container mx-auto flex-1 px-4 py-8">
+      <main id="main" className="text-foreground container mx-auto flex-1 px-4 py-8">
         {children}
       </main>
     </div>

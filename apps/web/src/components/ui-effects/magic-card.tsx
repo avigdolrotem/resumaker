@@ -38,7 +38,7 @@ export function MagicCard({
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`hover:border-brand-300 group relative overflow-hidden rounded-2xl border border-neutral-200 bg-white/80 backdrop-blur-sm transition-colors ${className ?? ''}`}
+      className={`hover:border-brand-300 border-border bg-card/80 group relative overflow-hidden rounded-2xl border backdrop-blur-sm transition-colors ${className ?? ''}`}
       style={
         {
           '--glow-color': glowColor,

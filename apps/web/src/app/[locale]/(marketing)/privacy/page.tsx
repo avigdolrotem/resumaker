@@ -17,7 +17,7 @@ function PrivacyHe() {
   return (
     <>
       <h1>מדיניות פרטיות</h1>
-      <p className="text-sm text-neutral-500">עודכן לאחרונה: מאי 2026</p>
+      <p className="text-muted-foreground text-sm">עודכן לאחרונה: מאי 2026</p>
 
       <h2>1. כללי</h2>
       <p>
@@ -74,7 +74,7 @@ function PrivacyEn() {
   return (
     <>
       <h1>Privacy Policy</h1>
-      <p className="text-sm text-neutral-500">Last updated: May 2026</p>
+      <p className="text-muted-foreground text-sm">Last updated: May 2026</p>
 
       <h2>1. Overview</h2>
       <p>

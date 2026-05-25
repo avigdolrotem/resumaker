@@ -87,13 +87,13 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-3xl font-bold">{t('title')}</h1>
-      <p className="mt-2 text-neutral-600">{t('subtitle')}</p>
+      <p className="text-muted-foreground mt-2">{t('subtitle')}</p>
 
       <div className="mt-8 space-y-2">
         {questions.map((item, i) => (
           <details
             key={i}
-            className="group rounded-lg border border-neutral-200 bg-white p-4 open:bg-violet-50/30"
+            className="border-border group rounded-lg border bg-white p-4 open:bg-violet-50/30"
           >
             <summary className="cursor-pointer list-none font-medium">
               <span className="me-2 inline-block text-violet-600 transition group-open:rotate-90">
@@ -101,7 +101,7 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
               </span>
               {item.q}
             </summary>
-            <p className="mt-3 text-sm leading-relaxed text-neutral-700">{item.a}</p>
+            <p className="text-foreground mt-3 text-sm leading-relaxed">{item.a}</p>
           </details>
         ))}
       </div>

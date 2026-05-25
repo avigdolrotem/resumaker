@@ -44,7 +44,7 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[200px] flex-1">
-          <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <Search className="text-muted-foreground absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -56,7 +56,7 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700"
+              className="text-muted-foreground hover:text-foreground absolute end-3 top-1/2 -translate-y-1/2"
               aria-label="Clear search"
             >
               <X className="h-4 w-4" />
@@ -66,7 +66,7 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)}
-          className="focus:ring-brand-500 h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm focus:outline-none focus:ring-2"
+          className="focus:ring-brand-500 border-input bg-background text-foreground h-10 rounded-md border px-3 text-sm focus:outline-none focus:ring-2"
         >
           <option value="all">All roles</option>
           <option value="user">user</option>
@@ -75,7 +75,7 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
           <option value="suspended">suspended</option>
           <option value="hr">hr</option>
         </select>
-        <span className="text-sm text-neutral-500">
+        <span className="text-muted-foreground text-sm">
           {filtered.length} / {users.length}
         </span>
       </div>
@@ -84,8 +84,8 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <caption className="sr-only">Filtered admin user list</caption>
-          <thead className="text-start text-xs uppercase text-neutral-500">
-            <tr className="border-b border-neutral-200">
+          <thead className="text-muted-foreground text-start text-xs uppercase">
+            <tr className="border-border border-b">
               <th scope="col" className="pb-2 ps-1 font-medium">
                 Email
               </th>
@@ -107,10 +107,10 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100">
+          <tbody className="divide-border divide-y">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-sm text-neutral-500">
+                <td colSpan={6} className="text-muted-foreground py-8 text-center text-sm">
                   No users match the filters
                 </td>
               </tr>
@@ -131,7 +131,7 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
                       <span className="text-amber-600">○</span>
                     )}
                   </td>
-                  <td className="py-2 text-xs text-neutral-500">
+                  <td className="text-muted-foreground py-2 text-xs">
                     {new Date(u.createdAt).toLocaleDateString()}
                   </td>
                   <td className="py-2 pe-1 text-end">
@@ -140,7 +140,7 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
                         URL manually — the page existed but was orphaned. */}
                     <Link
                       href={`/admin/users/${u.id}`}
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                      className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs"
                       aria-label={`View user ${u.email}`}
                     >
                       View

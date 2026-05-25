@@ -54,13 +54,13 @@ export default function AcceptInvitePage() {
         <CardContent className="space-y-4">
           {status === 'idle' && token && (
             <>
-              <p className="text-neutral-600">
+              <p className="text-muted-foreground">
                 You have been invited to join a company on Resumaker.
               </p>
               <Button onClick={() => void handleAccept()}>Accept invitation</Button>
             </>
           )}
-          {status === 'loading' && <p className="text-neutral-500">Accepting…</p>}
+          {status === 'loading' && <p className="text-muted-foreground">Accepting…</p>}
           {status === 'success' && <p className="text-green-600">{message}</p>}
           {status === 'error' && (
             <p className="text-red-600">{message || 'Invalid or expired invite.'}</p>

@@ -80,7 +80,7 @@ export default function ProfilePage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-        <p className="mt-1 text-neutral-600">{t('subtitle')}</p>
+        <p className="text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
 
       <Card>
@@ -107,7 +107,7 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <Label htmlFor="email">{t('emailLabel')}</Label>
               <Input id="email" value={session.user.email} disabled dir="ltr" />
-              <p className="text-xs text-neutral-500">{t('emailHint')}</p>
+              <p className="text-muted-foreground text-xs">{t('emailHint')}</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="locale">{t('languageLabel')}</Label>
@@ -115,12 +115,12 @@ export default function ProfilePage() {
                 id="locale"
                 value={locale}
                 onChange={(e) => setLocale(e.target.value as 'he' | 'en')}
-                className="focus:ring-brand-500 flex h-10 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                className="focus:ring-brand-500 border-input bg-card flex h-10 w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
               >
                 <option value="he">עברית (Hebrew)</option>
                 <option value="en">English</option>
               </select>
-              <p className="text-xs text-neutral-500">{t('languageHint')}</p>
+              <p className="text-muted-foreground text-xs">{t('languageHint')}</p>
             </div>
 
             <Button type="submit" disabled={saving}>
@@ -137,7 +137,7 @@ export default function ProfilePage() {
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-neutral-600">{t('emailVerified')}</span>
+            <span className="text-muted-foreground">{t('emailVerified')}</span>
             <span>
               {session.user.emailVerified ? (
                 <span className="text-emerald-600">✓ {t('emailVerifiedYes')}</span>
@@ -147,7 +147,7 @@ export default function ProfilePage() {
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-neutral-600">{t('memberSince')}</span>
+            <span className="text-muted-foreground">{t('memberSince')}</span>
             <span dir="ltr">
               {new Date(session.user.createdAt).toLocaleDateString(
                 locale === 'he' ? 'he-IL' : 'en-US',

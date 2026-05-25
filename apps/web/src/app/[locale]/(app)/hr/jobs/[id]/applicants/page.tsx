@@ -44,14 +44,14 @@ export default async function ApplicantsPage({
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{isHe ? 'מועמדים' : 'Applicants'}</h1>
-        <p className="mt-1 text-neutral-600">
+        <p className="text-muted-foreground mt-1">
           {job.title} — {isHe ? 'מועמדים שנתנו הסכמה' : 'applicants who opted in'}
         </p>
       </div>
 
       {applicants.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="py-16 text-center text-neutral-500">
+          <CardContent className="text-muted-foreground py-16 text-center">
             {isHe ? 'אין מועמדים שנתנו הסכמה עדיין.' : 'No opted-in applicants yet.'}
           </CardContent>
         </Card>
@@ -61,8 +61,8 @@ export default async function ApplicantsPage({
             <Card key={a.applicationId}>
               <CardContent className="space-y-1 pt-5">
                 <p className="font-medium">{(a.name ?? isHe) ? 'ללא שם' : 'No name'}</p>
-                <p className="text-sm text-neutral-600">{a.email}</p>
-                <p className="text-xs text-neutral-400">
+                <p className="text-muted-foreground text-sm">{a.email}</p>
+                <p className="text-muted-foreground text-xs">
                   {isHe ? 'סטטוס: ' : 'Status: '}
                   {a.status}
                   {a.appliedAt && (

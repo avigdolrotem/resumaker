@@ -51,7 +51,7 @@ export function OnboardingChecklist({
             : `${completedCount} of ${total} complete`}
         </CardDescription>
         {/* Progress bar */}
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-neutral-100">
+        <div className="bg-muted mt-3 h-1.5 overflow-hidden rounded-full">
           <div
             className="bg-brand-500 h-full rounded-full transition-all"
             style={{ width: `${(completedCount / total) * 100}%` }}
@@ -66,19 +66,19 @@ export function OnboardingChecklist({
               <div className="flex items-start gap-3">
                 <Icon
                   className={`mt-0.5 h-5 w-5 shrink-0 ${
-                    item.done ? 'text-emerald-500' : 'text-neutral-300'
+                    item.done ? 'text-emerald-500' : 'text-muted-foreground/50'
                   }`}
                 />
                 <div className="flex-1">
                   <p
                     className={`text-sm font-medium ${
-                      item.done ? 'text-neutral-400 line-through' : 'text-neutral-900'
+                      item.done ? 'text-muted-foreground line-through' : 'text-foreground'
                     }`}
                   >
                     {index + 1}. {item.title}
                   </p>
                   {!item.done && (
-                    <p className="mt-0.5 text-xs text-neutral-500">{item.description}</p>
+                    <p className="text-muted-foreground mt-0.5 text-xs">{item.description}</p>
                   )}
                 </div>
               </div>

@@ -38,7 +38,7 @@ export default async function CoverLetterDetailPage({
       <div>
         <Link
           href="/cover-letters"
-          className="hover:text-brand-600 inline-flex items-center gap-1 text-sm text-neutral-600 transition"
+          className="hover:text-brand-600 text-muted-foreground inline-flex items-center gap-1 text-sm transition"
         >
           <BackIcon className="h-4 w-4" />
           {isHebrew ? 'חזרה למכתבים' : 'All cover letters'}
@@ -53,15 +53,15 @@ export default async function CoverLetterDetailPage({
               <span className="rounded-full bg-purple-50 px-2 py-0.5 font-medium text-purple-700">
                 {letter.locale.toUpperCase()}
               </span>
-              <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-medium text-neutral-600">
+              <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-medium">
                 {letter.tone}
               </span>
               {letter.companyName && (
-                <span className="rounded-full bg-neutral-100 px-2 py-0.5 font-medium text-neutral-600">
+                <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-medium">
                   {letter.companyName}
                 </span>
               )}
-              <span className="text-neutral-500">
+              <span className="text-muted-foreground">
                 {new Date(letter.createdAt).toLocaleDateString(isHebrew ? 'he-IL' : 'en-US', {
                   year: 'numeric',
                   month: 'short',
@@ -83,7 +83,7 @@ export default async function CoverLetterDetailPage({
         </CardHeader>
         <CardContent>
           <div
-            className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-800"
+            className="text-foreground whitespace-pre-wrap text-sm leading-relaxed"
             dir={letter.locale === 'he' ? 'rtl' : 'ltr'}
           >
             {letter.content}
@@ -100,10 +100,10 @@ export default async function CoverLetterDetailPage({
           </CardHeader>
           <CardContent>
             <details className="text-sm">
-              <summary className="hover:text-brand-600 cursor-pointer text-neutral-600">
+              <summary className="hover:text-brand-600 text-muted-foreground cursor-pointer">
                 {isHebrew ? 'הצג' : 'Show'}
               </summary>
-              <div className="mt-3 whitespace-pre-wrap text-neutral-700">
+              <div className="text-foreground mt-3 whitespace-pre-wrap">
                 {letter.jobDescription}
               </div>
             </details>

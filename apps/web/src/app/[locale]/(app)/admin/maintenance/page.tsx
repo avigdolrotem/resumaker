@@ -67,7 +67,7 @@ export default function AdminMaintenancePage() {
                 type="checkbox"
                 checked={state.enabled}
                 onChange={(e) => setState((s) => ({ ...s, enabled: e.target.checked }))}
-                className="h-4 w-4 rounded border-neutral-300"
+                className="border-input h-4 w-4 rounded"
               />
               <Label htmlFor="enabled" className="cursor-pointer font-medium">
                 Maintenance mode enabled

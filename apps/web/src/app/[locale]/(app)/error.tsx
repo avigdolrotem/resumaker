@@ -35,7 +35,7 @@ export default function AppError({
         </CardHeader>
         <CardContent className="space-y-4">
           {error.digest && (
-            <div className="rounded-md bg-neutral-100 px-3 py-2 font-mono text-xs text-neutral-700">
+            <div className="bg-muted text-foreground rounded-md px-3 py-2 font-mono text-xs">
               {t('errorIdLabel')}: {error.digest}
             </div>
           )}

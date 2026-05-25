@@ -17,7 +17,7 @@ function TermsHe() {
   return (
     <>
       <h1>תנאי שימוש</h1>
-      <p className="text-sm text-neutral-500">עודכן לאחרונה: מאי 2026</p>
+      <p className="text-muted-foreground text-sm">עודכן לאחרונה: מאי 2026</p>
 
       <h2>1. שימוש בשירות</h2>
       <p>
@@ -57,7 +57,7 @@ function TermsEn() {
   return (
     <>
       <h1>Terms of Service</h1>
-      <p className="text-sm text-neutral-500">Last updated: May 2026</p>
+      <p className="text-muted-foreground text-sm">Last updated: May 2026</p>
 
       <h2>1. Service Use</h2>
       <p>

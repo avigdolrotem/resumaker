@@ -52,7 +52,7 @@ export default async function JobDetailPage({
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{job.title}</h1>
-        <p className="mt-1 flex flex-wrap items-center gap-3 text-neutral-600">
+        <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-3">
           <span className="font-medium">{job.company}</span>
           {job.location && (
             <span className="inline-flex items-center gap-1 text-sm">
@@ -91,14 +91,14 @@ export default async function JobDetailPage({
               href={job.url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900"
+              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
             >
               {t('viewOriginal')} <ExternalLink className="h-3.5 w-3.5" />
             </a>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-800">
+          <div className="text-foreground whitespace-pre-wrap text-sm leading-relaxed">
             {job.description}
           </div>
         </CardContent>

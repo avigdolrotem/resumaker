@@ -52,7 +52,7 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
               {t('betaBadge')}
             </span>
           </div>
-          <p className="mt-1 text-neutral-600">{t('subtitle')}</p>
+          <p className="text-muted-foreground mt-1">{t('subtitle')}</p>
         </div>
         <Button asChild>
           <Link href="/jobs/paste">
@@ -64,7 +64,9 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
 
       {jobs.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="py-16 text-center text-neutral-500">{t('empty')}</CardContent>
+          <CardContent className="text-muted-foreground py-16 text-center">
+            {t('empty')}
+          </CardContent>
         </Card>
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
@@ -78,7 +80,7 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
                         {j.title}
                       </Link>
                     </h3>
-                    <p className="line-clamp-1 text-sm text-neutral-600">
+                    <p className="text-muted-foreground line-clamp-1 text-sm">
                       {j.company}
                       {j.location ? ` · ${j.location}` : ''}
                       {j.remote ? ` · ${isHebrew ? 'מרחוק' : 'Remote'}` : ''}
@@ -87,7 +89,7 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
                   {j.isFavorite && <Star className="h-4 w-4 fill-amber-400 text-amber-400" />}
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-neutral-500">
+                  <span className="text-muted-foreground">
                     {j.source} ·{' '}
                     {new Date(j.scrapedAt).toLocaleDateString(isHebrew ? 'he-IL' : 'en-US')}
                   </span>
@@ -101,7 +103,7 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
                       href={j.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 text-neutral-500 hover:text-neutral-900"
+                      className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
                       aria-label={t('viewOriginal')}
                     >
                       <ExternalLink className="h-3.5 w-3.5" />

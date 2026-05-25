@@ -58,14 +58,14 @@ export default async function CompanyPublicPage({ params }: Props) {
       </div>
 
       {company.description && (
-        <p className="leading-relaxed text-neutral-600">{company.description}</p>
+        <p className="text-muted-foreground leading-relaxed">{company.description}</p>
       )}
 
       <section>
         <h2 className="mb-4 text-2xl font-semibold">{isHe ? 'משרות פתוחות' : 'Open positions'}</h2>
 
         {activeJobs.length === 0 ? (
-          <p className="text-neutral-500">
+          <p className="text-muted-foreground">
             {isHe ? 'אין משרות פתוחות כרגע.' : 'No open positions at this time.'}
           </p>
         ) : (
@@ -76,7 +76,7 @@ export default async function CompanyPublicPage({ params }: Props) {
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
                       <h3 className="font-medium">{job.title}</h3>
-                      <p className="text-sm text-neutral-500">
+                      <p className="text-muted-foreground text-sm">
                         {job.location ?? (isHe ? 'מיקום לא צוין' : 'Location not specified')}
                         {job.remote && ` · ${isHe ? 'מרחוק' : 'Remote'}`}
                         {job.seniority && ` · ${job.seniority}`}

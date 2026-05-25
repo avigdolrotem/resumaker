@@ -132,12 +132,12 @@ export default function AdminCouponsPage() {
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {rows.length === 0 ? (
-            <p className="text-sm text-neutral-500">No coupons yet.</p>
+            <p className="text-muted-foreground text-sm">No coupons yet.</p>
           ) : (
             <table className="w-full text-sm">
               <caption className="sr-only">Coupons list</caption>
-              <thead className="text-start text-xs uppercase text-neutral-500">
-                <tr className="border-b border-neutral-200">
+              <thead className="text-muted-foreground text-start text-xs uppercase">
+                <tr className="border-border border-b">
                   <th scope="col" className="pb-2 font-medium">
                     Code
                   </th>
@@ -155,7 +155,7 @@ export default function AdminCouponsPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-border divide-y">
                 {rows.map((row) => (
                   <tr key={row.id}>
                     <td className="py-2 font-mono font-medium">{row.code}</td>
@@ -163,7 +163,7 @@ export default function AdminCouponsPage() {
                     <td className="py-2">
                       {row.usageCount} / {row.usageLimit ?? '∞'}
                     </td>
-                    <td className="py-2 text-xs text-neutral-500" dir="ltr">
+                    <td className="text-muted-foreground py-2 text-xs" dir="ltr">
                       {row.expiresAt ? new Date(row.expiresAt).toLocaleDateString() : 'Never'}
                     </td>
                     <td className="py-2">

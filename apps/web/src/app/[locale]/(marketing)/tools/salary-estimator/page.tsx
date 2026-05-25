@@ -54,12 +54,12 @@ export default function SalaryEstimatorPage() {
             <DollarSign className="h-7 w-7" />
           </div>
           <h1 className="text-3xl font-bold">{t('title')}</h1>
-          <p className="mt-3 text-neutral-600">{t('description')}</p>
+          <p className="text-muted-foreground mt-3">{t('description')}</p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm"
+          className="border-border rounded-2xl border bg-white p-8 shadow-sm"
         >
           <div className="grid gap-5">
             <label className="block">
@@ -70,7 +70,7 @@ export default function SalaryEstimatorPage() {
                 onChange={(e) => setRole(e.target.value)}
                 placeholder={t('fields.rolePlaceholder')}
                 required
-                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="border-input w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               />
             </label>
 
@@ -84,7 +84,7 @@ export default function SalaryEstimatorPage() {
                 min={0}
                 max={40}
                 required
-                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="border-input w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               />
             </label>
 
@@ -96,7 +96,7 @@ export default function SalaryEstimatorPage() {
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder={t('fields.locationPlaceholder')}
                 required
-                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="border-input w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               />
             </label>
 
@@ -107,7 +107,7 @@ export default function SalaryEstimatorPage() {
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
                 placeholder={t('fields.industryPlaceholder')}
-                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="border-input w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               />
             </label>
           </div>

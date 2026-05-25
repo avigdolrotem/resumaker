@@ -136,7 +136,7 @@ export function AdminUserQuickActions({ userId, subscription }: Props) {
           </div>
         )}
 
-        {status && <p className="text-sm text-neutral-600">{status}</p>}
+        {status && <p className="text-muted-foreground text-sm">{status}</p>}
       </CardContent>
     </Card>
   );

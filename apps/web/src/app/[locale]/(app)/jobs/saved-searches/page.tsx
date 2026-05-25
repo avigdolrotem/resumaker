@@ -114,7 +114,9 @@ export default function SavedSearchesPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Saved searches</h1>
-        <p className="mt-1 text-neutral-600">Get email alerts when new jobs match your criteria.</p>
+        <p className="text-muted-foreground mt-1">
+          Get email alerts when new jobs match your criteria.
+        </p>
       </div>
 
       <Card>
@@ -163,7 +165,7 @@ export default function SavedSearchesPage() {
                   id="source"
                   value={source}
                   onChange={(e) => setSource(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm"
+                  className="border-input bg-card flex h-10 w-full rounded-md border px-3 py-2 text-sm"
                 >
                   <option value="">Any</option>
                   <option value="greenhouse">Greenhouse</option>
@@ -179,7 +181,7 @@ export default function SavedSearchesPage() {
                   id="freq"
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly' | 'off')}
-                  className="flex h-10 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm"
+                  className="border-input bg-card flex h-10 w-full rounded-md border px-3 py-2 text-sm"
                 >
                   <option value="daily">Daily digest</option>
                   <option value="weekly">Weekly</option>
@@ -208,16 +210,16 @@ export default function SavedSearchesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-sm text-neutral-500">Loading…</p>
+            <p className="text-muted-foreground text-sm">Loading…</p>
           ) : searches.length === 0 ? (
-            <p className="text-sm text-neutral-500">None yet.</p>
+            <p className="text-muted-foreground text-sm">None yet.</p>
           ) : (
-            <ul className="divide-y divide-neutral-100">
+            <ul className="divide-border divide-y">
               {searches.map((s) => (
                 <li key={s.id} className="flex items-start justify-between gap-3 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{s.name}</p>
-                    <p className="text-xs text-neutral-500">
+                    <p className="text-muted-foreground text-xs">
                       {[
                         s.query.q && `"${s.query.q}"`,
                         s.query.company && `@${s.query.company}`,
@@ -227,7 +229,7 @@ export default function SavedSearchesPage() {
                         .filter(Boolean)
                         .join(' · ') || 'any job'}
                     </p>
-                    <p className="mt-1 text-[10px] text-neutral-400">
+                    <p className="text-muted-foreground mt-1 text-[10px]">
                       {s.lastNotifiedAt
                         ? `Last digest: ${new Date(s.lastNotifiedAt).toLocaleDateString()}`
                         : 'No digest sent yet'}
@@ -239,7 +241,7 @@ export default function SavedSearchesPage() {
                       onChange={(e) =>
                         updateFreq(s.id, e.target.value as 'daily' | 'weekly' | 'off')
                       }
-                      className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-xs"
+                      className="border-input bg-card rounded-md border px-2 py-1 text-xs"
                     >
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>

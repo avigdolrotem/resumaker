@@ -64,8 +64,8 @@ export function PricingClient({
               onClick={() => setInterval(intv)}
               className={`relative rounded-full px-4 py-2 text-sm font-medium transition ${
                 interval === intv
-                  ? 'bg-white text-neutral-900 shadow-sm'
-                  : 'text-neutral-600 hover:text-neutral-900'
+                  ? 'text-foreground bg-white shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {t(intv)}
@@ -176,7 +176,7 @@ function TierCard({
   return (
     <div
       className={`relative flex flex-col rounded-2xl border bg-white p-6 shadow-sm ${
-        isFeatured ? 'border-brand-500 ring-brand-200 ring-4' : 'border-neutral-200'
+        isFeatured ? 'border-brand-500 ring-brand-200 ring-4' : 'border-border'
       }`}
     >
       {isFeatured && (
@@ -221,7 +221,7 @@ function TierCard({
           <button
             type="button"
             disabled
-            className="w-full cursor-not-allowed rounded-lg bg-neutral-100 px-4 py-2.5 text-sm font-medium text-neutral-500"
+            className="text-muted-foreground w-full cursor-not-allowed rounded-lg bg-neutral-100 px-4 py-2.5 text-sm font-medium"
           >
             {t('currentTier')}
           </button>

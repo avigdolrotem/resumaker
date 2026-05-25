@@ -103,7 +103,7 @@ export default function AdminBroadcastPage() {
                 id="locale"
                 value={locale}
                 onChange={(e) => setLocale(e.target.value)}
-                className="w-full rounded-md border border-neutral-200 px-3 py-2 text-sm"
+                className="border-border w-full rounded-md border px-3 py-2 text-sm"
               >
                 <option value="he">Hebrew (he)</option>
                 <option value="en">English (en)</option>
@@ -123,12 +123,12 @@ export default function AdminBroadcastPage() {
         </CardHeader>
         <CardContent>
           {rows.length === 0 ? (
-            <p className="text-sm text-neutral-500">No broadcasts yet.</p>
+            <p className="text-muted-foreground text-sm">No broadcasts yet.</p>
           ) : (
             <table className="w-full text-sm">
               <caption className="sr-only">Broadcast emails list</caption>
-              <thead className="text-start text-xs uppercase text-neutral-500">
-                <tr className="border-b border-neutral-200">
+              <thead className="text-muted-foreground text-start text-xs uppercase">
+                <tr className="border-border border-b">
                   <th scope="col" className="pb-2 font-medium">
                     Subject
                   </th>
@@ -146,7 +146,7 @@ export default function AdminBroadcastPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-border divide-y">
                 {rows.map((row) => (
                   <tr key={row.id}>
                     <td className="py-2">{row.subject}</td>

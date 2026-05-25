@@ -103,7 +103,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </ScrollReveal>
 
             <ScrollReveal delay={0.2}>
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-neutral-600 md:text-xl">
+              <p className="text-muted-foreground mt-6 max-w-xl text-lg leading-relaxed md:text-xl">
                 {t('hero.subtitle')}
               </p>
             </ScrollReveal>
@@ -122,7 +122,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </ScrollReveal>
 
             <ScrollReveal delay={0.4}>
-              <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-neutral-600 lg:justify-start">
+              <div className="text-muted-foreground mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm lg:justify-start">
                 <TrustItem
                   Icon={Languages}
                   label={isHebrew ? 'תמיכה מלאה בעברית' : 'Hebrew RTL native'}
@@ -149,7 +149,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ─── STATS ─── */}
-      <section className="relative border-y border-neutral-200 bg-white py-10">
+      <section className="border-border relative border-y bg-white py-10">
         <div className="container mx-auto grid grid-cols-2 gap-6 px-4 md:grid-cols-4">
           <Stat value="48" suffix={isHebrew ? 'בדיקות אבטחה' : 'Safety tests'} />
           <Stat value="<3s" suffix={isHebrew ? 'יצירה ממוצעת' : 'Avg generation'} />
@@ -173,7 +173,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   {isHebrew ? 'למה Resumaker?' : 'Why Resumaker'}
                 </AnimatedGradientText>
               </h2>
-              <p className="mt-4 text-lg text-neutral-600">
+              <p className="text-muted-foreground mt-4 text-lg">
                 {isHebrew
                   ? 'הכלי היחיד שמשלב AI מתקדם עם דרישות השוק הישראלי'
                   : 'The only tool combining advanced AI with Israeli market expertise'}
@@ -204,7 +204,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <h2 className="text-4xl font-bold tracking-tight md:text-5xl">
                 {isHebrew ? 'איך זה עובד' : 'How it works'}
               </h2>
-              <p className="mt-4 text-lg text-neutral-600">
+              <p className="text-muted-foreground mt-4 text-lg">
                 {isHebrew ? 'שלושה שלבים, מינוט אחד' : 'Three steps, one minute'}
               </p>
             </div>
@@ -226,7 +226,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   </div>
                   <div className="mt-6 text-center">
                     <h3 className="text-xl font-bold">{s.title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-neutral-600">{s.desc}</p>
+                    <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{s.desc}</p>
                   </div>
                 </div>
               </ScrollReveal>
@@ -243,7 +243,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <h2 className="text-4xl font-bold tracking-tight md:text-5xl">
                 {isHebrew ? 'מחירים פשוטים' : 'Simple pricing'}
               </h2>
-              <p className="mt-4 text-lg text-neutral-600">
+              <p className="text-muted-foreground mt-4 text-lg">
                 {isHebrew ? 'התחל בחינם, שדרג מתי שתרצה' : 'Start free, upgrade when you want'}
               </p>
             </div>
@@ -423,7 +423,7 @@ function Stat({ value, suffix }: { value: string; suffix: string }) {
       <div className="from-brand-600 to-brand-900 bg-gradient-to-br bg-clip-text text-3xl font-bold text-transparent md:text-4xl">
         <CountUp value={value} />
       </div>
-      <div className="mt-1 text-xs text-neutral-600 md:text-sm">{suffix}</div>
+      <div className="text-muted-foreground mt-1 text-xs md:text-sm">{suffix}</div>
     </div>
   );
 }
@@ -446,7 +446,7 @@ function FeatureCard({
           <Icon className="h-6 w-6" />
         </div>
         <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="mt-2 text-sm leading-relaxed text-neutral-600">{description}</p>
+        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">{description}</p>
       </div>
     </MagicCard>
   );
@@ -478,7 +478,7 @@ function PricingCard({
       className={`group relative rounded-2xl border p-8 transition hover:-translate-y-1 hover:shadow-xl ${
         featured
           ? 'border-brand-300 to-brand-50 shadow-brand-500/10 bg-gradient-to-b from-white shadow-xl'
-          : 'hover:border-brand-200 border-neutral-200 bg-white'
+          : 'hover:border-brand-200 border-border bg-white'
       }`}
     >
       {/* Featured cards get an outer glow ring on hover */}
@@ -495,16 +495,16 @@ function PricingCard({
         </div>
       )}
       <div className="relative">
-        <h3 className="text-lg font-semibold text-neutral-700">{tier}</h3>
+        <h3 className="text-foreground text-lg font-semibold">{tier}</h3>
         <div className="mt-4 flex items-baseline gap-2">
           <span className="text-4xl font-bold tracking-tight">{price}</span>
-          <span className="text-sm text-neutral-500">{period}</span>
+          <span className="text-muted-foreground text-sm">{period}</span>
         </div>
         <ul className="mt-6 space-y-3">
           {features.map((f, i) => (
             <li key={i} className="flex items-start gap-2 text-sm">
               <CheckCircle2 className="text-brand-600 mt-0.5 h-4 w-4 flex-shrink-0" />
-              <span className="text-neutral-700">{f}</span>
+              <span className="text-foreground">{f}</span>
             </li>
           ))}
         </ul>
@@ -513,7 +513,7 @@ function PricingCard({
           className={`mt-8 inline-flex h-11 w-full items-center justify-center rounded-md text-sm font-medium transition ${
             featured
               ? 'bg-brand-600 hover:bg-brand-700 text-white shadow-md'
-              : 'hover:border-brand-300 hover:bg-brand-50 border border-neutral-200 bg-white text-neutral-700'
+              : 'hover:border-brand-300 hover:bg-brand-50 border-border text-foreground border bg-white'
           }`}
         >
           {cta}

@@ -96,7 +96,7 @@ export function ThemeToggle() {
         aria-label="Change theme"
         aria-expanded={open}
         aria-haspopup="menu"
-        className="hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 inline-flex h-9 w-9 items-center justify-center rounded-md text-sm text-neutral-700 transition dark:text-neutral-300"
+        className="hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 text-foreground dark:text-muted-foreground/50 inline-flex h-9 w-9 items-center justify-center rounded-md text-sm transition"
       >
         <CurrentIcon className="h-4 w-4" />
       </button>

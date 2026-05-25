@@ -43,7 +43,7 @@ export function AdminRoleSelect({ userId, currentRole }: { userId: string; curre
   const colorMap: Record<Role, string> = {
     admin: 'bg-purple-100 text-purple-700',
     support: 'bg-indigo-100 text-indigo-700',
-    user: 'bg-neutral-100 text-neutral-700',
+    user: 'bg-muted text-foreground',
     suspended: 'bg-red-100 text-red-700',
     hr: 'bg-emerald-100 text-emerald-700',
   };
@@ -62,7 +62,7 @@ export function AdminRoleSelect({ userId, currentRole }: { userId: string; curre
         <option value="suspended">suspended</option>
         <option value="hr">hr (reserved)</option>
       </select>
-      {pending && <Loader2 className="h-3 w-3 animate-spin text-neutral-400" />}
+      {pending && <Loader2 className="text-muted-foreground h-3 w-3 animate-spin" />}
     </div>
   );
 }

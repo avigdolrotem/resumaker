@@ -420,7 +420,7 @@ export default function BuilderPage() {
                     id="industry"
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value as Industry)}
-                    className="flex h-10 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm"
+                    className="border-input bg-card flex h-10 w-full rounded-md border px-3 py-2 text-sm"
                   >
                     <option value="tech">{t('industries.tech')}</option>
                     <option value="healthcare">{t('industries.healthcare')}</option>
@@ -434,7 +434,7 @@ export default function BuilderPage() {
                     id="locale"
                     value={locale}
                     onChange={(e) => setLocale(e.target.value as LocaleChoice)}
-                    className="flex h-10 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm"
+                    className="border-input bg-card flex h-10 w-full rounded-md border px-3 py-2 text-sm"
                   >
                     <option value="auto">{t('locales.auto')}</option>
                     <option value="he">{t('locales.he')}</option>
@@ -471,7 +471,7 @@ export default function BuilderPage() {
             <Card>
               <CardContent className="py-24 text-center">
                 <div className="border-brand-200 border-t-brand-600 mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2" />
-                <p className="text-neutral-600">
+                <p className="text-muted-foreground">
                   {t.has('actions.loadingExisting') ? t('actions.loadingExisting') : 'Loading…'}
                 </p>
               </CardContent>
@@ -481,8 +481,8 @@ export default function BuilderPage() {
           {!result && !loading && !error && !hydrating && (
             <Card className="border-dashed">
               <CardContent className="space-y-2 py-24 text-center">
-                <p className="text-lg font-medium text-neutral-700">{t('empty.title')}</p>
-                <p className="text-sm text-neutral-500">{t('empty.subtitle')}</p>
+                <p className="text-foreground text-lg font-medium">{t('empty.title')}</p>
+                <p className="text-muted-foreground text-sm">{t('empty.subtitle')}</p>
               </CardContent>
             </Card>
           )}
@@ -491,7 +491,7 @@ export default function BuilderPage() {
             <Card>
               <CardContent className="py-24 text-center">
                 <div className="border-brand-200 border-t-brand-600 mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2" />
-                <p className="text-neutral-600">{t('generating')}</p>
+                <p className="text-muted-foreground">{t('generating')}</p>
               </CardContent>
             </Card>
           )}

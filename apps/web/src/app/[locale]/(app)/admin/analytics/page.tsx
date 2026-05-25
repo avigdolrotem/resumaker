@@ -45,7 +45,7 @@ export default async function AdminAnalyticsPage() {
     <div className="space-y-6">
       <Link
         href="/admin"
-        className="hover:text-brand-600 inline-flex items-center gap-1 text-sm text-neutral-600 transition"
+        className="hover:text-brand-600 text-muted-foreground inline-flex items-center gap-1 text-sm transition"
       >
         <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
         Back to admin
@@ -54,7 +54,7 @@ export default async function AdminAnalyticsPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
               Signups (30d)
             </p>
             <p className="text-3xl font-bold">{funnelData.signups}</p>
@@ -62,14 +62,16 @@ export default async function AdminAnalyticsPage() {
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">MRR</p>
+            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+              MRR
+            </p>
             <p className="text-3xl font-bold">₪{(mrrData.mrrIls ?? 0).toFixed(0)}</p>
-            <p className="text-xs text-neutral-500">{mrrData.subscriberCount} subscribers</p>
+            <p className="text-muted-foreground text-xs">{mrrData.subscriberCount} subscribers</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
               Funnel (30d)
             </p>
             <p className="text-sm">
@@ -108,7 +110,7 @@ export default async function AdminAnalyticsPage() {
             })}
           </svg>
           {dauRows.length === 0 && (
-            <p className="text-center text-sm text-neutral-500">No data yet</p>
+            <p className="text-muted-foreground text-center text-sm">No data yet</p>
           )}
         </CardContent>
       </Card>
@@ -124,22 +126,22 @@ export default async function AdminAnalyticsPage() {
             <caption className="sr-only">Cohort retention table</caption>
             <thead>
               <tr>
-                <th className="pb-2 pe-4 text-start font-medium text-neutral-500">Cohort</th>
+                <th className="text-muted-foreground pb-2 pe-4 text-start font-medium">Cohort</th>
                 {Array.from({ length: 8 }, (_, i) => (
-                  <th key={i} className="px-2 pb-2 font-medium text-neutral-500">
+                  <th key={i} className="text-muted-foreground px-2 pb-2 font-medium">
                     W{i}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-border divide-y">
               {(cohortData.cohortTable ?? []).map((row) => (
                 <tr key={row.cohortWeek}>
-                  <td className="py-1 pe-4 font-mono text-neutral-500">{row.cohortWeek}</td>
+                  <td className="text-muted-foreground py-1 pe-4 font-mono">{row.cohortWeek}</td>
                   {row.weeks.map((pct, wi) => (
                     <td key={wi} className="px-2 py-1 text-center">
                       {pct === -1 ? (
-                        <span className="text-neutral-300">—</span>
+                        <span className="text-muted-foreground/50">—</span>
                       ) : (
                         <span
                           className="rounded px-1 py-0.5"
@@ -158,7 +160,7 @@ export default async function AdminAnalyticsPage() {
             </tbody>
           </table>
           {(cohortData.cohortTable ?? []).length === 0 && (
-            <p className="text-center text-sm text-neutral-500">No data yet</p>
+            <p className="text-muted-foreground text-center text-sm">No data yet</p>
           )}
         </CardContent>
       </Card>

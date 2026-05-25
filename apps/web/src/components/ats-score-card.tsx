@@ -104,12 +104,12 @@ export function AtsScoreCard({ score, isHebrew }: { score: ATSScore; isHebrew: b
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-2xl font-bold">{displayScore}</span>
-              <span className="text-xs text-neutral-500">/ 100</span>
+              <span className="text-muted-foreground text-xs">/ 100</span>
             </div>
           </div>
           <div>
             <p className={`text-lg font-semibold ${color.text}`}>{label}</p>
-            <p className="text-sm text-neutral-600">
+            <p className="text-muted-foreground text-sm">
               {isHebrew
                 ? `${score.matched_keywords.length} התאמות, ${score.missing_keywords.length} חסרות`
                 : `${score.matched_keywords.length} matches, ${score.missing_keywords.length} missing`}
@@ -120,7 +120,7 @@ export function AtsScoreCard({ score, isHebrew }: { score: ATSScore; isHebrew: b
         {/* Missing keywords */}
         {score.missing_keywords.length > 0 && (
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+            <p className="text-muted-foreground mb-2 text-xs font-semibold uppercase tracking-wider">
               {isHebrew ? 'מילות מפתח חסרות' : 'Missing keywords'}
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -139,7 +139,7 @@ export function AtsScoreCard({ score, isHebrew }: { score: ATSScore; isHebrew: b
         {/* Suggestions */}
         {score.suggestions.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
               {isHebrew ? 'המלצות לשיפור' : 'Suggestions'}
             </p>
             {score.suggestions.map((s, i) => {
@@ -156,12 +156,9 @@ export function AtsScoreCard({ score, isHebrew }: { score: ATSScore; isHebrew: b
                     ? 'text-amber-500'
                     : 'text-emerald-500';
               return (
-                <div
-                  key={i}
-                  className="flex items-start gap-2 rounded-md bg-neutral-50 p-2.5 text-sm"
-                >
+                <div key={i} className="bg-muted flex items-start gap-2 rounded-md p-2.5 text-sm">
                   <Icon className={`mt-0.5 h-4 w-4 flex-shrink-0 ${iconColor}`} />
-                  <span className="text-neutral-700">{s.message}</span>
+                  <span className="text-foreground">{s.message}</span>
                 </div>
               );
             })}

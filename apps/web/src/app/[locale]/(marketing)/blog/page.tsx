@@ -35,15 +35,15 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
         <ScrollReveal>
           <div className="mb-16 text-center">
             <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{t('title')}</h1>
-            <p className="mt-4 text-lg text-neutral-600">{t('subtitle')}</p>
+            <p className="text-muted-foreground mt-4 text-lg">{t('subtitle')}</p>
           </div>
         </ScrollReveal>
 
         <div className="grid gap-8">
           {posts.map((post, i) => (
             <ScrollReveal key={post.slug} delay={i * 0.05}>
-              <article className="hover:border-brand-200 hover:shadow-brand-500/10 rounded-2xl border border-neutral-200 bg-white p-8 transition hover:-translate-y-0.5 hover:shadow-lg">
-                <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-500">
+              <article className="hover:border-brand-200 hover:shadow-brand-500/10 border-border rounded-2xl border bg-white p-8 transition hover:-translate-y-0.5 hover:shadow-lg">
+                <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4" />
                     {new Date(post.publishedAt).toLocaleDateString(
@@ -57,8 +57,8 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
                   </span>
                 </div>
 
-                <h2 className="mt-4 text-2xl font-bold text-neutral-900">{post.title}</h2>
-                <p className="mt-3 text-neutral-600">{post.summary}</p>
+                <h2 className="text-foreground mt-4 text-2xl font-bold">{post.title}</h2>
+                <p className="text-muted-foreground mt-3">{post.summary}</p>
 
                 <Link
                   href={`/blog/${post.slug}` as '/blog/[slug]'}
@@ -72,7 +72,9 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
           ))}
         </div>
 
-        {posts.length === 0 && <p className="py-16 text-center text-neutral-500">{t('noPosts')}</p>}
+        {posts.length === 0 && (
+          <p className="text-muted-foreground py-16 text-center">{t('noPosts')}</p>
+        )}
       </section>
     </main>
   );

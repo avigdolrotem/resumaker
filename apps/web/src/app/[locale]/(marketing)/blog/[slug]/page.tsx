@@ -49,7 +49,7 @@ export default async function BlogPostPage({ params }: Props) {
         </Link>
 
         <header className="mb-10">
-          <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-neutral-500">
+          <div className="text-muted-foreground mb-4 flex flex-wrap items-center gap-4 text-sm">
             <span className="flex items-center gap-1.5">
               <Calendar className="h-4 w-4" />
               {new Date(post.meta.publishedAt).toLocaleDateString(
@@ -63,7 +63,7 @@ export default async function BlogPostPage({ params }: Props) {
             </span>
           </div>
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{post.meta.title}</h1>
-          <p className="mt-4 text-xl text-neutral-600">{post.meta.summary}</p>
+          <p className="text-muted-foreground mt-4 text-xl">{post.meta.summary}</p>
         </header>
 
         <div className="prose prose-neutral max-w-none">

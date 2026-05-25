@@ -178,7 +178,7 @@ function UsageTile({
         </span>
       </p>
       {!isUnlimited && !isDisabled && (
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-neutral-200">
+        <div className="bg-muted mt-2 h-1.5 overflow-hidden rounded-full">
           <div
             className={`h-full rounded-full ${isNearLimit ? 'bg-amber-500' : 'bg-brand-500'}`}
             style={{ width: `${pct}%` }}

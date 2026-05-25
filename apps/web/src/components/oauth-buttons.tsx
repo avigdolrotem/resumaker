@@ -19,10 +19,10 @@ export function OAuthButtons({ showGoogle, showGitHub, callbackURL = '/dashboard
     <div className="space-y-3">
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-neutral-200" />
+          <span className="border-border w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-neutral-500">or</span>
+          <span className="bg-background text-muted-foreground px-2">or</span>
         </div>
       </div>
 

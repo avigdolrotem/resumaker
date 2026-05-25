@@ -59,11 +59,11 @@ export function CookieConsent({ locale }: { locale: string }) {
     <div
       role="dialog"
       aria-labelledby="cookie-consent-title"
-      className="fixed bottom-4 end-4 start-4 z-50 mx-auto max-w-2xl rounded-xl border border-neutral-200 bg-white p-4 shadow-2xl sm:p-5"
+      className="border-border bg-card fixed bottom-4 end-4 start-4 z-50 mx-auto max-w-2xl rounded-xl border p-4 shadow-2xl sm:p-5"
     >
       <div className="flex items-start gap-3">
-        <div className="flex-1 text-sm text-neutral-700">
-          <h2 id="cookie-consent-title" className="mb-1 font-semibold text-neutral-900">
+        <div className="text-foreground flex-1 text-sm">
+          <h2 id="cookie-consent-title" className="text-foreground mb-1 font-semibold">
             {isHe ? 'אנחנו משתמשים בעוגיות חיוניות' : 'We use essential cookies'}
           </h2>
           <p className="leading-relaxed">

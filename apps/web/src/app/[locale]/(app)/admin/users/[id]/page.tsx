@@ -78,7 +78,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
     <div className="space-y-6">
       <Link
         href="/admin"
-        className="hover:text-brand-600 inline-flex items-center gap-1 text-sm text-neutral-600 transition"
+        className="hover:text-brand-600 text-muted-foreground inline-flex items-center gap-1 text-sm transition"
       >
         <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
         Back to admin
@@ -184,15 +184,17 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                 />
                 {subscription.notes && (
                   <div className="sm:col-span-2">
-                    <dt className="text-xs font-medium uppercase tracking-wider text-neutral-500">
+                    <dt className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
                       Notes
                     </dt>
-                    <dd className="mt-1 text-neutral-700">{subscription.notes}</dd>
+                    <dd className="text-foreground mt-1">{subscription.notes}</dd>
                   </div>
                 )}
               </dl>
             ) : (
-              <p className="text-sm text-neutral-500">No subscription row (treated as free).</p>
+              <p className="text-muted-foreground text-sm">
+                No subscription row (treated as free).
+              </p>
             )}
           </CardContent>
         </Card>
@@ -216,18 +218,18 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           </CardHeader>
           <CardContent>
             {userResumes.length === 0 ? (
-              <p className="text-sm text-neutral-500">None</p>
+              <p className="text-muted-foreground text-sm">None</p>
             ) : (
-              <ul className="divide-y divide-neutral-100">
+              <ul className="divide-border divide-y">
                 {userResumes.map((r) => (
                   <li key={r.id} className="flex items-center justify-between py-2 text-sm">
                     <div>
                       <p className="font-medium">{r.title}</p>
-                      <p className="text-xs text-neutral-500">
+                      <p className="text-muted-foreground text-xs">
                         {r.locale.toUpperCase()} · {r.industry ?? 'general'}
                       </p>
                     </div>
-                    <span className="text-xs text-neutral-500" dir="ltr">
+                    <span className="text-muted-foreground text-xs" dir="ltr">
                       {new Date(r.updatedAt).toLocaleDateString()}
                     </span>
                   </li>
@@ -243,18 +245,18 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           </CardHeader>
           <CardContent>
             {userCoverLetters.length === 0 ? (
-              <p className="text-sm text-neutral-500">None</p>
+              <p className="text-muted-foreground text-sm">None</p>
             ) : (
-              <ul className="divide-y divide-neutral-100">
+              <ul className="divide-border divide-y">
                 {userCoverLetters.map((l) => (
                   <li key={l.id} className="flex items-center justify-between py-2 text-sm">
                     <div>
                       <p className="line-clamp-1 font-medium">{l.title}</p>
-                      <p className="text-xs text-neutral-500">
+                      <p className="text-muted-foreground text-xs">
                         {l.locale.toUpperCase()} · {l.tone}
                       </p>
                     </div>
-                    <span className="text-xs text-neutral-500" dir="ltr">
+                    <span className="text-muted-foreground text-xs" dir="ltr">
                       {new Date(l.updatedAt).toLocaleDateString()}
                     </span>
                   </li>
@@ -273,12 +275,12 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {userGenerations.length === 0 ? (
-            <p className="text-sm text-neutral-500">None</p>
+            <p className="text-muted-foreground text-sm">None</p>
           ) : (
             <table className="w-full text-sm">
               <caption className="sr-only">Generations for this user</caption>
-              <thead className="text-start text-xs uppercase text-neutral-500">
-                <tr className="border-b border-neutral-200">
+              <thead className="text-muted-foreground text-start text-xs uppercase">
+                <tr className="border-border border-b">
                   <th scope="col" className="pb-2 ps-1 font-medium">
                     When
                   </th>
@@ -296,10 +298,10 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-border divide-y">
                 {userGenerations.map((g) => (
                   <tr key={g.id}>
-                    <td className="py-2 ps-1 text-xs text-neutral-500" dir="ltr">
+                    <td className="text-muted-foreground py-2 ps-1 text-xs" dir="ltr">
                       {new Date(g.createdAt).toLocaleString()}
                     </td>
                     <td className="py-2 font-mono text-xs" dir="ltr">
@@ -321,7 +323,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                     <td className="py-2 text-xs" dir="ltr">
                       {((g.promptTokens ?? 0) + (g.completionTokens ?? 0)).toLocaleString()}
                     </td>
-                    <td className="py-2 text-xs text-neutral-500" dir="ltr">
+                    <td className="text-muted-foreground py-2 text-xs" dir="ltr">
                       {g.durationMs ? `${(g.durationMs / 1000).toFixed(1)}s` : '—'}
                     </td>
                   </tr>
@@ -340,21 +342,19 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         </CardHeader>
         <CardContent>
           {userAuditEvents.length === 0 ? (
-            <p className="text-sm text-neutral-500">No events recorded</p>
+            <p className="text-muted-foreground text-sm">No events recorded</p>
           ) : (
             <ul className="space-y-2">
               {userAuditEvents.map((e) => (
                 <li key={e.id} className="flex items-start gap-3 text-sm">
-                  <span className="font-mono text-xs text-neutral-400" dir="ltr">
+                  <span className="text-muted-foreground font-mono text-xs" dir="ltr">
                     {new Date(e.createdAt).toLocaleTimeString()}
                   </span>
-                  <span className="rounded bg-neutral-100 px-2 py-0.5 font-mono text-xs">
-                    {e.event}
-                  </span>
+                  <span className="bg-muted rounded px-2 py-0.5 font-mono text-xs">{e.event}</span>
                   {e.metadata != null && (
-                    <details className="text-xs text-neutral-600">
-                      <summary className="cursor-pointer hover:text-neutral-900">metadata</summary>
-                      <pre className="mt-1 max-w-xl overflow-x-auto rounded bg-neutral-50 p-2 text-[10px]">
+                    <details className="text-muted-foreground text-xs">
+                      <summary className="hover:text-foreground cursor-pointer">metadata</summary>
+                      <pre className="bg-muted mt-1 max-w-xl overflow-x-auto rounded p-2 text-[10px]">
                         {JSON.stringify(e.metadata, null, 2)}
                       </pre>
                     </details>
@@ -372,7 +372,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-xs font-medium uppercase tracking-wider text-neutral-500">{label}</dt>
+      <dt className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+        {label}
+      </dt>
       <dd className="mt-1">{value}</dd>
     </div>
   );
@@ -395,7 +397,9 @@ function StatTile({
             <Icon className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">{label}</p>
+            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+              {label}
+            </p>
             <p className="text-2xl font-bold">{value}</p>
           </div>
         </div>

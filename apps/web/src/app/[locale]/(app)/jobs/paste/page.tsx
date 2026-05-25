@@ -71,8 +71,8 @@ export default function JobsPastePage() {
               />
             </div>
             <div className="relative">
-              <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-neutral-200" />
-              <span className="relative mx-auto block w-fit bg-white px-3 text-xs text-neutral-400">
+              <div className="bg-muted absolute inset-x-0 top-1/2 h-px -translate-y-1/2" />
+              <span className="bg-card text-muted-foreground relative mx-auto block w-fit px-3 text-xs">
                 or
               </span>
             </div>

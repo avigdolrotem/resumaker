@@ -40,12 +40,14 @@ export default async function ApplicationsPage({
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{t('title')}</h1>
-        <p className="mt-1 text-neutral-600">{t('subtitle')}</p>
+        <p className="text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
 
       {rows.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="py-16 text-center text-neutral-500">{t('empty')}</CardContent>
+          <CardContent className="text-muted-foreground py-16 text-center">
+            {t('empty')}
+          </CardContent>
         </Card>
       ) : (
         <ApplicationsList rows={rows} locale={locale} />

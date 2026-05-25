@@ -60,13 +60,13 @@ export default function ATSScannerPage() {
             <FileSearch className="h-7 w-7" />
           </div>
           <h1 className="text-3xl font-bold">{t('title')}</h1>
-          <p className="mt-3 text-neutral-600">{t('description')}</p>
+          <p className="text-muted-foreground mt-3">{t('description')}</p>
           <p className="mt-1 text-xs text-neutral-400">{t('noAuthRequired')}</p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm"
+          className="border-border rounded-2xl border bg-white p-8 shadow-sm"
         >
           <div className="grid gap-5">
             <label className="block">
@@ -77,7 +77,7 @@ export default function ATSScannerPage() {
                 placeholder={t('fields.jdPlaceholder')}
                 required
                 rows={6}
-                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="border-input w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               />
             </label>
 
@@ -89,7 +89,7 @@ export default function ATSScannerPage() {
                 placeholder={t('fields.resumePlaceholder')}
                 required
                 rows={8}
-                className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="border-input w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               />
             </label>
           </div>
@@ -112,10 +112,10 @@ export default function ATSScannerPage() {
 
         {result && (
           <div className="mt-6 space-y-4">
-            <div className="rounded-2xl border border-neutral-200 bg-white p-8 text-center">
+            <div className="border-border rounded-2xl border bg-white p-8 text-center">
               <div className={`text-6xl font-bold ${scoreColor}`}>{result.score}%</div>
-              <div className="mt-2 text-sm text-neutral-600">{t('result.atsScore')}</div>
-              <p className="mt-4 text-sm text-neutral-700">{result.summary}</p>
+              <div className="text-muted-foreground mt-2 text-sm">{t('result.atsScore')}</div>
+              <p className="text-foreground mt-4 text-sm">{result.summary}</p>
             </div>
 
             {result.missing.length > 0 && (

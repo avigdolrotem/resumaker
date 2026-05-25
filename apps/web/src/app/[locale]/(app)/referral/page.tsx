@@ -52,35 +52,35 @@ export default function ReferralPage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <div className="text-neutral-400">{t('loading')}</div>
+        <div className="text-muted-foreground">{t('loading')}</div>
       </main>
     );
   }
 
   return (
-    <main id="main" className="min-h-screen bg-neutral-50 py-12">
+    <main id="main" className="bg-muted min-h-screen py-12">
       <div className="container mx-auto max-w-2xl px-4">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 text-white shadow-lg">
             <Gift className="h-7 w-7" />
           </div>
           <h1 className="text-3xl font-bold">{t('title')}</h1>
-          <p className="mt-3 text-neutral-600">{t('subtitle')}</p>
+          <p className="text-muted-foreground mt-3">{t('subtitle')}</p>
         </div>
 
         {/* Stats */}
         <div className="mb-8 grid grid-cols-2 gap-4">
-          <div className="rounded-xl border border-neutral-200 bg-white p-6 text-center shadow-sm">
-            <div className="flex items-center justify-center gap-2 text-neutral-500">
+          <div className="border-border bg-card rounded-xl border p-6 text-center shadow-sm">
+            <div className="text-muted-foreground flex items-center justify-center gap-2">
               <Users className="h-4 w-4" />
               <span className="text-sm">{t('stats.referred')}</span>
             </div>
-            <div className="mt-2 text-3xl font-bold text-neutral-900">
+            <div className="text-foreground mt-2 text-3xl font-bold">
               {data?.referredCount ?? 0}
             </div>
           </div>
-          <div className="rounded-xl border border-neutral-200 bg-white p-6 text-center shadow-sm">
-            <div className="flex items-center justify-center gap-2 text-neutral-500">
+          <div className="border-border bg-card rounded-xl border p-6 text-center shadow-sm">
+            <div className="text-muted-foreground flex items-center justify-center gap-2">
               <Check className="h-4 w-4" />
               <span className="text-sm">{t('stats.qualified')}</span>
             </div>
@@ -91,18 +91,18 @@ export default function ReferralPage() {
         </div>
 
         {/* Share card */}
-        <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+        <div className="border-border bg-card rounded-2xl border p-8 shadow-sm">
           <h2 className="mb-4 font-semibold">{t('yourCode')}</h2>
 
           {data && (
             <>
               <div className="mb-6 flex items-center gap-3">
-                <div className="flex-1 rounded-lg border border-neutral-200 bg-neutral-50 px-4 py-3 font-mono text-lg font-bold tracking-widest text-neutral-800">
+                <div className="border-border bg-muted text-foreground flex-1 rounded-lg border px-4 py-3 font-mono text-lg font-bold tracking-widest">
                   {data.code}
                 </div>
                 <button
                   onClick={handleCopy}
-                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-600 transition hover:bg-neutral-50"
+                  className="border-border bg-card text-muted-foreground hover:bg-accent flex h-11 w-11 items-center justify-center rounded-lg border transition"
                   aria-label={t('copy')}
                 >
                   {copied ? (
@@ -113,22 +113,22 @@ export default function ReferralPage() {
                 </button>
               </div>
 
-              <p className="mb-4 text-sm text-neutral-500">{t('linkLabel')}</p>
-              <div className="mb-6 break-all rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-600">
+              <p className="text-muted-foreground mb-4 text-sm">{t('linkLabel')}</p>
+              <div className="border-border bg-muted text-muted-foreground mb-6 break-all rounded-lg border px-3 py-2 text-xs">
                 {refLink}
               </div>
 
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={handleCopy}
-                  className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
+                  className="border-border bg-card text-foreground hover:bg-accent flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition"
                 >
                   <Copy className="h-4 w-4" />
                   {t('copyLink')}
                 </button>
                 <button
                   onClick={handleEmail}
-                  className="flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
+                  className="border-border bg-card text-foreground hover:bg-accent flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition"
                 >
                   <Mail className="h-4 w-4" />
                   {t('shareEmail')}

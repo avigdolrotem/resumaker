@@ -57,7 +57,7 @@ export default function SettingsPage() {
                   'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition',
                   active
                     ? 'bg-violet-100 font-medium text-violet-800'
-                    : 'text-neutral-700 hover:bg-neutral-100',
+                    : 'text-foreground hover:bg-accent',
                 ].join(' ')}
                 aria-current={active ? 'page' : undefined}
               >
@@ -340,11 +340,11 @@ function SessionsTab() {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <p className="text-sm text-neutral-500">Loading…</p>
+          <p className="text-muted-foreground text-sm">Loading…</p>
         ) : sessions.length === 0 ? (
-          <p className="text-sm text-neutral-500">No sessions.</p>
+          <p className="text-muted-foreground text-sm">No sessions.</p>
         ) : (
-          <ul className="divide-y divide-neutral-100">
+          <ul className="divide-border divide-y">
             {sessions.map((s) => (
               <li key={s.id} className="flex items-start justify-between gap-3 py-3 text-sm">
                 <div className="min-w-0 flex-1">
@@ -356,12 +356,12 @@ function SessionsTab() {
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-muted-foreground text-xs">
                     Started {new Date(s.createdAt).toLocaleString()} · expires{' '}
                     {new Date(s.expiresAt).toLocaleDateString()}
                   </p>
                   {s.ipAddress && (
-                    <p className="font-mono text-[10px] text-neutral-400" dir="ltr">
+                    <p className="text-muted-foreground font-mono text-[10px]" dir="ltr">
                       ip-hash: {s.ipAddress.slice(0, 12)}…
                     </p>
                   )}
@@ -441,7 +441,7 @@ function NotificationsTab() {
     ['emailProductUpdates', 'Product updates (new features, templates)'],
   ];
 
-  if (loading) return <p className="text-sm text-neutral-500">Loading…</p>;
+  if (loading) return <p className="text-muted-foreground text-sm">Loading…</p>;
   return (
     <Card>
       <CardHeader>
@@ -527,7 +527,7 @@ function AppearanceTab() {
     }
   }
 
-  if (loading) return <p className="text-sm text-neutral-500">Loading…</p>;
+  if (loading) return <p className="text-muted-foreground text-sm">Loading…</p>;
   return (
     <Card>
       <CardHeader>
@@ -541,7 +541,7 @@ function AppearanceTab() {
             id="theme"
             value={theme}
             onChange={(e) => setTheme(e.target.value as typeof theme)}
-            className="flex h-10 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm"
+            className="border-input bg-background text-foreground flex h-10 w-full rounded-md border px-3 py-2 text-sm"
           >
             <option value="system">Match my device</option>
             <option value="light">Light</option>
@@ -554,7 +554,7 @@ function AppearanceTab() {
             id="tz"
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm"
+            className="border-input bg-background text-foreground flex h-10 w-full rounded-md border px-3 py-2 text-sm"
           >
             <option value="Asia/Jerusalem">Asia/Jerusalem (Israel)</option>
             <option value="Europe/London">Europe/London (UK)</option>
@@ -570,7 +570,7 @@ function AppearanceTab() {
             id="df"
             value={dateFormat}
             onChange={(e) => setDateFormat(e.target.value as typeof dateFormat)}
-            className="flex h-10 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm"
+            className="border-input bg-background text-foreground flex h-10 w-full rounded-md border px-3 py-2 text-sm"
           >
             <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2026)</option>
             <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2026)</option>

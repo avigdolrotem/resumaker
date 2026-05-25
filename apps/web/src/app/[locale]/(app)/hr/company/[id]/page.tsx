@@ -77,17 +77,17 @@ export default function CompanyDetailPage() {
   }
 
   if (loading && !company) {
-    return <p className="p-6 text-neutral-500">Loading…</p>;
+    return <p className="text-muted-foreground p-6">Loading…</p>;
   }
 
   if (!company) {
-    return <p className="p-6 text-neutral-500">Company not found.</p>;
+    return <p className="text-muted-foreground p-6">Company not found.</p>;
   }
 
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">{company.name}</h1>
-      {company.description && <p className="text-neutral-600">{company.description}</p>}
+      {company.description && <p className="text-muted-foreground">{company.description}</p>}
       {company.websiteUrl && (
         <a
           href={company.websiteUrl}
@@ -108,7 +108,7 @@ export default function CompanyDetailPage() {
             <div key={m.id} className="flex items-center justify-between gap-2">
               <div>
                 <p className="text-sm font-medium">{m.user.name ?? m.user.email}</p>
-                <p className="text-xs text-neutral-500">{m.role}</p>
+                <p className="text-muted-foreground text-xs">{m.role}</p>
               </div>
               {m.role !== 'owner' && (
                 <Button size="sm" variant="destructive" onClick={() => handleKick(m.id)}>
@@ -151,7 +151,7 @@ export default function CompanyDetailPage() {
             <Button type="submit" disabled={inviteSending}>
               {inviteSending ? 'Sending…' : 'Send invite'}
             </Button>
-            {status && <p className="text-sm text-neutral-600">{status}</p>}
+            {status && <p className="text-muted-foreground text-sm">{status}</p>}
           </form>
         </CardContent>
       </Card>

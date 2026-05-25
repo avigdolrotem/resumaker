@@ -55,7 +55,7 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-3xl font-bold">{isHe ? 'סטטוס מערכת' : 'System status'}</h1>
-      <p className="mt-2 text-neutral-600">
+      <p className="text-muted-foreground mt-2">
         {isHe ? 'מתעדכן כל 30 שניות. בעדכון נכון לתאריך:' : 'Refreshed every 30 seconds. As of:'}{' '}
         <time dir="ltr">{new Date(status.ts).toLocaleString()}</time>
       </p>
@@ -81,11 +81,11 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
         {status.deps.map((d) => (
           <li
             key={d.name}
-            className="flex items-center justify-between rounded-md border border-neutral-200 bg-white px-4 py-3"
+            className="border-border flex items-center justify-between rounded-md border bg-white px-4 py-3"
           >
             <div>
               <p className="font-medium">{d.name}</p>
-              {d.detail && <p className="mt-1 text-xs text-neutral-600">{d.detail}</p>}
+              {d.detail && <p className="text-muted-foreground mt-1 text-xs">{d.detail}</p>}
             </div>
             <span
               className={`rounded-full px-3 py-0.5 text-xs font-medium ${
@@ -98,7 +98,7 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
         ))}
       </ul>
 
-      <p className="mt-8 text-xs text-neutral-500">
+      <p className="text-muted-foreground mt-8 text-xs">
         {isHe ? 'בעיה מתמשכת? ' : 'Ongoing issue? '}
         <a href={`/${locale}/contact`} className="text-violet-700 hover:underline">
           {isHe ? 'פנה לתמיכה' : 'Contact support'}

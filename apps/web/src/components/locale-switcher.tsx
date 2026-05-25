@@ -21,7 +21,7 @@ export function LocaleSwitcher() {
           { locale: otherLocale },
         )
       }
-      className="hover:text-brand-600 text-sm font-medium text-neutral-700"
+      className="hover:text-brand-600 text-foreground text-sm font-medium"
     >
       {label}
     </button>

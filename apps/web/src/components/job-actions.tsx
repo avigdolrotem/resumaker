@@ -126,18 +126,18 @@ export function JobActions({
           <CardContent className="space-y-3 pt-5">
             <div className="flex items-center gap-3">
               <span className="text-2xl font-bold text-violet-700">{fitScore}/10</span>
-              <span className="text-sm font-medium text-neutral-600">{t('fitScore')}</span>
+              <span className="text-muted-foreground text-sm font-medium">{t('fitScore')}</span>
             </div>
             {fitRationale && (
-              <p className="text-sm text-neutral-700">
-                <strong className="text-neutral-900">{t('rationale')}: </strong>
+              <p className="text-foreground text-sm">
+                <strong className="text-foreground">{t('rationale')}: </strong>
                 {fitRationale}
               </p>
             )}
             {fitStrengths.length > 0 && (
               <div className="text-sm">
                 <strong className="text-emerald-700">{t('strengths')}: </strong>
-                <ul className="ms-5 list-disc text-neutral-700">
+                <ul className="text-foreground ms-5 list-disc">
                   {fitStrengths.map((s, i) => (
                     <li key={i}>{s}</li>
                   ))}
@@ -147,7 +147,7 @@ export function JobActions({
             {fitGaps.length > 0 && (
               <div className="text-sm">
                 <strong className="text-amber-700">{t('gaps')}: </strong>
-                <ul className="ms-5 list-disc text-neutral-700">
+                <ul className="text-foreground ms-5 list-disc">
                   {fitGaps.map((g, i) => (
                     <li key={i}>{g}</li>
                   ))}

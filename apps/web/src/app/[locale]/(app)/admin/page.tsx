@@ -58,7 +58,7 @@ export default async function AdminPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold">Admin</h1>
-        <p className="text-neutral-600">System metrics + recent activity</p>
+        <p className="text-muted-foreground">System metrics + recent activity</p>
       </div>
 
       {/* Top metrics */}
@@ -121,8 +121,8 @@ export default async function AdminPage() {
         <CardContent className="overflow-x-auto">
           <table className="w-full text-sm">
             <caption className="sr-only">Recent LLM generations</caption>
-            <thead className="text-start text-xs uppercase text-neutral-500">
-              <tr className="border-b border-neutral-200">
+            <thead className="text-muted-foreground text-start text-xs uppercase">
+              <tr className="border-border border-b">
                 <th scope="col" className="pb-2 ps-1 font-medium">
                   When
                 </th>
@@ -143,10 +143,10 @@ export default async function AdminPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-border divide-y">
               {recentGenerations.map((g) => (
                 <tr key={g.id}>
-                  <td className="py-2 ps-1 text-xs text-neutral-500">
+                  <td className="text-muted-foreground py-2 ps-1 text-xs">
                     {new Date(g.createdAt).toLocaleTimeString()}
                   </td>
                   <td className="py-2 font-mono text-xs" dir="ltr">
@@ -161,7 +161,7 @@ export default async function AdminPage() {
                   <td className="py-2 text-xs" dir="ltr">
                     {((g.promptTokens ?? 0) + (g.completionTokens ?? 0)).toLocaleString()}
                   </td>
-                  <td className="py-2 text-xs text-neutral-500" dir="ltr">
+                  <td className="text-muted-foreground py-2 text-xs" dir="ltr">
                     {g.durationMs ? `${(g.durationMs / 1000).toFixed(1)}s` : '—'}
                   </td>
                 </tr>
@@ -192,9 +192,11 @@ function MetricCard({
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">{label}</p>
+            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+              {label}
+            </p>
             <p className="mt-1 text-2xl font-bold">{value}</p>
-            {delta && <p className="mt-1 text-xs text-neutral-600">{delta}</p>}
+            {delta && <p className="text-muted-foreground mt-1 text-xs">{delta}</p>}
           </div>
           <div
             className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-md ${color}`}

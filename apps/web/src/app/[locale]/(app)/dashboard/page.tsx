@@ -144,7 +144,7 @@ export default async function DashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">
             {isHebrew ? `שלום ${userName} 👋` : `Hi ${userName} 👋`}
           </h1>
-          <p className="mt-1 text-neutral-600">{t('title')}</p>
+          <p className="text-muted-foreground mt-1">{t('title')}</p>
         </div>
         <Button asChild size="lg">
           <Link href="/builder">
@@ -259,7 +259,7 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="divide-y divide-neutral-100">
+            <ul className="divide-border divide-y">
               {recentActivity.map((a) => (
                 <li key={a.id} className="flex items-center justify-between py-3">
                   <div className="flex items-center gap-3">
@@ -288,13 +288,13 @@ export default async function DashboardPage() {
                               ? 'יצירה נכשלה'
                               : 'Generation failed'}
                       </p>
-                      <p className="text-xs text-neutral-500" dir="ltr">
+                      <p className="text-muted-foreground text-xs" dir="ltr">
                         {a.model.replace('claude-', '')} ·{' '}
                         {a.durationMs ? `${(a.durationMs / 1000).toFixed(1)}s` : 'n/a'}
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs text-neutral-500" dir="ltr">
+                  <span className="text-muted-foreground text-xs" dir="ltr">
                     {new Date(a.createdAt).toLocaleString(isHebrew ? 'he-IL' : 'en-US', {
                       month: 'short',
                       day: 'numeric',
@@ -330,7 +330,9 @@ function StatCard({
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">{label}</p>
+            <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">
+              {label}
+            </p>
             <p className="mt-1 text-3xl font-bold">
               <CountUp value={value} />
             </p>
@@ -374,10 +376,10 @@ function QuickAction({
         <CardContent className="relative pt-6">
           <div className="flex items-start justify-between">
             <Icon className={`h-8 w-8 ${iconColor}`} />
-            <ArrowRight className="h-4 w-4 text-neutral-400 transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
+            <ArrowRight className="text-muted-foreground h-4 w-4 transition group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1" />
           </div>
           <h3 className="mt-4 text-base font-semibold">{title}</h3>
-          <p className="mt-1 text-sm text-neutral-600">{description}</p>
+          <p className="text-muted-foreground mt-1 text-sm">{description}</p>
         </CardContent>
       </MagicCard>
     </Link>

@@ -41,7 +41,7 @@ export default async function AdminAuditPage({ searchParams }: Props) {
     <div className="space-y-6">
       <Link
         href="/admin"
-        className="hover:text-brand-600 inline-flex items-center gap-1 text-sm text-neutral-600 transition"
+        className="hover:text-brand-600 text-muted-foreground inline-flex items-center gap-1 text-sm transition"
       >
         <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
         Back to admin
@@ -59,26 +59,26 @@ export default async function AdminAuditPage({ searchParams }: Props) {
               type="date"
               defaultValue={sp.from ?? ''}
               placeholder="From"
-              className="rounded-md border border-neutral-200 px-3 py-2 text-sm"
+              className="border-border rounded-md border px-3 py-2 text-sm"
             />
             <input
               name="to"
               type="date"
               defaultValue={sp.to ?? ''}
               placeholder="To"
-              className="rounded-md border border-neutral-200 px-3 py-2 text-sm"
+              className="border-border rounded-md border px-3 py-2 text-sm"
             />
             <input
               name="event"
               defaultValue={sp.event ?? ''}
               placeholder="Event type"
-              className="rounded-md border border-neutral-200 px-3 py-2 text-sm"
+              className="border-border rounded-md border px-3 py-2 text-sm"
             />
             <input
               name="userId"
               defaultValue={sp.userId ?? ''}
               placeholder="User ID"
-              className="rounded-md border border-neutral-200 px-3 py-2 font-mono text-sm"
+              className="border-border rounded-md border px-3 py-2 font-mono text-sm"
             />
             <button
               type="submit"
@@ -91,8 +91,8 @@ export default async function AdminAuditPage({ searchParams }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <caption className="sr-only">Audit log events</caption>
-              <thead className="text-start text-xs uppercase text-neutral-500">
-                <tr className="border-b border-neutral-200">
+              <thead className="text-muted-foreground text-start text-xs uppercase">
+                <tr className="border-border border-b">
                   <th scope="col" className="pb-2 ps-1 font-medium">
                     When
                   </th>
@@ -107,25 +107,28 @@ export default async function AdminAuditPage({ searchParams }: Props) {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-border divide-y">
                 {rows.map((row) => (
                   <tr key={row.id}>
-                    <td className="whitespace-nowrap py-2 ps-1 text-xs text-neutral-500" dir="ltr">
+                    <td
+                      className="text-muted-foreground whitespace-nowrap py-2 ps-1 text-xs"
+                      dir="ltr"
+                    >
                       {new Date(row.createdAt).toLocaleString()}
                     </td>
                     <td className="py-2">
-                      <span className="rounded bg-neutral-100 px-2 py-0.5 font-mono text-xs">
+                      <span className="bg-muted rounded px-2 py-0.5 font-mono text-xs">
                         {row.event}
                       </span>
                     </td>
-                    <td className="py-2 font-mono text-xs text-neutral-500" dir="ltr">
+                    <td className="text-muted-foreground py-2 font-mono text-xs" dir="ltr">
                       {row.userId ? row.userId.slice(0, 12) + '…' : '—'}
                     </td>
-                    <td className="py-2 text-xs text-neutral-500">
+                    <td className="text-muted-foreground py-2 text-xs">
                       {row.metadata ? (
                         <details>
                           <summary className="cursor-pointer">view</summary>
-                          <pre className="max-w-xs overflow-x-auto rounded bg-neutral-50 p-1 text-[10px]">
+                          <pre className="bg-muted max-w-xs overflow-x-auto rounded p-1 text-[10px]">
                             {JSON.stringify(row.metadata, null, 2)}
                           </pre>
                         </details>
@@ -140,10 +143,10 @@ export default async function AdminAuditPage({ searchParams }: Props) {
           </div>
 
           {rows.length === 0 && (
-            <p className="mt-4 text-center text-sm text-neutral-500">No results</p>
+            <p className="text-muted-foreground mt-4 text-center text-sm">No results</p>
           )}
 
-          <div className="mt-4 flex justify-between text-sm text-neutral-500">
+          <div className="text-muted-foreground mt-4 flex justify-between text-sm">
             {page > 1 && (
               <Link
                 href={`?page=${page - 1}${sp.event ? `&event=${sp.event}` : ''}${sp.userId ? `&userId=${sp.userId}` : ''}`}

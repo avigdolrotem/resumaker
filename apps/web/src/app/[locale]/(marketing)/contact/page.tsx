@@ -59,7 +59,7 @@ export default function ContactPage() {
                 ? 'תודה — נחזור אליך תוך 24 שעות'
                 : "Thanks — we'll reply within 24h"}
             </h1>
-            <p className="text-sm text-neutral-600">
+            <p className="text-muted-foreground text-sm">
               {locale === 'he'
                 ? 'הפנייה נשמרה ונשלחה לצוות התמיכה.'
                 : 'Your message has been logged and forwarded to our support team.'}

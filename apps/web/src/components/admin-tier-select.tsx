@@ -47,7 +47,7 @@ export function AdminTierSelect({ userId, currentTier }: { userId: string; curre
   }
 
   const colorMap: Record<Tier, string> = {
-    free: 'bg-neutral-100 text-neutral-700',
+    free: 'bg-muted text-foreground',
     plus: 'bg-amber-100 text-amber-800',
     pro: 'bg-violet-100 text-violet-800',
   };
@@ -65,7 +65,7 @@ export function AdminTierSelect({ userId, currentTier }: { userId: string; curre
         <option value="plus">plus</option>
         <option value="pro">pro</option>
       </select>
-      {pending && <Loader2 className="h-3 w-3 animate-spin text-neutral-400" />}
+      {pending && <Loader2 className="text-muted-foreground h-3 w-3 animate-spin" />}
     </div>
   );
 }

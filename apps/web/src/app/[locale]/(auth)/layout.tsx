@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
 import { GridPattern } from '@/components/ui-effects/grid-pattern';
 import { Logo } from '@/components/logo';
+import { auth } from '@/lib/auth';
 
 /**
  * Auth layout: sign-in / sign-up / forgot-password / reset-password
@@ -16,7 +19,17 @@ import { Logo } from '@/components/logo';
  * No nav links here — we don't want to encourage navigation away
  * mid-auth (lower bounce on the funnel).
  */
-export default function AuthLayout({ children }: { children: ReactNode }) {
+export default async function AuthLayout({ children }: { children: ReactNode }) {
+  // Already signed in? Skip the auth form and send them to the app.
+  // Reported bug: clicking "Build similar" from /examples landed
+  // signed-in users on /sign-up which felt like a re-auth prompt.
+  // The Better Auth session cookie is the source of truth; if it's
+  // valid, /sign-in and /sign-up should never be visible.
+  const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
+  if (session) {
+    redirect('/dashboard');
+  }
+
   return (
     <div className="from-brand-50 relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br via-white to-purple-50">
       {/* Backdrop layers — same recipe as the marketing hero */}

@@ -74,7 +74,7 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative rounded-md p-2 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+        className="text-muted-foreground hover:bg-accent hover:text-foreground relative rounded-md p-2"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={t('bellLabel', { count: unread })}
@@ -93,9 +93,9 @@ export function NotificationBell() {
       {open && (
         <div
           role="menu"
-          className="absolute end-0 top-full z-50 mt-2 w-80 rounded-lg border border-neutral-200 bg-white shadow-lg"
+          className="border-border bg-card absolute end-0 top-full z-50 mt-2 w-80 rounded-lg border shadow-lg"
         >
-          <div className="flex items-center justify-between border-b border-neutral-100 p-3">
+          <div className="border-border flex items-center justify-between border-b p-3">
             <span className="text-sm font-semibold">{t('title')}</span>
             {unread > 0 && (
               <button
@@ -108,17 +108,17 @@ export function NotificationBell() {
               </button>
             )}
           </div>
-          <ul className="max-h-96 divide-y divide-neutral-100 overflow-y-auto">
+          <ul className="divide-border max-h-96 divide-y overflow-y-auto">
             {items.length === 0 ? (
-              <li className="p-4 text-sm text-neutral-500">{t('empty')}</li>
+              <li className="text-muted-foreground p-4 text-sm">{t('empty')}</li>
             ) : (
               items.slice(0, 10).map((n) => {
-                const className = `block p-3 text-sm ${n.readAt ? 'text-neutral-500' : 'bg-violet-50/50'}`;
+                const className = `block p-3 text-sm ${n.readAt ? 'text-muted-foreground' : 'bg-violet-50/50'}`;
                 const inner = (
                   <>
                     <p className={n.readAt ? '' : 'font-semibold'}>{n.title}</p>
-                    {n.body && <p className="mt-1 text-xs text-neutral-600">{n.body}</p>}
-                    <p className="mt-1 text-[10px] text-neutral-400">
+                    {n.body && <p className="text-muted-foreground mt-1 text-xs">{n.body}</p>}
+                    <p className="text-muted-foreground mt-1 text-[10px]">
                       {new Date(n.createdAt).toLocaleString()}
                     </p>
                   </>

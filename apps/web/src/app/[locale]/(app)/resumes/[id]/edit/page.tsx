@@ -40,7 +40,7 @@ export default async function EditResumePage({
       <div className="flex items-center justify-between gap-2">
         <Link
           href={`/builder?id=${id}`}
-          className="inline-flex items-center gap-1 text-sm text-neutral-600 hover:text-violet-700"
+          className="text-muted-foreground inline-flex items-center gap-1 text-sm hover:text-violet-700"
         >
           <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
           {isHebrew ? 'חזרה לבונה' : 'Back to builder'}
@@ -50,28 +50,28 @@ export default async function EditResumePage({
             href={`/api/resumes/${id}/pdf`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 hover:bg-neutral-50"
+            className="hover:bg-accent inline-flex items-center gap-1 rounded-md border px-3 py-1.5"
           >
             <Download className="h-3.5 w-3.5" />
             PDF
           </a>
           <a
             href={`/api/resumes/${id}/export?format=docx`}
-            className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 hover:bg-neutral-50"
+            className="hover:bg-accent inline-flex items-center gap-1 rounded-md border px-3 py-1.5"
           >
             <Download className="h-3.5 w-3.5" />
             DOC
           </a>
           <a
             href={`/api/resumes/${id}/export?format=txt`}
-            className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 hover:bg-neutral-50"
+            className="hover:bg-accent inline-flex items-center gap-1 rounded-md border px-3 py-1.5"
           >
             <Download className="h-3.5 w-3.5" />
             TXT
           </a>
           <a
             href={`/api/resumes/${id}/export?format=json`}
-            className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 hover:bg-neutral-50"
+            className="hover:bg-accent inline-flex items-center gap-1 rounded-md border px-3 py-1.5"
           >
             <Download className="h-3.5 w-3.5" />
             JSON

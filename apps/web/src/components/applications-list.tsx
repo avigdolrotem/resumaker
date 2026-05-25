@@ -86,13 +86,13 @@ export function ApplicationsList({ rows, locale }: { rows: Row[]; locale: 'he' |
                     {r.jobTitle}
                   </Link>
                 </h3>
-                <p className="text-sm text-neutral-600">{r.jobCompany}</p>
+                <p className="text-muted-foreground text-sm">{r.jobCompany}</p>
               </div>
               <div className="flex items-center gap-2">
                 <select
                   value={r.status}
                   onChange={(e) => changeStatus(r.id, e.target.value as Status)}
-                  className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm"
+                  className="border-input bg-background text-foreground rounded-md border px-2 py-1 text-sm"
                 >
                   {STATUSES.map((s) => (
                     <option key={s} value={s}>
@@ -104,7 +104,7 @@ export function ApplicationsList({ rows, locale }: { rows: Row[]; locale: 'he' |
                   href={r.jobUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-neutral-400 hover:text-neutral-700"
+                  className="text-muted-foreground hover:text-foreground"
                   aria-label={locale === 'he' ? 'מודעה' : 'Original posting'}
                 >
                   <ExternalLink className="h-4 w-4" />
@@ -141,7 +141,7 @@ export function ApplicationsList({ rows, locale }: { rows: Row[]; locale: 'he' |
                 )}
               </div>
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+            <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
               {r.appliedAt && (
                 <span>
                   {t('appliedAt')}: {new Date(r.appliedAt).toLocaleDateString()}
@@ -155,7 +155,7 @@ export function ApplicationsList({ rows, locale }: { rows: Row[]; locale: 'he' |
               <span className="ms-auto">{new Date(r.updatedAt).toLocaleDateString()}</span>
             </div>
             {r.notes && (
-              <p className="text-sm text-neutral-700">
+              <p className="text-foreground text-sm">
                 <strong>{t('notes')}: </strong>
                 {r.notes}
               </p>
