@@ -16,8 +16,10 @@ import { VersionHistory } from '@/components/version-history';
 import { TemplatePicker, type TemplateId } from '@/components/template-picker';
 import { BuilderModeToggle, type BuilderMode } from '@/components/builder/builder-mode-toggle';
 import { AdvancedEditor } from '@/components/builder/advanced-editor';
+import { ImportModal } from '@/components/builder/import-modal';
+import { applyImportedProfile } from '@/lib/builder/apply-import';
 import type { Tier } from '@/lib/billing/limits';
-import { Sparkles, Save as SaveIcon, Check as CheckIcon, Loader2 } from 'lucide-react';
+import { Sparkles, Save as SaveIcon, Check as CheckIcon, Loader2, Upload } from 'lucide-react';
 import type { Resume, ATSScore } from '@resumaker/shared';
 
 type Industry = 'tech' | 'healthcare' | 'finance' | 'general';
@@ -90,6 +92,7 @@ export default function BuilderPage() {
   const [saving, setSaving] = useState(false);
   const [atsScore, setAtsScore] = useState<ATSScore | null>(null);
   const [advancedContent, setAdvancedContent] = useState<Resume | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const router = useRouter();
 
   /**
@@ -317,7 +320,12 @@ export default function BuilderPage() {
     }
   }
 
-  function applyImportedProfile(p: {
+  // Basic-mode import handler: takes the flat parsed profile and writes
+  // it into the per-field useState setters that drive the basic form.
+  // (The advanced editor uses the canonical applyImportedProfile helper
+  // from @/lib/builder/apply-import instead — that one produces a full
+  // Resume object with REPLACE/MERGE semantics per section.)
+  function applyImportedProfileToBasicForm(p: {
     name?: string;
     email?: string;
     phone?: string;
@@ -404,14 +412,20 @@ export default function BuilderPage() {
                 </span>
               )}
             </div>
-            <Button type="button" size="sm" onClick={handleAdvancedSave} disabled={saving}>
-              {saving ? (
-                <Loader2 className="me-1 h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <SaveIcon className="me-1 h-3.5 w-3.5" />
-              )}
-              {saving ? 'Saving…' : 'Save resume'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button type="button" size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+                <Upload className="me-1 h-3.5 w-3.5" />
+                Import
+              </Button>
+              <Button type="button" size="sm" onClick={handleAdvancedSave} disabled={saving}>
+                {saving ? (
+                  <Loader2 className="me-1 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <SaveIcon className="me-1 h-3.5 w-3.5" />
+                )}
+                {saving ? 'Saving…' : 'Save resume'}
+              </Button>
+            </div>
           </div>
           <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
             <AdvancedEditor resume={advancedResume} onChange={setAdvancedContent} />
@@ -419,6 +433,13 @@ export default function BuilderPage() {
               <ResumePreview resume={advancedResume} />
             </div>
           </div>
+          <ImportModal
+            open={importOpen}
+            onClose={() => setImportOpen(false)}
+            onApply={(profile, opts) =>
+              setAdvancedContent(applyImportedProfile(advancedResume, profile, opts))
+            }
+          />
         </div>
       )}
 
@@ -458,7 +479,7 @@ export default function BuilderPage() {
             <CardHeader>
               <CardTitle className="flex items-center justify-between gap-3">
                 <span>{t('profileTitle')}</span>
-                <ImportProfileButton onImport={applyImportedProfile} />
+                <ImportProfileButton onImport={applyImportedProfileToBasicForm} />
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
