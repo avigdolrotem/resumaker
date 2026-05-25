@@ -42,6 +42,11 @@ export const ExperienceSchema = z.object({
   location: z.string().max(200).optional(),
   description: z.string().max(2000).optional(),
   highlights: z.array(z.string().max(500)).max(10).default([]),
+  /**
+   * "Currently working here." When true, end_date should be null and the
+   * UI/PDF renders "Present" in place of an end date.
+   */
+  is_current: z.boolean().default(false),
 });
 
 export const EducationSchema = z.object({
@@ -52,6 +57,8 @@ export const EducationSchema = z.object({
   end_date: z.string().nullable(),
   gpa: z.string().max(20).optional(),
   description: z.string().max(1000).optional(),
+  /** "Currently studying." Same semantics as ExperienceSchema.is_current. */
+  is_current: z.boolean().default(false),
 });
 
 /**
@@ -66,6 +73,8 @@ export const ProjectSchema = z.object({
   url: z.string().url().max(500).optional(),
   start_date: z.string().optional(),
   end_date: z.string().nullable().optional(),
+  /** "Ongoing / active." When true, end_date renders as "Present". */
+  is_ongoing: z.boolean().default(false),
 });
 
 /**
@@ -92,11 +101,17 @@ export const ResumeSchema = z.object({
   experience: z.array(ExperienceSchema).max(20),
   education: z.array(EducationSchema).max(10),
   skills: z.array(z.string().max(100)).max(50),
+  /**
+   * Language proficiency levels are a strict enum to keep PDF rendering
+   * predictable. Legacy resumes that stored free-form levels ("B2",
+   * "Advanced", etc.) are normalized via `normalizeLanguageLevel` on the
+   * UI boundary before reaching this schema.
+   */
   languages: z
     .array(
       z.object({
-        name: z.string().max(50),
-        level: z.string().max(50),
+        name: z.string().min(1).max(50),
+        level: z.enum(['native', 'fluent', 'professional', 'conversational', 'basic']),
       }),
     )
     .max(10)
@@ -104,9 +119,11 @@ export const ResumeSchema = z.object({
   certifications: z
     .array(
       z.object({
-        name: z.string().max(200),
-        issuer: z.string().max(200),
+        name: z.string().min(1).max(200),
+        issuer: z.string().max(200).optional(),
         date: z.string().optional(),
+        /** Optional link to the credential / certificate page. */
+        credential_url: z.string().url().max(500).optional(),
       }),
     )
     .max(10)

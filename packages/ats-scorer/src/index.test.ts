@@ -17,6 +17,7 @@ const baseResume: Resume = {
         'Migrated from MySQL to Postgres',
         'Led team of 4 engineers',
       ],
+      is_current: true,
     },
   ],
   education: [
@@ -25,6 +26,7 @@ const baseResume: Resume = {
       degree: 'BSc Computer Science',
       start_date: '2014-10-01',
       end_date: '2018-06-30',
+      is_current: false,
     },
   ],
   skills: ['Python', 'PostgreSQL', 'AWS', 'Docker', 'Kubernetes'],
@@ -99,6 +101,7 @@ describe('scoreResume', () => {
           start_date: '2020-01-01',
           end_date: null,
           highlights: [],
+          is_current: true,
         },
       ],
     };
