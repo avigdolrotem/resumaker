@@ -38,7 +38,7 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   return (
-    <main id="main" className="min-h-screen bg-white">
+    <main id="main" className="bg-background min-h-screen">
       <article className="container mx-auto max-w-3xl px-4 py-20">
         <Link
           href="/blog"

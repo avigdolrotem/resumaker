@@ -61,12 +61,12 @@ export default function ATSScannerPage() {
           </div>
           <h1 className="text-3xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground mt-3">{t('description')}</p>
-          <p className="mt-1 text-xs text-neutral-400">{t('noAuthRequired')}</p>
+          <p className="text-muted-foreground/80 mt-1 text-xs">{t('noAuthRequired')}</p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="border-border rounded-2xl border bg-white p-8 shadow-sm"
+          className="border-border bg-card rounded-2xl border p-8 shadow-sm"
         >
           <div className="grid gap-5">
             <label className="block">
@@ -112,7 +112,7 @@ export default function ATSScannerPage() {
 
         {result && (
           <div className="mt-6 space-y-4">
-            <div className="border-border rounded-2xl border bg-white p-8 text-center">
+            <div className="border-border bg-card rounded-2xl border p-8 text-center">
               <div className={`text-6xl font-bold ${scoreColor}`}>{result.score}%</div>
               <div className="text-muted-foreground mt-2 text-sm">{t('result.atsScore')}</div>
               <p className="text-foreground mt-4 text-sm">{result.summary}</p>

@@ -59,7 +59,7 @@ export default function SalaryEstimatorPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="border-border rounded-2xl border bg-white p-8 shadow-sm"
+          className="border-border bg-card rounded-2xl border p-8 shadow-sm"
         >
           <div className="grid gap-5">
             <label className="block">

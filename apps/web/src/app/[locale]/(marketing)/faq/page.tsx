@@ -93,7 +93,7 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
         {questions.map((item, i) => (
           <details
             key={i}
-            className="border-border group rounded-lg border bg-white p-4 open:bg-violet-50/30"
+            className="border-border bg-card group rounded-lg border p-4 open:bg-violet-50/30"
           >
             <summary className="cursor-pointer list-none font-medium">
               <span className="me-2 inline-block text-violet-600 transition group-open:rotate-90">

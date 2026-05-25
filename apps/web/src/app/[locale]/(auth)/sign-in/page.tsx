@@ -38,21 +38,35 @@ export default function SignInPage() {
     const email = String(form.get('email') ?? '');
     const password = String(form.get('password') ?? '');
 
-    const { error: signInError } = await signIn.email({ email, password });
-
-    if (signInError) {
-      setError(signInError.message ?? t('errors.invalidCredentials'));
+    try {
+      const { error: signInError } = await signIn.email({ email, password });
+      if (signInError) {
+        setError(signInError.message ?? t('errors.invalidCredentials'));
+        setLoading(false);
+        return;
+      }
+      // Navigate but keep loading true so the button stays disabled
+      // through the page transition. The unmount cleans it up; if
+      // navigation fails (router rejects), we clear here too.
+      try {
+        router.push('/dashboard');
+      } catch (navErr) {
+        setError((navErr as Error).message);
+        setLoading(false);
+      }
+    } catch (err) {
+      // Better Auth client can throw on network failures (e.g. 5xx
+      // responses) — without this catch the loading spinner stuck
+      // forever. Surface the real error to the user instead.
+      setError((err as Error).message || t('errors.invalidCredentials'));
       setLoading(false);
-      return;
     }
-
-    router.push('/dashboard');
   }
 
   return (
     // Frosted glass card sits on top of the auth layout's animated mesh
     // background. Subtle outer glow on the brand border draws the eye.
-    <Card className="border-brand-200/50 shadow-brand-500/10 relative overflow-hidden bg-white/80 shadow-2xl backdrop-blur-xl">
+    <Card className="border-brand-200/50 dark:border-brand-800/50 shadow-brand-500/10 bg-card/80 relative overflow-hidden shadow-2xl backdrop-blur-xl">
       {/* Top accent bar — gradient gives the card a "header" without
           extra padding */}
       <div
@@ -87,7 +101,7 @@ export default function SignInPage() {
           </div>
 
           {error && (
-            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-200">
               {error}
             </div>
           )}
@@ -126,9 +140,12 @@ export default function SignInPage() {
 
         <OAuthButtons showGoogle={providers.google} showGitHub={providers.github} />
 
-        <p className="mt-4 text-center text-sm text-neutral-600">
+        <p className="text-muted-foreground mt-4 text-center text-sm">
           {t('signIn.noAccount')}{' '}
-          <Link href="/sign-up" className="text-brand-600 font-medium hover:underline">
+          <Link
+            href="/sign-up"
+            className="text-brand-600 dark:text-brand-300 font-medium hover:underline"
+          >
             {t('signUp.cta')}
           </Link>
         </p>

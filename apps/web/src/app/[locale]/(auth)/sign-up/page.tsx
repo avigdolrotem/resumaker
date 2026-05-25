@@ -45,19 +45,28 @@ export default function SignUpPage() {
       return;
     }
 
-    const { error: signUpError } = await signUp.email({ email, password, name });
-
-    if (signUpError) {
-      setError(signUpError.message ?? t('errors.generic'));
+    try {
+      const { error: signUpError } = await signUp.email({ email, password, name });
+      if (signUpError) {
+        setError(signUpError.message ?? t('errors.generic'));
+        setLoading(false);
+        return;
+      }
+      try {
+        router.push('/dashboard');
+      } catch (navErr) {
+        setError((navErr as Error).message);
+        setLoading(false);
+      }
+    } catch (err) {
+      // Network/5xx safety net — see sign-in for the same pattern.
+      setError((err as Error).message || t('errors.generic'));
       setLoading(false);
-      return;
     }
-
-    router.push('/dashboard');
   }
 
   return (
-    <Card className="border-brand-200/50 shadow-brand-500/10 relative overflow-hidden bg-white/80 shadow-2xl backdrop-blur-xl">
+    <Card className="border-brand-200/50 dark:border-brand-800/50 shadow-brand-500/10 bg-card/80 relative overflow-hidden shadow-2xl backdrop-blur-xl">
       <div
         aria-hidden
         className="from-brand-500 to-brand-500 absolute inset-x-0 top-0 h-1 bg-gradient-to-r via-purple-500"
@@ -87,11 +96,11 @@ export default function SignUpPage() {
               minLength={12}
               dir="ltr"
             />
-            <p className="text-xs text-neutral-500">{t('signUp.passwordHint')}</p>
+            <p className="text-muted-foreground text-xs">{t('signUp.passwordHint')}</p>
           </div>
 
           {error && (
-            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-200">
               {error}
             </div>
           )}
@@ -128,9 +137,12 @@ export default function SignUpPage() {
 
         <OAuthButtons showGoogle={providers.google} showGitHub={providers.github} />
 
-        <p className="mt-4 text-center text-sm text-neutral-600">
+        <p className="text-muted-foreground mt-4 text-center text-sm">
           {t('signUp.haveAccount')}{' '}
-          <Link href="/sign-in" className="text-brand-600 font-medium hover:underline">
+          <Link
+            href="/sign-in"
+            className="text-brand-600 dark:text-brand-300 font-medium hover:underline"
+          >
             {t('signIn.cta')}
           </Link>
         </p>

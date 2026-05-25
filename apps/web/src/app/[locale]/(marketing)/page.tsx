@@ -149,7 +149,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ─── STATS ─── */}
-      <section className="border-border relative border-y bg-white py-10">
+      <section className="border-border bg-card dark:bg-card/50 relative border-y py-10">
         <div className="container mx-auto grid grid-cols-2 gap-6 px-4 md:grid-cols-4">
           <Stat value="48" suffix={isHebrew ? 'בדיקות אבטחה' : 'Safety tests'} />
           <Stat value="<3s" suffix={isHebrew ? 'יצירה ממוצעת' : 'Avg generation'} />
@@ -478,7 +478,7 @@ function PricingCard({
       className={`group relative rounded-2xl border p-8 transition hover:-translate-y-1 hover:shadow-xl ${
         featured
           ? 'border-brand-300 to-brand-50 shadow-brand-500/10 bg-gradient-to-b from-white shadow-xl'
-          : 'hover:border-brand-200 border-border bg-white'
+          : 'hover:border-brand-200 border-border bg-card'
       }`}
     >
       {/* Featured cards get an outer glow ring on hover */}

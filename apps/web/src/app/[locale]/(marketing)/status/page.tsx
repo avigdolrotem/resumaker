@@ -81,7 +81,7 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
         {status.deps.map((d) => (
           <li
             key={d.name}
-            className="border-border flex items-center justify-between rounded-md border bg-white px-4 py-3"
+            className="border-border bg-card flex items-center justify-between rounded-md border px-4 py-3"
           >
             <div>
               <p className="font-medium">{d.name}</p>

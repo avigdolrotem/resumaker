@@ -42,7 +42,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
         <div className="grid gap-8">
           {posts.map((post, i) => (
             <ScrollReveal key={post.slug} delay={i * 0.05}>
-              <article className="hover:border-brand-200 hover:shadow-brand-500/10 border-border rounded-2xl border bg-white p-8 transition hover:-translate-y-0.5 hover:shadow-lg">
+              <article className="hover:border-brand-200 hover:shadow-brand-500/10 border-border bg-card rounded-2xl border p-8 transition hover:-translate-y-0.5 hover:shadow-lg">
                 <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4" />

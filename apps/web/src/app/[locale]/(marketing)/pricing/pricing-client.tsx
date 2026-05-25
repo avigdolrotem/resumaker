@@ -53,7 +53,7 @@ export function PricingClient({
         <div
           role="tablist"
           aria-label={locale === 'he' ? 'בחר תקופת חיוב' : 'Select billing period'}
-          className="inline-flex rounded-full bg-neutral-100 p-1"
+          className="bg-muted inline-flex rounded-full p-1"
         >
           {INTERVAL_ORDER.map((intv) => (
             <button
@@ -64,7 +64,7 @@ export function PricingClient({
               onClick={() => setInterval(intv)}
               className={`relative rounded-full px-4 py-2 text-sm font-medium transition ${
                 interval === intv
-                  ? 'text-foreground bg-white shadow-sm'
+                  ? 'text-foreground bg-card shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -175,7 +175,7 @@ function TierCard({
 
   return (
     <div
-      className={`relative flex flex-col rounded-2xl border bg-white p-6 shadow-sm ${
+      className={`bg-card relative flex flex-col rounded-2xl border p-6 shadow-sm ${
         isFeatured ? 'border-brand-500 ring-brand-200 ring-4' : 'border-border'
       }`}
     >
@@ -221,7 +221,7 @@ function TierCard({
           <button
             type="button"
             disabled
-            className="text-muted-foreground w-full cursor-not-allowed rounded-lg bg-neutral-100 px-4 py-2.5 text-sm font-medium"
+            className="text-muted-foreground bg-muted w-full cursor-not-allowed rounded-lg px-4 py-2.5 text-sm font-medium"
           >
             {t('currentTier')}
           </button>
@@ -250,7 +250,7 @@ function TierCard({
           <button
             type="button"
             disabled
-            className="w-full cursor-not-allowed rounded-lg bg-neutral-100 px-4 py-2.5 text-sm font-medium text-neutral-400"
+            className="bg-muted text-muted-foreground/80 w-full cursor-not-allowed rounded-lg px-4 py-2.5 text-sm font-medium"
           >
             {locale === 'he' ? 'לא זמין' : 'Not available'}
           </button>
