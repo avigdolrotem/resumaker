@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { User, Lock, Bell, Monitor, Database, AlertOctagon, ScreenShare } from 'lucide-react';
+import { User, Lock, Bell, Clock, Database, AlertOctagon, ScreenShare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,14 +13,17 @@ import { useRouter, Link } from '@/i18n/navigation';
 import { Security2FACard } from '@/components/security-2fa-card';
 import { LinkedAccountsCard } from '@/components/linked-accounts-card';
 
-type Tab = 'profile' | 'security' | 'sessions' | 'notifications' | 'appearance' | 'data' | 'danger';
+type Tab = 'profile' | 'security' | 'sessions' | 'notifications' | 'regional' | 'data' | 'danger';
 
 const TABS: { id: Tab; key: string; icon: typeof User }[] = [
   { id: 'profile', key: 'profile', icon: User },
   { id: 'security', key: 'security', icon: Lock },
   { id: 'sessions', key: 'sessions', icon: ScreenShare },
   { id: 'notifications', key: 'notifications', icon: Bell },
-  { id: 'appearance', key: 'appearance', icon: Monitor },
+  // Was "Appearance" with a Theme picker — that's now in the header's
+  // ThemeToggle (available everywhere, no settings detour). What's left
+  // here is timezone + date format, so renamed to "Date & time".
+  { id: 'regional', key: 'regional', icon: Clock },
   { id: 'data', key: 'data', icon: Database },
   { id: 'danger', key: 'danger', icon: AlertOctagon },
 ];
@@ -73,7 +76,7 @@ export default function SettingsPage() {
           {tab === 'security' && <SecurityTab />}
           {tab === 'sessions' && <SessionsTab />}
           {tab === 'notifications' && <NotificationsTab />}
-          {tab === 'appearance' && <AppearanceTab />}
+          {tab === 'regional' && <RegionalTab />}
           {tab === 'data' && <DataTab />}
           {tab === 'danger' && <DangerTab />}
         </div>
@@ -481,10 +484,16 @@ function NotificationsTab() {
   );
 }
 
-// ─── Tab: Appearance ────────────────────────────────────────────────
+// ─── Tab: Regional (date & time) ────────────────────────────────────
+//
+// Was "Appearance & locale" with a Theme picker. The Theme picker is
+// now permanently in the page header's <ThemeToggle> (available on
+// every page including marketing + auth), so duplicating it in
+// settings was confusing. Timezone + date format stay because those
+// affect how the app formats display dates and don't belong in the
+// header.
 
-function AppearanceTab() {
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+function RegionalTab() {
   const [timezone, setTimezone] = useState('Asia/Jerusalem');
   const [dateFormat, setDateFormat] = useState<'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD'>(
     'DD/MM/YYYY',
@@ -498,7 +507,6 @@ function AppearanceTab() {
         const res = await fetch('/api/account/profile');
         if (!res.ok) return;
         const data = await res.json();
-        if (data.user?.theme) setTheme(data.user.theme);
         if (data.user?.timezone) setTimezone(data.user.timezone);
         if (data.user?.dateFormat) setDateFormat(data.user.dateFormat);
       } finally {
@@ -513,14 +521,12 @@ function AppearanceTab() {
       const res = await fetch('/api/account/preferences', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ theme, timezone, dateFormat }),
+        body: JSON.stringify({ timezone, dateFormat }),
       });
       if (!res.ok) {
         toast.error('Save failed');
         return;
       }
-      // Apply theme immediately by reloading; CSS picks up next render
-      document.documentElement.dataset['theme'] = theme;
       toast.success('Saved');
     } finally {
       setSaving(false);
@@ -531,23 +537,12 @@ function AppearanceTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Appearance & locale</CardTitle>
-        <CardDescription>Theme, timezone, and date format.</CardDescription>
+        <CardTitle>Date &amp; time</CardTitle>
+        <CardDescription>
+          Set your timezone and how dates are formatted across the app.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="theme">Theme</Label>
-          <select
-            id="theme"
-            value={theme}
-            onChange={(e) => setTheme(e.target.value as typeof theme)}
-            className="border-input bg-background text-foreground flex h-10 w-full rounded-md border px-3 py-2 text-sm"
-          >
-            <option value="system">Match my device</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark (coming soon)</option>
-          </select>
-        </div>
         <div className="space-y-2">
           <Label htmlFor="tz">Timezone</Label>
           <select
@@ -577,6 +572,9 @@ function AppearanceTab() {
             <option value="YYYY-MM-DD">YYYY-MM-DD (2026-12-31)</option>
           </select>
         </div>
+        <p className="text-muted-foreground text-xs">
+          Tip: theme (light / dark) and language are in the top-right of every page header.
+        </p>
         <Button onClick={save} disabled={saving}>
           {saving ? 'Saving…' : 'Save'}
         </Button>
