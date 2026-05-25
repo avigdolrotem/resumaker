@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { SectionCard } from '../section-card';
+import { SortableList } from '../sortable-list';
 import { MonthYearPicker, formatMonthYear } from '../month-year-picker';
 
 /** Awards section — list of cards. Title + issuer + date + description. */
@@ -108,20 +109,22 @@ export function AwardsSection({
         </div>
       )}
 
-      {entries.map((a, i) => (
-        <SectionCard
-          key={i}
-          data={a}
-          isEditing={editingId === `award:${i}`}
-          onEnterEdit={() => onSetEditingId(`award:${i}`)}
-          onSave={(next) => handleSaveExisting(i, next)}
-          onCancel={() => onSetEditingId(null)}
-          onDelete={() => handleDelete(i)}
-          renderRead={readAward}
-          renderEdit={editAward}
-          deleteConfirmText={`Delete "${a.title || 'this award'}"?`}
-        />
-      ))}
+      <SortableList items={entries} sectionKey="award" onReorder={onChange}>
+        {(a, i, dragHandle) => (
+          <SectionCard
+            data={a}
+            isEditing={editingId === `award:${i}`}
+            onEnterEdit={() => onSetEditingId(`award:${i}`)}
+            onSave={(next) => handleSaveExisting(i, next)}
+            onCancel={() => onSetEditingId(null)}
+            onDelete={() => handleDelete(i)}
+            renderRead={readAward}
+            renderEdit={editAward}
+            deleteConfirmText={`Delete "${a.title || 'this award'}"?`}
+            leading={dragHandle}
+          />
+        )}
+      </SortableList>
     </section>
   );
 }

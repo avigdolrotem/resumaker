@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { SectionCard } from '../section-card';
+import { SortableList } from '../sortable-list';
 import { MonthYearPicker, formatMonthYear } from '../month-year-picker';
 
 /**
@@ -117,20 +118,22 @@ export function ProjectsSection({
         </div>
       )}
 
-      {entries.map((p, i) => (
-        <SectionCard
-          key={i}
-          data={p}
-          isEditing={editingId === `project:${i}`}
-          onEnterEdit={() => onSetEditingId(`project:${i}`)}
-          onSave={(next) => handleSaveExisting(i, next)}
-          onCancel={() => onSetEditingId(null)}
-          onDelete={() => handleDelete(i)}
-          renderRead={readProject}
-          renderEdit={editProject}
-          deleteConfirmText={`Delete project "${p.name || 'untitled'}"?`}
-        />
-      ))}
+      <SortableList items={entries} sectionKey="project" onReorder={onChange}>
+        {(p, i, dragHandle) => (
+          <SectionCard
+            data={p}
+            isEditing={editingId === `project:${i}`}
+            onEnterEdit={() => onSetEditingId(`project:${i}`)}
+            onSave={(next) => handleSaveExisting(i, next)}
+            onCancel={() => onSetEditingId(null)}
+            onDelete={() => handleDelete(i)}
+            renderRead={readProject}
+            renderEdit={editProject}
+            deleteConfirmText={`Delete project "${p.name || 'untitled'}"?`}
+            leading={dragHandle}
+          />
+        )}
+      </SortableList>
     </section>
   );
 }

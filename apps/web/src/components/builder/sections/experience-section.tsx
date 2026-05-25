@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { SectionCard } from '../section-card';
+import { SortableList } from '../sortable-list';
 import { MonthYearPicker, formatMonthYear } from '../month-year-picker';
 import { AiRewriteButton } from '../ai-rewrite-button';
 
@@ -129,20 +130,22 @@ export function ExperienceSection({
         </div>
       )}
 
-      {entries.map((e, i) => (
-        <SectionCard
-          key={i}
-          data={e}
-          isEditing={editingId === `experience:${i}`}
-          onEnterEdit={() => onSetEditingId(`experience:${i}`)}
-          onSave={(next) => handleSaveExisting(i, next)}
-          onCancel={() => onSetEditingId(null)}
-          onDelete={() => handleDelete(i)}
-          renderRead={readExperience}
-          renderEdit={(d, onChangeDraft) => editExperience(d, onChangeDraft, jobDescription)}
-          deleteConfirmText={`Delete experience at ${e.company || 'this company'}?`}
-        />
-      ))}
+      <SortableList items={entries} sectionKey="experience" onReorder={onChange}>
+        {(e, i, dragHandle) => (
+          <SectionCard
+            data={e}
+            isEditing={editingId === `experience:${i}`}
+            onEnterEdit={() => onSetEditingId(`experience:${i}`)}
+            onSave={(next) => handleSaveExisting(i, next)}
+            onCancel={() => onSetEditingId(null)}
+            onDelete={() => handleDelete(i)}
+            renderRead={readExperience}
+            renderEdit={(d, onChangeDraft) => editExperience(d, onChangeDraft, jobDescription)}
+            deleteConfirmText={`Delete experience at ${e.company || 'this company'}?`}
+            leading={dragHandle}
+          />
+        )}
+      </SortableList>
     </section>
   );
 }

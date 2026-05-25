@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SectionCard } from '../section-card';
+import { SortableList } from '../sortable-list';
 import { MonthYearPicker, formatMonthYear } from '../month-year-picker';
 
 /** Certifications section — list of cards with single date + credential URL. */
@@ -107,20 +108,22 @@ export function CertificationsSection({
         </div>
       )}
 
-      {entries.map((c, i) => (
-        <SectionCard
-          key={i}
-          data={c}
-          isEditing={editingId === `certification:${i}`}
-          onEnterEdit={() => onSetEditingId(`certification:${i}`)}
-          onSave={(next) => handleSaveExisting(i, next)}
-          onCancel={() => onSetEditingId(null)}
-          onDelete={() => handleDelete(i)}
-          renderRead={readCertification}
-          renderEdit={editCertification}
-          deleteConfirmText={`Delete "${c.name || 'this certification'}"?`}
-        />
-      ))}
+      <SortableList items={entries} sectionKey="certification" onReorder={onChange}>
+        {(c, i, dragHandle) => (
+          <SectionCard
+            data={c}
+            isEditing={editingId === `certification:${i}`}
+            onEnterEdit={() => onSetEditingId(`certification:${i}`)}
+            onSave={(next) => handleSaveExisting(i, next)}
+            onCancel={() => onSetEditingId(null)}
+            onDelete={() => handleDelete(i)}
+            renderRead={readCertification}
+            renderEdit={editCertification}
+            deleteConfirmText={`Delete "${c.name || 'this certification'}"?`}
+            leading={dragHandle}
+          />
+        )}
+      </SortableList>
     </section>
   );
 }

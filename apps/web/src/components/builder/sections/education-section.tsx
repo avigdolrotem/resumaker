@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { SectionCard } from '../section-card';
+import { SortableList } from '../sortable-list';
 import { MonthYearPicker, formatMonthYear } from '../month-year-picker';
 
 /**
@@ -120,20 +121,22 @@ export function EducationSection({
         </div>
       )}
 
-      {entries.map((e, i) => (
-        <SectionCard
-          key={i}
-          data={e}
-          isEditing={editingId === `education:${i}`}
-          onEnterEdit={() => onSetEditingId(`education:${i}`)}
-          onSave={(next) => handleSaveExisting(i, next)}
-          onCancel={() => onSetEditingId(null)}
-          onDelete={() => handleDelete(i)}
-          renderRead={readEducation}
-          renderEdit={editEducation}
-          deleteConfirmText={`Delete education at ${e.institution || 'this school'}?`}
-        />
-      ))}
+      <SortableList items={entries} sectionKey="education" onReorder={onChange}>
+        {(e, i, dragHandle) => (
+          <SectionCard
+            data={e}
+            isEditing={editingId === `education:${i}`}
+            onEnterEdit={() => onSetEditingId(`education:${i}`)}
+            onSave={(next) => handleSaveExisting(i, next)}
+            onCancel={() => onSetEditingId(null)}
+            onDelete={() => handleDelete(i)}
+            renderRead={readEducation}
+            renderEdit={editEducation}
+            deleteConfirmText={`Delete education at ${e.institution || 'this school'}?`}
+            leading={dragHandle}
+          />
+        )}
+      </SortableList>
     </section>
   );
 }
