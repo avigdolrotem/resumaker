@@ -7,6 +7,7 @@ import { useSession, signOut } from '@/lib/auth-client';
 import { LayoutDashboard, FilePlus2, Settings, LogOut, UserCircle } from 'lucide-react';
 import { LocaleSwitcher } from './locale-switcher';
 import { Logo } from './logo';
+import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
 
 /**
@@ -45,6 +46,7 @@ export function AppHeader() {
           <div className="mx-2 h-6 w-px bg-neutral-200" />
 
           <LocaleSwitcher />
+          <ThemeToggle />
 
           {isPending ? (
             <div className="ms-2 h-8 w-20 animate-pulse rounded bg-neutral-100" />

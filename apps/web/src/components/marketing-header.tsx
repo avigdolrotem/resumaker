@@ -5,6 +5,7 @@ import type { Locale } from '@/i18n/routing';
 import { LocaleSwitcher } from './locale-switcher';
 import { GlowButton } from './ui-effects/glow-button';
 import { Logo } from './logo';
+import { ThemeToggle } from './theme-toggle';
 import { auth } from '@/lib/auth';
 import { LayoutDashboard } from 'lucide-react';
 
@@ -55,6 +56,7 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
               {t('pricing')}
             </Link>
             <LocaleSwitcher />
+            <ThemeToggle />
 
             {isAuthed ? (
               // Signed in: show "Dashboard" CTA so the user knows they

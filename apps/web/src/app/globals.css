@@ -1,23 +1,28 @@
 @import 'tailwindcss';
 
 /*
+ * Tailwind dark-mode custom variant: fires whenever `.dark` is on an
+ * ancestor. The two dark themes (purple / gray) share the variant so
+ * `dark:bg-card` works in both; the THEME-specific styling lives in
+ * the CSS-variable overrides under `.dark[data-theme="..."]` below.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
  * Resumaker palette — bluish-violet brand, cool slate neutrals.
  *
  * Hue 252 sits between Tailwind indigo (~240) and violet (~262), giving
- * the "modern tech but slightly more confident than plain indigo" feel
- * the user asked for. Saturation 75% at the 500 step keeps the brand
- * legible against both light and dark surfaces; the 50-900 ramp uses
- * a perceptual lightness curve so adjacent steps differ enough to be
- * distinguishable but don't jump.
+ * the "modern tech but slightly more confident than plain indigo" feel.
+ * Saturation 75% at the 500 step keeps the brand legible against both
+ * light and dark surfaces.
  *
- * Neutrals are slate (hue 215, low saturation) — cooler than zinc, less
- * blue than indigo's own grey. Works visually under the brand violet.
- *
- * Migrated from hue 220 (royal blue) on 2026-05-24. Anything still
- * referencing `from-blue-*`/`text-blue-*` hardcoded in marketing/admin
- * markup is migrated in the same commit.
+ * Semantic colors (`background`, `card`, `foreground`, etc.) are CSS
+ * variables overridden in the dark themes below — components that use
+ * `bg-background` / `bg-card` / `text-foreground` get dark-mode
+ * automatically without changes.
  */
 @theme {
+  /* Semantic — defaults are the light theme */
   --color-background: hsl(0 0% 100%);
   --color-foreground: hsl(222 47% 11%);
   --color-card: hsl(0 0% 100%);
@@ -47,6 +52,7 @@
   --color-brand-700: hsl(252 72% 38%);
   --color-brand-800: hsl(252 75% 28%);
   --color-brand-900: hsl(252 80% 18%);
+  --color-brand-950: hsl(252 85% 9%);
 
   /* Accent ramp — pure violet, used sparingly for highlights + gradients */
   --color-accent-50: hsl(270 100% 97%);
@@ -58,6 +64,62 @@
   --radius: 0.5rem;
 
   --font-sans: var(--font-heebo), var(--font-inter), system-ui, sans-serif;
+}
+
+/* ─── DARK THEMES ──────────────────────────────────────────────────
+ *
+ * Two distinct dark variants, switched via `data-theme` on <html>.
+ * Both have `class="dark"` so Tailwind's `dark:` variant works
+ * uniformly.
+ *
+ *   dark-purple  — on-brand dark. Deep violet background, brand
+ *                  accents stay vivid. Distinctive "Resumaker dark".
+ *   dark-gray    — neutral system-like dark. Near-black, desaturated
+ *                  accents. Matches macOS/Windows dark conventions.
+ *
+ * We override only the SEMANTIC tokens — components that use
+ * `bg-background` / `bg-card` etc. inherit the new colors
+ * automatically. Components that hardcode brand-50/etc. still work
+ * (those values don't change between themes; only the surfaces do).
+ */
+.dark[data-theme='dark-purple'] {
+  --color-background: hsl(258 50% 6%);
+  --color-foreground: hsl(252 30% 96%);
+  --color-card: hsl(258 45% 10%);
+  --color-card-foreground: hsl(252 30% 96%);
+  --color-primary: hsl(252 85% 70%);
+  --color-primary-foreground: hsl(258 50% 8%);
+  --color-secondary: hsl(258 35% 14%);
+  --color-secondary-foreground: hsl(252 25% 92%);
+  --color-muted: hsl(258 30% 13%);
+  --color-muted-foreground: hsl(252 15% 70%);
+  --color-accent: hsl(270 50% 20%);
+  --color-accent-foreground: hsl(270 80% 92%);
+  --color-destructive: hsl(0 75% 60%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  --color-border: hsl(258 30% 18%);
+  --color-input: hsl(258 35% 16%);
+  --color-ring: hsl(252 85% 70%);
+}
+
+.dark[data-theme='dark-gray'] {
+  --color-background: hsl(0 0% 4%);
+  --color-foreground: hsl(0 0% 96%);
+  --color-card: hsl(0 0% 8%);
+  --color-card-foreground: hsl(0 0% 96%);
+  --color-primary: hsl(252 75% 68%);
+  --color-primary-foreground: hsl(0 0% 6%);
+  --color-secondary: hsl(0 0% 12%);
+  --color-secondary-foreground: hsl(0 0% 94%);
+  --color-muted: hsl(0 0% 11%);
+  --color-muted-foreground: hsl(0 0% 65%);
+  --color-accent: hsl(0 0% 14%);
+  --color-accent-foreground: hsl(0 0% 96%);
+  --color-destructive: hsl(0 70% 55%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  --color-border: hsl(0 0% 16%);
+  --color-input: hsl(0 0% 14%);
+  --color-ring: hsl(252 75% 68%);
 }
 
 @layer base {

@@ -3,10 +3,19 @@ import { Heebo, Inter } from 'next/font/google';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { Toaster } from 'sonner';
 import { routing, getDirection, type Locale } from '@/i18n/routing';
 import { CookieConsent } from '@/components/cookie-consent';
 import { SWRegister } from '@/components/sw-register';
+import {
+  DEFAULT_THEME,
+  THEME_COOKIE,
+  htmlAttrsForTheme,
+  isTheme,
+  resolveTheme,
+  themeInitScript,
+} from '@/lib/theme';
 import '../globals.css';
 
 const heebo = Heebo({
@@ -129,8 +138,32 @@ export default async function LocaleLayout({
   const messages = await getMessages();
   const dir = getDirection(locale);
 
+  // Read the theme cookie server-side so the right class+data-theme go
+  // out on the very first paint. For `system` we can't know the OS pref
+  // server-side; default to light and let the inline init script in
+  // <head> flip to dark before paint if the OS prefers dark.
+  const themeCookie = (await cookies()).get(THEME_COOKIE)?.value;
+  const theme = isTheme(themeCookie) ? themeCookie : DEFAULT_THEME;
+  const resolved = resolveTheme(theme, false);
+  const { className: themeClass, dataTheme } = htmlAttrsForTheme(resolved);
+
   return (
-    <html lang={locale} dir={dir} className={`${heebo.variable} ${inter.variable}`}>
+    <html
+      lang={locale}
+      dir={dir}
+      data-theme={dataTheme}
+      className={`${heebo.variable} ${inter.variable} ${themeClass}`}
+    >
+      <head>
+        {/*
+          Inline script runs BEFORE first paint. For `system`-mode users
+          on a dark OS, this flips the html class from the server-rendered
+          light default to dark — avoiding the white flash that would
+          otherwise happen on every navigation. Tiny (~250 bytes) so the
+          parser cost is negligible.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript(theme) }} />
+      </head>
       <body className="bg-background text-foreground min-h-screen font-sans antialiased">
         {/* Skip-to-main link for keyboard users (WCAG 2.4.1) */}
         <a
