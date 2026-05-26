@@ -1,0 +1,205 @@
+name: Deploy (GCP)
+
+# Triggered on:
+#   - Tag push matching v*.*.*    → prod deploy
+#   - workflow_dispatch            → manual deploy (any env)
+#
+# Flow:
+#   1. WIF auth to the target env's GCP project
+#   2. Build multi-arch container, push to Artifact Registry
+#   3. Bump infra/helm/resumaker/values.<env>-gcp.image.yaml with new tag
+#   4. Commit + push back to main — ArgoCD picks up the change
+#
+# Required repo secrets:
+#   - WIF_PROVIDER     Full resource name of the GitHub Actions WIF provider
+#                      (output of tofu apply: wif_github_provider)
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      image_tag:
+        description: 'Image tag (sha or tag). Defaults to current SHA.'
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-gcp-${{ github.event.inputs.environment || 'prod' }}
+  cancel-in-progress: false # never cancel an in-flight prod deploy
+
+permissions:
+  id-token: write # WIF auth to GCP
+  contents: write # commit the values bump back
+
+env:
+  REGION: europe-west1
+  REPO: resumaker
+
+jobs:
+  build-and-push:
+    name: Build & push image (GCP)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+      image_uri: ${{ steps.meta.outputs.image_uri }}
+      digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute environment + tag
+        id: meta
+        run: |
+          ENV="${{ github.event.inputs.environment || 'prod' }}"
+          echo "env=$ENV" >> "$GITHUB_OUTPUT"
+          echo "project_id=resumaker-$ENV" >> "$GITHUB_OUTPUT"
+
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            # Tag push: use the tag literally (vX.Y.Z)
+            TAG="${GITHUB_REF##*/}"
+          elif [[ -n "${{ github.event.inputs.image_tag }}" ]]; then
+            TAG="${{ github.event.inputs.image_tag }}"
+          else
+            TAG="sha-${GITHUB_SHA::7}"
+          fi
+          echo "image_tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+          IMAGE="${{ env.REGION }}-docker.pkg.dev/resumaker-${ENV}/${{ env.REPO }}/web:${TAG}"
+          echo "image_uri=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "Building: ${IMAGE}"
+
+      - name: Authenticate to GCP via WIF
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: resumaker-cicd@${{ steps.meta.outputs.project_id }}.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Set up QEMU (for multi-arch)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push container
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: true
+          sbom: true
+          build-args: |
+            NEXT_PUBLIC_SENTRY_DSN=${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+            NEXT_PUBLIC_SENTRY_ENVIRONMENT=${{ steps.meta.outputs.env }}
+          tags: |
+            ${{ steps.meta.outputs.image_uri }}
+            ${{ env.REGION }}-docker.pkg.dev/${{ steps.meta.outputs.project_id }}/${{ env.REPO }}/web:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.repository.updated_at }}
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ steps.meta.outputs.image_uri }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0' # report but don't fail (handled by security.yml)
+
+      - name: Upload Trivy SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  bump-image-tag:
+    name: Bump image tag (GitOps / GCP)
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: needs.build-and-push.result == 'success'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_DEPLOY_TOKEN || github.token }}
+          fetch-depth: 0
+
+      - name: Update image tag in values
+        env:
+          ENV_NAME: ${{ github.event.inputs.environment || 'prod' }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+          IMAGE_URI: ${{ needs.build-and-push.outputs.image_uri }}
+        run: |
+          VALUES_FILE="infra/helm/resumaker/values.${ENV_NAME}-gcp.image.yaml"
+          mkdir -p "$(dirname "$VALUES_FILE")"
+
+          cat > "$VALUES_FILE" <<EOF
+          # AUTO-GENERATED by .github/workflows/deploy-gcp.yml — do not edit by hand.
+          # Bumped on each successful image build; ArgoCD syncs from this file.
+          image:
+            repository: ${{ env.REGION }}-docker.pkg.dev/resumaker-${ENV_NAME}/${{ env.REPO }}/web
+            tag: "${IMAGE_TAG}"
+            digest: "${{ needs.build-and-push.outputs.digest }}"
+          EOF
+
+          echo "Updated $VALUES_FILE:"
+          cat "$VALUES_FILE"
+
+      - name: Commit and push
+        env:
+          ENV_NAME: ${{ github.event.inputs.environment || 'prod' }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          VALUES_FILE="infra/helm/resumaker/values.${ENV_NAME}-gcp.image.yaml"
+          git add "$VALUES_FILE"
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore(deploy/gcp): bump ${ENV_NAME} image to ${IMAGE_TAG} [skip ci]" \
+                     -m "Source ref: ${{ github.ref }}" \
+                     -m "Source SHA: ${{ github.sha }}"
+          git push origin HEAD:main
+
+      - name: Summary
+        env:
+          ENV_NAME: ${{ github.event.inputs.environment || 'prod' }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+        run: |
+          echo "### GCP Deploy complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Environment: \`${ENV_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image tag: \`${IMAGE_TAG}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Registry: \`${{ env.REGION }}-docker.pkg.dev\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- ArgoCD will pick up the change within ~3 minutes." >> "$GITHUB_STEP_SUMMARY"
