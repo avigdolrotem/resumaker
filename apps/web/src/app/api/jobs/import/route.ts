@@ -84,10 +84,8 @@ export async function POST(req: NextRequest): Promise<Response> {
   };
   if (body.url) {
     try {
-      const Anthropic = (await import('@anthropic-ai/sdk')).default;
       const { importJobFromUrl } = await import('@resumaker/job-engine');
-      const anthropic = new Anthropic();
-      const result = await importJobFromUrl(body.url, anthropic);
+      const result = await importJobFromUrl(body.url);
       extracted = {
         title: result.title,
         company: result.company,

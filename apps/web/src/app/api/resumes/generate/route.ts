@@ -21,6 +21,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { parseJD } from '@/lib/jd-parser';
 import { generateResume } from '@/lib/llm';
+import { resolveModelForUser } from '@/lib/llm/resolve-model';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { sanitizeInput } from '@resumaker/ai-safety';
 import { PromptInjectionError, ValidationError, LLMError } from '@resumaker/shared';
@@ -145,11 +146,13 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   // ─── 6. Generate ───
   try {
+    const modelString = await resolveModelForUser(session.user.id);
     const result = await generateResume({
       userId: session.user.id,
       locale: jdResult.detectedLocale,
       jobDescription: jdResult.cleaned,
       userProfile: sanitizedProfile,
+      modelString,
       ...(body.industry ? { industry: body.industry } : {}),
     });
 

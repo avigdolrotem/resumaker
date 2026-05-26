@@ -7,7 +7,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
-import Anthropic from '@anthropic-ai/sdk';
+import { generateText } from '@/lib/llm/provider';
 import { sanitizeInput } from '@resumaker/ai-safety';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { extractClientIp } from '@/lib/ip';
@@ -16,8 +16,6 @@ import { logger } from '@/lib/observability';
 import { hashIp } from '@/lib/audit';
 
 export const runtime = 'nodejs';
-
-const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
 const Body = z.object({
   role: z.string().min(1).max(200),
@@ -70,13 +68,13 @@ Respond with ONLY a JSON object (no markdown):
 }`;
 
   try {
-    const response = await client.messages.create({
+    const response = await generateText({
       model: env.FALLBACK_LLM_MODEL,
-      max_tokens: 256,
-      messages: [{ role: 'user', content: prompt }],
+      prompt,
+      maxOutputTokens: 256,
     });
 
-    const text = response.content.find((b) => b.type === 'text')?.text ?? '{}';
+    const text = response.text || '{}';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('No JSON in response');
 

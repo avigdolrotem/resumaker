@@ -1,140 +1,28 @@
 /**
- * LLM orchestrator — wraps Anthropic SDK with our safety layer.
+ * LLM orchestrator — wraps the provider-agnostic LLM layer with our
+ * safety + persistence concerns.
  *
- * Single entry point for resume generation. Handles:
- *  - Building safety-conscious prompts
- *  - Calling the model
- *  - Validating output
- *  - Persisting the generation record
+ * Resume generation is the one call-site that respects user model
+ * preference. Caller resolves the pick (tier + preference → model
+ * string) and passes it in.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
 import { createHash } from 'node:crypto';
 import { sanitizeInput, buildPrompt, validateOutput } from '@resumaker/ai-safety';
 import {
   PromptInjectionError,
   ValidationError,
   LLMError,
+  ResumeSchema,
   type Resume,
   type Locale,
   type Industry,
 } from '@resumaker/shared';
 import { db, schema } from '@/db';
 import { env } from '@/lib/env';
+import { generateObject } from '@/lib/llm/provider';
 
-// Read through the centralized env so `LLM_MAX_TOKENS=NaN` is caught at
-// startup by zod's coerce.number() instead of producing silent NaN at use.
-const MODEL = env.DEFAULT_LLM_MODEL;
 const MAX_TOKENS = env.LLM_MAX_TOKENS;
-const TIMEOUT_MS = env.LLM_TIMEOUT_MS;
-
-const client = new Anthropic({
-  apiKey: env.ANTHROPIC_API_KEY,
-  timeout: TIMEOUT_MS,
-});
-
-/**
- * JSON Schema for the resume tool. Mirrors packages/shared ResumeSchema (Zod).
- * Anthropic uses JSON Schema, not Zod, for tool definitions.
- */
-// Use mutable array shapes (no `as const`) so the Anthropic SDK types accept it.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const RESUME_JSON_SCHEMA: any = {
-  type: 'object',
-  required: ['metadata', 'contact', 'summary', 'experience', 'education', 'skills'],
-  properties: {
-    metadata: {
-      type: 'object',
-      required: ['language', 'generated_at', 'template'],
-      properties: {
-        language: { type: 'string', enum: ['he', 'en'] },
-        generated_at: { type: 'string', description: 'ISO 8601 datetime' },
-        industry: { type: 'string', enum: ['tech', 'healthcare', 'finance', 'general'] },
-        template: { type: 'string', maxLength: 50 },
-      },
-    },
-    contact: {
-      type: 'object',
-      required: ['name'],
-      properties: {
-        name: { type: 'string', minLength: 1, maxLength: 200 },
-        email: { type: 'string', format: 'email' },
-        phone: { type: 'string', maxLength: 50 },
-        location: { type: 'string', maxLength: 200 },
-        linkedin: { type: 'string', format: 'uri' },
-        github: { type: 'string', format: 'uri' },
-        website: { type: 'string', format: 'uri' },
-      },
-    },
-    summary: { type: 'string', maxLength: 2000 },
-    experience: {
-      type: 'array',
-      maxItems: 20,
-      items: {
-        type: 'object',
-        required: ['company', 'title', 'start_date', 'end_date'],
-        properties: {
-          company: { type: 'string', minLength: 1, maxLength: 200 },
-          title: { type: 'string', minLength: 1, maxLength: 200 },
-          start_date: { type: 'string', description: 'YYYY-MM-DD' },
-          end_date: { type: ['string', 'null'], description: 'YYYY-MM-DD or null for current' },
-          location: { type: 'string', maxLength: 200 },
-          description: { type: 'string', maxLength: 2000 },
-          highlights: {
-            type: 'array',
-            maxItems: 10,
-            items: { type: 'string', maxLength: 500 },
-          },
-        },
-      },
-    },
-    education: {
-      type: 'array',
-      maxItems: 10,
-      items: {
-        type: 'object',
-        required: ['institution', 'degree', 'start_date', 'end_date'],
-        properties: {
-          institution: { type: 'string', minLength: 1, maxLength: 200 },
-          degree: { type: 'string', maxLength: 200 },
-          field: { type: 'string', maxLength: 200 },
-          start_date: { type: 'string' },
-          end_date: { type: ['string', 'null'] },
-          gpa: { type: 'string', maxLength: 20 },
-          description: { type: 'string', maxLength: 1000 },
-        },
-      },
-    },
-    skills: {
-      type: 'array',
-      maxItems: 50,
-      items: { type: 'string', maxLength: 100 },
-    },
-    languages: {
-      type: 'array',
-      maxItems: 10,
-      items: {
-        type: 'object',
-        properties: {
-          name: { type: 'string', maxLength: 50 },
-          level: { type: 'string', maxLength: 50 },
-        },
-      },
-    },
-    certifications: {
-      type: 'array',
-      maxItems: 10,
-      items: {
-        type: 'object',
-        properties: {
-          name: { type: 'string', maxLength: 200 },
-          issuer: { type: 'string', maxLength: 200 },
-          date: { type: 'string' },
-        },
-      },
-    },
-  },
-};
 
 export interface GenerateResumeInput {
   userId: string;
@@ -142,6 +30,12 @@ export interface GenerateResumeInput {
   jobDescription: string;
   userProfile: Record<string, unknown>;
   industry?: Industry;
+  /**
+   * Gateway-format model string. Caller is responsible for resolving
+   * the user preference + tier gate before passing this in. Falls back
+   * to `env.DEFAULT_LLM_MODEL` when omitted.
+   */
+  modelString?: string;
 }
 
 export interface GenerateResumeResult {
@@ -153,14 +47,14 @@ export interface GenerateResumeResult {
 
 export async function generateResume(input: GenerateResumeInput): Promise<GenerateResumeResult> {
   const startedAt = Date.now();
+  const model = input.modelString ?? env.DEFAULT_LLM_MODEL;
 
   // ─── 1. Sanitize input ───
   const sanitized = sanitizeInput(input.jobDescription);
-
   if (sanitized.rejected) {
-    // Fire-and-forget DB write so we don't add latency to the error response
     void recordGeneration({
       ...input,
+      model,
       status: 'rejected_input',
       error: sanitized.reason,
       safetyDetections: sanitized.detections,
@@ -177,29 +71,22 @@ export async function generateResume(input: GenerateResumeInput): Promise<Genera
     ...(input.industry ? { industry: input.industry } : {}),
   });
 
-  // ─── 3. Call the model with tool-use for structured output ───
-  // Force JSON output via tool definition. Claude must call the tool with
-  // arguments matching our schema, eliminating freeform text + markdown.
-  let response: Anthropic.Message;
+  // ─── 3. Call the model with Zod-shaped structured output ───
+  let result;
   try {
-    response = await client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
+    result = await generateObject({
+      model,
+      schema: ResumeSchema,
       system,
-      tools: [
-        {
-          name: 'submit_resume',
-          description: 'Submit the generated resume as structured JSON',
-          input_schema: RESUME_JSON_SCHEMA,
-        },
-      ],
-      tool_choice: { type: 'tool', name: 'submit_resume' },
-      messages: [{ role: 'user', content: user }],
+      prompt: user,
+      maxOutputTokens: MAX_TOKENS,
+      schemaName: 'resume',
+      schemaDescription: 'A tailored resume in the canonical Resume schema.',
     });
   } catch (err) {
-    // Fire-and-forget so the user gets the error response without an extra DB roundtrip
     void recordGeneration({
       ...input,
+      model,
       status: 'llm_error',
       error: (err as Error).message,
       safetyDetections: sanitized.detections,
@@ -208,46 +95,41 @@ export async function generateResume(input: GenerateResumeInput): Promise<Genera
     throw new LLMError(`LLM call failed: ${(err as Error).message}`, err);
   }
 
-  // ─── 4. Extract structured tool input ───
-  const toolUse = response.content.find(
-    (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'submit_resume',
-  );
-  if (!toolUse) {
-    throw new LLMError('LLM did not call submit_resume tool');
-  }
-
-  // ─── 5. Validate output against Zod schema ───
-  const validation = validateOutput(toolUse.input);
-  const outputJsonText = JSON.stringify(toolUse.input);
+  // ─── 4. Validate output (defense in depth — the provider already
+  // applied the Zod schema, but our safety layer also runs content
+  // checks the schema can't express).
+  const validation = validateOutput(result.object);
+  const outputJsonText = JSON.stringify(result.object);
 
   if (!validation.valid || !validation.resume) {
     await recordGeneration({
       ...input,
+      model,
       status: 'output_invalid',
       error: validation.errors.join('; '),
       safetyDetections: sanitized.detections,
       inputLength: sanitized.cleaned.length,
       outputLength: outputJsonText.length,
-      promptTokens: response.usage.input_tokens,
-      completionTokens: response.usage.output_tokens,
+      promptTokens: result.usage.inputTokens,
+      completionTokens: result.usage.outputTokens,
     });
     throw new ValidationError(`Output validation failed: ${validation.errors.join('; ')}`);
   }
 
   const durationMs = Date.now() - startedAt;
 
-  // ─── 6. Record generation ───
   const generationId = await recordGeneration({
     ...input,
+    model,
     status: 'success',
     safetyDetections: [
       ...sanitized.detections,
-      ...validation.warnings.map((w) => ({ warning: w })),
+      ...validation.warnings.map((w: string) => ({ warning: w })),
     ],
     inputLength: sanitized.cleaned.length,
     outputLength: outputJsonText.length,
-    promptTokens: response.usage.input_tokens,
-    completionTokens: response.usage.output_tokens,
+    promptTokens: result.usage.inputTokens,
+    completionTokens: result.usage.outputTokens,
     durationMs,
   });
 
@@ -256,8 +138,8 @@ export async function generateResume(input: GenerateResumeInput): Promise<Genera
     generationId,
     durationMs,
     tokensUsed: {
-      input: response.usage.input_tokens,
-      output: response.usage.output_tokens,
+      input: result.usage.inputTokens ?? 0,
+      output: result.usage.outputTokens ?? 0,
     },
   };
 }
@@ -266,6 +148,7 @@ interface RecordOpts {
   userId: string;
   locale: Locale;
   jobDescription: string;
+  model: string;
   status: string;
   error?: string | undefined;
   safetyDetections?: unknown;
@@ -283,15 +166,13 @@ async function recordGeneration(opts: RecordOpts): Promise<string> {
     .insert(schema.generations)
     .values({
       userId: opts.userId,
-      model: MODEL,
+      model: opts.model,
       inputJdHash: hash,
       inputLengthChars: opts.inputLength,
       outputLengthChars: opts.outputLength ?? null,
       promptTokens: opts.promptTokens ?? null,
       completionTokens: opts.completionTokens ?? null,
       durationMs: opts.durationMs ?? null,
-      // Drizzle's jsonb column accepts the object as-is; no need to round-trip
-      // through JSON.parse(JSON.stringify(...)) (which is slow + drops Dates).
       safetyDetections: opts.safetyDetections ?? null,
       status: opts.status,
       error: opts.error ?? null,

@@ -1,6 +1,17 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
+import {
+  ACCESSIBILITY_EMAIL,
+  COMPANY_ADDRESS_EN,
+  COMPANY_ADDRESS_HE,
+  COMPANY_LEGAL_NAME,
+  COMPANY_TRADING_NAME,
+  COMPANY_TYPE_EN,
+  COMPANY_TYPE_HE,
+  PRIVACY_EMAIL,
+  SUPPORT_EMAIL,
+} from '@/lib/constants/contact';
 import { ResumeMockup } from '@/components/resume-mockup';
 import { ScrollReveal } from '@/components/scroll-reveal';
 import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
@@ -389,6 +400,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <FooterColumn title={isHebrew ? 'משפטי' : 'Legal'}>
               <FooterLink href="/privacy">{isHebrew ? 'מדיניות פרטיות' : 'Privacy'}</FooterLink>
               <FooterLink href="/terms">{isHebrew ? 'תנאי שימוש' : 'Terms'}</FooterLink>
+              <FooterLink href="/legal/accessibility">
+                {isHebrew ? 'הצהרת נגישות' : 'Accessibility'}
+              </FooterLink>
+              <FooterLink href="/legal/data-retention">
+                {isHebrew ? 'שמירת נתונים' : 'Data retention'}
+              </FooterLink>
+              <FooterLink href="/contact">{isHebrew ? 'צור קשר' : 'Contact'}</FooterLink>
             </FooterColumn>
             <div>
               <h4 className="text-sm font-semibold text-white">
@@ -396,20 +414,35 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               </h4>
               <ul className="mt-3 space-y-2 text-sm">
                 <li>
-                  <a href="mailto:hello@resumaker.co.il" className="transition hover:text-white">
-                    hello@resumaker.co.il
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="transition hover:text-white">
+                    {SUPPORT_EMAIL}
                   </a>
                 </li>
                 <li>
-                  <a href="mailto:privacy@resumaker.co.il" className="transition hover:text-white">
-                    privacy@resumaker.co.il
+                  <a href={`mailto:${PRIVACY_EMAIL}`} className="transition hover:text-white">
+                    {PRIVACY_EMAIL}
+                  </a>
+                </li>
+                <li>
+                  <a href={`mailto:${ACCESSIBILITY_EMAIL}`} className="transition hover:text-white">
+                    {ACCESSIBILITY_EMAIL}
                   </a>
                 </li>
               </ul>
             </div>
           </div>
+          {/* Sender identification — required by Israeli Spam Law (תיקון 40)
+              for any commercial communication. Showing it in the footer
+              satisfies the equivalent disclosure for the website itself. */}
           <div className="mt-12 border-t border-neutral-800 pt-6 text-center text-xs">
-            © 2026 Resumaker™ · {isHebrew ? 'כל הזכויות שמורות' : 'All rights reserved'} · BUSL-1.1
+            <p>
+              © 2026 {COMPANY_TRADING_NAME}™ ·{' '}
+              {isHebrew ? 'כל הזכויות שמורות' : 'All rights reserved'} · BUSL-1.1
+            </p>
+            <p className="mt-2 text-neutral-500">
+              {COMPANY_LEGAL_NAME} · {isHebrew ? COMPANY_TYPE_HE : COMPANY_TYPE_EN} ·{' '}
+              {isHebrew ? COMPANY_ADDRESS_HE : COMPANY_ADDRESS_EN}
+            </p>
           </div>
         </div>
       </footer>
@@ -551,7 +584,15 @@ function FooterLink({
   href,
   children,
 }: {
-  href: '/examples' | '/sign-up' | '/sign-in' | '/privacy' | '/terms';
+  href:
+    | '/examples'
+    | '/sign-up'
+    | '/sign-in'
+    | '/privacy'
+    | '/terms'
+    | '/contact'
+    | '/legal/accessibility'
+    | '/legal/data-retention';
   children: React.ReactNode;
 }) {
   return (

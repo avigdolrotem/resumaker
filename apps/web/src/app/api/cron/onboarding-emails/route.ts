@@ -26,6 +26,54 @@ import { env } from '@/lib/env';
 import { sendEmail } from '@/lib/email/client';
 import { escapeHtml } from '@/lib/email/templates';
 import { logger } from '@/lib/observability';
+import {
+  COMPANY_ADDRESS_EN,
+  COMPANY_ADDRESS_HE,
+  COMPANY_LEGAL_NAME,
+  COMPANY_TRADING_NAME,
+  SUPPORT_EMAIL,
+} from '@/lib/constants/contact';
+
+/**
+ * Israeli Spam Law (תיקון 40 לחוק התקשורת, 2008) requires every
+ * commercial communication to:
+ *   1. Begin with "פרסומת" in the subject line (Hebrew) — we mirror the
+ *      bracket convention "[Advertisement]" for English to make the
+ *      promotional nature equally clear in either language.
+ *   2. Identify the sender by full legal name + means of contact.
+ *   3. Include a clear opt-out / unsubscribe mechanism.
+ * Day-30 ("we miss you") is unambiguously promotional. Day-1/3/7 are
+ * onboarding nudges that arguably qualify as transactional follow-up,
+ * but we treat them the same way for safety — the cost is one extra
+ * word in the subject line; the legal cost of being wrong is ₪1,000
+ * per recipient under §30A.
+ */
+function withMarketingPrefix(subject: string, locale: string): string {
+  return locale === 'he' ? `פרסומת · ${subject}` : `[Advertisement] ${subject}`;
+}
+
+function senderFooter(locale: string): string {
+  if (locale === 'he') {
+    return `
+<hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb" />
+<p style="color:#6b7280;font-size:12px;line-height:1.6">
+  הודעה זו נשלחה אליך כי נרשמת ל-${escapeHtml(COMPANY_TRADING_NAME)}.<br />
+  לביטול קבלת מיילים שיווקיים: <a href="${env.APP_URL}/he/settings?tab=notifications">הגדרות התראות</a>
+  או השב למייל זה עם המילה "הסר".<br />
+  השולח: ${escapeHtml(COMPANY_LEGAL_NAME)} · ${escapeHtml(COMPANY_ADDRESS_HE)} ·
+  <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>
+</p>`;
+  }
+  return `
+<hr style="margin:24px 0;border:none;border-top:1px solid #e5e7eb" />
+<p style="color:#6b7280;font-size:12px;line-height:1.6">
+  You received this because you signed up for ${escapeHtml(COMPANY_TRADING_NAME)}.<br />
+  To unsubscribe from marketing emails: <a href="${env.APP_URL}/en/settings?tab=notifications">notification settings</a>
+  or reply with "UNSUBSCRIBE".<br />
+  Sender: ${escapeHtml(COMPANY_LEGAL_NAME)} · ${escapeHtml(COMPANY_ADDRESS_EN)} ·
+  <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>
+</p>`;
+}
 
 function unauthorized() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -64,45 +112,47 @@ function emailForDay(dayTag: string, locale: string, name: string | null): Email
   // (or worse, if the same template gets re-rendered server-side in a
   // future admin "preview drip" tool). Escape before interpolating.
   const first = escapeHtml(name?.split(' ')[0] ?? '');
+  const footer = senderFooter(locale);
+
   if (locale === 'he') {
     if (dayTag === 'day1')
       return {
-        subject: 'בנה את קורות החיים הראשונים שלך תוך 5 דקות',
-        html: `<p>שלום ${first},</p><p>שמחים שהצטרפת ל-Resumaker. הדבק תיאור משרה אחד וקבל קורות חיים מותאמים תוך דקה.</p><p><a href="${env.APP_URL}/he/builder">התחל עכשיו →</a></p>`,
+        subject: withMarketingPrefix('בנה את קורות החיים הראשונים שלך תוך 5 דקות', locale),
+        html: `<p>שלום ${first},</p><p>שמחים שהצטרפת ל-Resumaker. הדבק תיאור משרה אחד וקבל קורות חיים מותאמים תוך דקה.</p><p><a href="${env.APP_URL}/he/builder">התחל עכשיו →</a></p>${footer}`,
       };
     if (dayTag === 'day3')
       return {
-        subject: 'תקועים? הנה איך להתחיל',
-        html: `<p>שלום ${first},</p><p>שמנו לב שעדיין לא יצרת קורות חיים. הדוגמה שלנו תיתן לך מושג מהיר.</p><p><a href="${env.APP_URL}/he/builder">בנה קורות חיים ראשונים →</a></p>`,
+        subject: withMarketingPrefix('תקועים? הנה איך להתחיל', locale),
+        html: `<p>שלום ${first},</p><p>שמנו לב שעדיין לא יצרת קורות חיים. הדוגמה שלנו תיתן לך מושג מהיר.</p><p><a href="${env.APP_URL}/he/builder">בנה קורות חיים ראשונים →</a></p>${footer}`,
       };
     if (dayTag === 'day7')
       return {
-        subject: 'נסה את יוצר מכתבי ההצעה',
-        html: `<p>שלום ${first},</p><p>יש לך קורות חיים — עכשיו שדרג עם מכתב הצעה מותאם AI לכל משרה.</p><p><a href="${env.APP_URL}/he/cover-letters/new">צור מכתב הצעה →</a></p>`,
+        subject: withMarketingPrefix('נסה את יוצר מכתבי ההצעה', locale),
+        html: `<p>שלום ${first},</p><p>יש לך קורות חיים — עכשיו שדרג עם מכתב הצעה מותאם AI לכל משרה.</p><p><a href="${env.APP_URL}/he/cover-letters/new">צור מכתב הצעה →</a></p>${footer}`,
       };
     return {
-      subject: 'התגעגענו אליך',
-      html: `<p>שלום ${first},</p><p>לא ראינו אותך כבר שבועיים. הוספנו תבניות חדשות + פיצ׳ר חיפוש משרות בביתא.</p><p><a href="${env.APP_URL}/he/dashboard">חזור לפעולה →</a></p>`,
+      subject: withMarketingPrefix('התגעגענו אליך', locale),
+      html: `<p>שלום ${first},</p><p>לא ראינו אותך כבר שבועיים. הוספנו תבניות חדשות + פיצ׳ר חיפוש משרות בביתא.</p><p><a href="${env.APP_URL}/he/dashboard">חזור לפעולה →</a></p>${footer}`,
     };
   }
   if (dayTag === 'day1')
     return {
-      subject: 'Build your first resume in 5 minutes',
-      html: `<p>Hi ${first},</p><p>Glad you joined Resumaker. Paste a job description and get a tailored resume in a minute.</p><p><a href="${env.APP_URL}/en/builder">Start now →</a></p>`,
+      subject: withMarketingPrefix('Build your first resume in 5 minutes', locale),
+      html: `<p>Hi ${first},</p><p>Glad you joined Resumaker. Paste a job description and get a tailored resume in a minute.</p><p><a href="${env.APP_URL}/en/builder">Start now →</a></p>${footer}`,
     };
   if (dayTag === 'day3')
     return {
-      subject: "Stuck? Here's how to start",
-      html: `<p>Hi ${first},</p><p>We noticed you haven\'t created a resume yet. Our sample template will give you a quick feel.</p><p><a href="${env.APP_URL}/en/builder">Build your first →</a></p>`,
+      subject: withMarketingPrefix("Stuck? Here's how to start", locale),
+      html: `<p>Hi ${first},</p><p>We noticed you haven\'t created a resume yet. Our sample template will give you a quick feel.</p><p><a href="${env.APP_URL}/en/builder">Build your first →</a></p>${footer}`,
     };
   if (dayTag === 'day7')
     return {
-      subject: 'Try the cover letter generator',
-      html: `<p>Hi ${first},</p><p>You have a resume — now level up with an AI-tailored cover letter for each job.</p><p><a href="${env.APP_URL}/en/cover-letters/new">Generate one →</a></p>`,
+      subject: withMarketingPrefix('Try the cover letter generator', locale),
+      html: `<p>Hi ${first},</p><p>You have a resume — now level up with an AI-tailored cover letter for each job.</p><p><a href="${env.APP_URL}/en/cover-letters/new">Generate one →</a></p>${footer}`,
     };
   return {
-    subject: 'We miss you',
-    html: `<p>Hi ${first},</p><p>We haven\'t seen you in two weeks. New templates + a job-hunt beta are now live.</p><p><a href="${env.APP_URL}/en/dashboard">Come back →</a></p>`,
+    subject: withMarketingPrefix('We miss you', locale),
+    html: `<p>Hi ${first},</p><p>We haven\'t seen you in two weeks. New templates + a job-hunt beta are now live.</p><p><a href="${env.APP_URL}/en/dashboard">Come back →</a></p>${footer}`,
   };
 }
 
