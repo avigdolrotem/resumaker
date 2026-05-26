@@ -295,56 +295,86 @@ Once dev is green, repeat the same flow for `staging-gcp/` and `prod-gcp/`. Tota
 
 ---
 
-## 8. Phase 9 — Production cutover
+## 8. Phase 9 — Production cutover (Vercel → GKE)
 
-After `prod-gcp` is applied and prod secrets populated:
+**Production runs entirely on GCP. Vercel + Neon stay as the dev/test path only — useful for branch previews before launch, but the production target is the GKE cluster.**
 
-### 8.1 Set Vercel prod env vars
+After `prod-gcp` is applied, secrets populated, and schema migrations done:
 
-```bash
-cd /Volumes/Server_Data/code-server/workspace/resumaker/apps/web
+### 8.1 Deploy the app image to GKE prod
 
-vercel env add GCP_CLOUD_SQL_INSTANCE production
-# Paste the prod cloudsql_connection_name when prompted
-# Format: resumaker-prod:europe-west1:resumaker-pg-xxxx
-
-vercel env add GCP_CLOUD_SQL_IAM_USER production
-# Paste the prod app SA email: resumaker-app@resumaker-prod.iam
-
-vercel env add GCP_CLOUD_SQL_DATABASE production
-# Value: resumaker
-```
-
-**Important — Vercel OIDC**: Vercel mints OIDC tokens automatically (`VERCEL_OIDC_TOKEN`). The Cloud SQL Connector library picks them up via `google-auth-library`. No manual token wiring needed, BUT you must enable OIDC on the Vercel project:
+Push a release tag — `deploy-gcp.yml` builds the image, pushes to Artifact Registry, bumps `infra/helm/resumaker/values.prod-gcp.image.yaml`, commits back. ArgoCD on the GKE cluster picks up the change and rolls out the Deployment.
 
 ```bash
-# In the Vercel dashboard → your project → Settings → Security → OIDC Federation
-# Toggle "OIDC Federation" ON
-# Audience: https://vercel.com/<team-id>
+cd /Volumes/Server_Data/code-server/workspace/resumaker
+git tag v1.0.0
+git push origin v1.0.0
+# Watch GH Actions for deploy-gcp.yml
+# Watch ArgoCD: kubectl port-forward -n argocd svc/argocd-server 8080:443
 ```
 
-### 8.2 Trigger redeploy
+If ArgoCD isn't yet bootstrapped on the cluster: apply `infra/gitops/apps/resumaker.yaml` (existing GitOps config) once after the cluster is up. Without ArgoCD you can `helm upgrade --install resumaker infra/helm/resumaker -f infra/helm/resumaker/values.prod-gcp.yaml -f infra/helm/resumaker/values.prod-gcp.image.yaml` manually — same end result.
+
+### 8.2 Get the Ingress IP
 
 ```bash
-vercel deploy --prod
+kubectl get ingress -n <namespace>
+# Note EXTERNAL-IP. Provisioning takes 2-5 min after the Ingress resource lands.
 ```
 
-### 8.3 Smoke test
+### 8.3 Update Cloudflare DNS
 
-1. Visit <https://resumaker.co.il> (or your prod URL)
-2. Sign up with a new email
-3. Generate a tailored resume
-4. Log out, log in
-5. Verify in Cloud SQL:
+In Cloudflare dashboard:
+
+1. Find the A record for `resumaker.co.il` (currently → Vercel).
+2. Change to point at the GKE Ingress IP.
+3. Keep Cloudflare proxy ON (orange cloud) — edge cache + DDoS shield.
+4. Drop TTL to 60s before the change so you can revert quickly if needed.
+
+Repeat for `staging.resumaker.co.il` and `dev.resumaker.co.il` if you provisioned those.
+
+### 8.4 Wait for the Managed SSL cert
+
+The GKE `ManagedCertificate` CR (referenced by the Ingress annotation) provisions a Google-managed TLS cert once DNS resolves. Takes 15-60 min.
+
+```bash
+kubectl describe managedcertificate -n <namespace>
+# Status: Provisioning → Active
+```
+
+If stuck in `FailedNotVisible`: DNS hasn't propagated yet — wait + retry. Confirm `dig resumaker.co.il` resolves to the Cloudflare edge (or the bare GKE IP if proxy is off).
+
+### 8.5 Smoke test
+
+1. `dig resumaker.co.il` → Cloudflare / GKE IP.
+2. Visit <https://resumaker.co.il> — should serve the Next.js app from GKE.
+3. Sign up with a new email.
+4. Generate a tailored resume.
+5. Log out, log in.
+6. Verify in Cloud SQL — the prod DB is on PRIVATE IP, so query from inside the cluster:
 
    ```bash
-   gcloud sql connect "<prod-instance-suffix>" --user=resumaker-app --project=resumaker-prod
+   kubectl run -it --rm psql --image=postgres:15 -n <namespace> -- \
+     psql "postgresql://resumaker-app%40resumaker-prod.iam@<cloud-sql-private-ip>:5432/resumaker?sslmode=require"
+   # In psql:
    SELECT id, email, created_at FROM users ORDER BY created_at DESC LIMIT 5;
    ```
 
-If the user row exists in Cloud SQL — cutover complete.
+If the user row landed — cutover complete.
 
-### 8.4 Set up budget alerts
+### 8.6 Verify GKE CronJobs
+
+```bash
+kubectl get cronjobs -n <namespace>
+# Should show: resumaker-purge, resumaker-onboarding-emails, resumaker-push-notifications
+# (scrape-jobs is disabled until Track 2 lands the route)
+
+# Force a one-off run of the purge job to validate the secret + service-account wiring:
+kubectl create job --from=cronjob/resumaker-purge resumaker-purge-manual -n <namespace>
+kubectl logs job/resumaker-purge-manual -n <namespace>
+```
+
+### 8.7 Set up budget alerts
 
 GCP Console → Billing → Budgets & alerts → Create budget for each project:
 
@@ -352,46 +382,67 @@ GCP Console → Billing → Budgets & alerts → Create budget for each project:
 - `resumaker-staging`: $100/mo cap, alerts at 75%/90%
 - `resumaker-dev`: $50/mo cap, alerts at 90%
 
-### 8.5 Suspend Neon after 7 days clean
+### 8.8 Suspend Vercel prod + Neon after 7 days clean
 
-Once you're confident prod is healthy:
+Once GKE prod is stable:
 
-1. Go to <https://console.neon.tech>
-2. Pause the resumaker project (don't delete — keep as 30-day fallback)
-3. Document the rollback (paste in this section under "8.6")
+1. **Vercel**: dashboard → Project → Settings → "Pause" or delete the prod-environment deployments. Keep the project alive for branch previews (still useful for pre-launch testing — preview deploys default to the Neon `DATABASE_URL`, no GCP env vars set).
+2. **Neon**: pause the project at <https://console.neon.tech> (don't delete — 30-day fallback).
 
-### 8.6 Rollback procedure (within 30 days)
+### 8.9 Rollback procedure
+
+If GKE prod misbehaves and you need to ship traffic back to Vercel:
 
 ```bash
-cd /Volumes/Server_Data/code-server/workspace/resumaker/apps/web
-vercel env rm GCP_CLOUD_SQL_INSTANCE production
-vercel env rm GCP_CLOUD_SQL_IAM_USER production
-vercel env rm GCP_CLOUD_SQL_DATABASE production
-# Re-enable the Neon project in the Neon dashboard
-vercel deploy --prod
+# 1. In Cloudflare, change the A record for resumaker.co.il BACK to Vercel IPs.
+# 2. In Vercel, find the latest successful deploy that DIDN'T have GCP_CLOUD_SQL_INSTANCE set
+#    (or remove those env vars + redeploy).
+# 3. Resume the Neon project from the Neon dashboard if it was paused.
 ```
 
-App resumes using `DATABASE_URL` (Neon). Any data written to Cloud SQL after cutover is lost in the rollback (you can dump it via `pg_dump` first if needed).
+App returns to Vercel + Neon. Any data written to Cloud SQL during the GKE window can be `pg_dump`ed + replayed into Neon if needed:
+
+```bash
+# From a workstation with cloud-sql-proxy + gcloud auth:
+cloud-sql-proxy <prod-cloudsql-instance> --port=15432 &
+pg_dump "postgresql://resumaker-app%40resumaker-prod.iam@localhost:15432/resumaker" > snapshot.sql
+# Then restore into Neon via its connection string.
+```
 
 ---
 
 ## 9. Cloudflare / DNS
 
-**Current state**: Cloudflare proxies `resumaker.co.il` → Vercel. You don't touch this for Track 1, because the Next.js app stays on Vercel.
+**Production target**: Cloudflare proxies `resumaker.co.il` → GKE Ingress (after the cutover in §8.3).
 
-**When you'd touch it**: if you ever move the Next.js app from Vercel to GKE (NOT in Track 1's scope). Then you'd:
+**Current state (pre-cutover)**: DNS still points at Vercel for dev/test traffic. Don't change it until §8.1 has deployed the app to GKE and §8.2 has surfaced an Ingress IP.
 
-1. Provision a Google-managed certificate via the GKE Managed Certificate resource (Helm values already reference `resumaker-{env}-cert` — needs the `ManagedCertificate` CR in cluster).
-2. Point Cloudflare DNS for `resumaker.co.il` at the GKE Ingress IP.
-3. Keep Cloudflare in proxy mode for the edge cache + DDoS shield.
+### Cutover steps (recap from §8.3-8.4)
 
-For now, **no DNS changes needed**. Vercel keeps serving HTML; only the DB backend moves.
+1. Deploy app to GKE (`git tag v1.0.0 && git push origin v1.0.0` → deploy-gcp.yml → ArgoCD).
+2. `kubectl get ingress -n <ns>` to get the EXTERNAL-IP.
+3. In Cloudflare: change the A record for `resumaker.co.il` to that IP. Keep proxy ON.
+4. Wait for `ManagedCertificate` to reach `Active` (15-60 min after DNS propagates).
+5. Smoke test.
 
-If you want to expose the GKE cluster for a Track 2 worker URL (e.g. `worker.resumaker.co.il` for scrapers triggered by Vercel cron), then:
+### Per-env hostnames
 
-1. Get the GKE Ingress IP after a workload is deployed: `kubectl get ingress`
-2. Add an A record in Cloudflare: `worker.resumaker.co.il` → `<ingress-IP>`, proxied.
-3. The ManagedCertificate resource auto-provisions the SSL cert.
+| env     | host                    |
+| ------- | ----------------------- |
+| dev     | dev.resumaker.co.il     |
+| staging | staging.resumaker.co.il |
+| prod    | resumaker.co.il + www.  |
+
+Each env's Ingress provisions its own ManagedCertificate (named `resumaker-{env}-cert` in the Helm values). Each gets its own A record in Cloudflare.
+
+### Keep Vercel for branch previews
+
+Vercel preview deploys (off feature branches, NOT prod) still serve from `*.vercel.app` URLs. Useful for review. Vercel envs WITHOUT `GCP_CLOUD_SQL_INSTANCE` set will fall back to Neon — the dev/test path. Leave them alone.
+
+### TLS termination + Cloudflare proxy mode
+
+- Cloudflare proxy ON (orange cloud): Cloudflare terminates TLS at the edge with its own cert, then re-encrypts to GKE's Managed Certificate. Full strict mode recommended.
+- If you ever want to debug a TLS issue end-to-end, temporarily toggle proxy OFF (grey cloud) so DNS resolves directly to the GKE IP.
 
 ---
 
@@ -415,17 +466,22 @@ Then point Vercel back at the AWS RDS DB. ~1-2 days work. Has never been tested.
 
 ## 11. Things to verify before declaring success
 
-- [ ] `feat/multi-ai-3a` merged to main. Vercel preview deploy of `main` works.
-- [ ] `feat/gcp-migration` merged to main. Vercel preview deploy of `main` STILL works (the Cloud SQL path is opt-in — when `GCP_CLOUD_SQL_INSTANCE` is unset, it falls back to `DATABASE_URL` = Neon).
+- [ ] `feat/multi-ai-3a` merged to main. Vercel preview deploy of `main` works (dev/test path still intact).
+- [ ] `feat/gcp-migration` merged to main. Vercel preview deploy of `main` STILL works (Cloud SQL path stays opt-in: when `GCP_CLOUD_SQL_INSTANCE` is unset, the app falls back to `DATABASE_URL` = Neon — fine for previews).
 - [ ] `bootstrap.sh` ran for all 3 envs. `gcloud projects list` shows all 3.
 - [ ] `tofu apply` succeeded against `dev-gcp`. `kubectl get nodes` shows Autopilot nodes.
 - [ ] Schema migrations applied against dev Cloud SQL. `\dt` shows expected tables.
 - [ ] Secrets populated in dev Secret Manager. `gcloud secrets list --project=resumaker-dev` shows 13 secrets.
 - [ ] `tofu apply` for staging-gcp + prod-gcp succeeded.
-- [ ] Vercel prod env vars set for `GCP_CLOUD_SQL_INSTANCE`, `GCP_CLOUD_SQL_IAM_USER`, `GCP_CLOUD_SQL_DATABASE`.
-- [ ] Vercel OIDC federation enabled on prod project.
-- [ ] Prod redeploy successful. Smoke test (signup → resume gen → DB query) passes against Cloud SQL.
+- [ ] App image built + pushed to Artifact Registry (`gcloud artifacts docker images list ...`).
+- [ ] ArgoCD synced the resumaker app against `values.prod-gcp.yaml`. `kubectl get deploy -n <ns>` shows Ready.
+- [ ] `kubectl get ingress -n <ns>` returns an EXTERNAL-IP.
+- [ ] Cloudflare A record for `resumaker.co.il` repointed to the GKE Ingress IP.
+- [ ] `kubectl get managedcertificate` shows `Active`.
+- [ ] Smoke test from a browser: signup → resume gen → DB query against Cloud SQL (private IP) returns the row.
+- [ ] `kubectl get cronjobs -n <ns>` shows the 3 enabled crons (purge, onboarding-emails, push-notifications).
 - [ ] Budget alerts set on all 3 GCP projects.
+- [ ] Vercel prod env paused (or deleted); Neon project paused.
 
 ---
 
