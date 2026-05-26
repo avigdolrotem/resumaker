@@ -1,0 +1,55 @@
+# values.staging-gcp.yaml — GKE-specific overrides for staging.
+
+replicaCount: 2
+
+image:
+  # Tag injected by CI writing values.staging-gcp.image.yaml
+  repository: europe-west1-docker.pkg.dev/resumaker-staging/resumaker/web
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: '100m'
+    memory: '256Mi'
+  limits:
+    cpu: '500m'
+    memory: '512Mi'
+
+autoscaling:
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+ingress:
+  enabled: true
+  className: gce
+  annotations:
+    kubernetes.io/ingress.class: gce
+    networking.gke.io/managed-certificates: resumaker-staging-cert
+  hosts:
+    - host: staging.resumaker.co.il
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: [] # TLS handled by GCP managed certificate
+
+env:
+  NODE_ENV: staging
+  APP_URL: https://staging.resumaker.co.il
+  LOG_LEVEL: info
+
+# ExternalSecrets — pulls from GCP Secret Manager via Workload Identity.
+externalSecrets:
+  enabled: true
+  refreshInterval: '1m'
+  secretStoreName: resumaker-staging-secretstore
+
+# Service account with Workload Identity for GCP API access
+serviceAccount:
+  create: true
+  annotations:
+    iam.gke.io/gcp-service-account: resumaker-app@resumaker-staging.iam.gserviceaccount.com
+
+# Secrets pulled from GCP Secret Manager (managed by external-secrets-operator)
+secretsManagerName: resumaker-staging/app
+dbCredentialsSecretName: resumaker-staging/db-credentials

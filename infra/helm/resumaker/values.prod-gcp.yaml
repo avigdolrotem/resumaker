@@ -1,0 +1,55 @@
+# values.prod-gcp.yaml — GKE-specific overrides for prod.
+
+replicaCount: 3
+
+image:
+  # Tag injected by CI writing values.prod-gcp.image.yaml
+  repository: europe-west1-docker.pkg.dev/resumaker-prod/resumaker/web
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: '200m'
+    memory: '512Mi'
+  limits:
+    cpu: '1000m'
+    memory: '1Gi'
+
+autoscaling:
+  minReplicas: 3
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 60
+
+ingress:
+  enabled: true
+  className: gce
+  annotations:
+    kubernetes.io/ingress.class: gce
+    networking.gke.io/managed-certificates: resumaker-prod-cert
+  hosts:
+    - host: resumaker.co.il
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: [] # TLS handled by GCP managed certificate
+
+env:
+  NODE_ENV: production
+  APP_URL: https://resumaker.co.il
+  LOG_LEVEL: info
+
+# ExternalSecrets — pulls from GCP Secret Manager via Workload Identity.
+externalSecrets:
+  enabled: true
+  refreshInterval: '5m'
+  secretStoreName: resumaker-prod-secretstore
+
+# Service account with Workload Identity for GCP API access
+serviceAccount:
+  create: true
+  annotations:
+    iam.gke.io/gcp-service-account: resumaker-app@resumaker-prod.iam.gserviceaccount.com
+
+# Secrets pulled from GCP Secret Manager (managed by external-secrets-operator)
+secretsManagerName: resumaker-prod/app
+dbCredentialsSecretName: resumaker-prod/db-credentials
