@@ -1,12 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+const mockGetOptions = vi.fn().mockResolvedValue({
+  stream: () => ({}),
+  ssl: false,
+});
+
+const mockConnectorInstance = {
+  getOptions: mockGetOptions,
+  close: vi.fn(),
+};
+
 vi.mock('@google-cloud/cloud-sql-connector', () => ({
-  Connector: vi.fn().mockImplementation(() => ({
-    getOptions: vi.fn().mockResolvedValue({
-      stream: () => ({}),
-      ssl: false,
-    }),
-  })),
+  Connector: vi.fn().mockImplementation(() => mockConnectorInstance),
   IpAddressTypes: { PUBLIC: 'PUBLIC', PRIVATE: 'PRIVATE', PSC: 'PSC' },
   AuthTypes: { PASSWORD: 'PASSWORD', IAM: 'IAM' },
 }));
@@ -19,6 +24,7 @@ import { makeCloudSqlClient } from '../cloudsql';
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockGetOptions.mockResolvedValue({ stream: () => ({}), ssl: false });
 });
 
 describe('makeCloudSqlClient', () => {
@@ -29,11 +35,8 @@ describe('makeCloudSqlClient', () => {
       database: 'resumaker',
     });
     expect(sql).toBeDefined();
-    const { Connector } = await import('@google-cloud/cloud-sql-connector');
-    expect(Connector).toHaveBeenCalled();
-    // The first call to getOptions should have IAM auth + PUBLIC ip.
-    const inst = (Connector as ReturnType<typeof vi.fn>).mock.results[0]?.value;
-    expect(inst.getOptions).toHaveBeenCalledWith(
+    // getOptions is called with the right args regardless of connector reuse
+    expect(mockGetOptions).toHaveBeenCalledWith(
       expect.objectContaining({
         instanceConnectionName: 'resumaker-prod:europe-west1:pg',
         ipType: 'PUBLIC',

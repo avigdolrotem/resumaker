@@ -8,11 +8,13 @@ output "instance_connection_name" {
 }
 
 output "instance_public_ip" {
-  value = google_sql_database_instance.main.public_ip_address
+  value     = google_sql_database_instance.main.public_ip_address
+  sensitive = true
 }
 
 output "instance_private_ip" {
-  value = google_sql_database_instance.main.private_ip_address
+  value     = google_sql_database_instance.main.private_ip_address
+  sensitive = true
 }
 
 output "database_name" {

@@ -27,5 +27,15 @@ resource "google_container_cluster" "main" {
     workload_pool = "${var.project_id}.svc.id.goog"
   }
 
+  master_authorized_networks_config {
+    # No allowlist by default — the cluster control plane is publicly accessible
+    # but requires gcloud-auth. Add a CIDR block when you have a bastion or
+    # known CI runner IP. Example:
+    # cidr_blocks {
+    #   cidr_block   = "203.0.113.5/32"
+    #   display_name = "ops-bastion"
+    # }
+  }
+
   deletion_protection = var.env == "prod"
 }
