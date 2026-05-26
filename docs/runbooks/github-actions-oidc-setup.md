@@ -168,7 +168,7 @@ cd /Volumes/Server_Data/code-server/workspace/resumaker
 gh secret set AWS_DEPLOY_ROLE_ARN --body "arn:aws:iam::857812839967:role/resumaker-github-deploy"
 gh secret set AWS_ACCOUNT_ID --body "857812839967"
 gh secret set AWS_REGION --body "il-central-1"
-gh secret set NEXT_PUBLIC_SENTRY_DSN --body "https://dd977be424b5b1ab8ee3ebeccd7cb20e@o4511444222869504.ingest.de.sentry.io/4511444224573521"
+gh secret set NEXT_PUBLIC_SENTRY_DSN --body "<your-sentry-dsn-from-https://sentry.io>"
 ```
 
 ## Step 7 — Test

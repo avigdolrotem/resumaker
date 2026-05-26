@@ -40,5 +40,5 @@ variable "domain_name" {
 variable "alert_email" {
   description = "Email for cost / operational alerts"
   type        = string
-  default     = "rotem@avigdol.com"
+  default     = "ops@resumaker.co.il"
 }

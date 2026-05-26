@@ -18,11 +18,9 @@ module "network" {
 module "workload_identity" {
   source = "../../modules/gcp/workload-identity"
 
-  project_id        = var.project_id
-  env               = local.env
-  github_repo       = var.github_repo
-  vercel_team_id    = var.vercel_team_id
-  vercel_project_id = var.vercel_project_id
+  project_id  = var.project_id
+  env         = local.env
+  github_repo = var.github_repo
 }
 
 module "secrets" {

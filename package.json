@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "description": "Hebrew-first AI resume builder with ATS optimization",
-  "author": "Rotem Avigdol <rotem@avigdol.com>",
+  "author": "Resumaker Team",
   "license": "BUSL-1.1",
   "packageManager": "pnpm@9.15.0",
   "engines": {

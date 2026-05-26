@@ -537,18 +537,62 @@ cloud-sql-proxy "$(tofu output -raw cloudsql_connection_name)" --port=15432 &
 DATABASE_URL="postgresql://resumaker-app%40resumaker-dev.iam@localhost:15432/resumaker?sslmode=disable" \
   pnpm --filter @resumaker/web db:migrate
 
-# Populate a secret
-echo -n "value" | gcloud secrets versions add SECRET_NAME --data-file=- --project=resumaker-dev
+# Populate / rotate secrets (interactive, all 13 secrets per env)
+./scripts/rotate-secrets-gcp.sh prod
+# Or batch from a JSON file (file is auto-wiped on success):
+./scripts/rotate-secrets-gcp.sh prod /tmp/new-secrets.json
 
-# Set Vercel env (per-env)
-vercel env add GCP_CLOUD_SQL_INSTANCE production
+# Promote a user to admin (after they sign up)
+./scripts/grant-admin-gcp.sh prod you@example.com
 
-# Trigger Vercel deploy
-vercel deploy --prod
+# Trigger a GKE rollout to pick up rotated secrets immediately
+kubectl -n resumaker rollout restart deploy/resumaker
 
 # Tear it all down (per project)
 gcloud projects delete resumaker-<env>  # async — 30-day grace
 ```
+
+---
+
+## 14a. Helper scripts (committed in this branch)
+
+| Script                              | Purpose                                                                            |
+| ----------------------------------- | ---------------------------------------------------------------------------------- |
+| `scripts/rotate-secrets-gcp.sh`     | Rotate any/all of the 13 Secret Manager values per env. Interactive or batch JSON. |
+| `scripts/grant-admin-gcp.sh`        | Tunnel to Cloud SQL and `UPDATE users SET role='admin'` for an email.              |
+| `infra/tofu/bootstrap/bootstrap.sh` | One-time GCP project + state-bucket + Tofu admin SA bootstrap per env.             |
+
+All three are idempotent and refuse unsafe states (missing prerequisites, etc).
+
+---
+
+## 14b. Post-launch QA + security audit references
+
+- **`docs/POST_LAUNCH_QA.md`** — exhaustive per-user-type (free/plus/pro/HR/admin) walk-through. Run after every prod deploy and at launch.
+- **`docs/SECURITY_AUDIT_2026-05-26.md`** — full findings from the pre-launch audit (8 specialist agents). Maps each finding to FIXED / OPERATOR / DEFERRED status. Read before launch to know what's outstanding.
+- **`docs/runbooks/`** — existing per-incident runbooks (db restore, key rotation, cost spike, LLM injection, etc).
+
+---
+
+## 14c. Required manual steps before launch (in order)
+
+These are the OPERATOR-status items from `docs/SECURITY_AUDIT_2026-05-26.md`:
+
+1. **Rotate the Sentry DSN** — the old DSN was committed in git history (`docs/runbooks/github-actions-oidc-setup.md`, commit `adbba50`). Sentry dashboard → Settings → Client Keys → Rotate. Update the new value in `gcloud secrets versions add sentry-dsn --data-file=- --project=resumaker-prod`.
+2. **Configure GitHub `production` environment** with required reviewers. Repo → Settings → Environments → New environment "production" → add yourself as required reviewer. Repeat for "staging" if you want gating.
+3. **Provision API keys for all 13 secrets** (see §5 list). Push them with `scripts/rotate-secrets-gcp.sh prod`.
+4. **(Optional) Scrub git history of personal email + AWS account ID** if you care. `git filter-repo --replace-text expressions.txt` — rewrites all history, breaks every existing clone of the repo. Skip if you don't care.
+5. **Push branches + open PRs** for `feat/multi-ai-3a` and `feat/gcp-migration`. The PRs let you review the full diff in one place.
+6. **Run `bootstrap.sh` for all 3 envs** (gcloud auth + billing first).
+7. **`tofu apply` dev → staging → prod** (Phase 5 + 9 of this doc).
+8. **`./scripts/rotate-secrets-gcp.sh <env>`** for each env, paste in the values you provisioned in step 3.
+9. **Run schema migrations** via `cloud-sql-proxy` tunnel.
+10. **Tag a release** to fire `deploy-gcp.yml` → ArgoCD picks up the deploy.
+11. **Promote yourself to admin** with `./scripts/grant-admin-gcp.sh prod you@example.com` AFTER your first sign-up.
+12. **Cloudflare DNS swap** from Vercel IPs to GKE Ingress IP.
+13. **Wait for `ManagedCertificate` to be Active** (15-60 min after DNS propagates).
+14. **Run `docs/POST_LAUNCH_QA.md`** end-to-end before announcing the launch.
+15. **Set GCP Budget alerts** (50% / 75% / 90% caps per project).
 
 ---
 

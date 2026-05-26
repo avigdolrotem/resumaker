@@ -22,10 +22,6 @@ output "cicd_service_account_email" {
   value = module.workload_identity.cicd_service_account_email
 }
 
-output "wif_vercel_provider" {
-  value = module.workload_identity.vercel_provider_name
-}
-
 output "wif_github_provider" {
   value = module.workload_identity.github_provider_name
 }

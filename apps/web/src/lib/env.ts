@@ -28,18 +28,19 @@ const EnvSchema = z
     CRON_SECRET: z.string().min(32, 'CRON_SECRET must be >=32 chars').optional(),
 
     // Database
-    DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+    // DATABASE_URL is optional — only used for local psql tooling (drizzle-kit
+    // migrations, direct psql). The app runtime exclusively uses the Cloud SQL
+    // Connector path below.
+    DATABASE_URL: z.string().optional(),
     DATABASE_POOL_MAX: z.coerce.number().int().positive().default(10),
 
-    // GCP Cloud SQL — opt-in. When `GCP_CLOUD_SQL_INSTANCE` is set,
-    // the DB layer uses Cloud SQL Connector + IAM auth instead of the
-    // raw DATABASE_URL. Leave unset to keep using Neon.
-    GCP_CLOUD_SQL_INSTANCE: z.string().optional(), // "project:region:instance"
-    GCP_CLOUD_SQL_IAM_USER: z.string().optional(),
+    // GCP Cloud SQL — Cloud SQL Connector is the only DB path.
+    GCP_CLOUD_SQL_INSTANCE: z.string().min(1), // "project:region:instance"
+    GCP_CLOUD_SQL_IAM_USER: z.string().min(1),
     GCP_CLOUD_SQL_DATABASE: z.string().optional().default('resumaker'),
     // IP type for the Cloud SQL Connector. PRIVATE (default) is correct for
-    // GKE pods connecting over VPC peering. Set to PUBLIC only for Vercel
-    // previews or local dev connecting through the Cloud SQL Auth Proxy.
+    // GKE pods connecting over VPC peering. Set to PUBLIC only for local dev
+    // connecting through the Cloud SQL Auth Proxy.
     GCP_CLOUD_SQL_IP_TYPE: z.enum(['PUBLIC', 'PRIVATE']).default('PRIVATE'),
 
     // Redis
@@ -145,7 +146,7 @@ const EnvSchema = z
   })
   // Production-only sanity checks. Defaults that are fine for `pnpm dev`
   // (localhost URLs, missing CRON_SECRET) silently brick the app if they
-  // leak into a Vercel deploy. Fail fast at import-time instead.
+  // leak into a GKE deploy. Fail fast at import-time instead.
   .refine((e) => e.NODE_ENV !== 'production' || !e.APP_URL.startsWith('http://localhost'), {
     message: 'APP_URL must be set to the production URL (not localhost) when NODE_ENV=production',
   })

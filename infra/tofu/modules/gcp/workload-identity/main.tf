@@ -2,12 +2,12 @@ locals {
   name_prefix = "resumaker-${var.env}"
 }
 
-# Pool that both GitHub Actions and Vercel federate into.
+# Pool that GitHub Actions federates into.
 resource "google_iam_workload_identity_pool" "main" {
   project                   = var.project_id
   workload_identity_pool_id = "${local.name_prefix}-wif-pool"
   display_name              = "Resumaker ${var.env} WIF pool"
-  description               = "Trusts GitHub Actions and Vercel OIDC tokens."
+  description               = "Trusts GitHub Actions OIDC tokens."
 }
 
 # GitHub Actions provider — repo+branch claim binding via attribute mapping.
@@ -30,39 +30,11 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   }
 }
 
-# Vercel OIDC provider — project+env binding.
-resource "google_iam_workload_identity_pool_provider" "vercel" {
-  project                            = var.project_id
-  workload_identity_pool_id          = google_iam_workload_identity_pool.main.workload_identity_pool_id
-  workload_identity_pool_provider_id = "vercel"
-  display_name                       = "Vercel"
-
-  attribute_mapping = {
-    "google.subject"           = "assertion.sub"
-    "attribute.aud"            = "assertion.aud"
-    "attribute.vercel_project" = "assertion.project_id"
-    "attribute.vercel_env"     = "assertion.environment"
-  }
-
-  attribute_condition = "assertion.project_id == \"${var.vercel_project_id}\""
-
-  oidc {
-    issuer_uri        = "https://oidc.vercel.com/${var.vercel_team_id}"
-    allowed_audiences = ["https://vercel.com/${var.vercel_team_id}"]
-  }
-}
-
-# App service account — Vercel federates into this for runtime DB connections.
+# App service account — GKE pods run as this SA via Workload Identity.
 resource "google_service_account" "app" {
   project      = var.project_id
   account_id   = "resumaker-app"
-  display_name = "Resumaker Next.js app (Vercel)"
-}
-
-resource "google_service_account_iam_member" "app_vercel_binding" {
-  service_account_id = google_service_account.app.name
-  role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.main.name}/attribute.vercel_project/${var.vercel_project_id}"
+  display_name = "Resumaker Next.js app (GKE)"
 }
 
 # CI/CD service account — GitHub Actions deploys via this.

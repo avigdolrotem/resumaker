@@ -34,7 +34,8 @@ ingress:
   tls: [] # TLS handled by GCP managed certificate
 
 env:
-  NODE_ENV: staging
+  NODE_ENV: production
+  APP_ENV: staging
   APP_URL: https://staging.resumaker.co.il
   LOG_LEVEL: info
 

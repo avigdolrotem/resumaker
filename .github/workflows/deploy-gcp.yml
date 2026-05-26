@@ -116,7 +116,6 @@ jobs:
             NEXT_PUBLIC_SENTRY_ENVIRONMENT=${{ steps.meta.outputs.env }}
           tags: |
             ${{ steps.meta.outputs.image_uri }}
-            ${{ env.REGION }}-docker.pkg.dev/${{ steps.meta.outputs.project_id }}/${{ env.REPO }}/web:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           labels: |
@@ -131,7 +130,7 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
-          exit-code: '0' # report but don't fail (handled by security.yml)
+          exit-code: '1' # block build on CRITICAL/HIGH CVEs
 
       - name: Upload Trivy SARIF
         if: always()

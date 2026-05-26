@@ -12,11 +12,3 @@ variable "github_repo" {
   type    = string
   default = "resumaker/resumaker"
 }
-
-variable "vercel_team_id" {
-  type = string
-}
-
-variable "vercel_project_id" {
-  type = string
-}
