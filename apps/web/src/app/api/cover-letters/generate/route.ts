@@ -8,7 +8,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
-import Anthropic from '@anthropic-ai/sdk';
+import { generateText } from '@/lib/llm/provider';
 import { auth } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { sanitizeInput, type SanitizeResult } from '@resumaker/ai-safety';
@@ -27,8 +27,6 @@ const RequestSchema = z.object({
   tone: z.enum(['formal', 'friendly', 'enthusiastic']).default('formal'),
   locale: z.enum(['he', 'en', 'auto']).default('auto'),
 });
-
-const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY, timeout: 60_000 });
 
 export async function POST(req: NextRequest): Promise<Response> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -148,15 +146,14 @@ Write the cover letter body.`;
 
   const started = Date.now();
   try {
-    const response = await client.messages.create({
+    const response = await generateText({
       model: env.DEFAULT_LLM_MODEL,
-      max_tokens: 1024,
+      maxOutputTokens: 1024,
       system: systemPrompt,
-      messages: [{ role: 'user', content: userPrompt }],
+      prompt: userPrompt,
     });
 
-    const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === 'text');
-    if (!textBlock) {
+    if (!response.text) {
       return NextResponse.json({ error: 'Generation produced no text' }, { status: 502 });
     }
 
@@ -167,12 +164,12 @@ Write the cover letter body.`;
     });
 
     return NextResponse.json({
-      letter: textBlock.text,
+      letter: response.text,
       metadata: {
         durationMs: Date.now() - started,
         tokensUsed: {
-          input: response.usage.input_tokens,
-          output: response.usage.output_tokens,
+          input: response.usage.inputTokens,
+          output: response.usage.outputTokens,
         },
         detectedLocale,
       },

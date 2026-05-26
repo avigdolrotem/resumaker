@@ -13,14 +13,12 @@
     "lint": "eslint src",
     "typecheck": "tsc --noEmit"
   },
-  "peerDependencies": {
-    "@anthropic-ai/sdk": ">=0.26.0"
-  },
   "dependencies": {
+    "ai": "^6.0.191",
+    "@ai-sdk/gateway": "^3.0.120",
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@anthropic-ai/sdk": "^0.98.0",
     "typescript": "^5.7.3"
   }
 }

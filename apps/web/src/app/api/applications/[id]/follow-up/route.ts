@@ -18,6 +18,7 @@ import { and, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireJobHuntBetaApi } from '@/lib/beta-gate';
 import { logger } from '@/lib/observability';
+import { generateText } from '@/lib/llm/provider';
 
 const Body = z.object({ kind: z.enum(['follow_up', 'thank_you']) });
 
@@ -57,26 +58,16 @@ export async function POST(
   const promptKind = body.kind === 'thank_you' ? 'post-interview thank-you' : 'gentle follow-up';
 
   try {
-    const Anthropic = (await import('@anthropic-ai/sdk')).default;
-    const anthropic = new Anthropic();
-    const response = await anthropic.messages.create({
+    const response = await generateText({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 600,
+      maxOutputTokens: 600,
       system: `Generate a ${promptKind} email in ${isHebrew ? 'Hebrew' : 'English'}. Return JSON only: {"subject":"...","body":"..."}. Be concise (5-8 sentences body max), warm but professional, no platitudes.`,
-      messages: [
-        {
-          role: 'user',
-          content: `Candidate: ${guard.user.name ?? '[name]'}
+      prompt: `Candidate: ${guard.user.name ?? '[name]'}
 Job: ${a.jobTitle} at ${a.jobCompany}
 Recipient: ${a.contactName ?? 'Hiring Manager'}`,
-        },
-      ],
     });
 
-    const text = response.content
-      .filter((b) => b.type === 'text')
-      .map((b) => (b as { text: string }).text)
-      .join('\n')
+    const text = response.text
       .replace(/^```(?:json)?/m, '')
       .replace(/```$/m, '')
       .trim();

@@ -41,9 +41,7 @@ export async function POST(
 
   let fit;
   try {
-    const Anthropic = (await import('@anthropic-ai/sdk')).default;
     const { computeFitScore } = await import('@resumaker/job-engine');
-    const anthropic = new Anthropic();
     fit = await computeFitScore({
       profile,
       job: {
@@ -57,7 +55,6 @@ export async function POST(
         urlNormalized: job.urlNormalized,
         remote: job.remote,
       },
-      anthropic,
     });
   } catch (err) {
     logger.error(

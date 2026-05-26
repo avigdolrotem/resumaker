@@ -3,7 +3,16 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import { User, Lock, Bell, Clock, Database, AlertOctagon, ScreenShare } from 'lucide-react';
+import {
+  User,
+  Lock,
+  Bell,
+  Clock,
+  Database,
+  AlertOctagon,
+  ScreenShare,
+  Sparkles,
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +21,17 @@ import { useSession, signOut } from '@/lib/auth-client';
 import { useRouter, Link } from '@/i18n/navigation';
 import { Security2FACard } from '@/components/security-2fa-card';
 import { LinkedAccountsCard } from '@/components/linked-accounts-card';
+import { AIModelCard } from '@/components/settings/ai-model-card';
 
-type Tab = 'profile' | 'security' | 'sessions' | 'notifications' | 'regional' | 'data' | 'danger';
+type Tab =
+  | 'profile'
+  | 'security'
+  | 'sessions'
+  | 'notifications'
+  | 'regional'
+  | 'ai'
+  | 'data'
+  | 'danger';
 
 const TABS: { id: Tab; key: string; icon: typeof User }[] = [
   { id: 'profile', key: 'profile', icon: User },
@@ -24,6 +42,7 @@ const TABS: { id: Tab; key: string; icon: typeof User }[] = [
   // ThemeToggle (available everywhere, no settings detour). What's left
   // here is timezone + date format, so renamed to "Date & time".
   { id: 'regional', key: 'regional', icon: Clock },
+  { id: 'ai', key: 'ai', icon: Sparkles },
   { id: 'data', key: 'data', icon: Database },
   { id: 'danger', key: 'danger', icon: AlertOctagon },
 ];
@@ -77,6 +96,7 @@ export default function SettingsPage() {
           {tab === 'sessions' && <SessionsTab />}
           {tab === 'notifications' && <NotificationsTab />}
           {tab === 'regional' && <RegionalTab />}
+          {tab === 'ai' && <AIModelCard />}
           {tab === 'data' && <DataTab />}
           {tab === 'danger' && <DangerTab />}
         </div>

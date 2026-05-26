@@ -15,6 +15,7 @@ import { and, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireJobHuntBetaApi } from '@/lib/beta-gate';
 import { logger } from '@/lib/observability';
+import { generateText } from '@/lib/llm/provider';
 
 export async function POST(
   _req: NextRequest,
@@ -40,25 +41,15 @@ export async function POST(
   const job = app[0];
 
   try {
-    const Anthropic = (await import('@anthropic-ai/sdk')).default;
-    const anthropic = new Anthropic();
-    const response = await anthropic.messages.create({
+    const response = await generateText({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2000,
+      maxOutputTokens: 2000,
       system:
         'You generate concise interview preparation material. Return ONLY a JSON object with these exact keys: questions (array of likely interview questions, 8-12 items), questionsToAsk (array of smart questions the candidate should ask, 5-8 items), companyResearch (array of research hooks/topics to study, 4-6 items), redFlags (array of potential red flags to probe, 3-5 items). No markdown, no preamble.',
-      messages: [
-        {
-          role: 'user',
-          content: `Job: ${job.jobTitle} at ${job.jobCompany}\n\nDescription:\n${job.jobDescription.slice(0, 6000)}`,
-        },
-      ],
+      prompt: `Job: ${job.jobTitle} at ${job.jobCompany}\n\nDescription:\n${job.jobDescription.slice(0, 6000)}`,
     });
 
-    const text = response.content
-      .filter((b) => b.type === 'text')
-      .map((b) => (b as { text: string }).text)
-      .join('\n');
+    const text = response.text;
 
     // Strip markdown fences if present
     const cleaned = text

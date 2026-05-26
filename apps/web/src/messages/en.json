@@ -420,6 +420,13 @@
       "exportSuccess": "Your data has been downloaded.",
       "exportFailed": "Export failed. Please try again."
     },
+    "ai": {
+      "title": "AI engine",
+      "description": "Pick the model that generates your tailored resumes. You can switch any time.",
+      "recommended": "Recommended",
+      "locked": "Plus or Pro only",
+      "saved": "Saved"
+    },
     "danger": {
       "title": "Danger zone",
       "description": "Irreversible actions",
@@ -438,6 +445,7 @@
       "sessions": "Sessions",
       "notifications": "Notifications",
       "regional": "Date & time",
+      "ai": "AI engine",
       "data": "Your data",
       "danger": "Danger zone"
     }
