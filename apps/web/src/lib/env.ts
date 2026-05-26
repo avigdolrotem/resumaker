@@ -168,7 +168,8 @@ const EnvSchema = z
     message: 'CRON_SECRET is required in production so Vercel Cron can authenticate',
   })
   .refine((e) => e.NODE_ENV !== 'production' || Boolean(e.AI_GATEWAY_API_KEY), {
-    message: 'AI_GATEWAY_API_KEY is required in production once Phase 3A lands',
+    message: 'AI_GATEWAY_API_KEY is required in production',
+    path: ['AI_GATEWAY_API_KEY'],
   });
 
 function parseEnv() {
