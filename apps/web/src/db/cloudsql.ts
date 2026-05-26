@@ -6,6 +6,18 @@ export interface CloudSqlClientArgs {
   iamUser: string;
   database: string;
   poolMax?: number;
+  /**
+   * IP type used by the Cloud SQL Connector.
+   *
+   * - `'PRIVATE'` (default) — GKE pods reach Cloud SQL via private IP over
+   *   VPC peering. No public IPv4 endpoint required on the instance.
+   * - `'PUBLIC'`  — required when connecting from outside the VPC, e.g.
+   *   Vercel preview deployments or a developer's laptop.
+   *
+   * Controlled by `GCP_CLOUD_SQL_IP_TYPE` env var; defaults to `PRIVATE`
+   * so GKE production is zero-config.
+   */
+  ipType?: 'PUBLIC' | 'PRIVATE';
 }
 
 // Module-scope so it survives across calls; SIGTERM handler closes it on shutdown.
@@ -36,9 +48,10 @@ function getConnector(): Connector {
  */
 export async function makeCloudSqlClient(args: CloudSqlClientArgs) {
   const c = getConnector();
+  const ipType = args.ipType === 'PUBLIC' ? IpAddressTypes.PUBLIC : IpAddressTypes.PRIVATE;
   const clientOpts = await c.getOptions({
     instanceConnectionName: args.instance,
-    ipType: IpAddressTypes.PUBLIC,
+    ipType,
     authType: AuthTypes.IAM,
   });
 

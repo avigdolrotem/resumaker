@@ -28,17 +28,33 @@ beforeEach(() => {
 });
 
 describe('makeCloudSqlClient', () => {
-  it('passes instanceConnectionName, ipType=PUBLIC, authType=IAM to the connector', async () => {
+  it('passes instanceConnectionName, ipType=PRIVATE (default), authType=IAM to the connector', async () => {
     const sql = await makeCloudSqlClient({
       instance: 'resumaker-prod:europe-west1:pg',
       iamUser: 'app@resumaker-prod.iam',
       database: 'resumaker',
     });
     expect(sql).toBeDefined();
-    // getOptions is called with the right args regardless of connector reuse
+    // Default ipType is PRIVATE — GKE pods reach Cloud SQL over private VPC IP
     expect(mockGetOptions).toHaveBeenCalledWith(
       expect.objectContaining({
         instanceConnectionName: 'resumaker-prod:europe-west1:pg',
+        ipType: 'PRIVATE',
+        authType: 'IAM',
+      }),
+    );
+  });
+
+  it('passes ipType=PUBLIC when explicitly requested (e.g. Vercel preview)', async () => {
+    const sql = await makeCloudSqlClient({
+      instance: 'resumaker-dev:europe-west1:pg',
+      iamUser: 'app@resumaker-dev.iam',
+      database: 'resumaker',
+      ipType: 'PUBLIC',
+    });
+    expect(sql).toBeDefined();
+    expect(mockGetOptions).toHaveBeenCalledWith(
+      expect.objectContaining({
         ipType: 'PUBLIC',
         authType: 'IAM',
       }),

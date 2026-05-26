@@ -29,6 +29,7 @@ async function makeClient(): Promise<PgClient> {
       iamUser: env.GCP_CLOUD_SQL_IAM_USER,
       database: env.GCP_CLOUD_SQL_DATABASE ?? 'resumaker',
       poolMax: env.DATABASE_POOL_MAX,
+      ipType: env.GCP_CLOUD_SQL_IP_TYPE,
     });
   }
   return postgres(env.DATABASE_URL, {

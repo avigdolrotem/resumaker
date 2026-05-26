@@ -37,6 +37,10 @@ const EnvSchema = z
     GCP_CLOUD_SQL_INSTANCE: z.string().optional(), // "project:region:instance"
     GCP_CLOUD_SQL_IAM_USER: z.string().optional(),
     GCP_CLOUD_SQL_DATABASE: z.string().optional().default('resumaker'),
+    // IP type for the Cloud SQL Connector. PRIVATE (default) is correct for
+    // GKE pods connecting over VPC peering. Set to PUBLIC only for Vercel
+    // previews or local dev connecting through the Cloud SQL Auth Proxy.
+    GCP_CLOUD_SQL_IP_TYPE: z.enum(['PUBLIC', 'PRIVATE']).default('PRIVATE'),
 
     // Redis
     REDIS_URL: z.string().optional(),
@@ -157,7 +161,7 @@ const EnvSchema = z
       'BETTER_AUTH_URL must be set to the production URL (not localhost) when NODE_ENV=production — auth will silently break otherwise',
   })
   .refine((e) => e.NODE_ENV !== 'production' || Boolean(e.CRON_SECRET), {
-    message: 'CRON_SECRET is required in production so Vercel Cron can authenticate',
+    message: 'CRON_SECRET is required in production so GKE CronJobs can authenticate',
   });
 
 function parseEnv() {

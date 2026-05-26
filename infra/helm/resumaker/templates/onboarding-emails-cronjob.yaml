@@ -1,0 +1,61 @@
+{{- if .Values.cronJobs.onboardingEmails.enabled }}
+# Onboarding drip emails.
+#
+# POST /api/cron/onboarding-emails sends reminder / activation emails to
+# users who signed up but haven't completed their profile or generated a
+# resume yet.
+#
+# Auth: Bearer token via CRON_SECRET (must match the value in the
+# resumaker-app Secret). Curl-from-inside-the-cluster so the secret
+# never leaves the VPC.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "resumaker.fullname" . }}-onboarding-emails
+  labels:
+    {{- include "resumaker.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronJobs.onboardingEmails.schedule | quote }}
+  timeZone: Etc/UTC
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 7
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            {{- include "resumaker.selectorLabels" . | nindent 12 }}
+            job-type: onboarding-emails
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: onboarding-emails
+              image: curlimages/curl:8.10.1
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  curl --fail --show-error --silent \
+                    --max-time 600 \
+                    -H "Authorization: Bearer $CRON_SECRET" \
+                    "http://{{ include "resumaker.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local/api/cron/onboarding-emails"
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "resumaker.fullname" . }}-app
+                      key: CRON_SECRET
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 32Mi
+                limits:
+                  cpu: 200m
+                  memory: 64Mi
+{{- end }}

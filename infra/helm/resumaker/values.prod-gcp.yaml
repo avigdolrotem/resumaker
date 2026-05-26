@@ -53,3 +53,13 @@ serviceAccount:
 # Secrets pulled from GCP Secret Manager (managed by external-secrets-operator)
 secretsManagerName: resumaker-prod/app
 dbCredentialsSecretName: resumaker-prod/db-credentials
+
+cronJobs:
+  purge:
+    enabled: true
+  onboardingEmails:
+    enabled: true
+  scrapeJobs:
+    enabled: false # not implemented yet — Track 2
+  pushNotifications:
+    enabled: true

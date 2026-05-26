@@ -38,3 +38,9 @@ variable "iam_user_emails" {
   type        = list(string)
   default     = []
 }
+
+variable "enable_public_ip" {
+  description = "Enable Cloud SQL public IPv4 endpoint. Default false — set true only if you need to reach the DB from outside the VPC (e.g. Vercel previews or local dev via Cloud SQL Auth Proxy)."
+  type        = bool
+  default     = false
+}
