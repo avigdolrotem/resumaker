@@ -17,6 +17,11 @@ import {
   Palette,
   TrendingUp,
   LogOut,
+  Shield,
+  ScrollText,
+  Accessibility,
+  Archive,
+  MessageSquare,
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
@@ -47,11 +52,33 @@ type LinkHref =
   | '/pricing'
   | '/'
   | '/sign-in'
-  | '/sign-up';
+  | '/sign-up'
+  | '/contact'
+  | '/privacy'
+  | '/terms'
+  | '/legal/accessibility'
+  | '/legal/data-retention';
 
 type Item =
   | { kind: 'link'; href: LinkHref; label: string; Icon: typeof Menu }
+  | { kind: 'divider'; label: string }
   | { kind: 'action'; action: 'sign-out'; label: string; Icon: typeof Menu };
+
+/**
+ * Legal links visible to BOTH signed-in and signed-out users. Required
+ * to be reachable from every page under Israeli accessibility law
+ * (חוק שוויון זכויות לאנשים עם מוגבלות) — the accessibility statement
+ * in particular must have a clear link, including from inside the
+ * authed app shell.
+ */
+const legalItems: Item[] = [
+  { kind: 'divider', label: 'Legal' },
+  { kind: 'link', href: '/contact', label: 'Contact', Icon: MessageSquare },
+  { kind: 'link', href: '/privacy', label: 'Privacy', Icon: Shield },
+  { kind: 'link', href: '/terms', label: 'Terms', Icon: ScrollText },
+  { kind: 'link', href: '/legal/accessibility', label: 'Accessibility', Icon: Accessibility },
+  { kind: 'link', href: '/legal/data-retention', label: 'Data retention', Icon: Archive },
+];
 
 function authedItems(): Item[] {
   return [
@@ -64,6 +91,7 @@ function authedItems(): Item[] {
     { kind: 'link', href: '/profile', label: 'Profile', Icon: UserCircle },
     { kind: 'link', href: '/settings', label: 'Settings', Icon: Settings },
     { kind: 'link', href: '/account/billing', label: 'Billing', Icon: CreditCard },
+    ...legalItems,
     { kind: 'action', action: 'sign-out', label: 'Sign out', Icon: LogOut },
   ];
 }
@@ -75,6 +103,7 @@ function publicItems(): Item[] {
     { kind: 'link', href: '/pricing', label: 'Pricing', Icon: CreditCard },
     { kind: 'link', href: '/sign-in', label: 'Sign in', Icon: LogIn },
     { kind: 'link', href: '/sign-up', label: 'Sign up', Icon: UserPlus },
+    ...legalItems,
   ];
 }
 
@@ -159,6 +188,16 @@ export function MobileDrawer() {
 
             <nav className="flex-1 overflow-y-auto py-2">
               {items.map((it) => {
+                if (it.kind === 'divider') {
+                  return (
+                    <div
+                      key={`divider-${it.label}`}
+                      className="border-border text-muted-foreground mt-3 border-t px-4 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider"
+                    >
+                      {it.label}
+                    </div>
+                  );
+                }
                 if (it.kind === 'action') {
                   return (
                     <button
