@@ -10,6 +10,7 @@
 *.pfx
 *.csv
 secrets/
+!infra/**/secrets/
 .aws/
 credentials
 **/credentials.json

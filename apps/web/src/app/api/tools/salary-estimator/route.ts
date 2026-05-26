@@ -13,6 +13,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { extractClientIp } from '@/lib/ip';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/observability';
+import { hashIp } from '@/lib/audit';
 
 export const runtime = 'nodejs';
 
@@ -86,7 +87,10 @@ Respond with ONLY a JSON object (no markdown):
 
     return NextResponse.json(result);
   } catch (err) {
-    logger.error({ err: (err as Error).message, ip }, 'tools.salary_estimator.failed');
+    logger.error(
+      { err: (err as Error).message, ipHash: hashIp(ip) },
+      'tools.salary_estimator.failed',
+    );
     return NextResponse.json(
       { error: 'Failed to estimate salary. Please try again.' },
       { status: 500 },

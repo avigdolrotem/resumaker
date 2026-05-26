@@ -54,7 +54,6 @@ export async function POST(req: NextRequest): Promise<Response> {
     if (err instanceof LLMError) {
       return NextResponse.json({ error: 'Parser unavailable' }, { status: 502 });
     }
-    const msg = (err as Error).message;
-    return NextResponse.json({ error: msg }, { status: 400 });
+    return NextResponse.json({ error: 'Could not process file' }, { status: 400 });
   }
 }

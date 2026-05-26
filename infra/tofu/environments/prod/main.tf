@@ -27,7 +27,7 @@ provider "aws" {
       Project     = "resumaker"
       Environment = "prod"
       ManagedBy   = "opentofu"
-      Owner       = "rotem@avigdol.com"
+      Owner       = "ops@resumaker.co.il"
     }
   }
 }

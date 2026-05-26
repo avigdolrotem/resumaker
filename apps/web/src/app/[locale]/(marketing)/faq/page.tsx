@@ -39,7 +39,7 @@ const QUESTIONS_EN = [
   },
   {
     q: 'Is the job-hunt feature live?',
-    a: 'It is in beta. Sign in, then ask an admin (rotem@avigdol.com) to enable the feature flag for your account.',
+    a: 'It is in beta. Sign in, then contact support to enable the feature flag for your account.',
   },
 ];
 
@@ -74,7 +74,7 @@ const QUESTIONS_HE = [
   },
   {
     q: 'האם פיצ׳ר חיפוש המשרות פעיל?',
-    a: 'בביתא. התחבר, ובקש מאדמין (rotem@avigdol.com) להפעיל את הדגל לחשבונך.',
+    a: 'בביתא. התחבר, ופנה לתמיכה כדי להפעיל את הדגל לחשבונך.',
   },
 ];
 

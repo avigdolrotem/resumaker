@@ -4,6 +4,9 @@
  * Singleton pg client + drizzle-orm. Reads through the centralized
  * zod-validated env so a mistyped DATABASE_POOL_MAX surfaces at boot
  * instead of becoming NaN that postgres-js silently treats as default.
+ *
+ * Cloud SQL Connector is the only DB path. GCP_CLOUD_SQL_INSTANCE and
+ * GCP_CLOUD_SQL_IAM_USER are required env vars (validated in env.ts).
  */
 
 import { drizzle } from 'drizzle-orm/postgres-js';
@@ -12,19 +15,25 @@ import { env } from '@/lib/env';
 import { schema } from './schema';
 import * as relations from './relations';
 
-// Cache on globalThis so test isolation + hot reload don't leak connections.
-const globalForDb = globalThis as unknown as { _pg?: ReturnType<typeof postgres> };
+declare global {
+  // eslint-disable-next-line no-var
+  var __resumakerPgClient: ReturnType<typeof postgres> | undefined;
+}
 
-const client =
-  globalForDb._pg ??
-  postgres(env.DATABASE_URL, {
-    max: env.DATABASE_POOL_MAX,
-    idle_timeout: 30,
-    connect_timeout: 10,
+async function makeClient() {
+  const { makeCloudSqlClient } = await import('./cloudsql');
+  return makeCloudSqlClient({
+    instance: env.GCP_CLOUD_SQL_INSTANCE,
+    iamUser: env.GCP_CLOUD_SQL_IAM_USER,
+    database: env.GCP_CLOUD_SQL_DATABASE ?? 'resumaker',
+    poolMax: env.DATABASE_POOL_MAX,
+    ipType: env.GCP_CLOUD_SQL_IP_TYPE,
   });
+}
 
-if (env.NODE_ENV !== 'production') {
-  globalForDb._pg = client;
+const client = globalThis.__resumakerPgClient ?? (await makeClient());
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.__resumakerPgClient = client;
 }
 
 export const db = drizzle(client, { schema: { ...schema, ...relations } });

@@ -1,0 +1,65 @@
+# values.dev-gcp.yaml — GKE-specific overrides for dev.
+
+replicaCount: 1
+
+image:
+  # Tag injected by CI writing values.dev-gcp.image.yaml
+  repository: europe-west1-docker.pkg.dev/resumaker-dev/resumaker/web
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: '100m'
+    memory: '256Mi'
+  limits:
+    cpu: '500m'
+    memory: '512Mi'
+
+autoscaling:
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70
+
+ingress:
+  enabled: true
+  className: gce
+  annotations:
+    kubernetes.io/ingress.class: gce
+    networking.gke.io/managed-certificates: resumaker-dev-cert
+  hosts:
+    - host: dev.resumaker.co.il
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: [] # TLS handled by GCP managed certificate
+
+env:
+  NODE_ENV: development
+  APP_URL: https://dev.resumaker.co.il
+  LOG_LEVEL: debug
+
+# ExternalSecrets — pulls from GCP Secret Manager via Workload Identity.
+externalSecrets:
+  enabled: true
+  refreshInterval: '1m'
+  secretStoreName: resumaker-dev-secretstore
+
+# Service account with Workload Identity for GCP API access
+serviceAccount:
+  create: true
+  annotations:
+    iam.gke.io/gcp-service-account: resumaker-app@resumaker-dev.iam.gserviceaccount.com
+
+# Secrets pulled from GCP Secret Manager (managed by external-secrets-operator)
+secretsManagerName: resumaker-dev/app
+dbCredentialsSecretName: resumaker-dev/db-credentials
+
+cronJobs:
+  purge:
+    enabled: true
+  onboardingEmails:
+    enabled: true
+  scrapeJobs:
+    enabled: false # not implemented yet — Track 2
+  pushNotifications:
+    enabled: true

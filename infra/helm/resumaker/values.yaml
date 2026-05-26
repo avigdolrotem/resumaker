@@ -101,3 +101,21 @@ securityContext:
 
 podSecurityContext:
   fsGroup: 1001
+
+# CronJob configuration.
+# All jobs default to disabled so the chart is safe to deploy without
+# them. Enable per-environment in the GCP value overlays.
+# Schedules follow standard cron syntax (UTC).
+cronJobs:
+  purge:
+    enabled: false
+    schedule: '17 3 * * *'
+  onboardingEmails:
+    enabled: false
+    schedule: '0 9 * * *'
+  scrapeJobs:
+    enabled: false
+    schedule: '0 6 * * *'
+  pushNotifications:
+    enabled: false
+    schedule: '0 18 * * *'

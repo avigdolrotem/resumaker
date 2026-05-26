@@ -6,7 +6,7 @@ provider "aws" {
       Project     = var.project
       Environment = var.environment
       ManagedBy   = "opentofu"
-      Owner       = "rotem@avigdol.com"
+      Owner       = "ops@resumaker.co.il"
     }
   }
 }

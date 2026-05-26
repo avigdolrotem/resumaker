@@ -1,3 +1,4 @@
+{{- if .Values.cronJobs.purge.enabled }}
 # Daily compliance purge.
 #
 # GET /api/cron/purge does:
@@ -16,7 +17,6 @@
 # Auth: Bearer token via CRON_SECRET (must match the value in the
 # resumaker-app Secret). Curl-from-inside-the-cluster so the secret
 # never leaves the VPC.
-
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -27,7 +27,7 @@ spec:
   # 03:17 UTC daily = 05:17/06:17 Asia/Jerusalem (DST-dependent).
   # Off-peak for the IL audience. Prime-numbered minute avoids
   # the herd of crons that fire on the hour.
-  schedule: '17 3 * * *'
+  schedule: {{ .Values.cronJobs.purge.schedule | quote }}
   timeZone: Etc/UTC
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 7
@@ -71,3 +71,4 @@ spec:
                 limits:
                   cpu: 200m
                   memory: 64Mi
+{{- end }}

@@ -1,0 +1,61 @@
+{{- if .Values.cronJobs.scrapeJobs.enabled }}
+# Job listing scraper.
+#
+# GET /api/cron/scrape-jobs fetches fresh job listings from configured
+# sources and stores them for the job-match feature. Implementation is
+# pending (Track 2) — keep this CronJob disabled until the route exists.
+#
+# Auth: Bearer token via CRON_SECRET (must match the value in the
+# resumaker-app Secret). Curl-from-inside-the-cluster so the secret
+# never leaves the VPC.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "resumaker.fullname" . }}-scrape-jobs
+  labels:
+    {{- include "resumaker.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronJobs.scrapeJobs.schedule | quote }}
+  timeZone: Etc/UTC
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 7
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            {{- include "resumaker.selectorLabels" . | nindent 12 }}
+            job-type: scrape-jobs
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: scrape-jobs
+              image: curlimages/curl:8.10.1
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  curl --fail --show-error --silent \
+                    --max-time 600 \
+                    -H "Authorization: Bearer $CRON_SECRET" \
+                    "http://{{ include "resumaker.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local/api/cron/scrape-jobs"
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "resumaker.fullname" . }}-app
+                      key: CRON_SECRET
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 32Mi
+                limits:
+                  cpu: 200m
+                  memory: 64Mi
+{{- end }}

@@ -6,7 +6,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { headers } from 'next/headers';
-import { eq, desc } from 'drizzle-orm';
+import { and, eq, desc, isNull } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
@@ -62,9 +62,9 @@ export async function POST(req: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'Already sent' }, { status: 400 });
     }
 
-    // Find eligible users: marketingOptIn=true, locale matches
+    // Find eligible users: marketingOptIn=true, not soft-deleted, locale matches
     const users = await db.query.users.findMany({
-      where: eq(schema.users.marketingOptIn, true),
+      where: and(eq(schema.users.marketingOptIn, true), isNull(schema.users.deletedAt)),
       columns: { id: true, email: true, locale: true },
     });
     const recipients = users.filter((u) => u.locale === broadcast.locale);

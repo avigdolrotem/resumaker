@@ -7,7 +7,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { headers } from 'next/headers';
-import { and, gte, lte, eq } from 'drizzle-orm';
+import { and, gte, lte, eq, isNull } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireAdmin } from '@/lib/auth-guards';
 
@@ -33,9 +33,13 @@ export async function GET(_req: NextRequest): Promise<Response> {
     const cohortStart = startOfWeek(addWeeks(now, -i));
     const cohortEnd = addWeeks(cohortStart, 1);
 
-    // Users who signed up this week
+    // Users who signed up this week (exclude soft-deleted)
     const cohortUsers = await db.query.users.findMany({
-      where: and(gte(schema.users.createdAt, cohortStart), lte(schema.users.createdAt, cohortEnd)),
+      where: and(
+        gte(schema.users.createdAt, cohortStart),
+        lte(schema.users.createdAt, cohortEnd),
+        isNull(schema.users.deletedAt),
+      ),
       columns: { id: true },
     });
 

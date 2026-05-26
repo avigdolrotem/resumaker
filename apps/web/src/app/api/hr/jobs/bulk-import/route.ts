@@ -14,6 +14,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { auditEvent } from '@/lib/audit';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 interface CsvRow {
   title: string;
@@ -53,6 +54,15 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (guard instanceof NextResponse) return guard;
   if (guard.user.role !== 'hr' && guard.user.role !== 'admin') {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  // Rate limit: 10 bulk imports per hour per user
+  const rl = await checkRateLimit(`hr-bulk-import:${guard.user.id}`, 10, 3600);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', retryAfterSeconds: rl.resetSeconds },
+      { status: 429 },
+    );
   }
 
   let csvText: string;

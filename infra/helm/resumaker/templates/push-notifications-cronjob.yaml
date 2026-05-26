@@ -1,0 +1,62 @@
+{{- if .Values.cronJobs.pushNotifications.enabled }}
+# Web push notification dispatcher.
+#
+# GET /api/cron/push-notifications sends scheduled push notifications
+# (job alerts, engagement nudges) to opted-in users via the Web Push API.
+# Requires VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, and VAPID_SUBJECT to be
+# set in the resumaker-app Secret.
+#
+# Auth: Bearer token via CRON_SECRET (must match the value in the
+# resumaker-app Secret). Curl-from-inside-the-cluster so the secret
+# never leaves the VPC.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "resumaker.fullname" . }}-push-notifications
+  labels:
+    {{- include "resumaker.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronJobs.pushNotifications.schedule | quote }}
+  timeZone: Etc/UTC
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 7
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            {{- include "resumaker.selectorLabels" . | nindent 12 }}
+            job-type: push-notifications
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: push-notifications
+              image: curlimages/curl:8.10.1
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  curl --fail --show-error --silent \
+                    --max-time 600 \
+                    -H "Authorization: Bearer $CRON_SECRET" \
+                    "http://{{ include "resumaker.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local/api/cron/push-notifications"
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "resumaker.fullname" . }}-app
+                      key: CRON_SECRET
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 32Mi
+                limits:
+                  cpu: 200m
+                  memory: 64Mi
+{{- end }}
