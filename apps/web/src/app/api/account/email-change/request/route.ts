@@ -22,6 +22,7 @@ import { auditEvent } from '@/lib/audit';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { sendEmail } from '@/lib/email/client';
 import { env } from '@/lib/env';
+import { logger } from '@/lib/observability';
 
 const BodySchema = z.object({
   newEmail: z.string().email().max(320),
@@ -57,16 +58,22 @@ export async function POST(req: NextRequest): Promise<Response> {
     return NextResponse.json({ error: 'Wrong current password' }, { status: 401 });
   }
 
-  // Check that new email isn't already taken
+  // Check that new email isn't already taken — return a neutral response
+  // to prevent email enumeration by authenticated users.
   const existing = await db.query.users.findFirst({
     where: eq(schema.users.email, body.newEmail.toLowerCase()),
     columns: { id: true },
   });
   if (existing) {
-    return NextResponse.json(
-      { error: 'That email is already registered to another account' },
-      { status: 409 },
+    logger.warn(
+      { userId: guard.user.id, conflictingEmail: body.newEmail.toLowerCase() },
+      'email_change.request.conflict: target address already registered',
     );
+    return NextResponse.json({
+      success: true,
+      message:
+        "If that address isn't already linked to an account, you'll receive a verification email shortly.",
+    });
   }
 
   const token = randomBytes(32).toString('hex');
@@ -100,5 +107,9 @@ export async function POST(req: NextRequest): Promise<Response> {
     metadata: { kind: 'email_change_requested', expiresAt: expiresAt.toISOString() },
   });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({
+    success: true,
+    message:
+      "If that address isn't already linked to an account, you'll receive a verification email shortly.",
+  });
 }

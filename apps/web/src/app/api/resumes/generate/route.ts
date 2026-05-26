@@ -98,6 +98,15 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
+  // ─── 3b. Bound userProfile size to cap LLM cost / prompt injection surface ───
+  const profileBytes = JSON.stringify(body.userProfile).length;
+  if (profileBytes > 50_000) {
+    return NextResponse.json(
+      { error: 'Profile too large (max 50KB)', code: 'PAYLOAD_TOO_LARGE' },
+      { status: 413 },
+    );
+  }
+
   // ─── 4. Parse JD ───
   let jdResult;
   try {

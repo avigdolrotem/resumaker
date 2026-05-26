@@ -9,7 +9,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, isNull, lt, or, sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
 
@@ -46,14 +46,6 @@ export async function POST(req: NextRequest): Promise<Response> {
     return NextResponse.json({ error: 'Cannot refer yourself' }, { status: 400 });
   }
 
-  // Check max uses
-  if (codeRow.maxUses !== null && codeRow.usageCount >= codeRow.maxUses) {
-    return NextResponse.json(
-      { error: 'This referral code has reached its limit' },
-      { status: 400 },
-    );
-  }
-
   // Check if this user was already referred
   const existing = await db.query.referrals.findFirst({
     where: eq(schema.referrals.referredId, referredId),
@@ -63,19 +55,45 @@ export async function POST(req: NextRequest): Promise<Response> {
     return NextResponse.json({ error: 'Already referred' }, { status: 409 });
   }
 
-  // Insert referral + increment usage count atomically
-  await db.transaction(async (tx) => {
-    await tx.insert(schema.referrals).values({
-      referrerId: codeRow.ownerId,
-      referredId,
-      status: 'pending',
-    });
+  // Insert referral + increment usage count atomically.
+  // The maxUses check is now INSIDE the transaction via a conditional UPDATE
+  // that only increments if usageCount < maxUses — closing the TOCTOU window
+  // between the pre-transaction read and the actual write.
+  try {
+    await db.transaction(async (tx) => {
+      const incrementResult = await tx
+        .update(schema.referralCodes)
+        .set({ usageCount: sql`${schema.referralCodes.usageCount} + 1` })
+        .where(
+          and(
+            eq(schema.referralCodes.id, codeRow.id),
+            or(
+              isNull(schema.referralCodes.maxUses),
+              lt(schema.referralCodes.usageCount, schema.referralCodes.maxUses),
+            ),
+          ),
+        )
+        .returning({ id: schema.referralCodes.id });
 
-    await tx
-      .update(schema.referralCodes)
-      .set({ usageCount: sql`${schema.referralCodes.usageCount} + 1` })
-      .where(eq(schema.referralCodes.id, codeRow.id));
-  });
+      if (incrementResult.length === 0) {
+        throw new Error('REFERRAL_LIMIT_REACHED');
+      }
+
+      await tx.insert(schema.referrals).values({
+        referrerId: codeRow.ownerId,
+        referredId,
+        status: 'pending',
+      });
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'REFERRAL_LIMIT_REACHED') {
+      return NextResponse.json(
+        { error: 'This referral code has reached its limit' },
+        { status: 400 },
+      );
+    }
+    throw err;
+  }
 
   return NextResponse.json({ success: true }, { status: 201 });
 }

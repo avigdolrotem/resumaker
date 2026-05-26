@@ -178,10 +178,7 @@ Write the cover letter body.`;
       },
     });
   } catch (err) {
-    return NextResponse.json(
-      { error: `Generation failed: ${(err as Error).message}` },
-      { status: 502 },
-    );
+    return NextResponse.json({ error: 'Generation failed' }, { status: 502 });
   }
 }
 

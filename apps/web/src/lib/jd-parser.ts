@@ -103,8 +103,22 @@ async function fetchUrl(url: string): Promise<string> {
     throw new Error('Only HTTP(S) URLs allowed');
   }
 
-  // Quick hostname-string check (catches plaintext private IPs in the URL)
+  // Quick hostname-string check (catches plaintext private IPs in the URL).
+  // This also covers bare-IP inputs (e.g. http://192.168.1.1/) — the
+  // isPrivateHostname check runs on the raw hostname before any DNS
+  // resolution, so a bare private IP never reaches fetch().
   if (isPrivateHostname(parsed.hostname)) {
+    throw new Error('Private hosts not allowed');
+  }
+
+  // Additional reserved ranges not covered by the named-host check:
+  // 0.0.0.0/8 (this-network), 240.0.0.0/4 (reserved/future use).
+  // These can appear as bare IPs in URLs and skip DNS resolution entirely.
+  const rawHost = parsed.hostname.replace(/^\[|\]$/g, ''); // strip IPv6 brackets
+  if (/^0\./.test(rawHost)) {
+    throw new Error('Private hosts not allowed');
+  }
+  if (/^24[0-9]\.|^25[0-5]\./.test(rawHost)) {
     throw new Error('Private hosts not allowed');
   }
 

@@ -13,7 +13,7 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { and, isNotNull, lt, sql } from 'drizzle-orm';
+import { and, inArray, isNotNull, lt, sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { env } from '@/lib/env';
 import { auditEvent } from '@/lib/audit';
@@ -46,6 +46,19 @@ export async function GET(req: NextRequest): Promise<Response> {
     .where(and(isNotNull(schema.users.deletedAt), lt(schema.users.deletedAt, grace)))
     .returning({ id: schema.users.id });
   results.usersHardDeleted = deletedUsers.length;
+
+  // 1a. GDPR Art. 17 unlinkability: nullify audit_log.user_id for hard-deleted
+  //     users so the data subject is no longer identifiable in log records.
+  //     The log rows themselves are retained for legitimate-interest purposes.
+  if (deletedUsers.length > 0) {
+    const purgedUserIds = deletedUsers.map((u) => u.id);
+    await db
+      .update(schema.auditLog)
+      .set({ userId: null })
+      .where(
+        and(isNotNull(schema.auditLog.userId), inArray(schema.auditLog.userId, purgedUserIds)),
+      );
+  }
 
   // 2. Clean up expired verification tokens (Better Auth doesn't TTL these)
   const deletedVerifications = await db

@@ -13,6 +13,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { extractClientIp } from '@/lib/ip';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/observability';
+import { hashIp } from '@/lib/audit';
 
 export const runtime = 'nodejs';
 
@@ -103,7 +104,7 @@ Respond with ONLY a JSON object (no markdown):
     // Log the real error so Sentry sees LLM outages, rate-limits, parse
     // failures — previously this was a bare `catch {}` swallowing
     // everything.
-    logger.error({ err: (err as Error).message, ip }, 'tools.ats_scanner.failed');
+    logger.error({ err: (err as Error).message, ipHash: hashIp(ip) }, 'tools.ats_scanner.failed');
     return NextResponse.json({ error: 'Scan failed. Please try again.' }, { status: 500 });
   }
 }

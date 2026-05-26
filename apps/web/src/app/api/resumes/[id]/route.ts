@@ -92,14 +92,24 @@ export async function PATCH(
     });
   }
 
-  await db
+  const patchResult = await db
     .update(schema.resumes)
     .set({
       ...(body.title ? { title: body.title } : {}),
       ...(body.content ? { content: body.content, locale: body.content.metadata.language } : {}),
       updatedAt: new Date(),
     })
-    .where(eq(schema.resumes.id, id));
+    .where(
+      and(
+        eq(schema.resumes.id, id),
+        eq(schema.resumes.userId, session.user.id),
+        isNull(schema.resumes.deletedAt),
+      ),
+    )
+    .returning({ id: schema.resumes.id });
+  if (patchResult.length === 0) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
 
   auditEvent({
     userId: session.user.id,
@@ -125,7 +135,20 @@ export async function DELETE(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  await db.update(schema.resumes).set({ deletedAt: new Date() }).where(eq(schema.resumes.id, id));
+  const deleteResult = await db
+    .update(schema.resumes)
+    .set({ deletedAt: new Date() })
+    .where(
+      and(
+        eq(schema.resumes.id, id),
+        eq(schema.resumes.userId, session.user.id),
+        isNull(schema.resumes.deletedAt),
+      ),
+    )
+    .returning({ id: schema.resumes.id });
+  if (deleteResult.length === 0) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
 
   return NextResponse.json({ success: true });
 }

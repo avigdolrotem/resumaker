@@ -6,7 +6,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { headers } from 'next/headers';
-import { and, gte, ne, count } from 'drizzle-orm';
+import { and, gte, ne, count, isNull } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireAdmin } from '@/lib/auth-guards';
 
@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest): Promise<Response> {
   const [signupsRow] = await db
     .select({ count: count() })
     .from(schema.users)
-    .where(gte(schema.users.createdAt, since));
+    .where(and(gte(schema.users.createdAt, since), isNull(schema.users.deletedAt)));
 
   // Users who created at least one resume in last 30 days
   const firstResumeRows = await db

@@ -11,6 +11,7 @@
 import { NextResponse } from 'next/server';
 import { sql } from 'drizzle-orm';
 import { db } from '@/db';
+import { logger } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,7 +19,6 @@ export const dynamic = 'force-dynamic';
 interface DependencyStatus {
   status: 'ok' | 'down';
   latencyMs?: number;
-  error?: string;
 }
 
 export async function GET(): Promise<Response> {
@@ -30,7 +30,8 @@ export async function GET(): Promise<Response> {
     await db.execute(sql`SELECT 1`);
     checks.database = { status: 'ok', latencyMs: Date.now() - dbStart };
   } catch (err) {
-    checks.database = { status: 'down', error: (err as Error).message };
+    logger.error({ err: (err as Error).message }, 'health.ready: database check failed');
+    checks.database = { status: 'down' };
   }
 
   // Redis — non-blocking (if down, rate-limit fails open per design)
@@ -48,7 +49,8 @@ export async function GET(): Promise<Response> {
       await client.disconnect();
       checks.redis = { status: 'ok', latencyMs: Date.now() - redisStart };
     } catch (err) {
-      checks.redis = { status: 'down', error: (err as Error).message };
+      logger.error({ err: (err as Error).message }, 'health.ready: redis check failed');
+      checks.redis = { status: 'down' };
     }
   }
 
