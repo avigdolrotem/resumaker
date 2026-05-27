@@ -200,19 +200,10 @@ spec:
                   name: {{ include "resumaker.fullname" . }}-app
                   key: GITHUB_CLIENT_SECRET
                   optional: true
-            # DB URL from the Cloud SQL-managed secret
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "resumaker.fullname" . }}-db
-                  key: url
-            # Redis URL — rate limiter falls back to in-memory (not safe in prod)
-            # if this is unset, so verify the ExternalSecret syncs before launch.
-            - name: REDIS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "resumaker.fullname" . }}-redis
-                  key: url
+            # DATABASE_URL is intentionally not set — the app uses the
+            # Cloud SQL Connector via IAM (GCP_CLOUD_SQL_INSTANCE +
+            # GCP_CLOUD_SQL_IAM_USER) so no connection string is needed.
+            # REDIS_URL is provided via .Values.env above.
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
           readinessProbe:

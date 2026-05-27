@@ -44,10 +44,21 @@ networkPolicy:
   enabled: true
   vpcCidr: 10.2.0.0/16
 
+# Non-secret app config. Real secrets come from the ExternalSecret-managed
+# `resumaker-app` k8s Secret (or — currently — a kubectl-applied Secret of
+# the same name; see Phase 9 reconciliation).
 env:
   NODE_ENV: production
   APP_URL: https://resumaker.co.il
+  NEXT_PUBLIC_APP_URL: https://resumaker.co.il
   LOG_LEVEL: info
+  GCP_CLOUD_SQL_INSTANCE: resumaker-497309:europe-west1:resumaker-prod-pg-1b94
+  GCP_CLOUD_SQL_IAM_USER: resumaker-app@resumaker-497309.iam.gserviceaccount.com
+  GCP_CLOUD_SQL_DATABASE: resumaker
+  GCP_CLOUD_SQL_IP_TYPE: PRIVATE
+  GOOGLE_VERTEX_PROJECT: resumaker-497309
+  GOOGLE_VERTEX_LOCATION: europe-west1
+  REDIS_URL: rediss://10.130.0.4:6378
 
 # ExternalSecrets — pulls from GCP Secret Manager via Workload Identity.
 externalSecrets:
@@ -55,9 +66,12 @@ externalSecrets:
   refreshInterval: '5m'
   secretStoreName: resumaker-prod-secretstore
 
-# Service account with Workload Identity for GCP API access
+# Service account with Workload Identity for GCP API access.
+# Name pinned to `resumaker-app` so the WIF binding + ClusterSecretStore
+# serviceAccountRef both resolve to the same KSA.
 serviceAccount:
   create: true
+  name: resumaker-app
   annotations:
     iam.gke.io/gcp-service-account: resumaker-app@resumaker-497309.iam.gserviceaccount.com
 

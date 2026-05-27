@@ -12,7 +12,7 @@ import { eq } from 'drizzle-orm';
 import { after } from 'next/server';
 import { db } from '@/db';
 import { schema } from '@/db/schema';
-import { sendEmail, emailConfig } from '@/lib/email/client';
+import { sendEmail } from '@/lib/email/client';
 import { emailVerification, passwordReset, welcome } from '@/lib/email/templates';
 import { auditEvent, hashIp } from '@/lib/audit';
 import { env } from '@/lib/env';
@@ -86,9 +86,11 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
-    // Verification required when email service is live. Dev mode logs
-    // to console so flow can be tested without Resend.
-    requireEmailVerification: emailConfig.isLive,
+    // Always require verification — accounts can't sign in until the
+    // user clicks the verification link in their email. In dev (no
+    // RESEND_API_KEY) the email is logged to console, so a developer
+    // can still copy the URL and finish the flow.
+    requireEmailVerification: true,
     minPasswordLength: 12,
     maxPasswordLength: 256,
     sendResetPassword: async ({ user, url }) => {
