@@ -24,29 +24,44 @@ interface DependencyStatus {
 export async function GET(): Promise<Response> {
   const checks: Record<string, DependencyStatus> = {};
 
-  // Postgres
+  // Postgres — wrap in a hard 2s timeout so a stuck pool doesn't
+  // make the readiness probe hang the entire LB health check (which
+  // previously caused /api/health/ready to time out at 15s without
+  // ever logging a real failure cause).
   const dbStart = Date.now();
   try {
-    await db.execute(sql`SELECT 1`);
+    await Promise.race([
+      db.execute(sql`SELECT 1`),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('db timeout (2s)')), 2000)),
+    ]);
     checks.database = { status: 'ok', latencyMs: Date.now() - dbStart };
   } catch (err) {
     logger.error({ err: (err as Error).message }, 'health.ready: database check failed');
     checks.database = { status: 'down' };
   }
 
-  // Redis — non-blocking (if down, rate-limit fails open per design)
+  // Redis — non-blocking (if down, rate-limit fails closed per design).
+  // 1s connectTimeout, 1.5s overall race so a TLS-handshake stall on
+  // Memorystore can't tie up the probe past its timeout.
   const redisUrl = process.env.REDIS_URL;
   if (redisUrl) {
+    const redisStart = Date.now();
     try {
       const { createClient } = await import('redis');
-      const redisStart = Date.now();
       const client = createClient({ url: redisUrl, socket: { connectTimeout: 1000 } });
       client.on('error', () => {
         /* swallow; we handle below */
       });
-      await client.connect();
-      await client.ping();
-      await client.disconnect();
+      await Promise.race([
+        (async () => {
+          await client.connect();
+          await client.ping();
+          await client.disconnect();
+        })(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('redis timeout (1.5s)')), 1500),
+        ),
+      ]);
       checks.redis = { status: 'ok', latencyMs: Date.now() - redisStart };
     } catch (err) {
       logger.error({ err: (err as Error).message }, 'health.ready: redis check failed');

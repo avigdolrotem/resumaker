@@ -25,6 +25,15 @@ resource "google_compute_subnetwork" "main" {
     range_name    = "${local.name_prefix}-services"
     ip_cidr_range = var.services_cidr
   }
+
+  # VPC flow logs — costs ~$2/mo at 50% sampling but gives us NetFlow-
+  # style traffic forensics if we have a security incident. Closes
+  # Trivy GCP-0076 (snapshot security finding).
+  log_config {
+    aggregation_interval = "INTERVAL_5_SEC"
+    flow_sampling        = 0.5
+    metadata             = "INCLUDE_ALL_METADATA"
+  }
 }
 
 # Private services range for Cloud SQL + Memorystore VPC peering.
