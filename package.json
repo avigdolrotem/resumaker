@@ -24,7 +24,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
     "security:secrets": "gitleaks detect --source . --verbose",
-    "security:deps": "pnpm audit --audit-level=moderate",
+    "security:deps": "pnpm audit --audit-level=high --prod",
     "security:iac": "trivy config infra/",
     "security:all": "pnpm security:secrets && pnpm security:deps && pnpm security:iac",
     "infra:fmt": "tofu -chdir=infra/tofu fmt -recursive",
