@@ -1,14 +1,14 @@
 # Egress allowances for the resumaker-web pods.
 #
 # Allowed:
-#   - DNS                  (kube-dns in kube-system, both UDP+TCP 53)
-#   - RDS                  (private CIDR, port 5432)
-#   - ElastiCache Redis    (private CIDR, port 6379)
-#   - HTTPS to internet    (Anthropic, Resend, Stripe/LS APIs, OAuth providers)
+#   - DNS                    (kube-dns in kube-system, both UDP+TCP 53)
+#   - Cloud SQL              (private services CIDR, port 5432)
+#   - Memorystore Redis      (private services CIDR, port 6379)
+#   - HTTPS to internet      (AI Gateway, Resend, Stripe/LS APIs, OAuth providers)
 #
 # Blocked by default-deny + omission:
-#   - IMDS metadata (169.254.169.254) — IMDSv2 also requires a token,
-#     but blocking here defense-in-depth
+#   - GCP Metadata server (169.254.169.254) — Workload Identity also
+#     requires a token, but blocking here is defense-in-depth
 #   - Pod-to-pod traffic in other namespaces
 #   - SMTP / IMAP / arbitrary TCP
 
@@ -38,19 +38,20 @@ spec:
         - protocol: TCP
           port: 53
 
-    # RDS Postgres in private VPC CIDR (matches network module's 10.0.0.0/16)
+    # Cloud SQL + Memorystore reachable via Private Services Access from
+    # the VPC CIDR (matches network module's 10.0.0.0/16).
     - to:
         - ipBlock:
             cidr: 10.0.0.0/16
             except:
-              - 169.254.169.254/32 # explicitly block AWS IMDS even within VPC
+              - 169.254.169.254/32 # explicitly block GCP Metadata Server
       ports:
         - protocol: TCP
           port: 5432
         - protocol: TCP
           port: 6379
 
-    # Outbound HTTPS for external APIs (Anthropic, Resend, Stripe, LS, OAuth)
+    # Outbound HTTPS for external APIs (AI Gateway, Resend, Stripe, LS, OAuth)
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0

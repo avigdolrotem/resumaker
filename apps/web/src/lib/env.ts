@@ -6,7 +6,7 @@
  *
  * Usage:
  *   import { env } from '@/lib/env';
- *   env.ANTHROPIC_API_KEY  // typed string
+ *   env.AI_GATEWAY_API_KEY  // typed string | undefined
  */
 
 import { z } from 'zod';
@@ -69,12 +69,8 @@ const EnvSchema = z
     GITHUB_CLIENT_SECRET: z.string().optional(),
 
     // LLM — model strings use AI Gateway format `provider/model`.
-    // ANTHROPIC_API_KEY stays optional during the migration; remove once
-    // all call-sites use the gateway-backed provider (Phase 3 of this plan).
-    ANTHROPIC_API_KEY: z
-      .string()
-      .regex(/^sk-ant-/, 'Invalid Anthropic API key')
-      .optional(),
+    // All call-sites route through the Vercel AI Gateway; no direct
+    // provider keys are read by the app.
     AI_GATEWAY_API_KEY: z.string().min(1).optional(),
     DEFAULT_LLM_MODEL: z
       .string()
@@ -98,9 +94,8 @@ const EnvSchema = z
     RATE_LIMIT_PER_USER_PER_HOUR: z.coerce.number().int().positive().default(10),
     RATE_LIMIT_PER_IP_PER_HOUR: z.coerce.number().int().positive().default(20),
 
-    // AWS
-    AWS_REGION: z.string().default('il-central-1'),
-    AWS_S3_BUCKET: z.string().optional(),
+    // File storage (GCS — Workload Identity provides creds at runtime)
+    GCS_BUCKET: z.string().optional(),
 
     // Payment provider selection.
     //   'none'         — no payments (free tier only). Pricing page shows waitlist CTA.

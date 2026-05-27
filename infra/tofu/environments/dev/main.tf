@@ -1,19 +1,90 @@
+locals {
+  env = "dev"
+}
+
 module "network" {
   source = "../../modules/network"
 
-  project     = var.project
-  environment = var.environment
-  vpc_cidr    = var.vpc_cidr
-  azs         = ["${var.aws_region}a", "${var.aws_region}b"]
-
-  # Cost-saving for dev: single NAT
-  single_nat_gateway = true
+  project_id            = var.project_id
+  region                = var.region
+  env                   = local.env
+  vpc_cidr              = "10.0.0.0/16"
+  subnet_cidr           = "10.0.1.0/24"
+  pods_cidr             = "10.0.16.0/20"
+  services_cidr         = "10.0.32.0/20"
+  private_services_cidr = "10.128.0.0/16"
 }
 
-# Future modules:
-# module "eks" { ... }
-# module "rds" { ... }
-# module "redis" { ... }
-# module "s3" { ... }
-# module "secrets" { ... }
-# module "route53" { ... }
+module "workload_identity" {
+  source = "../../modules/workload-identity"
+
+  project_id  = var.project_id
+  env         = local.env
+  github_repo = var.github_repo
+}
+
+module "secrets" {
+  source = "../../modules/secrets"
+
+  project_id = var.project_id
+  env        = local.env
+  accessor_service_accounts = [
+    module.workload_identity.app_service_account_email,
+    module.workload_identity.cicd_service_account_email,
+  ]
+}
+
+module "cloudsql" {
+  source = "../../modules/cloudsql"
+
+  project_id                        = var.project_id
+  region                            = var.region
+  env                               = local.env
+  network_id                        = module.network.network_self_link
+  private_services_connection_ready = module.network.private_services_connection
+  tier                              = "db-g1-small"
+
+  iam_user_emails = [
+    module.workload_identity.app_service_account_email,
+  ]
+}
+
+module "memorystore" {
+  source = "../../modules/memorystore"
+
+  project_id                        = var.project_id
+  region                            = var.region
+  env                               = local.env
+  network_id                        = module.network.network_self_link
+  private_services_connection_ready = module.network.private_services_connection
+}
+
+module "artifactregistry" {
+  source = "../../modules/artifactregistry"
+
+  project_id = var.project_id
+  region     = var.region
+
+  writer_service_accounts = [
+    module.workload_identity.cicd_service_account_email,
+  ]
+}
+
+module "gcs" {
+  source = "../../modules/gcs"
+
+  project_id = var.project_id
+  buckets    = {}
+}
+
+module "gke" {
+  source = "../../modules/gke"
+
+  project_id          = var.project_id
+  region              = var.region
+  env                 = local.env
+  network_self_link   = module.network.network_self_link
+  subnet_self_link    = module.network.subnet_self_link
+  pods_range_name     = module.network.pods_range_name
+  services_range_name = module.network.services_range_name
+}

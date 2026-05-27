@@ -7,7 +7,7 @@
  * Also cleans up expired verification tokens (>7d old).
  *
  * Auth: requires the CRON_SECRET header (set on the scheduler side).
- * Run via Vercel Cron (vercel.json) or k8s CronJob hitting this URL.
+ * Triggered by a GKE CronJob hitting this URL with the secret header.
  *
  * Idempotent — safe to retry.
  */

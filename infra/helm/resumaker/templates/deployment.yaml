@@ -200,7 +200,7 @@ spec:
                   name: {{ include "resumaker.fullname" . }}-app
                   key: GITHUB_CLIENT_SECRET
                   optional: true
-            # DB URL from the RDS-managed secret
+            # DB URL from the Cloud SQL-managed secret
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:

@@ -7,10 +7,10 @@
  *   - In the browser: use the CURRENT origin (window.location.origin).
  *     This is critical because the build-time NEXT_PUBLIC_APP_URL is
  *     baked into the bundle once — if it's `https://resumaker.co.il`
- *     but the user is browsing a `*.vercel.app` preview URL (or local
- *     network IP, or any other host), cross-origin fetches CORS-fail
- *     with the Safari error "Load failed". Same-origin makes the
- *     client work on whatever URL the user happens to be on.
+ *     but the user is browsing a preview URL, a local network IP, or
+ *     any other host, cross-origin fetches CORS-fail with the Safari
+ *     error "Load failed". Same-origin makes the client work on
+ *     whatever URL the user happens to be on.
  *   - During SSR (process.env.NEXT_PUBLIC_APP_URL): used as the
  *     fallback. SSR never actually calls the auth client's mutations,
  *     but createAuthClient wants a valid URL at construction time.

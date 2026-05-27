@@ -1,23 +1,14 @@
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "us-east-1"
+variable "project_id" {
+  type    = string
+  default = "resumaker-dev"
 }
 
-variable "environment" {
-  description = "Deployment environment"
-  type        = string
-  default     = "dev"
+variable "region" {
+  type    = string
+  default = "europe-west1"
 }
 
-variable "project" {
-  description = "Project identifier"
-  type        = string
-  default     = "resumaker"
-}
-
-variable "vpc_cidr" {
-  description = "VPC CIDR for dev"
-  type        = string
-  default     = "10.10.0.0/16"
+variable "github_repo" {
+  type    = string
+  default = "resumaker/resumaker"
 }

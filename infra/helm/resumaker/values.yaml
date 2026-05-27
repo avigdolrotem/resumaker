@@ -1,7 +1,7 @@
 # Default values — override per environment via values.dev.yaml / values.prod.yaml
 
 image:
-  repository: '' # ECR URL injected by CI: <account>.dkr.ecr.<region>.amazonaws.com/resumaker-prod/web
+  repository: '' # Artifact Registry URL injected by CI: <region>-docker.pkg.dev/<project>/resumaker/web
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -28,21 +28,17 @@ service:
 
 ingress:
   enabled: true
-  className: alb # AWS Load Balancer Controller
+  className: gce # GKE Ingress (Google Cloud Load Balancing)
   annotations:
-    alb.ingress.kubernetes.io/scheme: internal
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
-    alb.ingress.kubernetes.io/healthcheck-path: /api/health
-    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '15'
-    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    kubernetes.io/ingress.class: gce
+    # Per-env overlay sets the actual ManagedCertificate name.
+    # networking.gke.io/managed-certificates: resumaker-<env>-cert
   hosts:
     - host: resumaker.co.il
       paths:
         - path: /
           pathType: Prefix
-  tls: [] # ACM cert handled at the ALB level via the cert annotation
+  tls: [] # TLS handled by GCP ManagedCertificate (per-env overlay)
 
 # Probes — hit our /api/health endpoints
 livenessProbe:
@@ -61,7 +57,7 @@ readinessProbe:
   periodSeconds: 5
   failureThreshold: 3
 
-# Env injected from AWS Secrets Manager via external-secrets-operator
+# Env injected from GCP Secret Manager via external-secrets-operator
 # (see templates/externalsecret.yaml). Plain envs:
 env:
   NODE_ENV: production
@@ -74,21 +70,22 @@ env:
   LOG_LEVEL: info
   PLAYWRIGHT_FALLBACK: 'true'
 
-# Pulled from Secrets Manager (managed by external-secrets-operator)
+# Pulled from GCP Secret Manager (managed by external-secrets-operator)
 secretsManagerName: resumaker-prod/app
 
-# DB credentials come from RDS-managed secret separately
+# DB credentials come from a Cloud SQL-managed secret separately
 dbCredentialsSecretName: resumaker-prod/db-credentials
 
 podDisruptionBudget:
   enabled: true
   minAvailable: 1
 
-# Service account with IRSA for AWS API access
+# Service account with Workload Identity for GCP API access (Cloud SQL,
+# Secret Manager, GCS). The per-env overlay sets the actual annotation:
+#   iam.gke.io/gcp-service-account: resumaker-app@resumaker-<env>.iam.gserviceaccount.com
 serviceAccount:
   create: true
   annotations: {}
-  # eks.amazonaws.com/role-arn: arn:aws:iam::<account>:role/resumaker-prod-web
 
 securityContext:
   runAsNonRoot: true
