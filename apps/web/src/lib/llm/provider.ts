@@ -1,20 +1,49 @@
 /**
- * Provider-agnostic wrapper over Vercel AI Gateway + AI SDK v6.
+ * Provider-agnostic wrapper over GCP Vertex AI + AI SDK v6.
  *
  * The rest of the app uses these two functions instead of touching `ai`
- * or `@ai-sdk/anthropic` directly. That keeps provider swaps (or even
- * pulling the gateway out) a single-file diff.
+ * or `@ai-sdk/google-vertex` directly. That keeps provider swaps a
+ * single-file diff.
+ *
+ * Routing — the model string is `provider/model`:
+ *   - `anthropic/X` → Claude on Vertex (vertexAnthropic provider)
+ *   - `google/X`    → Gemini on Vertex (vertex provider)
+ *
+ * Auth: Vertex uses Application Default Credentials. In GKE pods this
+ * resolves through Workload Identity to the resumaker-app SA, which has
+ * `roles/aiplatform.user`. In local dev: `gcloud auth application-default
+ * login` once and you're set.
  */
 import {
   generateText as aiGenerateText,
   generateObject as aiGenerateObject,
   type LanguageModelUsage,
 } from 'ai';
-import { gateway } from '@ai-sdk/gateway';
+import { vertex } from '@ai-sdk/google-vertex';
+import { vertexAnthropic } from '@ai-sdk/google-vertex/anthropic';
 import type { ZodSchema } from 'zod';
 
+/** Resolve `provider/model` to a Vertex-backed AI SDK model. */
+function resolveModel(modelString: string) {
+  const slash = modelString.indexOf('/');
+  if (slash === -1) {
+    throw new Error(`Invalid model string "${modelString}" — expected "provider/model"`);
+  }
+  const provider = modelString.slice(0, slash);
+  const modelId = modelString.slice(slash + 1);
+
+  switch (provider) {
+    case 'anthropic':
+      return vertexAnthropic(modelId);
+    case 'google':
+      return vertex(modelId);
+    default:
+      throw new Error(`Unsupported provider "${provider}" — use 'anthropic' or 'google'`);
+  }
+}
+
 export interface GenerateTextArgs {
-  /** Gateway-format model string, e.g. `anthropic/claude-haiku-4-5`. */
+  /** Format: `provider/model`, e.g. `anthropic/claude-sonnet-4-5@20250929`. */
   model: string;
   prompt: string;
   system?: string;
@@ -29,7 +58,7 @@ export interface GenerateTextResult {
 
 export async function generateText(args: GenerateTextArgs): Promise<GenerateTextResult> {
   const result = await aiGenerateText({
-    model: gateway(args.model),
+    model: resolveModel(args.model),
     prompt: args.prompt,
     ...(args.system !== undefined && { system: args.system }),
     ...(args.maxOutputTokens !== undefined && { maxOutputTokens: args.maxOutputTokens }),
@@ -44,7 +73,6 @@ export interface GenerateObjectArgs<T> {
   prompt: string;
   system?: string;
   maxOutputTokens?: number;
-  /** Name used by some providers for tool-use-style structured output. */
   schemaName?: string;
   schemaDescription?: string;
 }
@@ -58,7 +86,7 @@ export async function generateObject<T>(
   args: GenerateObjectArgs<T>,
 ): Promise<GenerateObjectResult<T>> {
   const result = await aiGenerateObject({
-    model: gateway(args.model),
+    model: resolveModel(args.model),
     schema: args.schema,
     prompt: args.prompt,
     ...(args.system !== undefined && { system: args.system }),
