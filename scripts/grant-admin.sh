@@ -128,9 +128,21 @@ if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
   exit 0
 fi
 
-# Promote
-psql "$DSN" -c \
-  "UPDATE users SET role = 'admin', updated_at = now() WHERE id = '$USER_ID' AND deleted_at IS NULL;"
+# Promote + clear sessions in one transaction so the next request
+# from this user picks up the new role without a manual sign-out.
+# Better Auth re-issues a session on /api/auth/get-session if the
+# cookie has no matching row in the `sessions` table.
+psql "$DSN" <<SQL
+BEGIN;
+UPDATE users SET role = 'admin', updated_at = now()
+  WHERE id = '$USER_ID' AND deleted_at IS NULL;
+INSERT INTO audit_log (id, user_id, event, metadata, created_at)
+  VALUES (gen_random_uuid(), '$USER_ID', 'admin_granted',
+          jsonb_build_object('email', '$EMAIL', 'via', 'grant-admin.sh'),
+          now());
+DELETE FROM sessions WHERE user_id = '$USER_ID';
+COMMIT;
+SQL
 
 # Verify
 AFTER=$(psql "$DSN" -tAX -c "SELECT role FROM users WHERE id = '$USER_ID';")
@@ -140,6 +152,5 @@ if [[ "$AFTER" != "admin" ]]; then
 fi
 
 echo "✅ $EMAIL is now admin in $PROJECT_ID."
-echo
-echo "Note: the user must sign out and back in for the new role to take effect"
-echo "(role is read off the session at request time)."
+echo "   Sessions cleared — next request from this user re-auths and"
+echo "   picks up the new role automatically. audit_log row written."

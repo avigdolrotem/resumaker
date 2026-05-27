@@ -15,6 +15,7 @@ import { ResumePreview } from '@/components/resume-preview';
 import { VersionHistory } from '@/components/version-history';
 import { TemplatePicker, type TemplateId } from '@/components/template-picker';
 import { BuilderModeToggle, type BuilderMode } from '@/components/builder/builder-mode-toggle';
+import { ModelPicker } from '@/components/builder/model-picker';
 import { AdvancedEditor } from '@/components/builder/advanced-editor';
 import { ImportModal } from '@/components/builder/import-modal';
 import { FitScorePanel } from '@/components/builder/fit-score-panel';
@@ -398,7 +399,16 @@ export default function BuilderPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
-        <BuilderModeToggle mode={mode} onChange={setMode} />
+        <div className="flex items-center gap-3">
+          {/* AI engine picker — hidden for free tier (tier check happens
+              inside the component, which fetches /api/user/llm-model).
+              Plus/Pro users see this so they don't have to detour to
+              Settings → AI tab to switch models mid-build. Admin gets
+              effective tier 'pro' via lib/billing/tier.getUserTier so
+              the picker shows the full catalog for them. */}
+          <ModelPicker />
+          <BuilderModeToggle mode={mode} onChange={setMode} />
+        </div>
       </div>
 
       {mode === 'advanced' && (

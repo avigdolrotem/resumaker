@@ -18,12 +18,28 @@ import { TIER_LIMITS, DEFAULT_TIER, type Tier } from './limits';
  * Look up a user's current tier. Returns `'free'` if no subscription
  * row exists (i.e. user hasn't been migrated yet, or row was deleted).
  * Cached for the request — call freely.
+ *
+ * Admin override: users with `role='admin'` get effective tier `'pro'`
+ * regardless of their actual subscription. Admin is an internal flag,
+ * not a billed state — we don't write a Pro subscription row, we just
+ * gate feature checks. This is the single source of truth for that
+ * promotion; every gate that calls getUserTier picks it up for free.
  */
 export async function getUserTier(userId: string): Promise<Tier> {
-  const sub = await db.query.subscriptions.findFirst({
-    where: eq(schema.subscriptions.userId, userId),
-    columns: { tier: true, status: true, currentPeriodEnd: true },
-  });
+  // Run role lookup + sub lookup in parallel — neither blocks the other
+  // and both are tiny indexed reads.
+  const [sub, user] = await Promise.all([
+    db.query.subscriptions.findFirst({
+      where: eq(schema.subscriptions.userId, userId),
+      columns: { tier: true, status: true, currentPeriodEnd: true },
+    }),
+    db.query.users.findFirst({
+      where: eq(schema.users.id, userId),
+      columns: { role: true },
+    }),
+  ]);
+
+  if (user?.role === 'admin') return 'pro';
 
   if (!sub) return DEFAULT_TIER;
 
@@ -115,6 +131,16 @@ export function canChooseLLM(tier: Tier): GateResult {
     return deny('billing.gate.model_choice', 'plus');
   }
   return ALLOW;
+}
+
+/**
+ * Pure-function variant of getUserTier for callers that already have
+ * the role + tier in memory (server components handed a `users` row,
+ * tests, etc). Mirrors the admin override.
+ */
+export function effectiveTier(user: { role?: string | null; tier?: Tier | null }): Tier {
+  if (user.role === 'admin') return 'pro';
+  return (user.tier ?? DEFAULT_TIER) as Tier;
 }
 
 /** Can the user use a specific template? */
