@@ -59,3 +59,23 @@ resource "google_project_iam_member" "cicd_roles" {
   role    = each.key
   member  = "serviceAccount:${google_service_account.cicd.email}"
 }
+
+# GKE Workload Identity bindings on the app GSA.
+#
+# Two principalSets bind here:
+#   1. resumaker/resumaker-app — the app pods themselves (Vertex AI,
+#      Cloud SQL, Secret Manager direct reads, etc).
+#   2. external-secrets/external-secrets — the ESO operator KSA, so
+#      it can impersonate the app GSA to sync Secret Manager values
+#      into the `resumaker-app` k8s Secret. Without this binding ESO
+#      throws "iam.serviceAccounts.getAccessToken denied" when it
+#      tries to assume the GSA from the external-secrets namespace.
+resource "google_service_account_iam_member" "app_workload_identity_users" {
+  for_each = toset([
+    "serviceAccount:${var.project_id}.svc.id.goog[resumaker/resumaker-app]",
+    "serviceAccount:${var.project_id}.svc.id.goog[external-secrets/external-secrets]",
+  ])
+  service_account_id = google_service_account.app.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = each.key
+}
