@@ -11,13 +11,16 @@ variable "secret_names" {
   type        = list(string)
   default = [
     "anthropic-api-key",
-    "ai-gateway-api-key",
     "better-auth-secret",
     "ip-hash-salt",
     "cron-secret",
     "resend-api-key",
     "sentry-dsn",
     "vapid-private-key",
+    "google-client-id",
+    "google-client-secret",
+    "github-client-id",
+    "github-client-secret",
     "stripe-secret-key",
     "stripe-webhook-secret",
     "lemonsqueezy-api-key",
