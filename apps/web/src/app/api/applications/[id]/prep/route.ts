@@ -42,7 +42,7 @@ export async function POST(
 
   try {
     const response = await generateText({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'anthropic/claude-haiku-4-5@20251001',
       maxOutputTokens: 2000,
       system:
         'You generate concise interview preparation material. Return ONLY a JSON object with these exact keys: questions (array of likely interview questions, 8-12 items), questionsToAsk (array of smart questions the candidate should ask, 5-8 items), companyResearch (array of research hooks/topics to study, 4-6 items), redFlags (array of potential red flags to probe, 3-5 items). No markdown, no preamble.',

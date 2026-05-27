@@ -111,9 +111,15 @@ export async function POST(
     return NextResponse.json({ error: 'Version content invalid' }, { status: 500 });
   }
 
-  // Snapshot the current state before restoring
+  // Snapshot the current state before restoring. Re-assert ownership +
+  // not-deleted in the WHERE so a concurrent ownership change or soft-
+  // delete between the ownsResume check above and this read is caught.
   const currentResume = await db.query.resumes.findFirst({
-    where: eq(schema.resumes.id, id),
+    where: and(
+      eq(schema.resumes.id, id),
+      eq(schema.resumes.userId, session.user.id),
+      isNull(schema.resumes.deletedAt),
+    ),
   });
   if (currentResume) {
     const [latest] = await db
@@ -131,7 +137,9 @@ export async function POST(
     });
   }
 
-  // Restore
+  // Restore — TOCTOU defense: the UPDATE re-asserts userId so a
+  // concurrent ownership change between ownsResume() and this write
+  // cannot smuggle this row into another user's account.
   await db
     .update(schema.resumes)
     .set({
@@ -140,7 +148,13 @@ export async function POST(
       locale: parsed.data.metadata.language,
       updatedAt: new Date(),
     })
-    .where(eq(schema.resumes.id, id));
+    .where(
+      and(
+        eq(schema.resumes.id, id),
+        eq(schema.resumes.userId, session.user.id),
+        isNull(schema.resumes.deletedAt),
+      ),
+    );
 
   auditEvent({
     userId: session.user.id,

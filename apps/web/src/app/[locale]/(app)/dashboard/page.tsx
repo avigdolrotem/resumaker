@@ -65,7 +65,7 @@ export default async function DashboardPage() {
       .select({ avg: sql<number>`COALESCE(AVG(${schema.atsScores.overall})::int, 0)` })
       .from(schema.atsScores)
       .innerJoin(schema.resumes, eq(schema.atsScores.resumeId, schema.resumes.id))
-      .where(eq(schema.resumes.userId, userId)),
+      .where(and(eq(schema.resumes.userId, userId), isNull(schema.resumes.deletedAt))),
     db
       .select({ value: count() })
       .from(schema.coverLetters)
@@ -74,7 +74,7 @@ export default async function DashboardPage() {
       .select({ value: count() })
       .from(schema.atsScores)
       .innerJoin(schema.resumes, eq(schema.atsScores.resumeId, schema.resumes.id))
-      .where(eq(schema.resumes.userId, userId)),
+      .where(and(eq(schema.resumes.userId, userId), isNull(schema.resumes.deletedAt))),
     db.query.resumes.findMany({
       where: and(eq(schema.resumes.userId, userId), isNull(schema.resumes.deletedAt)),
       orderBy: [desc(schema.resumes.updatedAt)],

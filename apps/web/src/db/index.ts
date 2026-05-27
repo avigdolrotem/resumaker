@@ -39,6 +39,11 @@ async function makeClient(): Promise<PgClient> {
     return postgres(dbUrl, {
       max: env.DATABASE_POOL_MAX,
       ssl: 'require',
+      // Cloud SQL idles out connections at ~10min; keep ours fresh so
+      // we don't see "Connection terminated unexpectedly" mid-request.
+      idle_timeout: 60,
+      max_lifetime: 60 * 30,
+      connect_timeout: 10,
     });
   }
   // Otherwise fall back to the Cloud SQL Connector + IAM auth path.

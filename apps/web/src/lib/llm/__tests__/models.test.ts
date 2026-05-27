@@ -6,9 +6,9 @@ describe('LLM model catalog', () => {
     expect(MODEL_CATALOG.length).toBeGreaterThanOrEqual(5);
   });
 
-  it('every model has a provider/model id', () => {
+  it('every model id matches the provider/model regex (including Vertex @date suffix)', () => {
     for (const m of MODEL_CATALOG) {
-      expect(m.id).toMatch(/^[a-z]+\/[a-z0-9.\-]+$/);
+      expect(m.id).toMatch(/^[a-z]+\/[a-z0-9.@\-]+$/);
     }
   });
 
@@ -23,10 +23,10 @@ describe('LLM model catalog', () => {
     expect(recommended).toHaveLength(1);
   });
 
-  it('free tier gets exactly one available model (Haiku)', () => {
+  it('free tier gets multiple models including Haiku', () => {
     const free = getModelsForTier('free');
-    expect(free).toHaveLength(1);
-    expect(free[0]?.id).toBe('anthropic/claude-haiku-4-5');
+    expect(free.length).toBeGreaterThanOrEqual(1);
+    expect(free.some((m) => m.id === 'anthropic/claude-haiku-4-5@20251001')).toBe(true);
   });
 
   it('plus tier gets at least 3 models', () => {
@@ -35,7 +35,7 @@ describe('LLM model catalog', () => {
 
   it('pro tier includes Opus', () => {
     const pro = getModelsForTier('pro');
-    expect(pro.some((m) => m.id === 'anthropic/claude-opus-4-7')).toBe(true);
+    expect(pro.some((m) => m.id === 'anthropic/claude-opus-4@20250515')).toBe(true);
   });
 
   it('getModelById returns undefined for unknown id', () => {
@@ -43,8 +43,8 @@ describe('LLM model catalog', () => {
   });
 
   it('getTierDefault returns Haiku for free, Sonnet for plus/pro', () => {
-    expect(getTierDefault('free')).toBe('anthropic/claude-haiku-4-5');
-    expect(getTierDefault('plus')).toBe('anthropic/claude-sonnet-4-6');
-    expect(getTierDefault('pro')).toBe('anthropic/claude-sonnet-4-6');
+    expect(getTierDefault('free')).toBe('anthropic/claude-haiku-4-5@20251001');
+    expect(getTierDefault('plus')).toBe('anthropic/claude-sonnet-4-5@20250929');
+    expect(getTierDefault('pro')).toBe('anthropic/claude-sonnet-4-5@20250929');
   });
 });

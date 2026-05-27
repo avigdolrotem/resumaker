@@ -22,6 +22,7 @@ import {
 import { vertex } from '@ai-sdk/google-vertex';
 import { vertexAnthropic } from '@ai-sdk/google-vertex/anthropic';
 import type { ZodSchema } from 'zod';
+import { env } from '@/lib/env';
 
 /** Resolve `provider/model` to a Vertex-backed AI SDK model. */
 function resolveModel(modelString: string) {
@@ -60,6 +61,7 @@ export async function generateText(args: GenerateTextArgs): Promise<GenerateText
   const result = await aiGenerateText({
     model: resolveModel(args.model),
     prompt: args.prompt,
+    abortSignal: AbortSignal.timeout(env.LLM_TIMEOUT_MS),
     ...(args.system !== undefined && { system: args.system }),
     ...(args.maxOutputTokens !== undefined && { maxOutputTokens: args.maxOutputTokens }),
     ...(args.temperature !== undefined && { temperature: args.temperature }),
@@ -89,6 +91,7 @@ export async function generateObject<T>(
     model: resolveModel(args.model),
     schema: args.schema,
     prompt: args.prompt,
+    abortSignal: AbortSignal.timeout(env.LLM_TIMEOUT_MS),
     ...(args.system !== undefined && { system: args.system }),
     ...(args.maxOutputTokens !== undefined && { maxOutputTokens: args.maxOutputTokens }),
     ...(args.schemaName !== undefined && { schemaName: args.schemaName }),

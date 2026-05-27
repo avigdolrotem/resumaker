@@ -6,7 +6,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
 
@@ -69,7 +69,12 @@ export async function DELETE(req: NextRequest): Promise<Response> {
 
   await db
     .delete(schema.pushSubscriptions)
-    .where(eq(schema.pushSubscriptions.endpoint, body.endpoint));
+    .where(
+      and(
+        eq(schema.pushSubscriptions.endpoint, body.endpoint),
+        eq(schema.pushSubscriptions.userId, guard.user.id),
+      ),
+    );
 
   return NextResponse.json({ success: true });
 }
