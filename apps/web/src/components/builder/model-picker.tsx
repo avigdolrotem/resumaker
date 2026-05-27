@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { MODEL_CATALOG, getModelById, type CatalogEntry } from '@/lib/llm/models';
 import type { Tier } from '@/lib/billing/limits';
 import { cn } from '@/lib/utils';
+import { useFeatureGate } from '@/lib/hooks/use-feature-gate';
+import { UpgradeModal } from '@/components/upgrade-modal';
 
 interface ServerState {
   llmModel: string | null;
@@ -64,10 +66,15 @@ export function ModelPicker() {
     };
   }, [open]);
 
+  // Note: we no longer hide for free tier — the picker is always
+  // visible so users discover Plus/Pro models. Locked entries open the
+  // upgrade modal on click. `useFeatureGate` is called unconditionally
+  // (rules-of-hooks) and is a cheap pure-client check.
+  // Picker requires `plus` minimum (any non-free tier unlocks model
+  // choice; individual models still gate on their own minTier).
+  const gate = useFeatureGate('model_choice', 'plus');
+
   if (!state) return null;
-  // Free tier can't choose — hide entirely. The picker would just be
-  // locked icons across the board, which is noise rather than UX.
-  if (state.tier === 'free') return null;
 
   const current = state.llmModel ? getModelById(state.llmModel) : undefined;
   const currentLabel = current?.displayName ?? t('defaultLabel', { defaultValue: 'Default model' });
@@ -75,7 +82,10 @@ export function ModelPicker() {
   async function pick(model: CatalogEntry) {
     if (!state) return;
     if (tierOrder[state.tier] < tierOrder[model.minTier]) {
-      toast.error(t('locked'));
+      // Locked model — open the upgrade modal instead of silently
+      // rejecting. Server still enforces; this is UX.
+      setOpen(false);
+      gate.show();
       return;
     }
     setSaving(model.id);
@@ -125,15 +135,15 @@ export function ModelPicker() {
                   type="button"
                   role="option"
                   aria-selected={selected}
-                  onClick={() => allowed && pick(m)}
-                  disabled={!allowed || saving === m.id}
+                  onClick={() => pick(m)}
+                  disabled={saving === m.id}
                   className={cn(
                     'flex w-full items-center justify-between gap-2 px-3 py-2 text-start text-sm transition',
                     selected
                       ? 'bg-brand-50 dark:bg-brand-900/30'
                       : allowed
                         ? 'hover:bg-muted'
-                        : 'cursor-not-allowed opacity-50',
+                        : 'hover:bg-muted/60 opacity-70',
                   )}
                 >
                   <div className="min-w-0 flex-1">
@@ -155,6 +165,12 @@ export function ModelPicker() {
           })}
         </ul>
       )}
+      <UpgradeModal
+        open={gate.open}
+        onOpenChange={gate.setOpen}
+        feature="model_choice"
+        requiredTier={gate.requiredTier}
+      />
     </div>
   );
 }
