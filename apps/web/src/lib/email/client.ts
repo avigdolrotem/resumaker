@@ -32,15 +32,13 @@ export async function sendEmail(
   input: SendInput,
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
   if (!resend) {
-    // Dev mode: log a structured representation
+    // Dev mode: log a redacted representation. NEVER print the full
+    // recipient or the body — password-reset / verification tokens
+    // live in the body and forwarded shell history is a real exfil
+    // vector for credential leaks.
+    const recipientHint = maskEmail(input.to);
     console.warn(
-      '\n┌─────────────────────────────────────────────────────────────\n' +
-        '│ 📧 [email/dev] No RESEND_API_KEY — logging instead of sending\n' +
-        `│ To:      ${input.to}\n` +
-        `│ Subject: ${input.subject}\n` +
-        '├─────────────────────────────────────────────────────────────\n' +
-        `${input.text ?? stripHtml(input.html)}\n` +
-        '└─────────────────────────────────────────────────────────────\n',
+      `[email/dev] No RESEND_API_KEY — would have sent "${input.subject}" to ${recipientHint}`,
     );
     return { ok: true, id: 'dev-stub' };
   }
@@ -54,14 +52,22 @@ export async function sendEmail(
       text: input.text ?? stripHtml(input.html),
     });
     if (result.error) {
-      console.error('[email] resend error:', result.error);
-      return { ok: false, error: result.error.message };
+      // Log only the error name — Resend error messages sometimes echo
+      // the recipient address back. Caller gets a generic code.
+      console.error('[email] resend error:', result.error.name);
+      return { ok: false, error: 'email_send_failed' };
     }
     return { ok: true, id: result.data?.id };
   } catch (err) {
-    console.error('[email] unexpected error:', err);
-    return { ok: false, error: (err as Error).message };
+    console.error('[email] unexpected error:', (err as Error).name);
+    return { ok: false, error: 'email_send_failed' };
   }
+}
+
+function maskEmail(addr: string): string {
+  const [local, domain] = addr.split('@');
+  if (!local || !domain) return '***';
+  return `${local.slice(0, 1)}***@${domain}`;
 }
 
 function stripHtml(html: string): string {

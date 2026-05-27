@@ -12,7 +12,6 @@ import { generateText } from '@/lib/llm/provider';
 import { auth } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { sanitizeInput, type SanitizeResult } from '@resumaker/ai-safety';
-import { PromptInjectionError } from '@resumaker/shared';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { auditEvent } from '@/lib/audit';
 
@@ -60,7 +59,10 @@ export async function POST(req: NextRequest): Promise<Response> {
       event: 'resume_generation_blocked',
       metadata: { kind: 'cover_letter', reason: sanitizedJd.reason },
     });
-    throw new PromptInjectionError(sanitizedJd.reason ?? 'Input rejected');
+    return NextResponse.json(
+      { error: 'Suspicious input detected', reason: sanitizedJd.reason ?? 'Input rejected' },
+      { status: 400 },
+    );
   }
 
   // Sanitize user profile string values

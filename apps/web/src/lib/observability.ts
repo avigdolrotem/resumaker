@@ -99,10 +99,14 @@ async function getSentry(): Promise<SentryModule | null> {
 
 export async function captureError(err: unknown, context?: Record<string, unknown>): Promise<void> {
   const s = await getSentry();
+  const safe = context ? scrubPii(context) : undefined;
   if (s) {
-    s.captureException(err, context ? { extra: context } : undefined);
+    s.captureException(err, safe ? { extra: safe } : undefined);
   } else if (env.NODE_ENV !== 'test') {
-    console.error('[error]', err, context ?? '');
+    // Don't echo the raw error object — it may contain user data in
+    // `cause` / `message` from upstream SDKs (Stripe, LS, Resend).
+    const name = err instanceof Error ? err.name : 'UnknownError';
+    console.error('[error]', name, safe ?? '');
   }
 }
 
@@ -112,11 +116,12 @@ export async function captureMessage(
   context?: Record<string, unknown>,
 ): Promise<void> {
   const s = await getSentry();
+  const safe = context ? scrubPii(context) : undefined;
   if (s) {
-    s.captureMessage(msg, context ? { level, extra: context } : { level });
+    s.captureMessage(msg, safe ? { level, extra: safe } : { level });
   } else if (env.NODE_ENV !== 'test') {
     const fn = level === 'error' ? console.error : level === 'warning' ? console.warn : console.log;
-    fn(`[${level}]`, msg, context ?? '');
+    fn(`[${level}]`, msg, safe ?? '');
   }
 }
 
@@ -129,23 +134,25 @@ export const logger = {
   debug(ctx: Record<string, unknown> | string, msg?: string): void {
     if (env.LOG_LEVEL === 'debug' && env.NODE_ENV !== 'test') {
       const [c, m] = typeof ctx === 'string' ? [{}, ctx] : [ctx, msg ?? ''];
-      console.debug('[debug]', m, c);
+      console.debug('[debug]', m, scrubPii(c));
     }
   },
   info(ctx: Record<string, unknown> | string, msg?: string): void {
     if (env.NODE_ENV !== 'test') {
       const [c, m] = typeof ctx === 'string' ? [{}, ctx] : [ctx, msg ?? ''];
-      console.log('[info]', m, c);
+      console.log('[info]', m, scrubPii(c));
     }
   },
   warn(ctx: Record<string, unknown> | string, msg?: string): void {
     const [c, m] = typeof ctx === 'string' ? [{}, ctx] : [ctx, msg ?? ''];
-    if (env.NODE_ENV !== 'test') console.warn('[warn]', m, c);
-    void captureMessage(m, 'warning', c);
+    const safe = scrubPii(c);
+    if (env.NODE_ENV !== 'test') console.warn('[warn]', m, safe);
+    void captureMessage(m, 'warning', safe);
   },
   error(ctx: Record<string, unknown> | string, msg?: string): void {
     const [c, m] = typeof ctx === 'string' ? [{}, ctx] : [ctx, msg ?? ''];
-    if (env.NODE_ENV !== 'test') console.error('[error]', m, c);
-    void captureMessage(m, 'error', c);
+    const safe = scrubPii(c);
+    if (env.NODE_ENV !== 'test') console.error('[error]', m, safe);
+    void captureMessage(m, 'error', safe);
   },
 };

@@ -52,8 +52,8 @@ export async function generateMetadata({
     },
     description: t('description'),
     applicationName: 'Resumaker',
-    authors: [{ name: 'Rotem Avigdol', url: 'https://avigdol.com' }],
-    creator: 'Rotem Avigdol',
+    authors: [{ name: 'Resumaker', url: 'https://resumaker.co.il' }],
+    creator: 'Resumaker',
     publisher: 'Resumaker',
     keywords:
       locale === 'he'

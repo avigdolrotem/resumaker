@@ -7,6 +7,7 @@
 
 import { createHmac } from 'crypto';
 import { db, schema } from '@/db';
+import { logger } from '@/lib/observability';
 
 /**
  * Privacy-preserving IP storage: HMAC-SHA256 the IP with a per-deployment
@@ -83,6 +84,6 @@ export function auditEvent(input: AuditInput): void {
     })
     .catch((err) => {
       // Don't propagate — but DO log so we know about audit failures
-      console.error('[audit] failed to record event', input.event, err);
+      logger.error({ event: input.event, err: (err as Error).name }, 'audit.record_failed');
     });
 }

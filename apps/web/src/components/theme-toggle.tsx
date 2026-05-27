@@ -60,7 +60,12 @@ export function ThemeToggle() {
    * makes it easier to call from system-pref change listener too.
    */
   function writeTheme(next: Theme) {
-    document.cookie = `${THEME_COOKIE}=${encodeURIComponent(next)}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+    // `secure` so the cookie is never sent over plaintext HTTP. Omit on
+    // dev (localhost is http://) so the cookie still sticks during local
+    // development; everywhere else (preview, prod) is https.
+    const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    const secure = isSecure ? '; secure' : '';
+    document.cookie = `${THEME_COOKIE}=${encodeURIComponent(next)}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax${secure}`;
     const html = document.documentElement;
     if (next === 'system') {
       const prefersDark =

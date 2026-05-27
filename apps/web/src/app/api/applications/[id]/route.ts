@@ -68,7 +68,14 @@ export async function PATCH(
   if (body.notifyRecruiter !== undefined) updates['notifyRecruiter'] = body.notifyRecruiter;
   if (advancingToApplied) updates['appliedAt'] = new Date();
 
-  await db.update(schema.applications).set(updates).where(eq(schema.applications.id, id));
+  // Re-assert ownership in the WHERE clause — TOCTOU defense. The
+  // `findFirst` above is correct, but binding only `id` in the write
+  // would let a concurrent transaction by a different user race past
+  // the check.
+  await db
+    .update(schema.applications)
+    .set(updates)
+    .where(and(eq(schema.applications.id, id), eq(schema.applications.userId, guard.user.id)));
 
   return NextResponse.json({ success: true });
 }
@@ -88,6 +95,8 @@ export async function DELETE(
   });
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  await db.delete(schema.applications).where(eq(schema.applications.id, id));
+  await db
+    .delete(schema.applications)
+    .where(and(eq(schema.applications.id, id), eq(schema.applications.userId, guard.user.id)));
   return NextResponse.json({ success: true });
 }

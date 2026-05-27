@@ -45,10 +45,11 @@ export async function DELETE(
   const existing = await getOwnedLetter(id, session.user.id);
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
+  // Re-assert ownership in the WHERE clause — TOCTOU defense.
   await db
     .update(schema.coverLetters)
     .set({ deletedAt: new Date() })
-    .where(eq(schema.coverLetters.id, id));
+    .where(and(eq(schema.coverLetters.id, id), eq(schema.coverLetters.userId, session.user.id)));
 
   auditEvent({
     userId: session.user.id,
