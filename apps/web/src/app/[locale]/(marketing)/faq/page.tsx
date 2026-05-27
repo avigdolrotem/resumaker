@@ -15,7 +15,7 @@ const QUESTIONS_EN = [
   },
   {
     q: 'Where is my data stored?',
-    a: 'Encrypted in AWS RDS Postgres in the il-central-1 region (Israel). We never sell data and never use it to train AI models. Full GDPR + Israeli Privacy Law compliance.',
+    a: 'Encrypted in Google Cloud SQL Postgres in the europe-west1 region (Belgium, EU). We never sell data and never use it to train AI models. Full GDPR + Israeli Privacy Law compliance.',
   },
   {
     q: 'Which AI model do you use?',
@@ -50,7 +50,7 @@ const QUESTIONS_HE = [
   },
   {
     q: 'איפה הנתונים שלי נשמרים?',
-    a: 'מוצפנים ב-AWS RDS Postgres ב-il-central-1 (ישראל). לא מוכרים נתונים ולא משתמשים בהם לאימון מודלי AI. תאימות מלאה ל-GDPR וחוק הגנת הפרטיות.',
+    a: 'מוצפנים ב-Google Cloud SQL Postgres באזור europe-west1 (בלגיה, אירופה). לא מוכרים נתונים ולא משתמשים בהם לאימון מודלי AI. תאימות מלאה ל-GDPR וחוק הגנת הפרטיות.',
   },
   {
     q: 'באיזה מודל AI אתם משתמשים?',

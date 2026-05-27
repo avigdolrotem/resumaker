@@ -1,128 +1,67 @@
-/**
- * VPC + subnets + gateways module.
- *
- * Creates:
- * - VPC with DNS support
- * - 2x public subnets (for ALB)
- * - 2x private subnets (for EKS, RDS, ElastiCache)
- * - Internet Gateway
- * - 1 NAT Gateway (cost-saving) or 1 per AZ (production)
- * - Routing tables
- */
-
 locals {
-  name_prefix     = "${var.project}-${var.environment}"
-  public_subnets  = [for i, az in var.azs : cidrsubnet(var.vpc_cidr, 8, i)]
-  private_subnets = [for i, az in var.azs : cidrsubnet(var.vpc_cidr, 8, i + 10)]
+  name_prefix = "resumaker-${var.env}"
 }
 
-resource "aws_vpc" "main" {
-  cidr_block           = var.vpc_cidr
-  enable_dns_support   = true
-  enable_dns_hostnames = true
+resource "google_compute_network" "main" {
+  project                 = var.project_id
+  name                    = "${local.name_prefix}-vpc"
+  auto_create_subnetworks = false
+  routing_mode            = "REGIONAL"
+}
 
-  tags = {
-    Name = "${local.name_prefix}-vpc"
+resource "google_compute_subnetwork" "main" {
+  project                  = var.project_id
+  name                     = "${local.name_prefix}-subnet"
+  network                  = google_compute_network.main.id
+  region                   = var.region
+  ip_cidr_range            = var.subnet_cidr
+  private_ip_google_access = true
+
+  secondary_ip_range {
+    range_name    = "${local.name_prefix}-pods"
+    ip_cidr_range = var.pods_cidr
+  }
+  secondary_ip_range {
+    range_name    = "${local.name_prefix}-services"
+    ip_cidr_range = var.services_cidr
   }
 }
 
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name = "${local.name_prefix}-igw"
-  }
+# Private services range for Cloud SQL + Memorystore VPC peering.
+resource "google_compute_global_address" "private_services" {
+  project       = var.project_id
+  name          = "${local.name_prefix}-private-services"
+  purpose       = "VPC_PEERING"
+  address_type  = "INTERNAL"
+  prefix_length = 16
+  address       = split("/", var.private_services_cidr)[0]
+  network       = google_compute_network.main.id
 }
 
-resource "aws_subnet" "public" {
-  count = length(var.azs)
-
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = local.public_subnets[count.index]
-  availability_zone       = var.azs[count.index]
-  map_public_ip_on_launch = false # Even public subnets don't auto-assign IPs
-
-  tags = {
-    Name                                         = "${local.name_prefix}-public-${var.azs[count.index]}"
-    "kubernetes.io/role/elb"                     = "1"
-    "kubernetes.io/cluster/${local.name_prefix}" = "shared"
-  }
+resource "google_service_networking_connection" "private_services" {
+  network                 = google_compute_network.main.id
+  service                 = "servicenetworking.googleapis.com"
+  reserved_peering_ranges = [google_compute_global_address.private_services.name]
 }
 
-resource "aws_subnet" "private" {
-  count = length(var.azs)
-
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = local.private_subnets[count.index]
-  availability_zone = var.azs[count.index]
-
-  tags = {
-    Name                                         = "${local.name_prefix}-private-${var.azs[count.index]}"
-    "kubernetes.io/role/internal-elb"            = "1"
-    "kubernetes.io/cluster/${local.name_prefix}" = "shared"
-  }
+# Cloud NAT so GKE pods can reach the internet.
+resource "google_compute_router" "main" {
+  project = var.project_id
+  name    = "${local.name_prefix}-router"
+  network = google_compute_network.main.id
+  region  = var.region
 }
 
-resource "aws_eip" "nat" {
-  count  = var.single_nat_gateway ? 1 : length(var.azs)
-  domain = "vpc"
+resource "google_compute_router_nat" "main" {
+  project                            = var.project_id
+  name                               = "${local.name_prefix}-nat"
+  router                             = google_compute_router.main.name
+  region                             = var.region
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 
-  tags = {
-    Name = "${local.name_prefix}-nat-eip-${count.index}"
+  log_config {
+    enable = true
+    filter = "ERRORS_ONLY"
   }
-}
-
-resource "aws_nat_gateway" "main" {
-  count = var.single_nat_gateway ? 1 : length(var.azs)
-
-  allocation_id = aws_eip.nat[count.index].id
-  subnet_id     = aws_subnet.public[count.index].id
-
-  tags = {
-    Name = "${local.name_prefix}-nat-${count.index}"
-  }
-
-  depends_on = [aws_internet_gateway.main]
-}
-
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id
-  }
-
-  tags = {
-    Name = "${local.name_prefix}-public-rt"
-  }
-}
-
-resource "aws_route_table_association" "public" {
-  count = length(var.azs)
-
-  subnet_id      = aws_subnet.public[count.index].id
-  route_table_id = aws_route_table.public.id
-}
-
-resource "aws_route_table" "private" {
-  count = length(var.azs)
-
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = var.single_nat_gateway ? aws_nat_gateway.main[0].id : aws_nat_gateway.main[count.index].id
-  }
-
-  tags = {
-    Name = "${local.name_prefix}-private-rt-${var.azs[count.index]}"
-  }
-}
-
-resource "aws_route_table_association" "private" {
-  count = length(var.azs)
-
-  subnet_id      = aws_subnet.private[count.index].id
-  route_table_id = aws_route_table.private[count.index].id
 }

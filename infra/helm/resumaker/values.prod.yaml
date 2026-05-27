@@ -1,13 +1,19 @@
-# Production overrides
+# values.prod.yaml — GKE-specific overrides for prod.
+
 replicaCount: 3
+
+image:
+  # Tag injected by CI writing values.prod.image.yaml
+  repository: europe-west1-docker.pkg.dev/resumaker-prod/resumaker/web
+  pullPolicy: IfNotPresent
 
 resources:
   requests:
-    cpu: 500m
-    memory: 1Gi
+    cpu: '200m'
+    memory: '512Mi'
   limits:
-    cpu: 2000m
-    memory: 2Gi
+    cpu: '1000m'
+    memory: '1Gi'
 
 autoscaling:
   minReplicas: 3
@@ -15,19 +21,45 @@ autoscaling:
   targetCPUUtilizationPercentage: 60
 
 ingress:
+  enabled: true
+  className: gce
   annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    # ACM certificate ARN for resumaker.co.il (+ www. if SANs were added).
-    # Issued in il-central-1.
-    alb.ingress.kubernetes.io/certificate-arn: 'arn:aws:acm:il-central-1:857812839967:certificate/5866e9a6-d8fa-4ce3-b4b6-e52353836872'
-    # Strong SSL policy (TLS 1.2+ only)
-    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
-    # ssl-redirect annotation needs a matching action — declare both.
-    # The action defines a permanent 301 from :80 to :443.
-    alb.ingress.kubernetes.io/actions.ssl-redirect: >-
-      {"Type":"redirect","RedirectConfig":{"Protocol":"HTTPS","Port":"443","StatusCode":"HTTP_301"}}
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
-    # WAF + Cloudflare-IP allowlist managed at ALB
-    # alb.ingress.kubernetes.io/wafv2-acl-arn: 'arn:aws:wafv2:il-central-1:...:regional/webacl/resumaker'
-    # alb.ingress.kubernetes.io/inbound-cidrs: '173.245.48.0/20,103.21.244.0/22,...' # Cloudflare ranges
+    kubernetes.io/ingress.class: gce
+    networking.gke.io/managed-certificates: resumaker-prod-cert
+  hosts:
+    - host: resumaker.co.il
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: [] # TLS handled by GCP managed certificate
+
+env:
+  NODE_ENV: production
+  APP_URL: https://resumaker.co.il
+  LOG_LEVEL: info
+
+# ExternalSecrets — pulls from GCP Secret Manager via Workload Identity.
+externalSecrets:
+  enabled: true
+  refreshInterval: '5m'
+  secretStoreName: resumaker-prod-secretstore
+
+# Service account with Workload Identity for GCP API access
+serviceAccount:
+  create: true
+  annotations:
+    iam.gke.io/gcp-service-account: resumaker-app@resumaker-prod.iam.gserviceaccount.com
+
+# Secrets pulled from GCP Secret Manager (managed by external-secrets-operator)
+secretsManagerName: resumaker-prod/app
+dbCredentialsSecretName: resumaker-prod/db-credentials
+
+cronJobs:
+  purge:
+    enabled: true
+  onboardingEmails:
+    enabled: true
+  scrapeJobs:
+    enabled: false # not implemented yet — Track 2
+  pushNotifications:
+    enabled: true

@@ -14,28 +14,17 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  id-token: write # for OIDC AWS and GCP auth
+  id-token: write # for OIDC GCP auth
 
 jobs:
   validate:
-    name: OpenTofu validate
+    name: OpenTofu validate (${{ matrix.env }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
+      fail-fast: false
       matrix:
-        include:
-          - env: dev
-            provider: aws
-          - env: staging
-            provider: aws
-          - env: prod
-            provider: aws
-          - env: dev-gcp
-            provider: gcp
-          - env: staging-gcp
-            provider: gcp
-          - env: prod-gcp
-            provider: gcp
+        env: [dev, staging, prod]
     steps:
       - uses: actions/checkout@v4
 
@@ -88,28 +77,17 @@ jobs:
     if: github.event_name == 'pull_request'
     needs: [validate, lint, trivy]
     strategy:
+      fail-fast: false
       matrix:
-        include:
-          - env: dev
-            provider: aws
-          - env: dev-gcp
-            provider: gcp
+        env: [dev]
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        if: matrix.provider == 'aws'
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::857812839967:role/GitHubActionsRole
-          aws-region: us-east-1
-
       - name: Configure GCP credentials
-        if: matrix.provider == 'gcp'
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: resumaker-cicd@resumaker-${{ matrix.env == 'dev-gcp' && 'dev' || matrix.env == 'staging-gcp' && 'staging' || 'prod' }}.iam.gserviceaccount.com
+          service_account: resumaker-cicd@resumaker-${{ matrix.env }}.iam.gserviceaccount.com
 
       - uses: opentofu/setup-opentofu@v1
         with:

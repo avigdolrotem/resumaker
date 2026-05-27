@@ -7,19 +7,19 @@
 # 1. INTERACTIVE — script prompts for each secret value (hidden input).
 #    Press ENTER on a prompt to SKIP that secret (leave existing value).
 #
-#      ./scripts/rotate-secrets-gcp.sh prod
+#      ./scripts/rotate-secrets.sh prod
 #
 # 2. BATCH — read a JSON file. Missing keys are skipped. The file is
 #    NEVER committed (it lives outside the repo and is wiped on success).
 #
-#      ./scripts/rotate-secrets-gcp.sh prod /tmp/new-secrets.json
+#      ./scripts/rotate-secrets.sh prod /tmp/new-secrets.json
 #
 # After all updates, optionally triggers a rollout restart so pods pick
 # up the new values immediately (otherwise ExternalSecrets refreshes
 # every 1 min on its own).
 #
 # Usage:
-#   ./rotate-secrets-gcp.sh <env> [json-file]
+#   ./rotate-secrets.sh <env> [json-file]
 #   where <env> ∈ {dev, staging, prod}
 #
 # Prerequisites:

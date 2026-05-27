@@ -83,5 +83,5 @@ cat <<EOF
   TF_ADMIN_SA:    $TF_ADMIN_SA
   REGION:         $REGION
 
-Next: cd ../environments/${ENV}-gcp && tofu init && tofu plan
+Next: cd ../environments/${ENV} && tofu init && tofu plan
 EOF

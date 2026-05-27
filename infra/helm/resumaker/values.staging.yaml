@@ -1,10 +1,10 @@
-# values.dev-gcp.yaml — GKE-specific overrides for dev.
+# values.staging.yaml — GKE-specific overrides for staging.
 
-replicaCount: 1
+replicaCount: 2
 
 image:
-  # Tag injected by CI writing values.dev-gcp.image.yaml
-  repository: europe-west1-docker.pkg.dev/resumaker-dev/resumaker/web
+  # Tag injected by CI writing values.staging.image.yaml
+  repository: europe-west1-docker.pkg.dev/resumaker-staging/resumaker/web
   pullPolicy: IfNotPresent
 
 resources:
@@ -16,8 +16,8 @@ resources:
     memory: '512Mi'
 
 autoscaling:
-  minReplicas: 1
-  maxReplicas: 3
+  minReplicas: 2
+  maxReplicas: 5
   targetCPUUtilizationPercentage: 70
 
 ingress:
@@ -25,34 +25,35 @@ ingress:
   className: gce
   annotations:
     kubernetes.io/ingress.class: gce
-    networking.gke.io/managed-certificates: resumaker-dev-cert
+    networking.gke.io/managed-certificates: resumaker-staging-cert
   hosts:
-    - host: dev.resumaker.co.il
+    - host: staging.resumaker.co.il
       paths:
         - path: /
           pathType: Prefix
   tls: [] # TLS handled by GCP managed certificate
 
 env:
-  NODE_ENV: development
-  APP_URL: https://dev.resumaker.co.il
-  LOG_LEVEL: debug
+  NODE_ENV: production
+  APP_ENV: staging
+  APP_URL: https://staging.resumaker.co.il
+  LOG_LEVEL: info
 
 # ExternalSecrets — pulls from GCP Secret Manager via Workload Identity.
 externalSecrets:
   enabled: true
   refreshInterval: '1m'
-  secretStoreName: resumaker-dev-secretstore
+  secretStoreName: resumaker-staging-secretstore
 
 # Service account with Workload Identity for GCP API access
 serviceAccount:
   create: true
   annotations:
-    iam.gke.io/gcp-service-account: resumaker-app@resumaker-dev.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account: resumaker-app@resumaker-staging.iam.gserviceaccount.com
 
 # Secrets pulled from GCP Secret Manager (managed by external-secrets-operator)
-secretsManagerName: resumaker-dev/app
-dbCredentialsSecretName: resumaker-dev/db-credentials
+secretsManagerName: resumaker-staging/app
+dbCredentialsSecretName: resumaker-staging/db-credentials
 
 cronJobs:
   purge:

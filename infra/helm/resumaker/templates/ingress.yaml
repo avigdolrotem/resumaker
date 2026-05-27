@@ -28,21 +28,6 @@ spec:
     - host: {{ .host | quote }}
       http:
         paths:
-          {{- /*
-            ALB ssl-redirect: the `ssl-redirect` annotation only works
-            if the HTTP listener has a rule pointing at the
-            `ssl-redirect` action. Inject it as the first path so HTTP
-            → HTTPS redirects fire before any real backend matches.
-          */ -}}
-          {{- if hasKey ($.Values.ingress.annotations | default dict) "alb.ingress.kubernetes.io/actions.ssl-redirect" }}
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: ssl-redirect
-                port:
-                  name: use-annotation
-          {{- end }}
           {{- range .paths }}
           - path: {{ .path }}
             pathType: {{ .pathType }}

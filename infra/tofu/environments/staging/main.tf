@@ -1,22 +1,22 @@
 locals {
-  env = "dev"
+  env = "staging"
 }
 
 module "network" {
-  source = "../../modules/gcp/network"
+  source = "../../modules/network"
 
   project_id            = var.project_id
   region                = var.region
   env                   = local.env
-  vpc_cidr              = "10.0.0.0/16"
-  subnet_cidr           = "10.0.1.0/24"
-  pods_cidr             = "10.0.16.0/20"
-  services_cidr         = "10.0.32.0/20"
-  private_services_cidr = "10.128.0.0/16"
+  vpc_cidr              = "10.1.0.0/16"
+  subnet_cidr           = "10.1.1.0/24"
+  pods_cidr             = "10.1.16.0/20"
+  services_cidr         = "10.1.32.0/20"
+  private_services_cidr = "10.129.0.0/16"
 }
 
 module "workload_identity" {
-  source = "../../modules/gcp/workload-identity"
+  source = "../../modules/workload-identity"
 
   project_id  = var.project_id
   env         = local.env
@@ -24,7 +24,7 @@ module "workload_identity" {
 }
 
 module "secrets" {
-  source = "../../modules/gcp/secrets"
+  source = "../../modules/secrets"
 
   project_id = var.project_id
   env        = local.env
@@ -35,7 +35,7 @@ module "secrets" {
 }
 
 module "cloudsql" {
-  source = "../../modules/gcp/cloudsql"
+  source = "../../modules/cloudsql"
 
   project_id                        = var.project_id
   region                            = var.region
@@ -50,7 +50,7 @@ module "cloudsql" {
 }
 
 module "memorystore" {
-  source = "../../modules/gcp/memorystore"
+  source = "../../modules/memorystore"
 
   project_id                        = var.project_id
   region                            = var.region
@@ -60,7 +60,7 @@ module "memorystore" {
 }
 
 module "artifactregistry" {
-  source = "../../modules/gcp/artifactregistry"
+  source = "../../modules/artifactregistry"
 
   project_id = var.project_id
   region     = var.region
@@ -71,14 +71,14 @@ module "artifactregistry" {
 }
 
 module "gcs" {
-  source = "../../modules/gcp/gcs"
+  source = "../../modules/gcs"
 
   project_id = var.project_id
   buckets    = {}
 }
 
 module "gke" {
-  source = "../../modules/gcp/gke"
+  source = "../../modules/gke"
 
   project_id          = var.project_id
   region              = var.region

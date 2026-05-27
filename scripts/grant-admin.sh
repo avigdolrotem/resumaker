@@ -3,11 +3,11 @@
 # Promote a user to `admin` role in the Resumaker database.
 #
 # Usage:
-#   ./scripts/grant-admin-gcp.sh <env> <email>
+#   ./scripts/grant-admin.sh <env> <email>
 #
 # Examples:
-#   ./scripts/grant-admin-gcp.sh prod you@example.com
-#   ./scripts/grant-admin-gcp.sh dev tester@example.com
+#   ./scripts/grant-admin.sh prod you@example.com
+#   ./scripts/grant-admin.sh dev tester@example.com
 #
 # Mechanism:
 #   - Opens a temporary cloud-sql-proxy tunnel to the env's Cloud SQL

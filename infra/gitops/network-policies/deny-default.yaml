@@ -1,13 +1,13 @@
 # Default-deny NetworkPolicy for the resumaker namespace.
 #
-# Without NetworkPolicies, EKS lets any pod talk to any other pod —
-# including the RDS endpoint and the IMDS metadata server. This file
-# locks the namespace down to "nothing by default" and the sibling
+# Without NetworkPolicies, GKE lets any pod talk to any other pod —
+# including the Cloud SQL endpoint and the GCP Metadata server. This
+# file locks the namespace down to "nothing by default" and the sibling
 # `allow-*.yaml` files explicitly open the connectivity we need.
 #
-# Prerequisite: NetworkPolicy enforcement must be enabled in vpc-cni
-# (set `ENABLE_NETWORK_POLICY=true` in the addon's configuration_values,
-# or install Calico / Cilium). Without that, these manifests are inert.
+# Prerequisite: NetworkPolicy enforcement is enabled by default on GKE
+# Autopilot. On Standard clusters, set `--enable-network-policy` (Calico
+# under the hood). Without that, these manifests are inert.
 
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

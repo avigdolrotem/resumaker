@@ -1,24 +1,35 @@
-output "vpc_id" {
-  description = "VPC ID"
-  value       = aws_vpc.main.id
+output "network_id" {
+  value = google_compute_network.main.id
 }
 
-output "vpc_cidr" {
-  description = "VPC CIDR"
-  value       = aws_vpc.main.cidr_block
+output "network_name" {
+  value = google_compute_network.main.name
 }
 
-output "public_subnet_ids" {
-  description = "Public subnet IDs"
-  value       = aws_subnet.public[*].id
+output "network_self_link" {
+  value = google_compute_network.main.self_link
 }
 
-output "private_subnet_ids" {
-  description = "Private subnet IDs"
-  value       = aws_subnet.private[*].id
+output "subnet_id" {
+  value = google_compute_subnetwork.main.id
 }
 
-output "nat_gateway_ips" {
-  description = "NAT gateway public IPs (for egress allowlists)"
-  value       = aws_eip.nat[*].public_ip
+output "subnet_name" {
+  value = google_compute_subnetwork.main.name
+}
+
+output "subnet_self_link" {
+  value = google_compute_subnetwork.main.self_link
+}
+
+output "pods_range_name" {
+  value = "resumaker-${var.env}-pods"
+}
+
+output "services_range_name" {
+  value = "resumaker-${var.env}-services"
+}
+
+output "private_services_connection" {
+  value = google_service_networking_connection.private_services.network
 }
