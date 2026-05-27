@@ -38,11 +38,25 @@ spec:
     - Ingress
   ingress:
     - from:
-        # GKE Ingress proxies via NEGs in the VPC CIDR. Kubelet health
-        # probes are exempt from NetworkPolicy (they run on the host
-        # network, not the pod network).
+        # GKE Ingress proxies user traffic via NEGs in the VPC CIDR.
         - ipBlock:
             cidr: {{ .Values.networkPolicy.vpcCidr | quote }}
+        # Google Cloud LB health checkers — REQUIRED for the GLB backend
+        # to mark pods healthy. Without these, the GLB's HTTP health
+        # check on /api/health gets blocked at the NetworkPolicy and
+        # marks every pod UNHEALTHY → external traffic returns 502 even
+        # though pods are 1/1 Ready and serving correctly. Source:
+        # https://cloud.google.com/load-balancing/docs/health-check-concepts#fw-rule
+        - ipBlock:
+            cidr: 130.211.0.0/22
+        - ipBlock:
+            cidr: 35.191.0.0/16
+        # Google Front End (proxy) — used by some IAP / external LB
+        # paths and harmless to include.
+        - ipBlock:
+            cidr: 209.85.152.0/22
+        - ipBlock:
+            cidr: 209.85.204.0/22
       ports:
         - protocol: TCP
           port: 3000

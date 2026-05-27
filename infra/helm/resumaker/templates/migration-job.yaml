@@ -1,3 +1,12 @@
+{{- /*
+Migration Job — runs `node apps/web/scripts/migrate.mjs` against
+DATABASE_URL before the deployment rolls. Skipped when
+`.Values.migrationJob.enabled` is false (today's default in prod
+because the prod DB is already migrated and the standalone-image
+migrator hasn't been validated end-to-end yet — see Phase 9 in
+docs/SECURITY_AUDIT_2026-05-27.md).
+*/ -}}
+{{- if .Values.migrationJob.enabled -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -31,11 +40,15 @@ spec:
           env:
             - name: NODE_ENV
               value: production
+            # Shares the runtime app secret instead of a separate -db
+            # secret, because we live with a single kubectl-applied
+            # `resumaker-app` Secret right now (see SECURITY_AUDIT
+            # G.4 for the ESO reconciliation plan).
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "resumaker.fullname" . }}-db
-                  key: url
+                  name: {{ include "resumaker.fullname" . }}-app
+                  key: DATABASE_URL
           resources:
             requests:
               cpu: 100m
@@ -43,3 +56,4 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+{{- end }}
