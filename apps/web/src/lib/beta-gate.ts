@@ -19,8 +19,12 @@ import { requireActiveUser } from '@/lib/auth-guards';
 
 /** True if the user has the job-hunt beta flag on. */
 export function hasJobHuntBeta(user: {
+  role?: string | null;
   featureFlags?: { jobHuntBeta?: boolean | undefined } | null;
 }): boolean {
+  // Admins always have access to in-development features so they can
+  // dogfood + support without needing to flip a flag on themselves.
+  if (user.role === 'admin') return true;
   return user.featureFlags?.jobHuntBeta === true;
 }
 

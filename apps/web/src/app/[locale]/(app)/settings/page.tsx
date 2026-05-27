@@ -12,6 +12,8 @@ import {
   AlertOctagon,
   ScreenShare,
   Sparkles,
+  Shield,
+  ExternalLink,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,9 +33,10 @@ type Tab =
   | 'regional'
   | 'ai'
   | 'data'
-  | 'danger';
+  | 'danger'
+  | 'admin';
 
-const TABS: { id: Tab; key: string; icon: typeof User }[] = [
+const TABS: { id: Tab; key: string; icon: typeof User; adminOnly?: boolean }[] = [
   { id: 'profile', key: 'profile', icon: User },
   { id: 'security', key: 'security', icon: Lock },
   { id: 'sessions', key: 'sessions', icon: ScreenShare },
@@ -45,6 +48,11 @@ const TABS: { id: Tab; key: string; icon: typeof User }[] = [
   { id: 'ai', key: 'ai', icon: Sparkles },
   { id: 'data', key: 'data', icon: Database },
   { id: 'danger', key: 'danger', icon: AlertOctagon },
+  // Admin tab — visible ONLY when the session's user.role === 'admin'.
+  // The /admin/* routes themselves enforce the role server-side
+  // (defense in depth), so this is just a discoverability surface,
+  // not an authorization boundary.
+  { id: 'admin', key: 'admin', icon: Shield, adminOnly: true },
 ];
 
 /**
@@ -57,7 +65,18 @@ const TABS: { id: Tab; key: string; icon: typeof User }[] = [
 export default function SettingsPage() {
   const t = useTranslations('settings');
   const tNav = useTranslations('settings.tabs');
+  const { data: session } = useSession();
   const [tab, setTab] = useState<Tab>('profile');
+
+  // Better Auth's User type doesn't surface `role` to the client by
+  // default (the column exists in the DB, but the SDK strips unknown
+  // fields). Cast locally — the value is sent by the server, just not
+  // typed. A larger refactor (extend Better Auth's user shape via
+  // `additionalFields`) is the proper fix; for now, this is safe
+  // because the /admin/* routes are independently role-gated server-
+  // side.
+  const isAdmin = (session?.user as { role?: string } | undefined)?.role === 'admin';
+  const visibleTabs = TABS.filter((it) => !it.adminOnly || isAdmin);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -67,7 +86,7 @@ export default function SettingsPage() {
 
       <div className="grid gap-6 md:grid-cols-[200px_1fr]">
         <nav className="space-y-1" aria-label="Settings sections">
-          {TABS.map((it) => {
+          {visibleTabs.map((it) => {
             const Icon = it.icon;
             const active = tab === it.id;
             return (
@@ -99,9 +118,90 @@ export default function SettingsPage() {
           {tab === 'ai' && <AIModelCard />}
           {tab === 'data' && <DataTab />}
           {tab === 'danger' && <DangerTab />}
+          {tab === 'admin' && isAdmin && <AdminTab />}
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── Tab: Admin (visible only when user.role === 'admin') ──────────
+//
+// Index of the admin-area pages. The pages themselves enforce
+// role === 'admin' server-side (see auth-guards.ts:requireAdmin and
+// requireAdminPage), so this tab is purely a discoverability surface.
+
+const ADMIN_LINKS: {
+  href:
+    | '/admin'
+    | '/admin/analytics'
+    | '/admin/audit'
+    | '/admin/broadcast'
+    | '/admin/coupons'
+    | '/admin/maintenance';
+  label: string;
+  description: string;
+}[] = [
+  {
+    href: '/admin',
+    label: 'Admin home',
+    description: 'User search, role + tier grants, impersonate',
+  },
+  { href: '/admin/analytics', label: 'Analytics', description: 'Cohort, funnel, retention' },
+  {
+    href: '/admin/audit',
+    label: 'Audit log',
+    description: 'Recent admin actions + security events',
+  },
+  {
+    href: '/admin/broadcast',
+    label: 'Broadcast',
+    description: 'Send an email to all opted-in users',
+  },
+  {
+    href: '/admin/coupons',
+    label: 'Coupons',
+    description: 'Stripe / LemonSqueezy coupon management',
+  },
+  {
+    href: '/admin/maintenance',
+    label: 'Maintenance',
+    description: 'Feature flags + maintenance mode toggle',
+  },
+];
+
+function AdminTab() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Shield className="h-4 w-4" />
+          Admin
+        </CardTitle>
+        <CardDescription>
+          Internal-only tools. Visible because your user has{' '}
+          <code className="rounded bg-violet-100 px-1 text-xs">role=admin</code>.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ul className="divide-border divide-y">
+          {ADMIN_LINKS.map((l) => (
+            <li key={l.href}>
+              <Link
+                href={l.href}
+                className="hover:bg-muted -mx-3 flex items-center justify-between gap-3 rounded-md px-3 py-3 transition"
+              >
+                <div className="min-w-0">
+                  <div className="font-medium">{l.label}</div>
+                  <div className="text-muted-foreground text-sm">{l.description}</div>
+                </div>
+                <ExternalLink className="text-muted-foreground h-4 w-4 flex-shrink-0" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }
 
