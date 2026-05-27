@@ -12,6 +12,17 @@ const nextConfig: NextConfig = {
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   reactStrictMode: true,
   poweredByHeader: false,
+  // Workspace packages export raw .ts source via `main: src/index.ts`.
+  // Without transpilePackages Next refuses to compile them through SWC
+  // and the container build fails on the first import of a workspace
+  // package's transitive deps.
+  transpilePackages: [
+    '@resumaker/shared',
+    '@resumaker/ai-safety',
+    '@resumaker/ats-scorer',
+    '@resumaker/job-engine',
+    '@resumaker/resume-engine',
+  ],
   // Source maps off in production to avoid leaking server-side logic (LLM
   // prompts, security patterns) to client-side DevTools.
   productionBrowserSourceMaps: false,
