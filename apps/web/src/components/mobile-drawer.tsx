@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Menu,
   X,
@@ -114,6 +115,15 @@ export function MobileDrawer() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
+  // Portal target — `document.body` is only available after hydration, so
+  // we resolve it client-side. Before hydration the burger button still
+  // renders; the overlay simply isn't open yet, so there's nothing to
+  // portal.
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setPortalTarget(document.body);
+  }, []);
+
   // Lock scroll on body while open. Restore on close.
   useEffect(() => {
     if (!open) return;
@@ -171,107 +181,115 @@ export function MobileDrawer() {
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Backdrop + panel */}
-      {open && (
-        <div
-          className="fixed inset-0 z-[90] md:hidden"
-          aria-modal="true"
-          role="dialog"
-          aria-label="Navigation menu"
-        >
-          {/* Click-outside backdrop */}
+      {/* Backdrop + panel — portaled to <body> so it escapes the
+          containing block created by the header's `backdrop-filter`
+          ancestor. CSS spec: any element with non-`none` backdrop-filter
+          becomes a containing block for fixed-positioned descendants,
+          which would otherwise have anchored the overlay to the 64px
+          header bar instead of the viewport — the drawer rendered as a
+          tiny clipped panel sitting under the menu button. */}
+      {open &&
+        portalTarget &&
+        createPortal(
           <div
-            className="absolute inset-0 bg-neutral-950/60 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
-          />
+            className="fixed inset-0 z-[90] md:hidden"
+            aria-modal="true"
+            role="dialog"
+            aria-label="Navigation menu"
+          >
+            {/* Click-outside backdrop */}
+            <div
+              className="absolute inset-0 bg-neutral-950/60 backdrop-blur-sm"
+              onClick={() => setOpen(false)}
+            />
 
-          {/* Sliding panel — slides in from the trailing edge (right in
+            {/* Sliding panel — slides in from the trailing edge (right in
               LTR, left in RTL). The animation uses two separate keyframe
               rules selected via [dir='rtl'] on the wrapper, because CSS
               at-rules can't be nested inside attribute selectors (the
               previous attempt silently fell back to LTR everywhere,
               which made the Hebrew drawer slide leftward across the
               entire viewport — looked broken). */}
-          <div className="bg-card resumaker-drawer-panel absolute inset-y-0 end-0 flex w-[85%] max-w-sm flex-col shadow-2xl">
-            <div className="border-border flex items-center justify-between border-b px-4 py-3">
-              <Logo size="sm" href={session ? '/dashboard' : '/'} />
-              <button
-                ref={closeRef}
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Close menu"
-                className="text-foreground hover:bg-muted inline-flex h-9 w-9 items-center justify-center rounded-md transition"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+            <div className="bg-card resumaker-drawer-panel absolute inset-y-0 end-0 flex w-[85%] max-w-sm flex-col shadow-2xl">
+              <div className="border-border flex items-center justify-between border-b px-4 py-3">
+                <Logo size="sm" href={session ? '/dashboard' : '/'} />
+                <button
+                  ref={closeRef}
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close menu"
+                  className="text-foreground hover:bg-muted inline-flex h-9 w-9 items-center justify-center rounded-md transition"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
 
-            <nav className="flex-1 overflow-y-auto py-2">
-              {items.map((it) => {
-                if (it.kind === 'divider') {
+              <nav className="flex-1 overflow-y-auto py-2">
+                {items.map((it) => {
+                  if (it.kind === 'divider') {
+                    return (
+                      <div
+                        key={`divider-${it.label}`}
+                        className="border-border text-muted-foreground mt-3 border-t px-4 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider"
+                      >
+                        {it.label}
+                      </div>
+                    );
+                  }
+                  if (it.kind === 'action') {
+                    return (
+                      <button
+                        key={it.label}
+                        type="button"
+                        onClick={() => void handleSignOut()}
+                        className="text-foreground hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-start text-sm font-medium transition"
+                      >
+                        <it.Icon className="text-muted-foreground h-4 w-4" />
+                        {it.label}
+                      </button>
+                    );
+                  }
                   return (
-                    <div
-                      key={`divider-${it.label}`}
-                      className="border-border text-muted-foreground mt-3 border-t px-4 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider"
-                    >
-                      {it.label}
-                    </div>
-                  );
-                }
-                if (it.kind === 'action') {
-                  return (
-                    <button
-                      key={it.label}
-                      type="button"
-                      onClick={() => void handleSignOut()}
-                      className="text-foreground hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-start text-sm font-medium transition"
+                    <Link
+                      key={it.href}
+                      href={it.href}
+                      onClick={() => setOpen(false)}
+                      className="text-foreground hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition"
                     >
                       <it.Icon className="text-muted-foreground h-4 w-4" />
                       {it.label}
-                    </button>
+                    </Link>
                   );
-                }
-                return (
-                  <Link
-                    key={it.href}
-                    href={it.href}
-                    onClick={() => setOpen(false)}
-                    className="text-foreground hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition"
-                  >
-                    <it.Icon className="text-muted-foreground h-4 w-4" />
-                    {it.label}
-                  </Link>
-                );
-              })}
-            </nav>
+                })}
+              </nav>
 
-            {session && (
-              <div className="border-border border-t px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <div className="bg-brand-100 dark:bg-brand-900/40 flex h-9 w-9 items-center justify-center rounded-full">
-                    <UserCircle className="text-brand-700 dark:text-brand-200 h-5 w-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-foreground truncate text-sm font-medium">
-                      {session.user.name}
+              {session && (
+                <div className="border-border border-t px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-brand-100 dark:bg-brand-900/40 flex h-9 w-9 items-center justify-center rounded-full">
+                      <UserCircle className="text-brand-700 dark:text-brand-200 h-5 w-5" />
                     </div>
-                    <div className="text-muted-foreground truncate text-xs" dir="ltr">
-                      {session.user.email}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-foreground truncate text-sm font-medium">
+                        {session.user.name}
+                      </div>
+                      <div className="text-muted-foreground truncate text-xs" dir="ltr">
+                        {session.user.email}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Two animation keyframes — one slides in from the right
+            {/* Two animation keyframes — one slides in from the right
               (LTR), the other from the left (RTL). The previous version
               tried to nest @keyframes inside [dir='rtl'], which is
               invalid CSS, so Hebrew users got the LTR animation: the
               panel started off-screen to the right and slid LEFTWARD
               across the whole viewport to land at its left-anchored
               position. */}
-          <style>{`
+            <style>{`
             @keyframes resumakerDrawerSlideFromRight {
               from { transform: translateX(100%); }
               to   { transform: translateX(0); }
@@ -290,8 +308,9 @@ export function MobileDrawer() {
               .resumaker-drawer-panel { animation: none; }
             }
           `}</style>
-        </div>
-      )}
+          </div>,
+          portalTarget,
+        )}
     </>
   );
 }
