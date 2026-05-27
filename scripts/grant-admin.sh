@@ -39,7 +39,17 @@ EOF
   exit 1
 fi
 
-PROJECT_ID="resumaker-$ENV"
+# Project IDs are environment-specific and don't follow a strict naming
+# pattern. The live prod cluster uses `resumaker-497309` (the auto-
+# generated GCP project ID), NOT `resumaker-prod`. Override the default
+# via the PROJECT_ID env var when running against a project whose ID
+# doesn't match `resumaker-<env>`.
+case "$ENV" in
+  prod)    DEFAULT_PROJECT="resumaker-497309" ;;
+  staging) DEFAULT_PROJECT="resumaker-staging" ;;
+  dev)     DEFAULT_PROJECT="resumaker-dev" ;;
+esac
+PROJECT_ID="${PROJECT_ID:-$DEFAULT_PROJECT}"
 IAM_USER="resumaker-app@$PROJECT_ID.iam"
 DB_NAME="resumaker"
 LOCAL_PORT="${PROXY_PORT:-15432}"
