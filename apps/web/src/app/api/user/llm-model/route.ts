@@ -2,8 +2,11 @@
  * GET   /api/user/llm-model  → { llmModel: string | null, tier: Tier }
  * PATCH /api/user/llm-model  body { llmModel: string | null } → { llmModel }
  *
- * Stores the user's preferred LLM. Free users cannot PATCH a non-null
- * value (tier gate); Plus/Pro can pick any model their tier allows.
+ * Stores the user's preferred LLM. Any user can pick any model whose
+ * `minTier` is reachable from their effective tier — including free
+ * users picking among free-tier models (Haiku, Gemini Flash). Picking a
+ * model above tier returns 402 with `tier_gate` so the client can open
+ * the upgrade modal.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -12,7 +15,7 @@ import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
-import { canChooseLLM, getUserTier } from '@/lib/billing/tier';
+import { getUserTier } from '@/lib/billing/tier';
 import { getModelById } from '@/lib/llm/models';
 
 const PatchSchema = z.object({
@@ -28,15 +31,24 @@ export async function GET(): Promise<Response> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  // Also returns `role` so client components that need to gate admin
+  // UI (settings Admin tab, avatar dropdown Admin link) can read it
+  // without an extra endpoint. Better Auth's client useSession()
+  // doesn't surface `role` by default and adding it to additionalFields
+  // is invasive — this endpoint is already fetched on settings load.
   const [row, tier] = await Promise.all([
     db.query.users.findFirst({
       where: eq(schema.users.id, session.user.id),
-      columns: { llmModel: true },
+      columns: { llmModel: true, role: true },
     }),
     getUserTier(session.user.id),
   ]);
 
-  return NextResponse.json({ llmModel: row?.llmModel ?? null, tier });
+  return NextResponse.json({
+    llmModel: row?.llmModel ?? null,
+    tier,
+    role: row?.role ?? 'user',
+  });
 }
 
 export async function PATCH(req: NextRequest): Promise<Response> {
@@ -56,26 +68,20 @@ export async function PATCH(req: NextRequest): Promise<Response> {
   const tier = await getUserTier(session.user.id);
 
   if (body.llmModel !== null) {
-    const gate = canChooseLLM(tier);
-    if (!gate.allowed) {
-      return NextResponse.json(
-        {
-          error: 'Model selection requires Plus or Pro',
-          code: 'TIER_LIMIT',
-          reasonKey: gate.reasonKey,
-        },
-        { status: 402 },
-      );
-    }
-
     const entry = getModelById(body.llmModel);
     if (!entry) {
       return NextResponse.json({ error: 'Unknown model id' }, { status: 400 });
     }
 
     if (tierOrder[tier] < tierOrder[entry.minTier]) {
+      // Canonical 402 + `tier_gate` body shape so the client apiClient
+      // helper can intercept and open the upgrade modal automatically.
       return NextResponse.json(
-        { error: 'This model requires a higher tier', requiredTier: entry.minTier },
+        {
+          error: 'tier_gate',
+          feature: 'model_choice',
+          requiredTier: entry.minTier,
+        },
         { status: 402 },
       );
     }

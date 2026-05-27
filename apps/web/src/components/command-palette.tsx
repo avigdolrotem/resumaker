@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
+import { Shortcut } from '@/components/ui/shortcut';
 import {
   Search,
   ArrowRight,
@@ -354,11 +355,8 @@ export function CommandPalette() {
               </kbd>
               select
             </span>
-            <span>
-              <kbd className="border-border bg-muted mx-0.5 rounded border px-1.5 py-0.5 font-mono">
-                <span aria-hidden>⌘</span>K
-              </kbd>
-              toggle
+            <span className="inline-flex items-center gap-1">
+              <Shortcut keys={['mod', 'K']} /> toggle
             </span>
           </div>
         </div>
@@ -395,9 +393,7 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
     >
       <Search className="h-4 w-4" />
       <span className="hidden sm:inline">Search or jump to…</span>
-      <kbd className="border-border bg-card ms-auto hidden rounded border px-1.5 py-0.5 font-mono text-[10px] sm:inline-block">
-        ⌘K
-      </kbd>
+      <Shortcut keys={['mod', 'K']} className="ms-auto hidden sm:inline-flex" />
     </button>
   );
 }

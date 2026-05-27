@@ -68,14 +68,28 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const [tab, setTab] = useState<Tab>('profile');
 
-  // Better Auth's User type doesn't surface `role` to the client by
-  // default (the column exists in the DB, but the SDK strips unknown
-  // fields). Cast locally — the value is sent by the server, just not
-  // typed. A larger refactor (extend Better Auth's user shape via
-  // `additionalFields`) is the proper fix; for now, this is safe
-  // because the /admin/* routes are independently role-gated server-
-  // side.
-  const isAdmin = (session?.user as { role?: string } | undefined)?.role === 'admin';
+  // Better Auth's client useSession() doesn't surface `role`. Fetch it
+  // from the same endpoint the AI model card already hits — augmented
+  // server-side to include role + tier. Cheap (one GET on settings
+  // load), no extra round-trip beyond what we already do. Defense in
+  // depth: /admin/* routes enforce server-side, so this is just
+  // discoverability — losing visibility is a UX bug, not a security
+  // bug.
+  const [meRole, setMeRole] = useState<string | null>(null);
+  useEffect(() => {
+    if (!session) return;
+    let active = true;
+    fetch('/api/user/llm-model')
+      .then((r) => r.json())
+      .then((data) => {
+        if (active && typeof data?.role === 'string') setMeRole(data.role);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [session]);
+  const isAdmin = meRole === 'admin';
   const visibleTabs = TABS.filter((it) => !it.adminOnly || isAdmin);
 
   return (

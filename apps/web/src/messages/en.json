@@ -12,6 +12,9 @@
     "dashboard": "Dashboard",
     "newResume": "New Resume",
     "myResumes": "My Resumes",
+    "coverLetters": "Cover Letters",
+    "jobs": "Jobs",
+    "applications": "Applications",
     "settings": "Settings",
     "signOut": "Sign out"
   },

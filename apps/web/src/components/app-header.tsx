@@ -4,7 +4,16 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
-import { LayoutDashboard, FilePlus2, Settings, LogOut, UserCircle } from 'lucide-react';
+import {
+  LayoutDashboard,
+  FilePlus2,
+  Settings,
+  LogOut,
+  UserCircle,
+  Mail,
+  Briefcase,
+  TrendingUp,
+} from 'lucide-react';
 import { LocaleSwitcher } from './locale-switcher';
 import { Logo } from './logo';
 import { ThemeToggle } from './theme-toggle';
@@ -64,6 +73,21 @@ export function AppHeader() {
             icon={<FilePlus2 className="h-4 w-4" />}
             label={t('newResume')}
           />
+          {/* Cover Letters — sits between Resumes/Builder and Jobs in
+              the canonical top-bar order (Section 8 of the round
+              spec). Renders only when signed in (this is the (app)
+              header). */}
+          <NavLink
+            href="/cover-letters"
+            icon={<Mail className="h-4 w-4" />}
+            label={t('coverLetters')}
+          />
+          <NavLink href="/jobs" icon={<Briefcase className="h-4 w-4" />} label={t('jobs')} />
+          <NavLink
+            href="/applications"
+            icon={<TrendingUp className="h-4 w-4" />}
+            label={t('applications')}
+          />
           <NavLink href="/settings" icon={<Settings className="h-4 w-4" />} label={t('settings')} />
 
           {/* Divider only when desktop nav items are visible */}
@@ -115,7 +139,13 @@ function NavLink({
   icon,
   label,
 }: {
-  href: '/dashboard' | '/builder' | '/settings';
+  href:
+    | '/dashboard'
+    | '/builder'
+    | '/cover-letters'
+    | '/jobs'
+    | '/applications'
+    | '/settings';
   icon: React.ReactNode;
   label: string;
 }) {
