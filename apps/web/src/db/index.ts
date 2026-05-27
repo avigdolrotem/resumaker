@@ -25,7 +25,6 @@ import * as relations from './relations';
 type PgClient = ReturnType<typeof postgres>;
 
 declare global {
-  // eslint-disable-next-line no-var
   var __resumakerPgClient: PgClient | undefined;
 }
 
@@ -80,7 +79,7 @@ const client =
   globalThis.__resumakerPgClient ??
   (await makeClient().catch((err: unknown) => {
     const message = err instanceof Error ? err.message : String(err);
-    // eslint-disable-next-line no-console
+
     console.warn('[db] Cloud SQL unreachable at module load — using stub client. Cause:', message);
     return makeStubClient();
   }));

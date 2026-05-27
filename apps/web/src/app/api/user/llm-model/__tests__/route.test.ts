@@ -61,7 +61,7 @@ describe('PATCH /api/user/llm-model', () => {
   it('stores a valid model id', async () => {
     const req = new NextRequest('http://localhost/api/user/llm-model', {
       method: 'PATCH',
-      body: JSON.stringify({ llmModel: 'anthropic/claude-opus-4-7' }),
+      body: JSON.stringify({ llmModel: 'anthropic/claude-opus-4@20250515' }),
       headers: { 'content-type': 'application/json' },
     });
     const res = await PATCH(req);
@@ -73,7 +73,7 @@ describe('PATCH /api/user/llm-model', () => {
   it('stores a model the tier can pick (Plus → Sonnet)', async () => {
     const req = new NextRequest('http://localhost/api/user/llm-model', {
       method: 'PATCH',
-      body: JSON.stringify({ llmModel: 'anthropic/claude-sonnet-4-6' }),
+      body: JSON.stringify({ llmModel: 'anthropic/claude-sonnet-4-5@20250929' }),
       headers: { 'content-type': 'application/json' },
     });
     const res = await PATCH(req);
@@ -96,7 +96,7 @@ describe('PATCH /api/user/llm-model', () => {
 
     const req = new NextRequest('http://localhost/api/user/llm-model', {
       method: 'PATCH',
-      body: JSON.stringify({ llmModel: 'anthropic/claude-sonnet-4-6' }),
+      body: JSON.stringify({ llmModel: 'anthropic/claude-sonnet-4-5@20250929' }),
       headers: { 'content-type': 'application/json' },
     });
     const res = await PATCH(req);

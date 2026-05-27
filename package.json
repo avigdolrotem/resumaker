@@ -33,6 +33,7 @@
     "prepare": "pre-commit install || true"
   },
   "devDependencies": {
+    "globals": "^16",
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.10"
   },
