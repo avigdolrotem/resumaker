@@ -32,6 +32,23 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=deps /app/packages ./packages
 COPY . .
+
+# Build-only env stubs. Next 16 sets NODE_ENV=production during `next
+# build`, which trips env.ts's production refines (APP_URL must not be
+# localhost, GCP Cloud SQL must be set, etc.). Real values are injected
+# at runtime via ExternalSecrets → pod env. These stubs only need to
+# satisfy Zod parsing — the build doesn't actually connect anywhere
+# (db/index.ts is wrapped in a try/catch that falls back to a stub
+# client when the connect fails).
+ENV APP_URL=https://build.example.com \
+    NEXT_PUBLIC_APP_URL=https://build.example.com \
+    BETTER_AUTH_URL=https://build.example.com \
+    BETTER_AUTH_SECRET=build-stub-secret-thirty-two-chars-minimum-here \
+    CRON_SECRET=build-stub-cron-secret-thirty-two-chars-min \
+    IP_HASH_SALT=build-stub-ip-hash-salt-thirty-two-chars-minimum-padding \
+    GCP_CLOUD_SQL_INSTANCE=build-stub:europe-west1:build-stub \
+    GCP_CLOUD_SQL_IAM_USER=build-stub@build.iam.gserviceaccount.com
+
 RUN pnpm --filter @resumaker/web build
 
 # Runtime image
