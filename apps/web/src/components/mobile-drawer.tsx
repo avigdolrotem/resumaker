@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Menu,
   X,
@@ -111,6 +111,8 @@ export function MobileDrawer() {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
   const router = useRouter();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   // Lock scroll on body while open. Restore on close.
   useEffect(() => {
@@ -132,6 +134,21 @@ export function MobileDrawer() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
+  // Focus management — when the drawer opens, focus the close button so
+  // keyboard / screen-reader users land inside the dialog; when it
+  // closes, return focus to the trigger they opened it with. Without
+  // this, Tab can escape the open drawer into the page underneath,
+  // which feels broken on mobile.
+  useEffect(() => {
+    if (open) {
+      // wait one frame so the panel is in the DOM
+      const id = requestAnimationFrame(() => closeRef.current?.focus());
+      return () => cancelAnimationFrame(id);
+    }
+    triggerRef.current?.focus();
+    return undefined;
+  }, [open]);
+
   const items = session ? authedItems() : publicItems();
 
   async function handleSignOut() {
@@ -144,6 +161,7 @@ export function MobileDrawer() {
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Open menu"
@@ -167,16 +185,18 @@ export function MobileDrawer() {
             onClick={() => setOpen(false)}
           />
 
-          {/* Sliding panel — slides in from trailing edge (right in LTR, left in RTL) */}
-          <div
-            className="bg-card absolute inset-y-0 end-0 flex w-[85%] max-w-sm flex-col shadow-2xl"
-            style={{
-              animation: 'slideInRight 0.25s ease-out',
-            }}
-          >
+          {/* Sliding panel — slides in from the trailing edge (right in
+              LTR, left in RTL). The animation uses two separate keyframe
+              rules selected via [dir='rtl'] on the wrapper, because CSS
+              at-rules can't be nested inside attribute selectors (the
+              previous attempt silently fell back to LTR everywhere,
+              which made the Hebrew drawer slide leftward across the
+              entire viewport — looked broken). */}
+          <div className="bg-card resumaker-drawer-panel absolute inset-y-0 end-0 flex w-[85%] max-w-sm flex-col shadow-2xl">
             <div className="border-border flex items-center justify-between border-b px-4 py-3">
               <Logo size="sm" href={session ? '/dashboard' : '/'} />
               <button
+                ref={closeRef}
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close menu"
@@ -244,16 +264,30 @@ export function MobileDrawer() {
             )}
           </div>
 
-          {/* slide-in keyframe — scoped to this drawer so it doesn't
-              leak into the global animation registry */}
+          {/* Two animation keyframes — one slides in from the right
+              (LTR), the other from the left (RTL). The previous version
+              tried to nest @keyframes inside [dir='rtl'], which is
+              invalid CSS, so Hebrew users got the LTR animation: the
+              panel started off-screen to the right and slid LEFTWARD
+              across the whole viewport to land at its left-anchored
+              position. */}
           <style>{`
-            @keyframes slideInRight {
+            @keyframes resumakerDrawerSlideFromRight {
               from { transform: translateX(100%); }
-              to { transform: translateX(0); }
+              to   { transform: translateX(0); }
             }
-            [dir='rtl'] @keyframes slideInRight {
+            @keyframes resumakerDrawerSlideFromLeft {
               from { transform: translateX(-100%); }
-              to { transform: translateX(0); }
+              to   { transform: translateX(0); }
+            }
+            [dir='ltr'] .resumaker-drawer-panel {
+              animation: resumakerDrawerSlideFromRight 0.25s ease-out;
+            }
+            [dir='rtl'] .resumaker-drawer-panel {
+              animation: resumakerDrawerSlideFromLeft 0.25s ease-out;
+            }
+            @media (prefers-reduced-motion: reduce) {
+              .resumaker-drawer-panel { animation: none; }
             }
           `}</style>
         </div>
