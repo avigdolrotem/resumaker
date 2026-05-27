@@ -18,7 +18,7 @@ import { getModelById } from '@/lib/llm/models';
 const PatchSchema = z.object({
   llmModel: z
     .string()
-    .regex(/^[a-z]+\/[a-z0-9.\-]+$/, 'Must be provider/model format')
+    .regex(/^[a-z]+\/[a-z0-9.@\-]+$/, 'Must be provider/model format')
     .nullable(),
 });
 

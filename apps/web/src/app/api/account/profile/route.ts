@@ -8,7 +8,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
@@ -35,7 +35,7 @@ export async function GET(): Promise<Response> {
   // user_profile table lands with the L5 job-hunt port). Letter
   // generation uses name + skills + summary from this.
   const recent = await db.query.resumes.findFirst({
-    where: eq(schema.resumes.userId, session.user.id),
+    where: and(eq(schema.resumes.userId, session.user.id), isNull(schema.resumes.deletedAt)),
     orderBy: (r, { desc }) => [desc(r.updatedAt)],
     columns: { content: true },
   });

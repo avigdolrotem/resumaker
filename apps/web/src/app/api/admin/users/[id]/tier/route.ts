@@ -19,7 +19,7 @@ import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
 import { TIER_ORDER } from '@/lib/billing/limits';
-import { requireAdmin } from '@/lib/auth-guards';
+import { requireAdmin, requireFreshSession } from '@/lib/auth-guards';
 
 const BodySchema = z.object({
   tier: z.enum(['free', 'plus', 'pro']),
@@ -34,6 +34,11 @@ export async function POST(
 ): Promise<Response> {
   const guard = await requireAdmin(await headers());
   if (guard instanceof NextResponse) return guard;
+
+  // Tier grants/revocations are high-impact (refund mismatches, free-Pro forever).
+  // Match the freshness gate on role grants — admin must have signed in recently.
+  const fresh = await requireFreshSession(await headers(), 15 * 60);
+  if (fresh instanceof NextResponse) return fresh;
 
   const { id } = await params;
   const force = req.nextUrl.searchParams.get('force') === '1';

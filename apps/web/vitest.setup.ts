@@ -19,6 +19,5 @@ e.DATABASE_URL = 'postgres://test:test@localhost:5432/test';
 // placeholder values so env validation passes.
 e.GCP_CLOUD_SQL_INSTANCE = 'test-project:europe-west1:test-instance';
 e.GCP_CLOUD_SQL_IAM_USER = 'test-sa@test-project.iam.gserviceaccount.com';
-e.AI_GATEWAY_API_KEY = 'test-gateway-key';
 e.BETTER_AUTH_SECRET = 'test-secret-must-be-at-least-32-chars-long-yep';
 e.BETTER_AUTH_URL = 'http://localhost:3000';

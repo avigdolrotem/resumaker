@@ -2,6 +2,7 @@ import { generateObject } from 'ai';
 import { vertex } from '@ai-sdk/google-vertex';
 import { vertexAnthropic } from '@ai-sdk/google-vertex/anthropic';
 import { z } from 'zod';
+import { lookup as dnsLookup } from 'node:dns/promises';
 
 /** Resolve `provider/model` to a Vertex-backed AI SDK model. */
 function resolveModel(modelString: string) {
@@ -16,6 +17,110 @@ function resolveModel(modelString: string) {
 import type { NormalizedJob } from './types';
 import { normalizeUrl } from './url-normalize';
 import { stripHtml, inferSeniority, parseIsoDate } from './html-utils';
+
+const MAX_FETCH_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_REDIRECTS = 5;
+
+/**
+ * Block hosts that resolve to private / link-local / loopback / metadata
+ * addresses. Defense against SSRF where an attacker submits a URL that
+ * fronts an internal service (Cloud SQL, Memorystore, GCE metadata).
+ *
+ * Resolves the hostname, checks every returned IP. We re-resolve at each
+ * redirect hop — not a perfect DNS-rebinding mitigation (a fast TTL=0
+ * record could still flip between resolve and connect), but it raises
+ * the bar considerably.
+ */
+async function assertPublicHost(hostname: string): Promise<void> {
+  // Numeric / hex / octal IP literals — let dns.lookup normalize them.
+  const addrs = await dnsLookup(hostname, { all: true });
+  for (const a of addrs) {
+    if (isPrivateIp(a.address)) {
+      throw new Error(`Blocked private/internal address: ${hostname} → ${a.address}`);
+    }
+  }
+}
+
+function isPrivateIp(ip: string): boolean {
+  if (ip === '::1' || ip === '0:0:0:0:0:0:0:1' || ip === '127.0.0.1' || ip === '0.0.0.0') {
+    return true;
+  }
+  if (ip.startsWith('fe80:') || ip.startsWith('fc00:') || ip.startsWith('fd')) return true;
+  if (ip.includes(':')) {
+    // IPv6: also block ::ffff:10.x and similar IPv4-mapped private ranges
+    const mapped = ip.toLowerCase().match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+    if (mapped?.[1]) return isPrivateIp(mapped[1]);
+    return false;
+  }
+  const parts = ip.split('.').map(Number);
+  if (parts.length !== 4 || parts.some((p) => Number.isNaN(p) || p < 0 || p > 255)) {
+    return true; // malformed → block
+  }
+  const [a, b] = parts as [number, number, number, number];
+  if (a === 10) return true; // 10.0.0.0/8
+  if (a === 127) return true; // 127.0.0.0/8
+  if (a === 169 && b === 254) return true; // 169.254.0.0/16 — GCE metadata, link-local
+  if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+  if (a === 192 && b === 168) return true; // 192.168.0.0/16
+  if (a === 0) return true; // 0.0.0.0/8
+  if (a >= 224) return true; // multicast + reserved
+  return false;
+}
+
+async function fetchUrlText(url: string): Promise<string> {
+  let current = url;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    let parsed: URL;
+    try {
+      parsed = new URL(current);
+    } catch {
+      throw new Error('Invalid URL');
+    }
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      throw new Error(`Blocked protocol: ${parsed.protocol}`);
+    }
+    await assertPublicHost(parsed.hostname);
+
+    const res = await fetch(current, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ResumakerBot/1.0)' },
+      redirect: 'manual',
+      signal: AbortSignal.timeout(20_000),
+    });
+
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get('location');
+      if (!location) throw new Error('Redirect without Location');
+      current = new URL(location, current).toString();
+      continue;
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    // Defensive content-length check before streaming the body.
+    const declared = Number(res.headers.get('content-length') ?? '0');
+    if (declared > MAX_FETCH_BYTES) {
+      throw new Error(`Response too large: ${declared} bytes`);
+    }
+
+    const reader = res.body?.getReader();
+    if (!reader) return '';
+    const decoder = new TextDecoder('utf-8', { fatal: false });
+    let total = 0;
+    let out = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > MAX_FETCH_BYTES) {
+        await reader.cancel();
+        throw new Error('Response exceeded size cap');
+      }
+      out += decoder.decode(value, { stream: true });
+      if (out.length > 20_000) break;
+    }
+    return out.slice(0, 20_000);
+  }
+  throw new Error('Too many redirects');
+}
 
 const EXTRACT_JD_SYSTEM = `You are a job description parser. Extract structured information from the given job description text or URL content.
 
@@ -55,17 +160,6 @@ const ExtractJobSchema = z.object({
 
 type ExtractedJob = z.infer<typeof ExtractJobSchema>;
 
-async function fetchUrlText(url: string): Promise<string> {
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0' },
-    redirect: 'follow',
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const text = await res.text();
-  return text.slice(0, 20_000);
-}
-
 async function extractJobData(content: string, modelString: string): Promise<ExtractedJob | null> {
   const result = await generateObject({
     model: resolveModel(modelString),
@@ -78,12 +172,13 @@ async function extractJobData(content: string, modelString: string): Promise<Ext
 }
 
 /**
- * Fetch a job posting URL and use an LLM (default: anthropic/claude-haiku-4-5)
- * to extract structured job data.  Returns a NormalizedJob with source="manual".
+ * Fetch a job posting URL and use an LLM (default:
+ * anthropic/claude-haiku-4-5@20251001) to extract structured job data.
+ * Returns a NormalizedJob with source="manual".
  */
 export async function importJobFromUrl(
   url: string,
-  modelString = 'anthropic/claude-haiku-4-5',
+  modelString = 'anthropic/claude-haiku-4-5@20251001',
 ): Promise<NormalizedJob> {
   let content = '';
   try {

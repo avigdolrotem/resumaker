@@ -34,12 +34,11 @@ spec:
             - name: {{ $k }}
               value: {{ $v | quote }}
             {{- end }}
-            # App secrets (pulled by external-secrets-operator into a k8s secret of the same name)
-            - name: ANTHROPIC_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "resumaker.fullname" . }}-app
-                  key: ANTHROPIC_API_KEY
+            # App secrets (pulled by external-secrets-operator into a k8s secret of the same name).
+            # ANTHROPIC_API_KEY is intentionally not injected — Vertex AI authenticates via
+            # Workload Identity (Application Default Credentials), not an API key. The
+            # Secret Manager entry is kept only as a rollback path if we ever need to
+            # leave Vertex; remove the secretKeyRef before relying on it.
             - name: BETTER_AUTH_SECRET
               valueFrom:
                 secretKeyRef:

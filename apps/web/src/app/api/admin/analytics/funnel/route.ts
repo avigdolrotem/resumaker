@@ -25,7 +25,7 @@ export async function GET(_req: NextRequest): Promise<Response> {
   const firstResumeRows = await db
     .selectDistinct({ userId: schema.resumes.userId })
     .from(schema.resumes)
-    .where(gte(schema.resumes.createdAt, since));
+    .where(and(gte(schema.resumes.createdAt, since), isNull(schema.resumes.deletedAt)));
 
   // Users who went paid in last 30 days
   const [paidRow] = await db
