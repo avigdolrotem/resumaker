@@ -26,6 +26,7 @@ import { env } from '@/lib/env';
 import { sendEmail } from '@/lib/email/client';
 import { escapeHtml } from '@/lib/email/templates';
 import { logger } from '@/lib/observability';
+import { verifyCronSecret } from '@/lib/cron-auth';
 import {
   COMPANY_ADDRESS_EN,
   COMPANY_ADDRESS_HE,
@@ -73,10 +74,6 @@ function senderFooter(locale: string): string {
   Sender: ${escapeHtml(COMPANY_LEGAL_NAME)} · ${escapeHtml(COMPANY_ADDRESS_EN)} ·
   <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>
 </p>`;
-}
-
-function unauthorized() {
-  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 }
 
 async function alreadySent(userId: string, dayTag: string): Promise<boolean> {
@@ -157,10 +154,8 @@ function emailForDay(dayTag: string, locale: string, name: string | null): Email
 }
 
 export async function GET(req: NextRequest): Promise<Response> {
-  const authHeader = req.headers.get('authorization') ?? '';
-  if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
-    return unauthorized();
-  }
+  const authError = verifyCronSecret(req);
+  if (authError) return authError;
 
   const now = new Date();
   const day1 = new Date(now.getTime() - 24 * 60 * 60 * 1000);

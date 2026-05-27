@@ -33,6 +33,16 @@ ingress:
           pathType: Prefix
   tls: [] # TLS handled by GCP managed certificate
 
+managedCertificate:
+  enabled: true
+  name: resumaker-dev-cert
+  domains:
+    - dev.resumaker.co.il
+
+networkPolicy:
+  enabled: true
+  vpcCidr: 10.0.0.0/16
+
 env:
   NODE_ENV: development
   APP_URL: https://dev.resumaker.co.il
