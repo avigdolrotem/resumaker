@@ -6,7 +6,7 @@
  *
  * Usage:
  *   import { env } from '@/lib/env';
- *   env.AI_GATEWAY_API_KEY  // typed string | undefined
+ *   env.GOOGLE_VERTEX_LOCATION  // typed string with default
  */
 
 import { z } from 'zod';
@@ -68,22 +68,25 @@ const EnvSchema = z
     GITHUB_CLIENT_ID: z.string().optional(),
     GITHUB_CLIENT_SECRET: z.string().optional(),
 
-    // LLM — model strings use AI Gateway format `provider/model`.
-    // All call-sites route through the Vercel AI Gateway; no direct
-    // provider keys are read by the app.
-    AI_GATEWAY_API_KEY: z.string().min(1).optional(),
+    // LLM — model strings use `provider/model` format. All calls route
+    // through GCP Vertex AI via the @ai-sdk/google-vertex provider.
+    // Auth is via Application Default Credentials (Workload Identity in
+    // GKE), so no API key is read from env. Project + location override
+    // the SDK's auto-detection.
+    GOOGLE_VERTEX_PROJECT: z.string().optional(),
+    GOOGLE_VERTEX_LOCATION: z.string().default('europe-west1'),
     DEFAULT_LLM_MODEL: z
       .string()
-      .regex(/^[a-z]+\/[a-z0-9.\-]+$/, 'Must be provider/model format')
-      .default('anthropic/claude-sonnet-4-6'),
+      .regex(/^[a-z]+\/[a-z0-9.@\-]+$/, 'Must be provider/model format')
+      .default('anthropic/claude-sonnet-4-5@20250929'),
     FALLBACK_LLM_MODEL: z
       .string()
-      .regex(/^[a-z]+\/[a-z0-9.\-]+$/, 'Must be provider/model format')
-      .default('anthropic/claude-haiku-4-5'),
+      .regex(/^[a-z]+\/[a-z0-9.@\-]+$/, 'Must be provider/model format')
+      .default('anthropic/claude-haiku-4-5@20251001'),
     PARSE_LLM_MODEL: z
       .string()
-      .regex(/^[a-z]+\/[a-z0-9.\-]+$/, 'Must be provider/model format')
-      .default('anthropic/claude-haiku-4-5'),
+      .regex(/^[a-z]+\/[a-z0-9.@\-]+$/, 'Must be provider/model format')
+      .default('anthropic/claude-haiku-4-5@20251001'),
     LLM_MAX_TOKENS: z.coerce.number().int().positive().default(4096),
     LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
     LLM_CONCURRENCY_LIMIT: z.coerce.number().int().positive().default(20),
@@ -173,10 +176,6 @@ const EnvSchema = z
   })
   .refine((e) => e.NODE_ENV !== 'production' || Boolean(e.CRON_SECRET), {
     message: 'CRON_SECRET is required in production so GKE CronJobs can authenticate',
-  })
-  .refine((e) => e.NODE_ENV !== 'production' || Boolean(e.AI_GATEWAY_API_KEY), {
-    message: 'AI_GATEWAY_API_KEY is required in production',
-    path: ['AI_GATEWAY_API_KEY'],
   });
 
 function parseEnv() {
