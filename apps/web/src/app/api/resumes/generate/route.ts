@@ -27,6 +27,7 @@ import { sanitizeInput } from '@resumaker/ai-safety';
 import { PromptInjectionError, ValidationError, LLMError } from '@resumaker/shared';
 import { canGenerate, getGenerationsToday, getUserTier } from '@/lib/billing/tier';
 import { env } from '@/lib/env';
+import { logger } from '@/lib/observability';
 
 const BodySchema = z
   .object({
@@ -176,7 +177,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     if (err instanceof LLMError) {
       return NextResponse.json({ error: 'LLM service error' }, { status: 502 });
     }
-    console.error('[generate] unexpected error:', err);
+    logger.error({ err: (err as Error).message }, 'resume.generate.failed');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

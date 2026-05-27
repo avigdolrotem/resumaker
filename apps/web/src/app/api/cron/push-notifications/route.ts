@@ -11,6 +11,7 @@
  * The route previously exported POST and never fired in production.
  */
 
+import { createHash } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { isNull, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
@@ -83,7 +84,10 @@ export async function GET(req: NextRequest): Promise<Response> {
         sent++;
       } catch (err) {
         failed++;
-        logger.error({ err: (err as Error).message, endpoint: sub.endpoint }, 'push.send_failed');
+        // Endpoint URL is a long unique identifier that can correlate
+        // a subscriber across services — hash before logging.
+        const endpointHash = createHash('sha256').update(sub.endpoint).digest('hex').slice(0, 16);
+        logger.error({ err: (err as Error).name, endpointHash }, 'push.send_failed');
         // If subscription is gone (410), remove it
         if ((err as { statusCode?: number }).statusCode === 410) {
           await db

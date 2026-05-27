@@ -25,9 +25,25 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // Spectre/cross-window isolation. COEP intentionally omitted
+          // because Stripe/LS iframes break under credentialless.
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            value: [
+              'camera=()',
+              'microphone=()',
+              'geolocation=()',
+              'usb=()',
+              'payment=(self "https://checkout.stripe.com" "https://*.lemonsqueezy.com")',
+              'accelerometer=()',
+              'gyroscope=()',
+              'magnetometer=()',
+              'interest-cohort=()',
+              'browsing-topics=()',
+              'attribution-reporting=()',
+            ].join(', '),
           },
           {
             key: 'Strict-Transport-Security',
@@ -49,7 +65,9 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
               "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://*.stripe.com https://*.lemonsqueezy.com",
-              "connect-src 'self' https://api.anthropic.com https://*.sentry.io",
+              // No api.anthropic.com — LLM calls happen server-side via the
+              // AI Gateway, never from the browser.
+              "connect-src 'self' https://*.sentry.io",
               // Stripe Checkout uses a hosted iframe + same for LS
               'frame-src https://checkout.stripe.com https://*.lemonsqueezy.com https://js.stripe.com',
               "frame-ancestors 'none'",

@@ -31,6 +31,7 @@ import {
   getCustomer,
 } from '@lemonsqueezy/lemonsqueezy.js';
 import { env } from '@/lib/env';
+import { logger } from '@/lib/observability';
 
 let initialized = false;
 
@@ -48,7 +49,7 @@ export function ensureLemonSqueezy(): void {
   lemonSqueezySetup({
     apiKey: env.LEMONSQUEEZY_API_KEY,
     onError: (err) => {
-      console.error('[lemonsqueezy] api error', err);
+      logger.error({ err: (err as Error).name }, 'lemonsqueezy.api_error');
     },
   });
   initialized = true;

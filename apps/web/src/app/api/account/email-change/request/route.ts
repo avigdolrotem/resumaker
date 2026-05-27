@@ -65,8 +65,11 @@ export async function POST(req: NextRequest): Promise<Response> {
     columns: { id: true },
   });
   if (existing) {
+    // Don't echo the target email — observability scrubber keys on
+    // standard `email` field name; using a custom key bypasses the
+    // scrub and leaks it to Sentry / Cloud Logging.
     logger.warn(
-      { userId: guard.user.id, conflictingEmail: body.newEmail.toLowerCase() },
+      { userId: guard.user.id },
       'email_change.request.conflict: target address already registered',
     );
     return NextResponse.json({
