@@ -10,8 +10,10 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/shared/package.json ./packages/shared/
-COPY packages/ui/package.json ./packages/ui/
 COPY packages/ai-safety/package.json ./packages/ai-safety/
+COPY packages/ats-scorer/package.json ./packages/ats-scorer/
+COPY packages/job-engine/package.json ./packages/job-engine/
+COPY packages/resume-engine/package.json ./packages/resume-engine/
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
 
@@ -28,6 +30,7 @@ ENV NEXT_PUBLIC_SENTRY_ENVIRONMENT=${NEXT_PUBLIC_SENTRY_ENVIRONMENT}
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=deps /app/packages ./packages
 COPY . .
 RUN pnpm --filter @resumaker/web build
 

@@ -135,3 +135,6 @@ agentdb.rvf
 
 # Sentry Config File
 .env.sentry-build-plugin
+plan.tfplan
+infra/tofu/environments/*/.terraform/
+infra/tofu/environments/*/.terraform.lock.hcl

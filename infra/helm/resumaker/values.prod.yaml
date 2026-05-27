@@ -4,7 +4,7 @@ replicaCount: 3
 
 image:
   # Tag injected by CI writing values.prod.image.yaml
-  repository: europe-west1-docker.pkg.dev/resumaker-prod/resumaker/web
+  repository: europe-west1-docker.pkg.dev/resumaker-497309/resumaker/web
   pullPolicy: IfNotPresent
 
 resources:
@@ -59,7 +59,7 @@ externalSecrets:
 serviceAccount:
   create: true
   annotations:
-    iam.gke.io/gcp-service-account: resumaker-app@resumaker-prod.iam.gserviceaccount.com
+    iam.gke.io/gcp-service-account: resumaker-app@resumaker-497309.iam.gserviceaccount.com
 
 # Secrets pulled from GCP Secret Manager (managed by external-secrets-operator)
 secretsManagerName: resumaker-prod/app
