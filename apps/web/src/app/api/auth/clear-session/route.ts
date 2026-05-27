@@ -14,6 +14,7 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
+import { env } from '@/lib/env';
 
 const COOKIE_PREFIX = 'resumaker.';
 
@@ -23,7 +24,10 @@ export async function GET(req: NextRequest): Promise<Response> {
   // Open-redirect guard — only allow same-origin relative paths.
   const to = rawTo.startsWith('/') && !rawTo.startsWith('//') ? rawTo : '/sign-in';
 
-  const redirectUrl = new URL(to, url.origin);
+  // Resolve against the canonical public APP_URL rather than req.url —
+  // behind GKE Ingress, req.url.host is the pod-internal 0.0.0.0:3000
+  // and the browser would chase an unreachable address.
+  const redirectUrl = new URL(to, env.APP_URL);
   const res = NextResponse.redirect(redirectUrl, 307);
 
   // Iterate every cookie on the request, delete every resumaker.*
