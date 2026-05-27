@@ -74,7 +74,25 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # DNS — both UDP (standard) and TCP (fallback for large responses)
+    # DNS — both UDP (standard) and TCP (fallback for large responses).
+    #
+    # Two egress targets are required on GKE Autopilot:
+    #   1. NodeLocal DNSCache at 169.254.20.10 — the address every
+    #      pod's /etc/resolv.conf is wired to by default on Autopilot.
+    #      WITHOUT this rule pods can't resolve ANY hostname; every
+    #      external API call (Google OAuth, Vertex AI, Resend, Stripe)
+    #      times out at DNS resolution. This bug took out Google
+    #      sign-in in production on 2026-05-27 — operator-reported P0.
+    #   2. kube-dns pods in kube-system — fallback when NodeLocal is
+    #      unavailable; some Autopilot variants bypass NodeLocal.
+    - to:
+        - ipBlock:
+            cidr: 169.254.20.10/32
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
     - to:
         - namespaceSelector:
             matchLabels:
