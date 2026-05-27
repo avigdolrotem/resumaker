@@ -89,6 +89,18 @@ jobs:
     needs: [lint, typecheck]
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Build-time env stubs so apps/web/src/lib/env.ts's Zod prod-refines
+    # don't fail page-data collection. Real values are injected at runtime
+    # via the Helm chart's env block + ExternalSecrets — these are
+    # obviously-fake placeholders so a leaked CI artifact can't be
+    # mistaken for real config. Same stubs as apps/web/Dockerfile.
+    env:
+      APP_URL: https://build.example.com
+      BETTER_AUTH_URL: https://build.example.com
+      NEXT_PUBLIC_APP_URL: https://build.example.com
+      BETTER_AUTH_SECRET: build-stub-must-be-at-least-32-chars-long
+      GCP_CLOUD_SQL_INSTANCE: build:stub:instance
+      GCP_CLOUD_SQL_IAM_USER: build-stub@example.iam.gserviceaccount.com
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

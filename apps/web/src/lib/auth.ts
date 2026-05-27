@@ -108,6 +108,13 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
+    // 3 days. Better Auth defaults to 1 hour. Without SPF/DKIM/DMARC the
+    // verification email lands in spam for many users; by the time they
+    // dig it out and click, a 1-hour token has expired and they get
+    // stuck — can't verify, can't sign in (requireEmailVerification:true
+    // blocks unverified accounts). 3 days survives the spam-folder
+    // discovery window. Once DNS is fixed we can bring this back down.
+    expiresIn: 60 * 60 * 24 * 3,
     sendVerificationEmail: async ({ user, url }) => {
       const locale = detectLocale(url);
       const tmpl = emailVerification({ locale, verifyUrl: url });
