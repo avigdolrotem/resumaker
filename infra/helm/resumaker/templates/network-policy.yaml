@@ -74,12 +74,14 @@ spec:
         - protocol: TCP
           port: 53
 
-    # Cloud SQL + Memorystore via Private Services Access on the VPC CIDR.
+    # Cloud SQL + Memorystore via Private Services Access. The Google-
+    # managed services live in the 10.0.0.0/8 RFC1918 range (the exact
+    # CIDR is allocated dynamically), so allow the broad private range
+    # for these two ports only. GCP Metadata Server (169.254.169.254)
+    # is not reachable on these ports anyway.
     - to:
         - ipBlock:
-            cidr: {{ .Values.networkPolicy.vpcCidr | quote }}
-            except:
-              - 169.254.169.254/32 # GCP Metadata Server — defense-in-depth
+            cidr: 10.0.0.0/8
       ports:
         - protocol: TCP
           port: 5432
