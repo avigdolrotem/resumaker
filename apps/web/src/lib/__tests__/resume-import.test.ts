@@ -25,7 +25,7 @@ describe('parseResumeText', () => {
     expect(profile.skills).toEqual(['TS']);
     expect(vi.mocked(llm.generateObject)).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: expect.stringMatching(/^[a-z]+\/[a-z0-9.\-]+$/),
+        model: expect.stringMatching(/^[a-z]+\/[a-z0-9.@\-]+$/),
       }),
     );
   });

@@ -42,7 +42,7 @@ export default function GlobalError({
     // Sentry (via instrumentation-client.ts) already captures the full
     // error before this boundary runs.
     const isProd = process.env.NODE_ENV === 'production';
-    // eslint-disable-next-line no-console
+
     console.error('[global-error]', {
       name: error.name,
       digest: error.digest,

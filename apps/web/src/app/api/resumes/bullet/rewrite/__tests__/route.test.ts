@@ -59,7 +59,7 @@ describe('POST /api/resumes/bullet/rewrite', () => {
     expect(data.bullet).toContain('Led');
     expect(vi.mocked(llm.generateText)).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: expect.stringMatching(/^[a-z]+\/[a-z0-9.\-]+$/),
+        model: expect.stringMatching(/^[a-z]+\/[a-z0-9.@\-]+$/),
         prompt: expect.stringContaining('Led a team'),
       }),
     );

@@ -72,7 +72,7 @@ describe('POST /api/resumes/fit-score', () => {
     expect(data.missing_keywords).toEqual(['Kubernetes']);
     expect(vi.mocked(llm.generateObject)).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: expect.stringMatching(/^[a-z]+\/[a-z0-9.\-]+$/),
+        model: expect.stringMatching(/^[a-z]+\/[a-z0-9.@\-]+$/),
       }),
     );
   });

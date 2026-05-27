@@ -6,8 +6,9 @@
  */
 
 import { env } from '@/lib/env';
+import type * as SentryNS from '@sentry/nextjs';
 
-type SentryModule = typeof import('@sentry/nextjs');
+type SentryModule = typeof SentryNS;
 
 let sentry: SentryModule | null = null;
 let initAttempted = false;
