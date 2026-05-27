@@ -5,6 +5,18 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
+# Migration Job (helm pre-upgrade hook).
+#
+# Disabled by default: the standalone-image migrator
+# (apps/web/scripts/migrate.mjs) hasn't been end-to-end-validated against
+# the production schema yet (Phase 9 in docs/SECURITY_AUDIT_2026-05-27.md).
+# Production migrations today are run manually via the operator-laptop
+# cloud-sql-proxy flow documented in OPERATOR_ACTION_LIST_2026-05-27.md.
+# Flip this to `true` once we've validated the migrator on dev/staging
+# (and have a tested rollback for a failed migration).
+migrationJob:
+  enabled: false
+
 replicaCount: 2
 
 resources:
