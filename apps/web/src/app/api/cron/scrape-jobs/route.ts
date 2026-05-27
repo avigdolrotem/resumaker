@@ -15,16 +15,14 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { db, schema } from '@/db';
-import { env } from '@/lib/env';
 import { logger } from '@/lib/observability';
+import { verifyCronSecret } from '@/lib/cron-auth';
 
 export const maxDuration = 300; // 5 minutes — scraping can take a while
 
 export async function GET(req: NextRequest): Promise<Response> {
-  const auth = req.headers.get('authorization') ?? '';
-  if (!env.CRON_SECRET || auth !== `Bearer ${env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = verifyCronSecret(req);
+  if (authError) return authError;
 
   const startedAt = Date.now();
   const stats = {

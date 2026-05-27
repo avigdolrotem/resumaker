@@ -15,8 +15,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { and, inArray, isNotNull, lt, sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
-import { env } from '@/lib/env';
 import { auditEvent } from '@/lib/audit';
+import { verifyCronSecret } from '@/lib/cron-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -25,12 +25,8 @@ const DELETION_GRACE_DAYS = 30;
 const VERIFICATION_TTL_DAYS = 7;
 
 export async function GET(req: NextRequest): Promise<Response> {
-  // Auth: bearer-token header (Vercel Cron sets `Authorization: Bearer <secret>`)
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = env.CRON_SECRET;
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const authError = verifyCronSecret(req);
+  if (authError) return authError;
 
   const grace = new Date(Date.now() - DELETION_GRACE_DAYS * 24 * 60 * 60 * 1000);
   const verifyTtl = new Date(Date.now() - VERIFICATION_TTL_DAYS * 24 * 60 * 60 * 1000);

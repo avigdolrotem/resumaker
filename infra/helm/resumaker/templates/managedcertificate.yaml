@@ -1,0 +1,24 @@
+{{- /*
+ManagedCertificate (GKE Ingress CRD) — Google provisions + renews TLS
+certificates for the domain list automatically. Requires the DNS
+record for `domain` to point at the Ingress static IP BEFORE the cert
+provisions, otherwise the challenge fails with FAILED_NOT_VISIBLE.
+
+Per-env overlay supplies:
+  managedCertificate.enabled  (bool)
+  managedCertificate.name     (string, must match Ingress annotation)
+  managedCertificate.domains  (list of strings)
+*/ -}}
+{{- if and .Values.ingress.enabled .Values.managedCertificate.enabled }}
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: {{ .Values.managedCertificate.name }}
+  labels:
+    {{- include "resumaker.labels" . | nindent 4 }}
+spec:
+  domains:
+    {{- range .Values.managedCertificate.domains }}
+    - {{ . | quote }}
+    {{- end }}
+{{- end }}

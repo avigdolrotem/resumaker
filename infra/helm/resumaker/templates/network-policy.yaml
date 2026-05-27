@@ -1,0 +1,102 @@
+{{- /*
+NetworkPolicies for the resumaker namespace.
+
+1. default-deny — deny all ingress + egress in the namespace.
+2. allow-app-egress — allow only DNS, Cloud SQL/Memorystore in VPC,
+   and outbound HTTPS to the internet (with private CIDRs excluded).
+
+VPC CIDR varies per env (dev 10.0/16, staging 10.1/16, prod 10.2/16)
+and is supplied by the per-env overlay as networkPolicy.vpcCidr.
+
+Prerequisite: NetworkPolicy enforcement is enabled by default on
+GKE Autopilot.
+*/ -}}
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  labels:
+    {{- include "resumaker.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-from-lb
+  labels:
+    {{- include "resumaker.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "resumaker.name" . }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        # GKE Ingress proxies via NEGs in the VPC CIDR. Kubelet health
+        # probes are exempt from NetworkPolicy (they run on the host
+        # network, not the pod network).
+        - ipBlock:
+            cidr: {{ .Values.networkPolicy.vpcCidr | quote }}
+      ports:
+        - protocol: TCP
+          port: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-egress
+  labels:
+    {{- include "resumaker.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "resumaker.name" . }}
+  policyTypes:
+    - Egress
+  egress:
+    # DNS — both UDP (standard) and TCP (fallback for large responses)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+    # Cloud SQL + Memorystore via Private Services Access on the VPC CIDR.
+    - to:
+        - ipBlock:
+            cidr: {{ .Values.networkPolicy.vpcCidr | quote }}
+            except:
+              - 169.254.169.254/32 # GCP Metadata Server — defense-in-depth
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
+
+    # Outbound HTTPS for external APIs (AI Gateway, Resend, Stripe, LS, OAuth)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.0.0/16
+              - 127.0.0.0/8
+      ports:
+        - protocol: TCP
+          port: 443
+{{- end }}

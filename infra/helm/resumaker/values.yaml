@@ -40,6 +40,21 @@ ingress:
           pathType: Prefix
   tls: [] # TLS handled by GCP ManagedCertificate (per-env overlay)
 
+# GCP ManagedCertificate — per-env overlay enables + sets domains
+# matching the Ingress hosts. Without this the Ingress provisions an
+# LB but serves no TLS until an out-of-band kubectl apply happens.
+managedCertificate:
+  enabled: false
+  name: resumaker-cert # overridden per env, e.g. resumaker-prod-cert
+  domains: []
+
+# NetworkPolicy egress — VPC CIDR varies per env (dev 10.0.0.0/16,
+# staging 10.1.0.0/16, prod 10.2.0.0/16). Per-env overlay sets the
+# right value so Cloud SQL + Memorystore are reachable.
+networkPolicy:
+  enabled: true
+  vpcCidr: 10.0.0.0/16
+
 # Probes — hit our /api/health endpoints
 livenessProbe:
   httpGet:

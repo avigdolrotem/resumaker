@@ -17,16 +17,14 @@ import { isNull, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/observability';
+import { verifyCronSecret } from '@/lib/cron-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest): Promise<Response> {
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = env.CRON_SECRET;
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const authError = verifyCronSecret(req);
+  if (authError) return authError;
 
   if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
     logger.warn({}, 'push-notifications.vapid_keys_missing — skipping');
