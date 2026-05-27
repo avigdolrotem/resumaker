@@ -224,7 +224,7 @@ Each step depends on the previous one — execute top to bottom.
 After your first sign-up:
 
 ```bash
-psql $DATABASE_URL -c "UPDATE users SET role='admin' WHERE email='rotem@avigdol.com';"
+psql $DATABASE_URL -c "UPDATE users SET role='admin' WHERE email='admin@resumaker.co.il';"
 ```
 
 ### 8. Set up cron secret for purge job
