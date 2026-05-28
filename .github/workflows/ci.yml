@@ -77,7 +77,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test --coverage
+      # `pnpm test --coverage` errored before running ANY test (pnpm parsed
+      # --coverage as its own flag → "Unknown option: 'coverage'"), so this
+      # gate silently never ran. Run unit suites across apps + packages,
+      # excluding the Playwright E2E package (it has its own `e2e` job).
+      # No coverage provider is installed; add @vitest/coverage-v8 to restore
+      # coverage upload.
+      - run: pnpm --filter "./apps/*" --filter "./packages/*" test
       - name: Upload coverage
         uses: codecov/codecov-action@v5
         with:

@@ -37,7 +37,10 @@ async function makeClient(): Promise<PgClient> {
   if (dbUrl && !dbUrl.startsWith('postgres://stub')) {
     return postgres(dbUrl, {
       max: env.DATABASE_POOL_MAX,
-      ssl: 'require',
+      // Local dev points DATABASE_URL at a plain Postgres (docker) with no
+      // TLS; require SSL everywhere else. Prod has no DATABASE_URL (it uses the
+      // Cloud SQL Connector path below), so this only affects local/preview.
+      ssl: /@(localhost|127\.0\.0\.1)([:/]|$)/.test(dbUrl) ? false : 'require',
       // Cloud SQL idles out connections at ~10min; keep ours fresh so
       // we don't see "Connection terminated unexpectedly" mid-request.
       idle_timeout: 60,
