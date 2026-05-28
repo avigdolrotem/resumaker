@@ -60,6 +60,20 @@
       "haveAccount": "Already have an account?",
       "passwordHint": "At least 12 characters"
     },
+    "verifyPending": {
+      "title": "Check your email",
+      "sentTo": "We sent a verification link to <strong>{email}</strong>.",
+      "instruction": "Click the link in that email to activate your account, then sign in.",
+      "spam": "Can't find it? Check your spam or promotions folder.",
+      "ttl": "The link expires in 3 days.",
+      "resend": "Resend email",
+      "resending": "Sending…",
+      "resent": "Sent — check your inbox again.",
+      "resendCooldown": "Resend available in {seconds}s",
+      "resendError": "Couldn't resend right now. Please try again in a moment.",
+      "differentEmail": "Use a different email",
+      "backToSignIn": "Back to sign in"
+    },
     "signIn": {
       "title": "Welcome back",
       "subtitle": "Sign in to continue",
@@ -91,7 +105,10 @@
     "errors": {
       "generic": "Something went wrong. Please try again.",
       "passwordTooShort": "Password must be at least 12 characters.",
-      "invalidCredentials": "Invalid email or password."
+      "invalidCredentials": "Invalid email or password.",
+      "accountPendingDeletion": "You already have an account with this email that's scheduled for deletion. Sign in to restore it.",
+      "accountSuspended": "This account has been suspended. Please contact support.",
+      "accountDeleted": "This account has been deleted and can no longer be accessed."
     }
   },
   "dashboard": {

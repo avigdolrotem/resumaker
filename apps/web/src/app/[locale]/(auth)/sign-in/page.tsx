@@ -41,7 +41,18 @@ export default function SignInPage() {
     try {
       const { error: signInError } = await signIn.email({ email, password });
       if (signInError) {
-        setError(signInError.message ?? t('errors.invalidCredentials'));
+        // Map account-state codes to localized copy. ACCOUNT_SUSPENDED/DELETED
+        // come from session.create.before; a within-window soft-deleted account
+        // is silently restored on correct credentials (no error here at all).
+        const byCode: Record<string, string> = {
+          ACCOUNT_SUSPENDED: t('errors.accountSuspended'),
+          ACCOUNT_DELETED: t('errors.accountDeleted'),
+        };
+        setError(
+          (signInError.code && byCode[signInError.code]) ??
+            signInError.message ??
+            t('errors.invalidCredentials'),
+        );
         setLoading(false);
         return;
       }

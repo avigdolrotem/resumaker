@@ -8,7 +8,8 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { twoFactor } from 'better-auth/plugins';
-import { eq } from 'drizzle-orm';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { eq, sql } from 'drizzle-orm';
 import { after } from 'next/server';
 import { db } from '@/db';
 import { schema } from '@/db/schema';
@@ -17,6 +18,7 @@ import { emailVerification, passwordReset, welcome } from '@/lib/email/templates
 import { auditEvent, hashIp } from '@/lib/audit';
 import { env } from '@/lib/env';
 import { ensureSubscription } from '@/lib/billing/tier';
+import { isWithinRestoreWindow } from '@/lib/account-lifecycle';
 
 const secret = env.BETTER_AUTH_SECRET;
 const baseUrl = env.BETTER_AUTH_URL;
@@ -232,6 +234,43 @@ export const auth = betterAuth({
     useSecureCookies: env.NODE_ENV === 'production',
   },
 
+  // Request-lifecycle hooks (distinct from the databaseHooks below).
+  hooks: {
+    // Intercept sign-up for an email that belongs to a soft-deleted account
+    // still inside its restore window. Without this, Better Auth rejects the
+    // re-signup with a bare "user already exists" — baffling for someone who
+    // deliberately deleted their account and now wants back in. We instead
+    // return an actionable error (code ACCOUNT_PENDING_DELETION) that the
+    // sign-up page renders as "sign in to restore your account" — and signing
+    // in with the right password auto-restores it (see session.create.before).
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== '/sign-up/email') return;
+      const body = ctx.body as { email?: unknown } | undefined;
+      const email = typeof body?.email === 'string' ? body.email : '';
+      if (!email) return;
+
+      // Case-insensitive lookup: emails are compared case-insensitively
+      // everywhere else (cf. the account-restore tooling), so a re-signup with
+      // different casing must still match the pending-deletion row.
+      const existing = await db.query.users.findFirst({
+        where: sql`lower(${schema.users.email}) = lower(${email})`,
+        columns: { id: true, deletedAt: true },
+      });
+
+      if (existing && isWithinRestoreWindow(existing.deletedAt)) {
+        auditEvent({
+          userId: existing.id,
+          event: 'sign_in_failed',
+          metadata: { reason: 'signup_on_pending_deletion' },
+        });
+        throw new APIError('UNPROCESSABLE_ENTITY', {
+          message: 'This email has an account scheduled for deletion. Sign in to restore it.',
+          code: 'ACCOUNT_PENDING_DELETION',
+        });
+      }
+    }),
+  },
+
   databaseHooks: {
     user: {
       create: {
@@ -277,15 +316,51 @@ export const auth = betterAuth({
             where: eq(schema.users.id, session.userId),
             columns: { role: true, deletedAt: true },
           });
-          if (user?.role === 'suspended' || user?.deletedAt) {
-            // Audit the rejected sign-in attempt so support can see it.
+
+          // Suspended is an admin action — never self-restorable. Block with a
+          // clean 403; throwing a bare Error here surfaces as an opaque 500.
+          if (user?.role === 'suspended') {
             auditEvent({
               userId: session.userId,
               event: 'sign_in_failed',
-              metadata: { reason: 'suspended_or_deleted' },
+              metadata: { reason: 'suspended' },
             });
-            throw new Error('ACCOUNT_SUSPENDED');
+            throw new APIError('FORBIDDEN', {
+              message: 'This account has been suspended.',
+              code: 'ACCOUNT_SUSPENDED',
+            });
           }
+
+          if (user?.deletedAt) {
+            if (isWithinRestoreWindow(user.deletedAt)) {
+              // Returning user with the correct credentials (Better Auth has
+              // already verified the password / OAuth identity before this
+              // hook). Honour the "I changed my mind" path: clear the
+              // soft-delete and let them straight back in.
+              await db
+                .update(schema.users)
+                .set({ deletedAt: null })
+                .where(eq(schema.users.id, session.userId));
+              auditEvent({
+                userId: session.userId,
+                event: 'account_restored',
+                metadata: { via: 'sign_in' },
+              });
+            } else {
+              // Past the grace window — the purge cron has (or imminently will
+              // have) hard-deleted the data. Don't resurrect a tombstone.
+              auditEvent({
+                userId: session.userId,
+                event: 'sign_in_failed',
+                metadata: { reason: 'deleted_past_grace' },
+              });
+              throw new APIError('FORBIDDEN', {
+                message: 'This account has been deleted.',
+                code: 'ACCOUNT_DELETED',
+              });
+            }
+          }
+
           // Replace raw IP with hash. `hashIp` returns null when there
           // is no secret configured; we'd rather store nothing than a
           // plain IP, so the null fallthrough is intentional.
