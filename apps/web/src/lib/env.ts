@@ -45,6 +45,12 @@ const EnvSchema = z
 
     // Redis
     REDIS_URL: z.string().optional(),
+    // PEM of the Memorystore server CA. When set, the rate limiter + readiness
+    // probe verify the TLS cert against it (hardened path). When unset, they
+    // fall back to skipping verification on the private VPC link (the
+    // Google-managed CA is not in node's default trust store). Read directly
+    // from process.env in rate-limit.ts; declared here for documentation.
+    REDIS_CA_CERT: z.string().optional(),
 
     // Better Auth
     BETTER_AUTH_SECRET: z.string().min(32, 'BETTER_AUTH_SECRET must be >=32 chars'),

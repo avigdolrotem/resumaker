@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server';
 import { sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { logger } from '@/lib/observability';
+import { checkRedis } from '@/lib/redis-health';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,31 +42,14 @@ export async function GET(): Promise<Response> {
   }
 
   // Redis — non-blocking (if down, rate-limit fails closed per design).
-  // 1s connectTimeout, 1.5s overall race so a TLS-handshake stall on
-  // Memorystore can't tie up the probe past its timeout.
+  // checkRedis ALWAYS tears the client down (even on timeout) so a degraded
+  // Memorystore link can't leak a reconnecting socket on every 5s probe — that
+  // leak accumulated hundreds of clients/pod and pegged the HPA (the money leak).
   const redisUrl = process.env.REDIS_URL;
   if (redisUrl) {
-    const redisStart = Date.now();
-    try {
-      const { createClient } = await import('redis');
-      const client = createClient({ url: redisUrl, socket: { connectTimeout: 1000 } });
-      client.on('error', () => {
-        /* swallow; we handle below */
-      });
-      await Promise.race([
-        (async () => {
-          await client.connect();
-          await client.ping();
-          await client.disconnect();
-        })(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('redis timeout (1.5s)')), 1500),
-        ),
-      ]);
-      checks.redis = { status: 'ok', latencyMs: Date.now() - redisStart };
-    } catch (err) {
-      logger.error({ err: (err as Error).message }, 'health.ready: redis check failed');
-      checks.redis = { status: 'down' };
+    checks.redis = await checkRedis(redisUrl, 1500);
+    if (checks.redis.status === 'down') {
+      logger.error({}, 'health.ready: redis check failed');
     }
   }
 

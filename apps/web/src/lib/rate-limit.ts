@@ -22,10 +22,47 @@ import { createClient } from 'redis';
 import { logger } from '@/lib/observability';
 
 type RedisClient = ReturnType<typeof createClient>;
+type SocketOptions = NonNullable<NonNullable<Parameters<typeof createClient>[0]>['socket']>;
 
 const globalForRedis = globalThis as unknown as {
   _redis?: RedisClient | null;
 };
+
+/**
+ * Cap on how long we wait for a Redis connection. Memorystore is TLS-only
+ * (rediss://, 6378) over a private VPC link; if that link is slow or degraded,
+ * an unbounded connect() stalls the rate-limited request for many seconds
+ * (observed ~25s hangs). We bound it and fail CLOSED fast — never open. Read
+ * per call (not memoized) so it stays overridable in tests.
+ */
+function connectTimeoutMs(): number {
+  return Number(process.env.REDIS_CONNECT_TIMEOUT_MS) || 2000;
+}
+
+function buildSocket(url: string): SocketOptions {
+  const connectTimeout = connectTimeoutMs();
+  // Plain TCP (local dev / non-TLS Redis).
+  if (!url.startsWith('rediss://')) {
+    return { connectTimeout };
+  }
+  // TLS link to Memorystore. Pin the server CA when provided (REDIS_CA_CERT);
+  // otherwise skip cert verification. The endpoint is a private VPC IP using
+  // SERVER_AUTHENTICATION, and node's default trust store does not include
+  // Google's managed Memorystore CA — so without one of these, every TLS
+  // handshake is rejected (UNABLE_TO_VERIFY_LEAF_SIGNATURE). CA pinning is the
+  // hardened path; the private-link fallback is acceptable per the runbook.
+  const ca = process.env.REDIS_CA_CERT;
+  return ca
+    ? { tls: true, ca, connectTimeout }
+    : { tls: true, rejectUnauthorized: false, connectTimeout };
+}
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('redis connect timeout')), ms)),
+  ]);
+}
 
 async function getClient(): Promise<RedisClient | null> {
   if (globalForRedis._redis) return globalForRedis._redis;
@@ -34,14 +71,27 @@ async function getClient(): Promise<RedisClient | null> {
     logger.error({}, 'rate-limit.redis_url_unset');
     return null;
   }
+  let client: RedisClient | undefined;
   try {
-    const client = createClient({ url });
-    client.on('error', (err: Error) => logger.error({ err: err.message }, 'redis.error'));
-    await client.connect();
+    client = createClient({ url, socket: buildSocket(url) });
+    client.on('error', (err: Error) => {
+      logger.error({ err: err.message }, 'redis.error');
+      // Drop the cached client so the next call rebuilds it once the network
+      // path recovers, instead of reusing a dead socket forever.
+      if (globalForRedis._redis === client) globalForRedis._redis = null;
+    });
+    // Bound the connect so a degraded private link can't hang the request.
+    await withTimeout(client.connect(), connectTimeoutMs());
     globalForRedis._redis = client;
     return client;
   } catch (err) {
     logger.error({ err: (err as Error).message }, 'redis.connect_failed');
+    // Best-effort cleanup so a stalled connect doesn't leak a reconnect loop.
+    try {
+      client?.destroy();
+    } catch {
+      /* socket already gone */
+    }
     return null;
   }
 }
