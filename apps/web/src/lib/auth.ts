@@ -61,6 +61,22 @@ function detectLocale(url: string | undefined): 'he' | 'en' {
   return env.DEFAULT_LOCALE;
 }
 
+/**
+ * Send the welcome email. Called exactly once per account, at the moment the
+ * email becomes verified — NOT at sign-up (which would arrive bundled with the
+ * verification email). OAuth signups are created already-verified so they get
+ * it from the user.create hook; email+password signups get it from
+ * `afterEmailVerification` after they click the link.
+ */
+async function sendWelcomeEmail(user: { id: string; email: string; name?: string | null }) {
+  const tmpl = welcome({ locale: env.DEFAULT_LOCALE, ...(user.name ? { name: user.name } : {}) });
+  const result = await sendEmail({ to: user.email, subject: tmpl.subject, html: tmpl.html });
+  if (!result.ok) {
+    const { logger } = await import('@/lib/observability');
+    logger.warn({ err: result.error, userId: user.id }, 'auth.welcome_email_send_failed');
+  }
+}
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
@@ -108,6 +124,13 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
+    // Welcome email fires HERE — only once the user clicks the verification
+    // link — so it never arrives bundled with the verification email itself.
+    // (OAuth signups are created already-verified and get theirs from the
+    // user.create hook instead, since they never hit this path.)
+    afterEmailVerification: async (user) => {
+      after(() => sendWelcomeEmail(user));
+    },
     // 3 days. Better Auth defaults to 1 hour. Without SPF/DKIM/DMARC the
     // verification email lands in spam for many users; by the time they
     // dig it out and click, a 1-hour token has expired and they get
@@ -227,22 +250,16 @@ export const auth = betterAuth({
             );
           }
 
-          // Welcome email is non-critical — schedule via Next's `after()`
-          // so the work runs after the response is sent BUT is guaranteed
-          // to complete before Vercel freezes the function (unlike a bare
-          // `void (async () => {})()` IIFE, which can be reaped mid-send).
-          after(async () => {
-            const tmpl = welcome({ locale: env.DEFAULT_LOCALE, name: user.name ?? undefined });
-            const result = await sendEmail({
-              to: user.email,
-              subject: tmpl.subject,
-              html: tmpl.html,
-            });
-            if (!result.ok) {
-              const { logger } = await import('@/lib/observability');
-              logger.warn({ err: result.error, userId: user.id }, 'auth.welcome_email_send_failed');
-            }
-          });
+          // Welcome email: ONLY for already-verified signups (OAuth/social,
+          // which skip the email-verification flow). Email+password signups
+          // get the welcome from `afterEmailVerification` below — so the
+          // welcome is NEVER sent alongside the verification email (the old
+          // behavior fired both at sign-up, which read as a confusing
+          // "double email"). Scheduled via Next's `after()` so it runs after
+          // the response without blocking it.
+          if (user.emailVerified) {
+            after(() => sendWelcomeEmail(user));
+          }
           auditEvent({ userId: user.id, event: 'sign_up' });
         },
       },
