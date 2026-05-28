@@ -105,7 +105,10 @@
     "errors": {
       "generic": "אירעה שגיאה. אנא נסה שוב.",
       "passwordTooShort": "הסיסמה חייבת להיות לפחות 12 תווים.",
-      "invalidCredentials": "אימייל או סיסמה שגויים."
+      "invalidCredentials": "אימייל או סיסמה שגויים.",
+      "accountPendingDeletion": "כבר קיים חשבון עם כתובת אימייל זו שמתוזמן למחיקה. התחברו כדי לשחזר אותו.",
+      "accountSuspended": "החשבון הזה הושעה. אנא פנו לתמיכה.",
+      "accountDeleted": "החשבון הזה נמחק ולא ניתן עוד לגשת אליו."
     }
   },
   "dashboard": {

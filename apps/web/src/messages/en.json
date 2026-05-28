@@ -105,7 +105,10 @@
     "errors": {
       "generic": "Something went wrong. Please try again.",
       "passwordTooShort": "Password must be at least 12 characters.",
-      "invalidCredentials": "Invalid email or password."
+      "invalidCredentials": "Invalid email or password.",
+      "accountPendingDeletion": "You already have an account with this email that's scheduled for deletion. Sign in to restore it.",
+      "accountSuspended": "This account has been suspended. Please contact support.",
+      "accountDeleted": "This account has been deleted and can no longer be accessed."
     }
   },
   "dashboard": {

@@ -48,7 +48,14 @@ export default function SignUpPage() {
     try {
       const { error: signUpError } = await signUp.email({ email, password, name });
       if (signUpError) {
-        setError(signUpError.message ?? t('errors.generic'));
+        // A soft-deleted account still inside its restore window: the server
+        // rejects the re-signup (code ACCOUNT_PENDING_DELETION) and we point
+        // the user at sign-in, which auto-restores on correct credentials.
+        if (signUpError.code === 'ACCOUNT_PENDING_DELETION') {
+          setError(t('errors.accountPendingDeletion'));
+        } else {
+          setError(signUpError.message ?? t('errors.generic'));
+        }
         setLoading(false);
         return;
       }
