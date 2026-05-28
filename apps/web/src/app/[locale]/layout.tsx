@@ -154,6 +154,13 @@ export default async function LocaleLayout({
       dir={dir}
       data-theme={dataTheme}
       className={`${heebo.variable} ${inter.variable} ${themeClass}`}
+      // The inline themeInitScript below mutates <html>'s class + data-theme
+      // BEFORE React hydrates (to apply the OS preference for `system` users
+      // without a flash). That intentional server/client divergence on the
+      // <html> attributes is exactly what suppressHydrationWarning is for —
+      // without it React throws "Hydration failed", regenerates the whole
+      // tree, and logs red console errors on every navigation.
+      suppressHydrationWarning
     >
       <head>
         {/*
