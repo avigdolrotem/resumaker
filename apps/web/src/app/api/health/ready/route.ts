@@ -48,7 +48,19 @@ export async function GET(): Promise<Response> {
     const redisStart = Date.now();
     try {
       const { createClient } = await import('redis');
-      const client = createClient({ url: redisUrl, socket: { connectTimeout: 1000 } });
+      // Memorystore is TLS-only (rediss://) with a Google-managed CA not in
+      // node's default trust store. Mirror rate-limit.ts: pin REDIS_CA_CERT
+      // when provided, else skip verification on the private VPC link — without
+      // this the handshake fails with UNABLE_TO_VERIFY_LEAF_SIGNATURE and this
+      // probe reports redis:down even when Redis is reachable.
+      const useTls = redisUrl.startsWith('rediss://');
+      const ca = process.env.REDIS_CA_CERT;
+      const socket = useTls
+        ? ca
+          ? { connectTimeout: 1000, tls: true as const, ca }
+          : { connectTimeout: 1000, tls: true as const, rejectUnauthorized: false }
+        : { connectTimeout: 1000 };
+      const client = createClient({ url: redisUrl, socket });
       client.on('error', () => {
         /* swallow; we handle below */
       });
