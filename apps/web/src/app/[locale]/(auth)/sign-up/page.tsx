@@ -53,7 +53,10 @@ export default function SignUpPage() {
         return;
       }
       try {
-        router.push('/dashboard');
+        // Unverified accounts have no session (requireEmailVerification=true),
+        // so pushing to /dashboard immediately bounces to sign-in — the
+        // "jumps to login" bug. Send the user to the verify-pending screen.
+        router.push(`/sign-up/verify-pending?email=${encodeURIComponent(email)}`);
       } catch (navErr) {
         setError((navErr as Error).message);
         setLoading(false);
