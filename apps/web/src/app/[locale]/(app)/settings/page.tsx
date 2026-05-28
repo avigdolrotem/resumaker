@@ -68,6 +68,16 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const [tab, setTab] = useState<Tab>('profile');
 
+  // Defer tab content until after mount. The tab panels read the client
+  // `useSession()` which, with cookieCache enabled, resolves a session
+  // SYNCHRONOUSLY on the client's first render but is empty during SSR — so
+  // panels like ProfileTab render their Card on the client while the server
+  // rendered nothing, throwing "Hydration failed" and regenerating the tree
+  // (red console errors on every visit to settings). Gating on `mounted`
+  // makes SSR and the first client render agree (both empty), then fills in.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // Better Auth's client useSession() doesn't surface `role`. Fetch it
   // from the same endpoint the AI model card already hits — augmented
   // server-side to include role + tier. Cheap (one GET on settings
@@ -124,15 +134,19 @@ export default function SettingsPage() {
         </nav>
 
         <div>
-          {tab === 'profile' && <ProfileTab />}
-          {tab === 'security' && <SecurityTab />}
-          {tab === 'sessions' && <SessionsTab />}
-          {tab === 'notifications' && <NotificationsTab />}
-          {tab === 'regional' && <RegionalTab />}
-          {tab === 'ai' && <AIModelCard />}
-          {tab === 'data' && <DataTab />}
-          {tab === 'danger' && <DangerTab />}
-          {tab === 'admin' && isAdmin && <AdminTab />}
+          {mounted && (
+            <>
+              {tab === 'profile' && <ProfileTab />}
+              {tab === 'security' && <SecurityTab />}
+              {tab === 'sessions' && <SessionsTab />}
+              {tab === 'notifications' && <NotificationsTab />}
+              {tab === 'regional' && <RegionalTab />}
+              {tab === 'ai' && <AIModelCard />}
+              {tab === 'data' && <DataTab />}
+              {tab === 'danger' && <DangerTab />}
+              {tab === 'admin' && isAdmin && <AdminTab />}
+            </>
+          )}
         </div>
       </div>
     </div>
