@@ -1,0 +1,12 @@
+# Keep Cloud Build upload small + fast. The Dockerfile reinstalls deps and
+# builds inside the image, so none of these are needed in the build context.
+.git
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/.turbo
+*.log
+.env
+.env.*
+apps/web/.env.local

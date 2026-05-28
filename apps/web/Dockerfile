@@ -37,9 +37,16 @@ COPY . .
 # build`, which trips env.ts's production refines (APP_URL must not be
 # localhost, GCP Cloud SQL must be set, etc.). Real values are injected
 # at runtime via ExternalSecrets → pod env. These stubs only need to
-# satisfy Zod parsing — the build doesn't actually connect anywhere
-# (db/index.ts is wrapped in a try/catch that falls back to a stub
-# client when the connect fails).
+# satisfy Zod parsing.
+#
+# DATABASE_URL stub is critical: without it, db/index.ts takes the Cloud SQL
+# Connector path, which EAGERLY calls the GCP metadata server at module load.
+# In Cloud Build that request ETIMEDOUTs (slowly) on every page-data worker,
+# dragging "Collecting page data" out to many minutes. With a DATABASE_URL set,
+# db/index.ts uses the LAZY postgres client (no connection at import) → fast
+# build. This ENV lives only in the builder stage; the runner stage does not
+# inherit it, so runtime still uses the Connector path. (127.0.0.1 → nothing
+# listening; no page queries the DB at build, so it's never dialed.)
 ENV APP_URL=https://build.example.com \
     NEXT_PUBLIC_APP_URL=https://build.example.com \
     BETTER_AUTH_URL=https://build.example.com \
@@ -47,7 +54,8 @@ ENV APP_URL=https://build.example.com \
     CRON_SECRET=build-stub-cron-secret-thirty-two-chars-min \
     IP_HASH_SALT=build-stub-ip-hash-salt-thirty-two-chars-minimum-padding \
     GCP_CLOUD_SQL_INSTANCE=build-stub:europe-west1:build-stub \
-    GCP_CLOUD_SQL_IAM_USER=build-stub@build.iam.gserviceaccount.com
+    GCP_CLOUD_SQL_IAM_USER=build-stub@build.iam.gserviceaccount.com \
+    DATABASE_URL=postgres://build:build@127.0.0.1:5432/build_db
 
 RUN pnpm --filter @resumaker/web build
 
