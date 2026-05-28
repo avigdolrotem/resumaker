@@ -116,11 +116,20 @@ spec:
             cidr: 10.0.0.0/8
       ports:
         - protocol: TCP
-          port: 5432
+          port: 5432 # Cloud SQL Postgres
+        # Memorystore exposes its TLS endpoint on 6378 (NOT the plaintext
+        # 6379) because the instance has transit_encryption_mode=
+        # SERVER_AUTHENTICATION. REDIS_URL is rediss://...:6378. Without
+        # 6378 here, every Redis connection times out → the app's
+        # fail-closed rate limiter blocks custom-limited routes and the
+        # readiness probe reports redis:down. 6379 kept for a future
+        # plaintext fallback / non-TLS env.
+        - protocol: TCP
+          port: 6378
         - protocol: TCP
           port: 6379
 
-    # Outbound HTTPS for external APIs (AI Gateway, Resend, Stripe, LS, OAuth)
+    # Outbound HTTPS for external APIs (Vertex AI, Resend, Stripe, LS, OAuth)
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
