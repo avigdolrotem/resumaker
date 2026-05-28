@@ -49,7 +49,16 @@ export async function sendEmail(
       to: input.to,
       subject: input.subject,
       html: input.html,
+      // Always include a plain-text alternative (multipart) — improves
+      // deliverability and the text:HTML ratio mail-tester flags.
       text: input.text ?? stripHtml(input.html),
+      headers: {
+        // List-Unsubscribe: flagged by mail-tester when absent and required
+        // by Gmail/Yahoo bulk-sender rules. The mailto variant needs no
+        // endpoint. One-Click (List-Unsubscribe-Post) additionally needs an
+        // /api/unsubscribe POST handler — see operator follow-ups.
+        'List-Unsubscribe': '<mailto:unsubscribe@resumaker.co.il?subject=unsubscribe>',
+      },
     });
     if (result.error) {
       // Log only the error name — Resend error messages sometimes echo
