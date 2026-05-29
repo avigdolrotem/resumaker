@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ModelPicker } from '@/components/builder/model-picker';
+import { apiFetch, ApiTierError } from '@/lib/api-client';
 
 type Tone = 'formal' | 'friendly' | 'enthusiastic';
 
@@ -53,7 +54,7 @@ export default function NewCoverLetterPage() {
     setLetter(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/cover-letters/generate', {
+      const res = await apiFetch('/api/cover-letters/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -73,6 +74,9 @@ export default function NewCoverLetterPage() {
         setDetectedLocale(data.metadata?.detectedLocale ?? 'en');
       }
     } catch (err) {
+      // ApiTierError = 402; the global ApiUpgradeListener already opened
+      // the upgrade modal — swallow it here so we don't double-prompt.
+      if (err instanceof ApiTierError) return;
       setError((err as Error).message);
     } finally {
       setLoading(false);

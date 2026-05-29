@@ -817,5 +817,39 @@
       "sessionCreated": "Impersonation session created. Reload to switch context.",
       "exitSuccess": "Impersonation ended."
     }
+  },
+  "upgradeModal": {
+    "close": "Close",
+    "later": "Maybe later",
+    "cta": {
+      "label": "Join the waitlist",
+      "href": "mailto:hello@resumaker.co.il?subject=Waitlist"
+    },
+    "features": {
+      "model_choice": {
+        "title": "Choose your AI model",
+        "body": "Picking a specific model is a Plus feature. Upgrade to swap between Claude Sonnet, Claude Opus, and the fast/free options on demand."
+      },
+      "cover_letter": {
+        "title": "Cover letters are a Plus feature",
+        "body": "Resumaker Plus unlocks unlimited tailored cover letters — match your tone to the JD, swap AI models, and save revisions."
+      },
+      "resume_limit": {
+        "title": "Resume limit reached",
+        "body": "You've hit the free-tier resume cap. Upgrade to Plus to save unlimited resumes."
+      },
+      "generation_limit": {
+        "title": "Daily AI generations exhausted",
+        "body": "Free accounts get a handful of generations a day to try things out. Plus removes the daily cap so you can keep iterating."
+      },
+      "template_locked": {
+        "title": "This template is Plus-only",
+        "body": "Premium templates ship with Plus. Upgrade to use them on every resume."
+      },
+      "job_hunt_beta": {
+        "title": "Job Hunt is in beta",
+        "body": "Track every job you've applied to, score your fit, save favourites, and let us auto-import postings. Join the waitlist and we'll email you when access opens."
+      }
+    }
   }
 }
