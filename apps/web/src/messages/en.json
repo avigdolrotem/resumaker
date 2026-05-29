@@ -18,6 +18,50 @@
     "settings": "Settings",
     "signOut": "Sign out"
   },
+  "commandPalette": {
+    "ariaLabel": "Command palette",
+    "search": "Search commands",
+    "placeholder": "Type a command or search…",
+    "noMatches": "No matches for \"{query}\"",
+    "groups": {
+      "Navigate": "Navigate",
+      "Actions": "Actions",
+      "Account": "Account"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "newResume": "New resume",
+      "newResumeKeywords": "create builder",
+      "newCoverLetter": "New cover letter",
+      "newCoverLetterKeywords": "create",
+      "coverLetters": "My cover letters",
+      "applications": "My applications",
+      "applicationsKeywords": "jobs tracker",
+      "jobs": "Job hunt",
+      "profile": "Profile",
+      "settings": "Settings",
+      "billing": "Billing",
+      "billingKeywords": "subscription plan",
+      "signOut": "Sign out",
+      "home": "Home",
+      "examples": "Examples",
+      "examplesKeywords": "samples templates",
+      "pricing": "Pricing",
+      "pricingKeywords": "plans cost subscription",
+      "signIn": "Sign in",
+      "signUp": "Sign up"
+    },
+    "footer": {
+      "quickNav": "Quick nav",
+      "navigate": "navigate",
+      "select": "select",
+      "toggle": "toggle"
+    },
+    "trigger": {
+      "ariaLabel": "Open command palette",
+      "placeholder": "Search or jump to…"
+    }
+  },
   "home": {
     "hero": {
       "title": "Build a Winning Resume with AI",

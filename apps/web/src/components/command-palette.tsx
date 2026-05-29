@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
 import { Shortcut } from '@/components/ui/shortcut';
@@ -67,87 +68,122 @@ type CommandItem = {
   action?: 'sign-out';
 };
 
-function buildItems(isAuthed: boolean): CommandItem[] {
+// `t` is intentionally untyped here — `useTranslations` returns a
+// strongly-typed callable, but threading that type through this helper
+// adds zero safety in exchange for noise.
+type TFn = (key: string) => string;
+
+function buildItems(isAuthed: boolean, t: TFn): CommandItem[] {
   const authedNav: CommandItem[] = [
     {
       id: 'dashboard',
-      label: 'Dashboard',
+      label: t('items.dashboard'),
       group: 'Navigate',
       Icon: LayoutDashboard,
       href: '/dashboard',
     },
     {
       id: 'new-resume',
-      label: 'New resume',
-      keywords: 'create builder',
+      label: t('items.newResume'),
+      keywords: t('items.newResumeKeywords'),
       group: 'Actions',
       Icon: FilePlus2,
       href: '/builder',
     },
     {
       id: 'cover-letter',
-      label: 'New cover letter',
-      keywords: 'create',
+      label: t('items.newCoverLetter'),
+      keywords: t('items.newCoverLetterKeywords'),
       group: 'Actions',
       Icon: Mail,
       href: '/cover-letters/new',
     },
     {
       id: 'cover-letters',
-      label: 'My cover letters',
+      label: t('items.coverLetters'),
       group: 'Navigate',
       Icon: Mail,
       href: '/cover-letters',
     },
     {
       id: 'applications',
-      label: 'My applications',
-      keywords: 'jobs tracker',
+      label: t('items.applications'),
+      keywords: t('items.applicationsKeywords'),
       group: 'Navigate',
       Icon: TrendingUp,
       href: '/applications',
     },
-    { id: 'jobs', label: 'Job hunt', group: 'Navigate', Icon: Briefcase, href: '/jobs' },
-    { id: 'profile', label: 'Profile', group: 'Account', Icon: UserCircle, href: '/profile' },
-    { id: 'settings', label: 'Settings', group: 'Account', Icon: Settings, href: '/settings' },
+    {
+      id: 'jobs',
+      label: t('items.jobs'),
+      group: 'Navigate',
+      Icon: Briefcase,
+      href: '/jobs',
+    },
+    {
+      id: 'profile',
+      label: t('items.profile'),
+      group: 'Account',
+      Icon: UserCircle,
+      href: '/profile',
+    },
+    {
+      id: 'settings',
+      label: t('items.settings'),
+      group: 'Account',
+      Icon: Settings,
+      href: '/settings',
+    },
     {
       id: 'billing',
-      label: 'Billing',
-      keywords: 'subscription plan',
+      label: t('items.billing'),
+      keywords: t('items.billingKeywords'),
       group: 'Account',
       Icon: CreditCard,
       href: '/account/billing',
     },
     {
       id: 'sign-out',
-      label: 'Sign out',
+      label: t('items.signOut'),
       group: 'Account',
       Icon: LogOut,
       action: 'sign-out',
     },
   ];
   const publicNav: CommandItem[] = [
-    { id: 'home', label: 'Home', group: 'Navigate', Icon: Home, href: '/' },
+    { id: 'home', label: t('items.home'), group: 'Navigate', Icon: Home, href: '/' },
     {
       id: 'examples',
-      label: 'Examples',
-      keywords: 'samples templates',
+      label: t('items.examples'),
+      keywords: t('items.examplesKeywords'),
       group: 'Navigate',
       Icon: Palette,
       href: '/examples',
     },
     {
       id: 'pricing',
-      label: 'Pricing',
-      keywords: 'plans cost subscription',
+      label: t('items.pricing'),
+      keywords: t('items.pricingKeywords'),
       group: 'Navigate',
       Icon: CreditCard,
       href: '/pricing',
     },
   ];
   const guestActions: CommandItem[] = [
-    { id: 'sign-in', label: 'Sign in', group: 'Account', Icon: LogIn, href: '/sign-in' },
-    { id: 'sign-up', label: 'Sign up', group: 'Account', Icon: UserPlus, href: '/sign-up' },
+    {
+      id: 'sign-in',
+      label: t('items.signIn'),
+      group: 'Account',
+      Icon: LogIn,
+      href: '/sign-in',
+    },
+    {
+      id: 'sign-up',
+      label: t('items.signUp'),
+      group: 'Account',
+      Icon: UserPlus,
+      href: '/sign-up',
+    },
   ];
 
   return isAuthed ? [...publicNav, ...authedNav] : [...publicNav, ...guestActions];
@@ -156,12 +192,13 @@ function buildItems(isAuthed: boolean): CommandItem[] {
 export function CommandPalette() {
   const router = useRouter();
   const { data: session } = useSession();
+  const t = useTranslations('commandPalette');
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const items = useMemo(() => buildItems(Boolean(session)), [session]);
+  const items = useMemo(() => buildItems(Boolean(session), t), [session, t]);
 
   // Filter items by substring match across label + keywords. Empty query
   // shows everything, grouped.
@@ -257,7 +294,7 @@ export function CommandPalette() {
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Command palette"
+      aria-label={t('ariaLabel')}
       className="fixed inset-0 z-[100] flex items-start justify-center bg-neutral-950/60 p-4 pt-[15vh] backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === e.currentTarget) setOpen(false);
@@ -275,9 +312,9 @@ export function CommandPalette() {
               setQuery(e.target.value);
               setActiveIndex(0);
             }}
-            placeholder="Type a command or search…"
+            placeholder={t('placeholder')}
             className="placeholder:text-muted-foreground flex-1 bg-transparent text-sm outline-none"
-            aria-label="Search commands"
+            aria-label={t('search')}
           />
           <kbd className="border-border bg-muted text-muted-foreground hidden rounded border px-1.5 py-0.5 font-mono text-[10px] sm:inline-block">
             ESC
@@ -288,7 +325,7 @@ export function CommandPalette() {
         <div className="max-h-[60vh] overflow-y-auto py-2">
           {filtered.length === 0 ? (
             <div className="text-muted-foreground px-4 py-12 text-center text-sm">
-              No matches for &ldquo;{query}&rdquo;
+              {t('noMatches', { query })}
             </div>
           ) : (
             (['Navigate', 'Actions', 'Account'] as const).map((groupName) => {
@@ -297,7 +334,7 @@ export function CommandPalette() {
               return (
                 <div key={groupName} className="mb-2">
                   <div className="text-muted-foreground px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider">
-                    {groupName}
+                    {t(`groups.${groupName}`)}
                   </div>
                   {groupItems.map((it) => {
                     const idx = runningIndex++;
@@ -340,23 +377,23 @@ export function CommandPalette() {
         <div className="border-border text-muted-foreground flex items-center justify-between border-t px-4 py-2 text-[11px]">
           <div className="flex items-center gap-1.5">
             <Sparkles className="h-3 w-3" />
-            <span>Quick nav</span>
+            <span>{t('footer.quickNav')}</span>
           </div>
           <div className="flex items-center gap-3">
             <span>
               <kbd className="border-border bg-muted mx-0.5 rounded border px-1.5 py-0.5 font-mono">
                 ↑↓
               </kbd>
-              navigate
+              {t('footer.navigate')}
             </span>
             <span>
               <kbd className="border-border bg-muted mx-0.5 rounded border px-1.5 py-0.5 font-mono">
                 ↵
               </kbd>
-              select
+              {t('footer.select')}
             </span>
             <span className="inline-flex items-center gap-1">
-              <Shortcut keys={['mod', 'K']} /> toggle
+              <Shortcut keys={['mod', 'K']} /> {t('footer.toggle')}
             </span>
           </div>
         </div>
@@ -371,6 +408,7 @@ export function CommandPalette() {
  * keyboard hint on the right.
  */
 export function CommandPaletteTrigger({ className }: { className?: string }) {
+  const t = useTranslations('commandPalette.trigger');
   // Dispatches a synthetic mod+K event so the global listener in
   // CommandPalette handles it (one source of truth for open state).
   function open() {
@@ -386,13 +424,13 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
     <button
       type="button"
       onClick={open}
-      aria-label="Open command palette"
+      aria-label={t('ariaLabel')}
       className={`border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm transition ${
         className ?? ''
       }`}
     >
       <Search className="h-4 w-4" />
-      <span className="hidden sm:inline">Search or jump to…</span>
+      <span className="hidden sm:inline">{t('placeholder')}</span>
       <Shortcut keys={['mod', 'K']} className="ms-auto hidden sm:inline-flex" />
     </button>
   );

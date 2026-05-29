@@ -18,6 +18,50 @@
     "settings": "הגדרות",
     "signOut": "התנתקות"
   },
+  "commandPalette": {
+    "ariaLabel": "פלטת פקודות",
+    "search": "חיפוש פקודות",
+    "placeholder": "הקלידו פקודה או חיפוש…",
+    "noMatches": "אין תוצאות עבור \"{query}\"",
+    "groups": {
+      "Navigate": "ניווט",
+      "Actions": "פעולות",
+      "Account": "חשבון"
+    },
+    "items": {
+      "dashboard": "לוח בקרה",
+      "newResume": "קורות חיים חדשים",
+      "newResumeKeywords": "יצירה בילדר",
+      "newCoverLetter": "מכתב מקדים חדש",
+      "newCoverLetterKeywords": "יצירה",
+      "coverLetters": "מכתבי המקדים שלי",
+      "applications": "המועמדויות שלי",
+      "applicationsKeywords": "עבודות מעקב",
+      "jobs": "חיפוש עבודה",
+      "profile": "פרופיל",
+      "settings": "הגדרות",
+      "billing": "חיוב",
+      "billingKeywords": "מנוי תוכנית",
+      "signOut": "התנתקות",
+      "home": "בית",
+      "examples": "דוגמאות",
+      "examplesKeywords": "דגימות תבניות",
+      "pricing": "מחירים",
+      "pricingKeywords": "תוכניות עלות מנוי",
+      "signIn": "התחברות",
+      "signUp": "הרשמה"
+    },
+    "footer": {
+      "quickNav": "ניווט מהיר",
+      "navigate": "ניווט",
+      "select": "בחירה",
+      "toggle": "החלפה"
+    },
+    "trigger": {
+      "ariaLabel": "פתח פלטת פקודות",
+      "placeholder": "חיפוש או קפיצה ל…"
+    }
+  },
   "home": {
     "hero": {
       "title": "צור קורות חיים מנצחים בעזרת AI",
