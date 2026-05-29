@@ -20,7 +20,12 @@
 
 export type Theme = 'light' | 'dark-purple' | 'dark-gray' | 'system';
 export const THEMES: Theme[] = ['light', 'dark-purple', 'dark-gray', 'system'];
-export const DEFAULT_THEME: Theme = 'system';
+// Default to `light` (not `system`) so first-time visitors get a
+// deterministic, on-brand light rendering — most of our audience uses
+// light-mode by default on resume sites, and the dark variant is opt-in
+// via the toggle. Returning `system` users still pick it up via the
+// theme cookie + the inline init script (which only flips for `system`).
+export const DEFAULT_THEME: Theme = 'light';
 export const THEME_COOKIE = 'resumaker.theme';
 
 export function isTheme(v: string | undefined | null): v is Theme {
