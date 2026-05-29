@@ -88,3 +88,15 @@ module "gke" {
   pods_range_name     = module.network.pods_range_name
   services_range_name = module.network.services_range_name
 }
+
+# Cloud Monitoring uptime check — pings /api/health every 5 min from
+# US/EU/APAC probe regions. Alert routing is intentionally left to a
+# follow-up so notification channels (PagerDuty / email / Slack) can be
+# wired without churning this module. See infra/tofu/modules/monitoring.
+module "monitoring" {
+  source = "../../modules/monitoring"
+
+  project_id = var.project_id
+  env        = local.env
+  host       = "resumaker.co.il"
+}
