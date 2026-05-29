@@ -16,6 +16,11 @@
     "jobs": "Jobs",
     "applications": "Applications",
     "settings": "Settings",
+    "new": "New",
+    "newCoverLetter": "New cover letter",
+    "profile": "Profile",
+    "billing": "Billing",
+    "account": "Account",
     "signOut": "Sign out"
   },
   "commandPalette": {
@@ -198,6 +203,12 @@
     "rationale": "Why",
     "viewOriginal": "View original posting",
     "loadMore": "Load more",
+    "betaGate": {
+      "title": "Job Hunt is in beta",
+      "subtitle": "Track every job you've applied to, score your fit, save favourites, and let us auto-import postings from your saved searches.",
+      "ctaButton": "Request beta access",
+      "note": "Currently invite-only — we'll email you when your access opens."
+    },
     "filters": {
       "all": "All",
       "favorites": "Favorites",
