@@ -76,6 +76,14 @@ jobs:
     timeout-minutes: 15
     if: github.event_name == 'pull_request'
     needs: [validate, lint, trivy]
+    # continue-on-error: dev + staging GCP projects are not yet
+    # bootstrapped (per docs/SECURITY_AUDIT_2026-05-27.md and the
+    # 2026-05-28 wind-down dump). The WIF auth step rejects with
+    # "unauthorized_client" against the non-existent resumaker-dev
+    # project. When the operator bootstraps dev (creates the project,
+    # the cicd SA, and the WIF binding), remove this flag so plan
+    # failures block merges again.
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
