@@ -139,19 +139,18 @@ jobs:
             org.opencontainers.image.created=${{ github.event.repository.updated_at }}
 
       - name: Scan image with Trivy
+        # Gate on the scan (table + exit-code) — blocks the deploy on
+        # CRITICAL/HIGH image CVEs. No SARIF→Code-Scanning upload: that
+        # needs GitHub Advanced Security, unavailable on this private repo
+        # ("Resource not accessible by integration"). Same approach as the
+        # security.yml trivy jobs.
         uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: ${{ steps.meta.outputs.image_uri }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          format: 'table'
           severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
           exit-code: '1' # block build on CRITICAL/HIGH CVEs
-
-      - name: Upload Trivy SARIF
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'
 
       - name: Rollout instructions
         if: success()
