@@ -1,18 +1,33 @@
 name: Deploy (GCP)
 
 # Triggered on:
-#   - Tag push matching v*.*.*    → prod deploy
-#   - workflow_dispatch            → manual deploy (any env)
+#   - Tag push matching v*.*.*    → build + push + scan a prod image
+#   - workflow_dispatch            → manual build (any env)
 #
-# Flow:
+# WHAT THIS DOES TODAY (always):
 #   1. WIF auth to the target env's GCP project
 #   2. Build multi-arch container, push to Artifact Registry
-#   3. Bump infra/helm/resumaker/values.<env>.image.yaml with new tag
-#   4. Commit + push back to main — ArgoCD picks up the change
+#   3. Trivy-scan the image (blocks on CRITICAL/HIGH CVEs)
+#   4. Print the one-line `helm upgrade` rollout command in the job summary
 #
-# Required repo secrets:
-#   - WIF_PROVIDER     Full resource name of the GitHub Actions WIF provider
-#                      (output of tofu apply: wif_github_provider)
+# WHAT THIS DOES NOT DO (yet):
+#   It does NOT roll the image out to the cluster automatically. Two reasons:
+#     - ArgoCD is not installed (no `argocd` namespace / CRDs), so the
+#       GitOps "commit values.<env>.image.yaml → auto-sync" path has nothing
+#       watching it.
+#     - The GKE control plane is IP-allowlisted to the operator's home IP
+#       (master_authorized_networks), so a GitHub-hosted runner cannot reach
+#       it to `helm upgrade` directly either.
+#   Until one of those is addressed, rollout is the single documented
+#   `helm upgrade` command emitted in the build summary (run it from a host
+#   on the allowlisted network). The GitOps bump job below is retained but
+#   DORMANT — it only runs when the repo variable ARGOCD_ENABLED == 'true',
+#   so installing ArgoCD later flips automated sync on with no edit here.
+#
+# Required repo secrets / variables (already set via tofu output):
+#   - secrets.WIF_PROVIDER          GitHub Actions WIF provider resource name
+#   - secrets.WIF_SERVICE_ACCOUNT   cicd SA email (unused here; SA derived per-env)
+#   - vars.ARGOCD_ENABLED           'true' once ArgoCD is installed (default unset)
 
 on:
   push:
@@ -138,12 +153,47 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
+      - name: Rollout instructions
+        if: success()
+        env:
+          ENV_NAME: ${{ steps.meta.outputs.env }}
+          IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
+        run: |
+          {
+            echo "### ✅ Image built, pushed & scanned"
+            echo ""
+            echo "- Environment: \`${ENV_NAME}\`"
+            echo "- Image: \`${{ steps.meta.outputs.image_uri }}\`"
+            echo "- Digest: \`${{ steps.build.outputs.digest }}\`"
+            echo ""
+            echo "#### Roll it out"
+            echo "ArgoCD is not installed and the GKE control plane is IP-allowlisted,"
+            echo "so the rollout is one command from a host on the allowlisted network:"
+            echo ""
+            echo '```sh'
+            echo "helm upgrade resumaker ./infra/helm/resumaker -n resumaker \\"
+            echo "  -f infra/helm/resumaker/values.${ENV_NAME}.yaml \\"
+            echo "  --set image.tag=${IMAGE_TAG} \\"
+            echo "  --wait --timeout=10m --force-conflicts"
+            echo '```'
+            echo ""
+            echo "Then verify: \`kubectl -n resumaker rollout status deploy/resumaker\`"
+            echo "and \`curl -fsS https://resumaker.co.il/api/health/ready\`."
+            echo ""
+            echo "To make this automatic, install ArgoCD (manifests under \`infra/gitops/\`)"
+            echo "and set repo variable \`ARGOCD_ENABLED=true\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+
   bump-image-tag:
     name: Bump image tag (GitOps / GCP)
     needs: build-and-push
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: needs.build-and-push.result == 'success'
+    # DORMANT until ArgoCD is installed. ArgoCD watches
+    # values.<env>.image.yaml in git and syncs the cluster; without it this
+    # job would commit an orphan file nothing consumes. Flip on by setting
+    # repo variable ARGOCD_ENABLED=true (no edit to this file needed).
+    if: needs.build-and-push.result == 'success' && vars.ARGOCD_ENABLED == 'true'
 
     steps:
       - uses: actions/checkout@v4
