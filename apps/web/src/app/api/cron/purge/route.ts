@@ -17,11 +17,14 @@ import { and, inArray, isNotNull, lt, sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
 import { verifyCronSecret } from '@/lib/cron-auth';
+import { ACCOUNT_DELETION_GRACE_DAYS } from '@/lib/account-lifecycle';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const DELETION_GRACE_DAYS = 30;
+// Grace window is shared with the sign-in restore logic (lib/auth) so a
+// soft-deleted account is restorable for exactly as long as the purge spares it.
+const DELETION_GRACE_DAYS = ACCOUNT_DELETION_GRACE_DAYS;
 const VERIFICATION_TTL_DAYS = 7;
 
 export async function GET(req: NextRequest): Promise<Response> {

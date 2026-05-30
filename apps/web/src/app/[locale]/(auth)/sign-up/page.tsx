@@ -48,12 +48,22 @@ export default function SignUpPage() {
     try {
       const { error: signUpError } = await signUp.email({ email, password, name });
       if (signUpError) {
-        setError(signUpError.message ?? t('errors.generic'));
+        // A soft-deleted account still inside its restore window: the server
+        // rejects the re-signup (code ACCOUNT_PENDING_DELETION) and we point
+        // the user at sign-in, which auto-restores on correct credentials.
+        if (signUpError.code === 'ACCOUNT_PENDING_DELETION') {
+          setError(t('errors.accountPendingDeletion'));
+        } else {
+          setError(signUpError.message ?? t('errors.generic'));
+        }
         setLoading(false);
         return;
       }
       try {
-        router.push('/dashboard');
+        // Unverified accounts have no session (requireEmailVerification=true),
+        // so pushing to /dashboard immediately bounces to sign-in — the
+        // "jumps to login" bug. Send the user to the verify-pending screen.
+        router.push(`/sign-up/verify-pending?email=${encodeURIComponent(email)}`);
       } catch (navErr) {
         setError((navErr as Error).message);
         setLoading(false);

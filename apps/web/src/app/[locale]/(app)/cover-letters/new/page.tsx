@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ModelPicker } from '@/components/builder/model-picker';
+import { apiFetch, ApiTierError } from '@/lib/api-client';
 
 type Tone = 'formal' | 'friendly' | 'enthusiastic';
 
@@ -52,7 +54,7 @@ export default function NewCoverLetterPage() {
     setLetter(null);
     setLoading(true);
     try {
-      const res = await fetch('/api/cover-letters/generate', {
+      const res = await apiFetch('/api/cover-letters/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -72,6 +74,9 @@ export default function NewCoverLetterPage() {
         setDetectedLocale(data.metadata?.detectedLocale ?? 'en');
       }
     } catch (err) {
+      // ApiTierError = 402; the global ApiUpgradeListener already opened
+      // the upgrade modal — swallow it here so we don't double-prompt.
+      if (err instanceof ApiTierError) return;
       setError((err as Error).message);
     } finally {
       setLoading(false);
@@ -120,9 +125,14 @@ export default function NewCoverLetterPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">{t('newTitle')}</h1>
-        <p className="text-muted-foreground mt-2">{t('subtitle')}</p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">{t('newTitle')}</h1>
+          <p className="text-muted-foreground mt-2">{t('subtitle')}</p>
+        </div>
+        {/* Same picker as the resume builder — backed by the global
+            /api/user/llm-model setting, so the choice persists across both. */}
+        <ModelPicker />
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">

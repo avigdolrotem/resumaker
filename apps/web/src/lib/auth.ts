@@ -8,7 +8,8 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { twoFactor } from 'better-auth/plugins';
-import { eq } from 'drizzle-orm';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
+import { eq, sql } from 'drizzle-orm';
 import { after } from 'next/server';
 import { db } from '@/db';
 import { schema } from '@/db/schema';
@@ -17,6 +18,7 @@ import { emailVerification, passwordReset, welcome } from '@/lib/email/templates
 import { auditEvent, hashIp } from '@/lib/audit';
 import { env } from '@/lib/env';
 import { ensureSubscription } from '@/lib/billing/tier';
+import { isWithinRestoreWindow } from '@/lib/account-lifecycle';
 
 const secret = env.BETTER_AUTH_SECRET;
 const baseUrl = env.BETTER_AUTH_URL;
@@ -59,6 +61,22 @@ function detectLocale(url: string | undefined): 'he' | 'en' {
   if (url.includes('/he/') || url.includes('/he?')) return 'he';
   if (url.includes('/en/') || url.includes('/en?')) return 'en';
   return env.DEFAULT_LOCALE;
+}
+
+/**
+ * Send the welcome email. Called exactly once per account, at the moment the
+ * email becomes verified — NOT at sign-up (which would arrive bundled with the
+ * verification email). OAuth signups are created already-verified so they get
+ * it from the user.create hook; email+password signups get it from
+ * `afterEmailVerification` after they click the link.
+ */
+async function sendWelcomeEmail(user: { id: string; email: string; name?: string | null }) {
+  const tmpl = welcome({ locale: env.DEFAULT_LOCALE, ...(user.name ? { name: user.name } : {}) });
+  const result = await sendEmail({ to: user.email, subject: tmpl.subject, html: tmpl.html });
+  if (!result.ok) {
+    const { logger } = await import('@/lib/observability');
+    logger.warn({ err: result.error, userId: user.id }, 'auth.welcome_email_send_failed');
+  }
 }
 
 export const auth = betterAuth({
@@ -108,6 +126,13 @@ export const auth = betterAuth({
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
+    // Welcome email fires HERE — only once the user clicks the verification
+    // link — so it never arrives bundled with the verification email itself.
+    // (OAuth signups are created already-verified and get theirs from the
+    // user.create hook instead, since they never hit this path.)
+    afterEmailVerification: async (user) => {
+      after(() => sendWelcomeEmail(user));
+    },
     // 3 days. Better Auth defaults to 1 hour. Without SPF/DKIM/DMARC the
     // verification email lands in spam for many users; by the time they
     // dig it out and click, a 1-hour token has expired and they get
@@ -209,6 +234,43 @@ export const auth = betterAuth({
     useSecureCookies: env.NODE_ENV === 'production',
   },
 
+  // Request-lifecycle hooks (distinct from the databaseHooks below).
+  hooks: {
+    // Intercept sign-up for an email that belongs to a soft-deleted account
+    // still inside its restore window. Without this, Better Auth rejects the
+    // re-signup with a bare "user already exists" — baffling for someone who
+    // deliberately deleted their account and now wants back in. We instead
+    // return an actionable error (code ACCOUNT_PENDING_DELETION) that the
+    // sign-up page renders as "sign in to restore your account" — and signing
+    // in with the right password auto-restores it (see session.create.before).
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== '/sign-up/email') return;
+      const body = ctx.body as { email?: unknown } | undefined;
+      const email = typeof body?.email === 'string' ? body.email : '';
+      if (!email) return;
+
+      // Case-insensitive lookup: emails are compared case-insensitively
+      // everywhere else (cf. the account-restore tooling), so a re-signup with
+      // different casing must still match the pending-deletion row.
+      const existing = await db.query.users.findFirst({
+        where: sql`lower(${schema.users.email}) = lower(${email})`,
+        columns: { id: true, deletedAt: true },
+      });
+
+      if (existing && isWithinRestoreWindow(existing.deletedAt)) {
+        auditEvent({
+          userId: existing.id,
+          event: 'sign_in_failed',
+          metadata: { reason: 'signup_on_pending_deletion' },
+        });
+        throw new APIError('UNPROCESSABLE_ENTITY', {
+          message: 'This email has an account scheduled for deletion. Sign in to restore it.',
+          code: 'ACCOUNT_PENDING_DELETION',
+        });
+      }
+    }),
+  },
+
   databaseHooks: {
     user: {
       create: {
@@ -227,22 +289,16 @@ export const auth = betterAuth({
             );
           }
 
-          // Welcome email is non-critical — schedule via Next's `after()`
-          // so the work runs after the response is sent BUT is guaranteed
-          // to complete before Vercel freezes the function (unlike a bare
-          // `void (async () => {})()` IIFE, which can be reaped mid-send).
-          after(async () => {
-            const tmpl = welcome({ locale: env.DEFAULT_LOCALE, name: user.name ?? undefined });
-            const result = await sendEmail({
-              to: user.email,
-              subject: tmpl.subject,
-              html: tmpl.html,
-            });
-            if (!result.ok) {
-              const { logger } = await import('@/lib/observability');
-              logger.warn({ err: result.error, userId: user.id }, 'auth.welcome_email_send_failed');
-            }
-          });
+          // Welcome email: ONLY for already-verified signups (OAuth/social,
+          // which skip the email-verification flow). Email+password signups
+          // get the welcome from `afterEmailVerification` below — so the
+          // welcome is NEVER sent alongside the verification email (the old
+          // behavior fired both at sign-up, which read as a confusing
+          // "double email"). Scheduled via Next's `after()` so it runs after
+          // the response without blocking it.
+          if (user.emailVerified) {
+            after(() => sendWelcomeEmail(user));
+          }
           auditEvent({ userId: user.id, event: 'sign_up' });
         },
       },
@@ -260,15 +316,51 @@ export const auth = betterAuth({
             where: eq(schema.users.id, session.userId),
             columns: { role: true, deletedAt: true },
           });
-          if (user?.role === 'suspended' || user?.deletedAt) {
-            // Audit the rejected sign-in attempt so support can see it.
+
+          // Suspended is an admin action — never self-restorable. Block with a
+          // clean 403; throwing a bare Error here surfaces as an opaque 500.
+          if (user?.role === 'suspended') {
             auditEvent({
               userId: session.userId,
               event: 'sign_in_failed',
-              metadata: { reason: 'suspended_or_deleted' },
+              metadata: { reason: 'suspended' },
             });
-            throw new Error('ACCOUNT_SUSPENDED');
+            throw new APIError('FORBIDDEN', {
+              message: 'This account has been suspended.',
+              code: 'ACCOUNT_SUSPENDED',
+            });
           }
+
+          if (user?.deletedAt) {
+            if (isWithinRestoreWindow(user.deletedAt)) {
+              // Returning user with the correct credentials (Better Auth has
+              // already verified the password / OAuth identity before this
+              // hook). Honour the "I changed my mind" path: clear the
+              // soft-delete and let them straight back in.
+              await db
+                .update(schema.users)
+                .set({ deletedAt: null })
+                .where(eq(schema.users.id, session.userId));
+              auditEvent({
+                userId: session.userId,
+                event: 'account_restored',
+                metadata: { via: 'sign_in' },
+              });
+            } else {
+              // Past the grace window — the purge cron has (or imminently will
+              // have) hard-deleted the data. Don't resurrect a tombstone.
+              auditEvent({
+                userId: session.userId,
+                event: 'sign_in_failed',
+                metadata: { reason: 'deleted_past_grace' },
+              });
+              throw new APIError('FORBIDDEN', {
+                message: 'This account has been deleted.',
+                code: 'ACCOUNT_DELETED',
+              });
+            }
+          }
+
           // Replace raw IP with hash. `hashIp` returns null when there
           // is no secret configured; we'd rather store nothing than a
           // plain IP, so the null fallthrough is intentional.

@@ -18,11 +18,6 @@ variable "env" {
   }
 }
 
-variable "vpc_cidr" {
-  description = "Primary VPC CIDR (e.g. 10.0.0.0/16 for dev)"
-  type        = string
-}
-
 variable "subnet_cidr" {
   description = "Subnet CIDR within the VPC (e.g. 10.0.1.0/24)"
   type        = string

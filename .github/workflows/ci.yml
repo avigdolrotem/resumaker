@@ -98,15 +98,24 @@ jobs:
     # Build-time env stubs so apps/web/src/lib/env.ts's Zod prod-refines
     # don't fail page-data collection. Real values are injected at runtime
     # via the Helm chart's env block + ExternalSecrets — these are
-    # obviously-fake placeholders so a leaked CI artifact can't be
-    # mistaken for real config. Same stubs as apps/web/Dockerfile.
+    # obviously-fake placeholders so a leaked CI artifact can't be mistaken
+    # for real config. Keep this list in sync with the parallel stubs in
+    # apps/web/Dockerfile (the prod image build). env.ts has four
+    # prod-refines (NODE_ENV=production): non-localhost APP_URL +
+    # NEXT_PUBLIC_APP_URL + BETTER_AUTH_URL, and Boolean(CRON_SECRET).
+    # DATABASE_URL is present so db/index.ts takes the lazy postgres path
+    # at module load instead of the Cloud SQL Connector (which would dial
+    # the GCP metadata server on the GitHub runner and stall the build).
     env:
       APP_URL: https://build.example.com
       BETTER_AUTH_URL: https://build.example.com
       NEXT_PUBLIC_APP_URL: https://build.example.com
       BETTER_AUTH_SECRET: build-stub-must-be-at-least-32-chars-long
+      CRON_SECRET: build-stub-cron-secret-thirty-two-chars-min
+      IP_HASH_SALT: build-stub-ip-hash-salt-thirty-two-chars-minimum-padding
       GCP_CLOUD_SQL_INSTANCE: build:stub:instance
       GCP_CLOUD_SQL_IAM_USER: build-stub@example.iam.gserviceaccount.com
+      DATABASE_URL: postgres://build:build@127.0.0.1:5432/build_db
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -123,6 +132,58 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     if: github.event_name == 'pull_request'
+    # playwright.config.ts starts `next start` as its CI webServer, which
+    # requires a production build AND the app booting successfully — which
+    # means env.ts validation passing AND a reachable DATABASE_URL/REDIS_URL
+    # (db/index.ts and rate-limit.ts both connect eagerly under NODE_ENV=
+    # production). The build is duplicated here (rather than artifact-passed
+    # from the Build job) because the artifact dance adds failure modes for
+    # marginal time savings at our PR volume.
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: e2e
+          POSTGRES_PASSWORD: e2e
+          POSTGRES_DB: e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U e2e -d e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    # Env: prod-refine satisfying stubs + DATABASE_URL/REDIS_URL pointing at
+    # the service containers above. The URL stubs differ from the Build
+    # job's: Better-Auth uses APP_URL / BETTER_AUTH_URL to build absolute
+    # redirect URLs (e.g. /he/admin → 307 to <APP_URL>/sign-in), so a
+    # non-resolvable stub (build.example.com is NXDOMAIN) breaks the
+    # protected-routes test's followed redirect with ERR_NAME_NOT_RESOLVED.
+    # 127.0.0.1:3000 is the SAME server as Playwright's localhost:3000
+    # baseURL (next start binds 0.0.0.0) AND it passes env.ts's
+    # `!startsWith('http://localhost')` refine since the literal string
+    # differs. Build job's stubs can stay as example.com — Build runs no
+    # server.
+    env:
+      APP_URL: http://127.0.0.1:3000
+      BETTER_AUTH_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+      BETTER_AUTH_SECRET: build-stub-must-be-at-least-32-chars-long
+      CRON_SECRET: build-stub-cron-secret-thirty-two-chars-min
+      IP_HASH_SALT: build-stub-ip-hash-salt-thirty-two-chars-minimum-padding
+      GCP_CLOUD_SQL_INSTANCE: build:stub:instance
+      GCP_CLOUD_SQL_IAM_USER: build-stub@example.iam.gserviceaccount.com
+      DATABASE_URL: postgres://e2e:e2e@localhost:5432/e2e
+      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -131,7 +192,23 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
+
+      # Apply schema to the e2e Postgres service so the app's eager db
+      # client doesn't crash on first connect. drizzle.config.ts reads
+      # DATABASE_URL from env — already set above.
+      - name: Apply schema to e2e DB
+        run: pnpm -C apps/web db:migrate
+
+      # Build the app on THIS runner — webServer's `next start` needs the
+      # .next/ output and GitHub Actions doesn't share filesystems between
+      # jobs. Same env vars satisfy env.ts validation as the Build job.
+      - name: Build app for webServer
+        run: pnpm --filter @resumaker/web build
+
+      # @playwright/test lives only in tests/e2e (not the root workspace),
+      # so scope the install to the package that owns the dep — same
+      # locality as the `pnpm test:e2e` script (which filters to tests-e2e).
+      - run: pnpm -C tests/e2e exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - name: Upload Playwright report
         if: always()

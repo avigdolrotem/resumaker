@@ -2,10 +2,6 @@ variable "project_id" {
   type = string
 }
 
-variable "env" {
-  type = string
-}
-
 variable "secret_names" {
   description = "List of secret names to provision (empty values; populate post-create via gcloud)."
   type        = list(string)

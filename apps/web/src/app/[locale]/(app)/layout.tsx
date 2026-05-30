@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { AppHeader } from '@/components/app-header';
 import { Link } from '@/i18n/navigation';
 import { SessionGuard } from '@/components/session-guard';
+import { ApiUpgradeListener } from '@/components/api-upgrade-listener';
 
 /**
  * Layout for all signed-in app pages. Redirects to /sign-in if no session.
@@ -35,6 +36,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           layout above is the primary defence; this catches the
           edge case where SSR didn't run again. */}
       <SessionGuard />
+      {/* Global 402 → UpgradeModal interceptor. Every tier-gated client
+          fetch goes through `apiFetch`, which dispatches an event that
+          this listener turns into the existing upgrade modal — call
+          sites don't manage modal state themselves. */}
+      <ApiUpgradeListener />
       <AppHeader />
       <main id="main" className="text-foreground container mx-auto flex-1 px-4 py-8">
         {children}

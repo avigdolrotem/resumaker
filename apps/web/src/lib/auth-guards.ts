@@ -25,7 +25,7 @@
 
 import { NextResponse } from 'next/server';
 import { headers as nextHeaders } from 'next/headers';
-import { redirect, notFound } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { eq } from 'drizzle-orm';
 import { auth, type Session } from '@/lib/auth';
 import { db, schema } from '@/db';
@@ -126,9 +126,15 @@ export async function requireFreshSession(
  *
  *   const { user } = await requireAdminPage();
  *
- * If the caller isn't admin, this `notFound()`s — mimicking the
- * "page doesn't exist" stance the API helper takes (avoids announcing
- * the existence of admin endpoints to logged-in non-admins).
+ * Non-admins are REDIRECTED to /dashboard. We use redirect() rather than
+ * notFound() deliberately: notFound() renders the not-found UI but the HTTP
+ * status is committed as 200 whenever an admin route gets statically
+ * optimized (observed under `next dev`/Turbopack; `force-dynamic` does not
+ * reliably suppress it, and client-component admin pages can't carry route
+ * config at all) — which would leave a non-admin on an admin URL at HTTP 200.
+ * A redirect yields an unambiguous denial status in every render mode and is
+ * inherited by the client-component admin pages via the admin layout. The
+ * API guard (`requireAdmin`) still returns 404 to hide endpoint existence.
  */
 export async function requireAdminPage(): Promise<Guarded> {
   const loaded = await loadSessionAndUser(await nextHeaders());
@@ -139,7 +145,7 @@ export async function requireAdminPage(): Promise<Guarded> {
     redirect('/sign-in?reason=suspended');
   }
   if (loaded.user.role !== 'admin') {
-    notFound();
+    redirect('/dashboard');
   }
   return loaded;
 }

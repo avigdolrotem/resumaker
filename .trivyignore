@@ -1,0 +1,33 @@
+# Trivy ignore list — IaC + filesystem scans.
+# Each entry must be a specific known/accepted finding with a written rationale.
+# Reviewed by Security Researcher persona; do not add without justification.
+#
+# CURRENT SEVERITY GATES: both trivy jobs (security.yml, infra.yml) scan
+# at CRITICAL,HIGH only — so the MEDIUM entries below aren't actively
+# enforced. They're documented here so the suppression decision is
+# durable: if anyone re-enables MEDIUM scanning (e.g. the nightly run,
+# or a future tightening), these specific findings should NOT block.
+
+# AVD-GCP-0059 (MEDIUM): "Cluster does not have private nodes."
+# Our GKE clusters are Autopilot (`enable_autopilot = true` in modules/gke).
+# Autopilot manages node networking and uses private nodes by default; the
+# explicit `private_cluster_config { enable_private_nodes = true }` block
+# that Trivy's GCP-0059 rule looks for is not the canonical configuration
+# for Autopilot. The clusters are in fact private — verified by node IPs
+# (10.x.x.x VPC-internal only) and by master_authorized_networks scoping.
+# Affected: infra/tofu/modules/gke/main.tf via environments dev/staging/prod.
+AVD-GCP-0059
+
+# AVD-GCP-0050 (MEDIUM): "Cluster does not override the default service account."
+# This rule expects `node_config { service_account = ... }` on the cluster
+# resource to pin a minimally-privileged custom SA. Two reasons we don't
+# do that:
+#   1. Workload IAM is handled at the workload level via Workload Identity
+#      — the `resumaker-app` GSA (modules/workload-identity) is bound to
+#      the app pod's KSA and is what every API call out of the workload
+#      authenticates as. The default node SA never reaches the app.
+#   2. GKE Autopilot manages node-level config; explicit `node_config`
+#      overrides on Autopilot clusters are non-standard and historically
+#      have been silently dropped or rejected by the google-beta provider.
+# Affected: infra/tofu/modules/gke/main.tf via environments dev/staging/prod.
+AVD-GCP-0050

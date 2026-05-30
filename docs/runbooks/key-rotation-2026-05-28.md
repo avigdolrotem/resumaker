@@ -4,13 +4,13 @@ Status of the secret-rotation pass before session handoff.
 
 ## Already rotated this session (live + verified)
 
-| Secret | How | Verified |
-|---|---|---|
-| `BETTER_AUTH_SECRET` | `openssl rand -base64 48` → Secret Manager v2 + live k8s Secret → rolled | All sessions invalidated (intended). Sign-in re-issues fresh sessions. |
-| `CRON_SECRET` | `openssl rand -base64 32` → SM v2 + k8s → rolled | App + 3 CronJobs read the same key; consistent post-roll |
-| `IP_HASH_SALT` | `openssl rand -base64 48` → SM v2 + k8s → rolled | Audit-log IP hashes re-keyed (old hashes no longer correlate — by design) |
-| `DATABASE_URL` (postgres pw) | `gcloud sql users set-password postgres` + rebuilt URL → k8s → rolled | `/api/health/ready` → `database: ok, latencyMs: 1` ✅ |
-| `ANTHROPIC_API_KEY` | **destroyed** (version 1) | App uses Vertex AI ADC; not referenced by the deployment. Removed historical-exposure liability. |
+| Secret                       | How                                                                      | Verified                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `BETTER_AUTH_SECRET`         | `openssl rand -base64 48` → Secret Manager v2 + live k8s Secret → rolled | All sessions invalidated (intended). Sign-in re-issues fresh sessions.                           |
+| `CRON_SECRET`                | `openssl rand -base64 32` → SM v2 + k8s → rolled                         | App + 3 CronJobs read the same key; consistent post-roll                                         |
+| `IP_HASH_SALT`               | `openssl rand -base64 48` → SM v2 + k8s → rolled                         | Audit-log IP hashes re-keyed (old hashes no longer correlate — by design)                        |
+| `DATABASE_URL` (postgres pw) | `gcloud sql users set-password postgres` + rebuilt URL → k8s → rolled    | `/api/health/ready` → `database: ok, latencyMs: 1` ✅                                            |
+| `ANTHROPIC_API_KEY`          | **destroyed** (version 1)                                                | App uses Vertex AI ADC; not referenced by the deployment. Removed historical-exposure liability. |
 
 The previously-leaked break-glass postgres password is now invalid (rotated).
 
@@ -19,6 +19,7 @@ The previously-leaked break-glass postgres password is now invalid (rotated).
 For each: regenerate in the provider dashboard, then push the new value via stdin so it never appears in shell history, then roll.
 
 ### Sentry DSN (highest priority — leaked in git history `adbba50`)
+
 ```bash
 # 1. sentry.io → Settings → Projects → resumaker → Client Keys (DSN) → "Generate New Key", revoke old
 # 2. push (paste value at the prompt; --data-file=- reads stdin, nothing in argv/history):
@@ -31,6 +32,7 @@ kubectl -n resumaker rollout restart deploy/resumaker
 ```
 
 ### Resend API key
+
 ```bash
 # 1. resend.com → API Keys → create new (full access), delete old AFTER step 3 succeeds
 # 2. gcloud secrets versions add resend-api-key --data-file=- --project=resumaker-497309
@@ -42,6 +44,7 @@ kubectl -n resumaker rollout restart deploy/resumaker
 ```
 
 ### Google OAuth client secret (NOT the client ID — that's not secret)
+
 ```bash
 # 1. console.cloud.google.com → APIs & Services → Credentials → the OAuth 2.0 Client
 #    → "Add secret" (rotation grace), or "Reset secret"

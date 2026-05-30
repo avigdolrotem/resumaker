@@ -2,24 +2,15 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { useRouter } from '@/i18n/navigation';
-import { useSession, signOut } from '@/lib/auth-client';
-import {
-  LayoutDashboard,
-  FilePlus2,
-  Settings,
-  LogOut,
-  UserCircle,
-  Mail,
-  Briefcase,
-  TrendingUp,
-} from 'lucide-react';
+import { useSession } from '@/lib/auth-client';
+import { LayoutDashboard, Settings, Mail, Briefcase, TrendingUp } from 'lucide-react';
 import { LocaleSwitcher } from './locale-switcher';
 import { Logo } from './logo';
 import { ThemeToggle } from './theme-toggle';
 import { CommandPaletteTrigger } from './command-palette';
 import { MobileDrawer } from './mobile-drawer';
 import { Button } from './ui/button';
+import { NewMenu, UserAvatarMenu } from './app-header-menus';
 
 /**
  * Header for authenticated app pages.
@@ -27,14 +18,7 @@ import { Button } from './ui/button';
  */
 export function AppHeader() {
   const t = useTranslations('nav');
-  const router = useRouter();
   const { data: session, isPending } = useSession();
-
-  async function handleSignOut() {
-    await signOut();
-    router.push('/');
-    router.refresh();
-  }
 
   return (
     <header
@@ -68,15 +52,17 @@ export function AppHeader() {
             icon={<LayoutDashboard className="h-4 w-4" />}
             label={t('dashboard')}
           />
-          <NavLink
-            href="/builder"
-            icon={<FilePlus2 className="h-4 w-4" />}
-            label={t('newResume')}
-          />
-          {/* Cover Letters — sits between Resumes/Builder and Jobs in
-              the canonical top-bar order (Section 8 of the round
-              spec). Renders only when signed in (this is the (app)
-              header). */}
+          {/* "+ New" dropdown consolidates the create actions
+              (resume + cover letter) — replaces the old standalone
+              Builder NavLink, which got lopsided once cover letters
+              joined. Sits as the first action after Dashboard so it's
+              the most prominent CTA. */}
+          <div className="hidden md:flex md:items-center">
+            <NewMenu />
+          </div>
+          {/* Cover Letters — sits between New and Jobs in the
+              canonical top-bar order. Renders only when signed in
+              (this is the (app) header). */}
           <NavLink
             href="/cover-letters"
             icon={<Mail className="h-4 w-4" />}
@@ -101,23 +87,15 @@ export function AppHeader() {
             <ThemeToggle />
           </div>
 
-          {/* User + sign-out — desktop only. Drawer has same actions. */}
+          {/* Account — desktop only. Drawer has the same actions on mobile.
+              Avatar dropdown consolidates Profile / Billing / Settings /
+              Sign out under one affordance — less header chrome than the
+              old name-link + standalone sign-out button pair. */}
           <div className="hidden md:flex md:items-center md:gap-2">
             {isPending ? (
-              <div className="bg-muted ms-2 h-8 w-20 animate-pulse rounded" />
+              <div className="bg-muted ms-2 h-9 w-9 animate-pulse rounded-full" />
             ) : session ? (
-              <>
-                <Link
-                  href="/profile"
-                  className="text-muted-foreground hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 hidden items-center gap-1 rounded-md px-2 py-1 text-sm transition lg:inline-flex"
-                >
-                  <UserCircle className="h-4 w-4" />
-                  <span className="max-w-[140px] truncate">{session.user.name}</span>
-                </Link>
-                <Button variant="ghost" size="sm" onClick={handleSignOut} title={t('signOut')}>
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </>
+              <UserAvatarMenu />
             ) : (
               <Button asChild size="sm" variant="outline" className="ms-2">
                 <Link href="/sign-in">{t('signIn')}</Link>
@@ -139,13 +117,7 @@ function NavLink({
   icon,
   label,
 }: {
-  href:
-    | '/dashboard'
-    | '/builder'
-    | '/cover-letters'
-    | '/jobs'
-    | '/applications'
-    | '/settings';
+  href: '/dashboard' | '/builder' | '/cover-letters' | '/jobs' | '/applications' | '/settings';
   icon: React.ReactNode;
   label: string;
 }) {

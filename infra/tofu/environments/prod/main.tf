@@ -8,7 +8,6 @@ module "network" {
   project_id            = var.project_id
   region                = var.region
   env                   = local.env
-  vpc_cidr              = "10.2.0.0/16"
   subnet_cidr           = "10.2.1.0/24"
   pods_cidr             = "10.2.16.0/20"
   services_cidr         = "10.2.32.0/20"
@@ -27,7 +26,6 @@ module "secrets" {
   source = "../../modules/secrets"
 
   project_id = var.project_id
-  env        = local.env
   accessor_service_accounts = [
     module.workload_identity.app_service_account_email,
     module.workload_identity.cicd_service_account_email,
@@ -87,4 +85,16 @@ module "gke" {
   subnet_self_link    = module.network.subnet_self_link
   pods_range_name     = module.network.pods_range_name
   services_range_name = module.network.services_range_name
+}
+
+# Cloud Monitoring uptime check — pings /api/health every 5 min from
+# US/EU/APAC probe regions. Alert routing is intentionally left to a
+# follow-up so notification channels (PagerDuty / email / Slack) can be
+# wired without churning this module. See infra/tofu/modules/monitoring.
+module "monitoring" {
+  source = "../../modules/monitoring"
+
+  project_id = var.project_id
+  env        = local.env
+  host       = "resumaker.co.il"
 }

@@ -51,6 +51,7 @@ export type AuditEventName =
   | 'resume_scored'
   | 'rate_limit_hit'
   | 'account_deleted'
+  | 'account_restored'
   | 'data_exported'
   | 'admin_action'
   | 'billing_checkout_started'

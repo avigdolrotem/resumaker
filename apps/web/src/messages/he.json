@@ -16,7 +16,56 @@
     "jobs": "משרות",
     "applications": "מועמדויות",
     "settings": "הגדרות",
+    "new": "חדש",
+    "newCoverLetter": "מכתב מקדים חדש",
+    "profile": "פרופיל",
+    "billing": "חיוב",
+    "account": "חשבון",
     "signOut": "התנתקות"
+  },
+  "commandPalette": {
+    "ariaLabel": "פלטת פקודות",
+    "search": "חיפוש פקודות",
+    "placeholder": "הקלידו פקודה או חיפוש…",
+    "noMatches": "אין תוצאות עבור \"{query}\"",
+    "groups": {
+      "Navigate": "ניווט",
+      "Actions": "פעולות",
+      "Account": "חשבון"
+    },
+    "items": {
+      "dashboard": "לוח בקרה",
+      "newResume": "קורות חיים חדשים",
+      "newResumeKeywords": "יצירה בילדר",
+      "newCoverLetter": "מכתב מקדים חדש",
+      "newCoverLetterKeywords": "יצירה",
+      "coverLetters": "מכתבי המקדים שלי",
+      "applications": "המועמדויות שלי",
+      "applicationsKeywords": "עבודות מעקב",
+      "jobs": "חיפוש עבודה",
+      "profile": "פרופיל",
+      "settings": "הגדרות",
+      "billing": "חיוב",
+      "billingKeywords": "מנוי תוכנית",
+      "signOut": "התנתקות",
+      "home": "בית",
+      "examples": "דוגמאות",
+      "examplesKeywords": "דגימות תבניות",
+      "pricing": "מחירים",
+      "pricingKeywords": "תוכניות עלות מנוי",
+      "signIn": "התחברות",
+      "signUp": "הרשמה"
+    },
+    "footer": {
+      "quickNav": "ניווט מהיר",
+      "navigate": "ניווט",
+      "select": "בחירה",
+      "toggle": "החלפה"
+    },
+    "trigger": {
+      "ariaLabel": "פתח פלטת פקודות",
+      "placeholder": "חיפוש או קפיצה ל…"
+    }
   },
   "home": {
     "hero": {
@@ -60,6 +109,20 @@
       "haveAccount": "כבר יש לך חשבון?",
       "passwordHint": "לפחות 12 תווים"
     },
+    "verifyPending": {
+      "title": "בדקו את תיבת הדוא״ל",
+      "sentTo": "שלחנו קישור אימות לכתובת <strong>{email}</strong>.",
+      "instruction": "לחצו על הקישור באותו אימייל כדי להפעיל את החשבון, ולאחר מכן התחברו.",
+      "spam": "לא מוצאים? בדקו בתיקיית הספאם או הקידומים.",
+      "ttl": "הקישור תקף ל-3 ימים.",
+      "resend": "שליחת אימייל מחדש",
+      "resending": "שולח…",
+      "resent": "נשלח — בדקו שוב את תיבת הדואר.",
+      "resendCooldown": "ניתן לשלוח שוב בעוד {seconds} שניות",
+      "resendError": "לא הצלחנו לשלוח כעת. נסו שוב בעוד רגע.",
+      "differentEmail": "שימוש בכתובת אחרת",
+      "backToSignIn": "חזרה לכניסה"
+    },
     "signIn": {
       "title": "ברוכים השבים",
       "subtitle": "התחבר כדי להמשיך",
@@ -91,7 +154,10 @@
     "errors": {
       "generic": "אירעה שגיאה. אנא נסה שוב.",
       "passwordTooShort": "הסיסמה חייבת להיות לפחות 12 תווים.",
-      "invalidCredentials": "אימייל או סיסמה שגויים."
+      "invalidCredentials": "אימייל או סיסמה שגויים.",
+      "accountPendingDeletion": "כבר קיים חשבון עם כתובת אימייל זו שמתוזמן למחיקה. התחברו כדי לשחזר אותו.",
+      "accountSuspended": "החשבון הזה הושעה. אנא פנו לתמיכה.",
+      "accountDeleted": "החשבון הזה נמחק ולא ניתן עוד לגשת אליו."
     }
   },
   "dashboard": {
@@ -137,6 +203,12 @@
     "rationale": "למה",
     "viewOriginal": "צפה במודעה המקורית",
     "loadMore": "טען עוד",
+    "betaGate": {
+      "title": "חיפוש העבודה בבטא",
+      "subtitle": "עקבו אחרי כל המועמדויות, קבלו ציון התאמה, שמרו מועדפים, ותנו לנו לייבא משרות אוטומטית מהחיפושים השמורים שלכם.",
+      "ctaButton": "בקשו גישה לבטא",
+      "note": "כעת בהזמנה בלבד — נשלח לכם אימייל ברגע שהגישה תיפתח."
+    },
     "filters": {
       "all": "הכל",
       "favorites": "מועדפים",
@@ -744,6 +816,40 @@
       "cannotImpersonateAdmin": "לא ניתן להתחזות למנהל",
       "sessionCreated": "סשן התחזות נוצר. רענן כדי לעבור להקשר.",
       "exitSuccess": "ההתחזות הסתיימה."
+    }
+  },
+  "upgradeModal": {
+    "close": "סגירה",
+    "later": "אולי בפעם אחרת",
+    "cta": {
+      "label": "הצטרפו לרשימת ההמתנה",
+      "href": "mailto:hello@resumaker.co.il?subject=Waitlist"
+    },
+    "features": {
+      "model_choice": {
+        "title": "בחירת מודל ה-AI",
+        "body": "בחירת מודל ספציפי היא פיצ'ר של Plus. שדרגו כדי לעבור בין Claude Sonnet, Claude Opus והמודלים המהירים/חינמיים לפי הצורך."
+      },
+      "cover_letter": {
+        "title": "מכתבי מקדים בחבילת Plus",
+        "body": "Resumaker Plus פותח גישה למכתבי מקדים מותאמים אישית — תאמו את הטון למשרה, החליפו מודלי AI ושמרו גרסאות."
+      },
+      "resume_limit": {
+        "title": "הגעתם למספר המקסימלי של קורות חיים",
+        "body": "הגעתם למגבלת התוכנית החינמית. שדרגו ל-Plus לשמירת קורות חיים ללא הגבלה."
+      },
+      "generation_limit": {
+        "title": "ניצלתם את היצירות היומיות",
+        "body": "חשבונות חינמיים מקבלים מספר יצירות יומי להתנסות. Plus מסיר את המגבלה היומית — כדי שתוכלו להמשיך לשפר ללא הפסקה."
+      },
+      "template_locked": {
+        "title": "תבנית בחבילת Plus בלבד",
+        "body": "תבניות פרימיום זמינות ב-Plus. שדרגו כדי להשתמש בהן בכל קורות החיים."
+      },
+      "job_hunt_beta": {
+        "title": "חיפוש העבודה בבטא",
+        "body": "עקבו אחרי כל המועמדויות, קבלו ציון התאמה, שמרו מועדפים ותנו לנו לייבא משרות אוטומטית. הצטרפו לרשימת ההמתנה ונשלח לכם אימייל כשהגישה תיפתח."
+      }
     }
   }
 }

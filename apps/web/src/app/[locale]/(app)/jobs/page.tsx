@@ -1,3 +1,5 @@
+import { headers as nextHeaders } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { desc, eq, and } from 'drizzle-orm';
 import { Plus, ExternalLink, Star } from 'lucide-react';
@@ -5,17 +7,29 @@ import { db, schema } from '@/db';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { requireJobHuntBetaPage } from '@/lib/beta-gate';
+import { requireActiveUser } from '@/lib/auth-guards';
+import { hasJobHuntBeta } from '@/lib/beta-gate';
+import { JobHuntPreview } from '@/components/job-hunt-preview';
 
 /**
  * /jobs — beta inbox. Lists imported + scraped jobs newest first, with
  * the user's per-job state (favorite + fit score) joined.
  *
- * Beta-gated: non-flagged users get redirected to /dashboard.
+ * Soft beta gate: non-flagged users see a blurred preview + an upsell
+ * card instead of being silently redirected. Creates demand for the
+ * feature without leaking real job data. The API routes still hard-gate
+ * with `requireJobHuntBetaApi`, so no data ever reaches a non-flagged
+ * client — the preview is sample data only.
  */
 export default async function JobsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const guard = await requireJobHuntBetaPage();
+  const guard = await requireActiveUser(await nextHeaders());
+  if (guard instanceof Response) {
+    redirect('/sign-in');
+  }
+  if (!hasJobHuntBeta(guard.user)) {
+    return <JobHuntPreview />;
+  }
   const t = await getTranslations({ locale, namespace: 'jobs' });
   const isHebrew = locale === 'he';
 
