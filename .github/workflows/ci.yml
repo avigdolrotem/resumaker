@@ -132,23 +132,50 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     if: github.event_name == 'pull_request'
-    # continue-on-error: this job has never actually run in CI before — it
-    # was previously skipping behind Build, which was skipping behind Lint,
-    # which was failing on a pre-existing prettier issue. The catch-up PR
-    # surfaced it. Making it green requires CI infrastructure that doesn't
-    # exist yet:
-    #   1. Run `pnpm build` here with the same env stubs as the build job
-    #      (playwright.config.ts starts `next start` as its webServer; that
-    #      requires a build, which only happens on the separate build job's
-    #      runner — the .next/ artefact isn't passed to this one).
-    #   2. Stand up DB + Redis service containers — tests hit /api/* and
-    #      the app refuses to boot without a reachable DATABASE_URL.
-    #   3. Override BASE_URL or set E2E_BASE_URL appropriately.
-    # Tracked as the existing P8 detection-gap follow-up. Until that lands,
-    # the failure is informational (24/24 of these tests passed locally and
-    # against live prod in the orchestrator's prior work). Remove this flag
-    # once the bootstrap above is in place.
-    continue-on-error: true
+    # playwright.config.ts starts `next start` as its CI webServer, which
+    # requires a production build AND the app booting successfully — which
+    # means env.ts validation passing AND a reachable DATABASE_URL/REDIS_URL
+    # (db/index.ts and rate-limit.ts both connect eagerly under NODE_ENV=
+    # production). The build is duplicated here (rather than artifact-passed
+    # from the Build job) because the artifact dance adds failure modes for
+    # marginal time savings at our PR volume.
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: e2e
+          POSTGRES_PASSWORD: e2e
+          POSTGRES_DB: e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U e2e -d e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    # Same prod-refine satisfying stubs as the Build job + DATABASE_URL and
+    # REDIS_URL pointing at the service containers above. Keep this block in
+    # sync with build job + apps/web/Dockerfile.
+    env:
+      APP_URL: https://build.example.com
+      BETTER_AUTH_URL: https://build.example.com
+      NEXT_PUBLIC_APP_URL: https://build.example.com
+      BETTER_AUTH_SECRET: build-stub-must-be-at-least-32-chars-long
+      CRON_SECRET: build-stub-cron-secret-thirty-two-chars-min
+      IP_HASH_SALT: build-stub-ip-hash-salt-thirty-two-chars-minimum-padding
+      GCP_CLOUD_SQL_INSTANCE: build:stub:instance
+      GCP_CLOUD_SQL_IAM_USER: build-stub@example.iam.gserviceaccount.com
+      DATABASE_URL: postgres://e2e:e2e@localhost:5432/e2e
+      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -157,9 +184,21 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
+
+      # Apply schema to the e2e Postgres service so the app's eager db
+      # client doesn't crash on first connect. drizzle.config.ts reads
+      # DATABASE_URL from env — already set above.
+      - name: Apply schema to e2e DB
+        run: pnpm -C apps/web db:migrate
+
+      # Build the app on THIS runner — webServer's `next start` needs the
+      # .next/ output and GitHub Actions doesn't share filesystems between
+      # jobs. Same env vars satisfy env.ts validation as the Build job.
+      - name: Build app for webServer
+        run: pnpm --filter @resumaker/web build
+
       # @playwright/test lives only in tests/e2e (not the root workspace),
-      # so `pnpm exec playwright` at repo-root context can't resolve the
-      # binary. Scope the install to the package that owns the dep — same
+      # so scope the install to the package that owns the dep — same
       # locality as the `pnpm test:e2e` script (which filters to tests-e2e).
       - run: pnpm -C tests/e2e exec playwright install --with-deps chromium
       - run: pnpm test:e2e
