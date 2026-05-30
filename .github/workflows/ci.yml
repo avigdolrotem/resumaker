@@ -140,7 +140,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
+      # @playwright/test lives only in tests/e2e (not the root workspace),
+      # so `pnpm exec playwright` at repo-root context can't resolve the
+      # binary. Scope the install to the package that owns the dep — same
+      # locality as the `pnpm test:e2e` script (which filters to tests-e2e).
+      - run: pnpm -C tests/e2e exec playwright install --with-deps chromium
       - run: pnpm test:e2e
       - name: Upload Playwright report
         if: always()
