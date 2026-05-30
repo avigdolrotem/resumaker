@@ -30,6 +30,73 @@ The bootstrap script below is the same on both. The only differences:
 
 ---
 
+## Part 0 — Transfer the data from the Mac (same LAN, keep both machines)
+
+You own both boxes and they're on the same LAN, so use **rsync over SSH** — encrypted,
+resumable, and it carries the files that are NOT in git (your `.env`s, agent DBs) which
+a fresh clone would miss. `.git` is portable, so this also brings the full repo (no
+separate `git clone` needed).
+
+**What transfers vs not:**
+
+- TRANSFER: `.git` + all source + the 3 `.env` files + `.claude/*.local` + RuVector
+  `*.rvf` / `ruvector.db`.
+- EXCLUDE (Mac-specific or rebuildable — regenerate on Ubuntu): `node_modules` (arm64
+  binaries), `.next` (build cache), `infra/tofu/**/.terraform/` (darwin_arm64 provider
+  binaries — would break on Linux; re-fetched by `tofu init`).
+
+```bash
+# --- On the Ubuntu PC (target): enable SSH + make the destination ---
+sudo apt update && sudo apt install -y openssh-server rsync
+sudo systemctl enable --now ssh
+hostname -I            # note the LAN IP, e.g. 192.168.1.42
+mkdir -p ~/code/resumaker
+
+# --- On the Mac (source): push the repo (excludes the rebuildable/arm64 dirs) ---
+rsync -avhP \
+  --exclude='node_modules' --exclude='**/node_modules' \
+  --exclude='.next' --exclude='**/.next' \
+  --exclude='.terraform' --exclude='**/.terraform' \
+  --exclude='.turbo' --exclude='coverage' \
+  /Volumes/Server_Data/code-server/workspace/resumaker/ \
+  UBUNTU_USER@UBUNTU_IP:/home/UBUNTU_USER/code/resumaker/
+
+# --- On the Mac: push Claude config + memory (plugins, settings, this project's memory) ---
+rsync -avhP ~/.claude/ UBUNTU_USER@UBUNTU_IP:/home/UBUNTU_USER/.claude/
+```
+
+```bash
+# --- On the Ubuntu PC (after transfer): rebuild + fix the memory path ---
+cd ~/code/resumaker
+pnpm install --frozen-lockfile        # rebuilds node_modules for linux-x64
+pre-commit install
+chmod 600 .env apps/web/.env apps/web/.env.local
+
+# Re-fetch tofu providers for linux (only if you run tofu locally):
+for e in prod staging dev; do tofu -chdir=infra/tofu/environments/$e init -backend=false || true; done
+
+# Remap Claude project memory to the new path-encoded dir name.
+# Foolproof: open `claude` once in ~/code/resumaker (it creates the correct dir), exit, then:
+cd ~/.claude/projects
+cp -a "./-Volumes-Server-Data-code-server-workspace-resumaker/memory/." \
+      "./-home-$USER-code-resumaker/memory/"   # dir name = abs repo path, '/'→'-', leading '/'→leading '-'
+```
+
+**Verify the transfer was lossless (run on BOTH, compare):**
+
+```bash
+# secrets intact?  Mac: shasum -a256 ...   Ubuntu: sha256sum ...
+( cd ~/code/resumaker && sha256sum .env apps/web/.env apps/web/.env.local )
+# repo intact?
+git -C ~/code/resumaker fsck && git -C ~/code/resumaker status -s && git -C ~/code/resumaker log --oneline -1
+```
+
+The two checksum sets must match across machines, `git status` must be clean, and the
+`git log` HEAD must equal `origin/main`. Your Mac is untouched throughout (rsync only
+reads it), so nothing is at risk — re-run the rsync anytime to catch later changes.
+
+---
+
 ## Part 1 — Setup script (native Ubuntu or WSL2)
 
 **Windows only, first:** in PowerShell (admin) run `wsl --install -d Ubuntu-24.04`,
