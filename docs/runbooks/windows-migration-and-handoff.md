@@ -1,34 +1,42 @@
-# Windows Migration + Post-Migration Handoff (2026-05-30)
+# Migration + Post-Migration Handoff (2026-05-30)
 
-This is the single reference for moving Resumaker dev from the Mac to a Windows
-machine, reducing GCP cost, and picking the project back up cleanly. It has
-three parts:
+This is the single reference for moving Resumaker dev off the Mac to a new
+machine (native **Ubuntu** — recommended — or **Windows/WSL2**), reducing GCP
+cost, and picking the project back up cleanly. It has three parts:
 
-1. **WSL2 setup script** — run on the new Windows box to install every tool.
+1. **Setup script** — run on the new box to install every tool.
 2. **GCP cost-reduction plan** — the run-rate is ~$10–13/day idle; how to cut it.
 3. **Handoff prompt** — paste into a fresh Claude Code session after setup.
 
-> **Golden rule for Windows:** do all of this inside **WSL2 (Ubuntu 22.04)**, not
-> native PowerShell. This repo is bash scripts + pre-commit + docker + gcloud +
-> helm + tofu + zsh-isms — all of which "just work" in WSL2 exactly like they did
-> on the Mac, and are painful natively. Clone into the WSL2 home filesystem
-> (`~/code/...`), **never** `/mnt/c/...` (10× slower for node_modules).
+## Choosing the OS
+
+- **Native Ubuntu (recommended): 24.04 LTS "Noble"** (supported to 2029; 22.04
+  also fine). Simplest path — it's Linux already, closest to prod (GKE), and Docker
+  runs without a VM, so the local builds that OOM'd the 16GB Mac may work locally
+  again. Clone anywhere on the native FS (`~/code/resumaker`).
+- **Windows: use WSL2 (Ubuntu 24.04), not native PowerShell.** This repo is bash +
+  pre-commit + docker + gcloud + helm + tofu — seamless in WSL2, painful natively.
+  Clone into the WSL2 home FS (`~/code/...`), **never** `/mnt/c/...` (10× slower for
+  node_modules).
+
+The bootstrap script below is the same on both. The only differences:
+
+|                 | Native Ubuntu 24.04                                                       | Windows/WSL2                                                |
+| --------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| OS prep         | none                                                                      | `wsl --install -d Ubuntu-24.04` (PowerShell admin) + reboot |
+| Docker          | `sudo apt install docker.io` + `sudo usermod -aG docker $USER` (re-login) | Docker Desktop + enable WSL Integration                     |
+| pre-commit      | `pipx` (PEP 668 blocks `pip --user` on 24.04) — handled in the script     | same                                                        |
+| `/mnt/c` gotcha | n/a                                                                       | avoid it; use `~/`                                          |
 
 ---
 
-## Part 1 — WSL2 setup script
+## Part 1 — Setup script (native Ubuntu or WSL2)
 
-On the new Windows machine, first enable WSL2 + Ubuntu (PowerShell as admin):
+**Windows only, first:** in PowerShell (admin) run `wsl --install -d Ubuntu-24.04`,
+reboot, open Ubuntu, create your user; install Docker Desktop and enable _Settings →
+Resources → WSL Integration → Ubuntu-24.04_. **Native Ubuntu: skip this paragraph.**
 
-```powershell
-wsl --install -d Ubuntu-22.04
-# reboot if prompted, then open "Ubuntu 22.04" from Start; create your user.
-```
-
-Then install **Docker Desktop for Windows** and enable _Settings → Resources →
-WSL Integration → Ubuntu-22.04_. (Simplest path to Docker inside WSL2.)
-
-Now inside the **Ubuntu (WSL2)** terminal, save the script below as
+Then, in the Ubuntu terminal (native or WSL2), save the script below as
 `setup-resumaker.sh` and run `bash setup-resumaker.sh`:
 
 ```bash
@@ -50,8 +58,18 @@ export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"
 nvm install 22 && nvm alias default 22
 corepack enable && corepack prepare pnpm@9.15.0 --activate
 
-log "pre-commit (Python)"
-python3 -m pip install --user --upgrade pre-commit
+log "pre-commit (via pipx — PEP 668 blocks 'pip --user' on Ubuntu 24.04)"
+sudo apt-get install -y pipx
+pipx ensurepath
+pipx install pre-commit || pipx upgrade pre-commit || true
+
+log "Docker (native Ubuntu only — on Windows/WSL2 use Docker Desktop + WSL integration, skip this)"
+if ! command -v docker >/dev/null && ! grep -qi microsoft /proc/version 2>/dev/null; then
+  sudo apt-get install -y docker.io
+  sudo usermod -aG docker "$USER"
+  sudo systemctl enable --now docker || true
+  echo ">> Log out/in (or run 'newgrp docker') so docker works without sudo."
+fi
 
 log "gh CLI"
 if ! command -v gh >/dev/null; then
