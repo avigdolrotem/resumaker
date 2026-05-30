@@ -61,17 +61,17 @@ export function TemplatePicker({ value, onChange, userTier }: Props) {
             ].join(' ')}
           >
             <TemplatePreview id={tpl.id} />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-left">
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-start">
               <p className="text-xs font-semibold text-white">{t(`${tpl.id}.name`)}</p>
               <p className="text-[10px] text-white/80">{t(`${tpl.id}.subtitle`)}</p>
             </div>
             {selected && (
-              <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 text-white">
+              <span className="absolute end-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 text-white">
                 <Check className="h-3.5 w-3.5" />
               </span>
             )}
             {locked && (
-              <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-neutral-900/80 px-2 py-0.5 text-[10px] font-medium text-white">
+              <span className="absolute end-2 top-2 flex items-center gap-1 rounded-full bg-neutral-900/80 px-2 py-0.5 text-[10px] font-medium text-white">
                 <Lock className="h-3 w-3" />
                 {tpl.minTier === 'plus' ? 'Plus' : 'Pro'}
               </span>

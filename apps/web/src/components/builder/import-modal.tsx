@@ -79,7 +79,7 @@ export function ImportModal({ open, onClose, onApply }: ImportModalProps) {
           type="button"
           onClick={close}
           aria-label="Close"
-          className="text-muted-foreground hover:text-foreground absolute right-4 top-4"
+          className="text-muted-foreground hover:text-foreground absolute end-4 top-4"
         >
           <X className="h-5 w-5" />
         </button>

@@ -70,7 +70,7 @@ export default function BulkImportPage() {
                 type="file"
                 accept=".csv,text/csv"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="text-muted-foreground file:bg-muted hover:file:bg-muted mt-1 block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:px-4 file:py-2 file:text-sm file:font-medium"
+                className="text-muted-foreground file:bg-muted hover:file:bg-muted mt-1 block w-full text-sm file:me-4 file:rounded-md file:border-0 file:px-4 file:py-2 file:text-sm file:font-medium"
               />
             </div>
 
