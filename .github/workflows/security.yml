@@ -57,21 +57,25 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      # Gate directly on the scan (table + exit-code 1) instead of uploading
+      # SARIF to Code Scanning. SARIF upload requires GitHub Advanced
+      # Security, which isn't available on this private repo — the
+      # upload-sarif step failed with "Resource not accessible by
+      # integration" on every push to a protected/default branch. This
+      # mirrors the trivy-config (IaC) job, which already gates this way.
+      # Verified locally: 0 CRITICAL/HIGH fixable findings, so this is green
+      # today and blocks regressions going forward. Dependency CVEs are also
+      # gated independently by the `deps` job (pnpm audit --audit-level=high).
+      # If GitHub Advanced Security is enabled later, restore a
+      # `format: sarif` + `github/codeql-action/upload-sarif` step to also
+      # publish findings to the Security tab.
       - uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           ignore-unfixed: true
-          format: sarif
-          output: trivy-results.sarif
           severity: CRITICAL,HIGH
-      - uses: github/codeql-action/upload-sarif@v3
-        # SARIF upload to Code Scanning requires permissions not granted on
-        # PR workflow runs ("Resource not accessible by integration"). The
-        # trivy scan itself runs on every PR and surfaces findings in the
-        # job log; only the Code-Scanning publish is gated to push.
-        if: github.event_name == 'push'
-        with:
-          sarif_file: trivy-results.sarif
+          exit-code: '1'
+          format: table
 
   trivy-config:
     name: Trivy (IaC)
