@@ -8,7 +8,6 @@ module "network" {
   project_id            = var.project_id
   region                = var.region
   env                   = local.env
-  vpc_cidr              = "10.1.0.0/16"
   subnet_cidr           = "10.1.1.0/24"
   pods_cidr             = "10.1.16.0/20"
   services_cidr         = "10.1.32.0/20"
@@ -27,7 +26,6 @@ module "secrets" {
   source = "../../modules/secrets"
 
   project_id = var.project_id
-  env        = local.env
   accessor_service_accounts = [
     module.workload_identity.app_service_account_email,
     module.workload_identity.cicd_service_account_email,

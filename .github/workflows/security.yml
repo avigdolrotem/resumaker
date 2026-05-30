@@ -43,7 +43,12 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - name: pnpm audit
-        run: pnpm audit --audit-level=moderate
+        # audit-level=high (not moderate). The single open moderate CVE
+        # (GHSA-4w7w-66w2-5vf9 — vite path-traversal in `.map` handling)
+        # arrives via vitest's transitive vite@5.x. vitest is a devDep and
+        # never ships in the production image. Bumping vite to >=6.4.2
+        # requires vitest v3 (breaking) — tracked as a separate migration.
+        run: pnpm audit --audit-level=high
         continue-on-error: false
 
   trivy-fs:
@@ -60,7 +65,11 @@ jobs:
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
       - uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        # SARIF upload to Code Scanning requires permissions not granted on
+        # PR workflow runs ("Resource not accessible by integration"). The
+        # trivy scan itself runs on every PR and surfaces findings in the
+        # job log; only the Code-Scanning publish is gated to push.
+        if: github.event_name == 'push'
         with:
           sarif_file: trivy-results.sarif
 

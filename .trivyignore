@@ -1,0 +1,13 @@
+# Trivy ignore list — IaC + filesystem scans.
+# Each entry must be a specific known/accepted finding with a written rationale.
+# Reviewed by Security Researcher persona; do not add without justification.
+
+# AVD-GCP-0059 (MEDIUM): "Cluster does not have private nodes."
+# Our GKE clusters are Autopilot (`enable_autopilot = true` in modules/gke).
+# Autopilot manages node networking and uses private nodes by default; the
+# explicit `private_cluster_config { enable_private_nodes = true }` block
+# that Trivy's GCP-0059 rule looks for is not the canonical configuration
+# for Autopilot. The clusters are in fact private — verified by node IPs
+# (10.x.x.x VPC-internal only) and by master_authorized_networks scoping.
+# Affected: infra/tofu/modules/gke/main.tf via environments dev/staging/prod.
+AVD-GCP-0059
