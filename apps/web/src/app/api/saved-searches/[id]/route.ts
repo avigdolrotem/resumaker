@@ -46,7 +46,10 @@ export async function PATCH(
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
   }
 
-  await db.update(schema.savedSearches).set(updates).where(eq(schema.savedSearches.id, id));
+  await db
+    .update(schema.savedSearches)
+    .set(updates)
+    .where(and(eq(schema.savedSearches.id, id), eq(schema.savedSearches.userId, guard.user.id)));
   return NextResponse.json({ success: true });
 }
 
@@ -64,6 +67,8 @@ export async function DELETE(
   });
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  await db.delete(schema.savedSearches).where(eq(schema.savedSearches.id, id));
+  await db
+    .delete(schema.savedSearches)
+    .where(and(eq(schema.savedSearches.id, id), eq(schema.savedSearches.userId, guard.user.id)));
   return NextResponse.json({ success: true });
 }
