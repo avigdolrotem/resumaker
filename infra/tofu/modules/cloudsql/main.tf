@@ -16,7 +16,7 @@ resource "google_sql_database_instance" "main" {
 
   settings {
     tier              = var.tier
-    availability_type = var.env == "prod" ? "REGIONAL" : "ZONAL"
+    availability_type = var.availability_type != null ? var.availability_type : (var.env == "prod" ? "REGIONAL" : "ZONAL")
     disk_size         = 20
     disk_autoresize   = true
 

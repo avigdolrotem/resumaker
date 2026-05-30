@@ -16,7 +16,9 @@ resources:
     memory: '1Gi'
 
 autoscaling:
-  minReplicas: 3
+  # Pre-launch cost cut (2026-05-31): dropped 3→1 while pre-launch/no traffic.
+  # REVERT to 2–3 before production-ready (HA). HPA still scales up to 20 on load.
+  minReplicas: 1
   maxReplicas: 20
   targetCPUUtilizationPercentage: 60
 
