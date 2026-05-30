@@ -74,16 +74,19 @@ jobs:
     name: Plan ${{ matrix.env }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: github.event_name == 'pull_request'
+    # Skipped: dev + staging GCP projects are not yet bootstrapped (per
+    # docs/SECURITY_AUDIT_2026-05-27.md and the 2026-05-28 wind-down
+    # dump). The WIF auth step rejects with "unauthorized_client" against
+    # the non-existent resumaker-dev project. Previously gated with
+    # `continue-on-error: true`, but GitHub Actions still reports the
+    # job-level status as "fail" in that mode (only the workflow-level
+    # status is suppressed), so the CI-monitor webhook fired on every PR.
+    # `if: false` keeps it from running at all → silent. When the operator
+    # bootstraps dev (creates the project, the cicd SA, and the WIF
+    # binding), change this back to `if: github.event_name == 'pull_request'`
+    # — plan failures should block merges again.
+    if: false
     needs: [validate, lint, trivy]
-    # continue-on-error: dev + staging GCP projects are not yet
-    # bootstrapped (per docs/SECURITY_AUDIT_2026-05-27.md and the
-    # 2026-05-28 wind-down dump). The WIF auth step rejects with
-    # "unauthorized_client" against the non-existent resumaker-dev
-    # project. When the operator bootstraps dev (creates the project,
-    # the cicd SA, and the WIF binding), remove this flag so plan
-    # failures block merges again.
-    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
