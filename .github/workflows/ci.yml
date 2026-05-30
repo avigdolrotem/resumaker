@@ -162,13 +162,21 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
-    # Same prod-refine satisfying stubs as the Build job + DATABASE_URL and
-    # REDIS_URL pointing at the service containers above. Keep this block in
-    # sync with build job + apps/web/Dockerfile.
+    # Env: prod-refine satisfying stubs + DATABASE_URL/REDIS_URL pointing at
+    # the service containers above. The URL stubs differ from the Build
+    # job's: Better-Auth uses APP_URL / BETTER_AUTH_URL to build absolute
+    # redirect URLs (e.g. /he/admin → 307 to <APP_URL>/sign-in), so a
+    # non-resolvable stub (build.example.com is NXDOMAIN) breaks the
+    # protected-routes test's followed redirect with ERR_NAME_NOT_RESOLVED.
+    # 127.0.0.1:3000 is the SAME server as Playwright's localhost:3000
+    # baseURL (next start binds 0.0.0.0) AND it passes env.ts's
+    # `!startsWith('http://localhost')` refine since the literal string
+    # differs. Build job's stubs can stay as example.com — Build runs no
+    # server.
     env:
-      APP_URL: https://build.example.com
-      BETTER_AUTH_URL: https://build.example.com
-      NEXT_PUBLIC_APP_URL: https://build.example.com
+      APP_URL: http://127.0.0.1:3000
+      BETTER_AUTH_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
       BETTER_AUTH_SECRET: build-stub-must-be-at-least-32-chars-long
       CRON_SECRET: build-stub-cron-secret-thirty-two-chars-min
       IP_HASH_SALT: build-stub-ip-hash-salt-thirty-two-chars-minimum-padding
