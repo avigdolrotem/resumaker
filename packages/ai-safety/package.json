@@ -14,8 +14,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@resumaker/shared": "workspace:*",
-    "zod": "^3.24.1"
+    "@resumaker/shared": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.3",

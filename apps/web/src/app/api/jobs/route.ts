@@ -15,7 +15,7 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { and, desc, eq, ilike, or, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, lt } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { db, schema } from '@/db';
 import { requireJobHuntBetaApi } from '@/lib/beta-gate';
@@ -85,6 +85,3 @@ export async function GET(req: NextRequest): Promise<Response> {
     hasMore,
   });
 }
-
-// Silence unused-import warning when this file gets refactored later
-void sql;
