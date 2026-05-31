@@ -83,10 +83,11 @@ function PrivacyHe() {
 
       <h2>6. שיתוף עם צד שלישי</h2>
       <p>
-        תיאור המשרה ופרופיל המשתמש נשלחים לספקי AI (Anthropic / Google / OpenAI דרך Vercel AI
-        Gateway) לצורך יצירת קורות החיים. הספקים הללו אינם משתמשים בנתונים אלה לאימון מודלים.
-        שירותים תפעוליים נוספים: Resend (אימייל), Sentry (ניטור שגיאות, ללא PII), Cloudflare (CDN
-        ו-WAF), Google Cloud (תשתית). לא משתפים מידע עם גורמים נוספים אלא אם נדרש על פי חוק.
+        תיאור המשרה ופרופיל המשתמש נשלחים לשירות Google Cloud Vertex AI (מודלים של Anthropic
+        ו-Google, באזור europe-west1) לצורך יצירת קורות החיים. הספקים הללו אינם משתמשים בנתונים אלה
+        לאימון מודלים. שירותים תפעוליים נוספים: Resend (אימייל), Sentry (ניטור שגיאות, ללא PII),
+        Cloudflare (CDN ו-WAF), Google Cloud (תשתית). לא משתפים מידע עם גורמים נוספים אלא אם נדרש על
+        פי חוק.
       </p>
 
       <h2>7. עוגיות (Cookies)</h2>
@@ -116,7 +117,7 @@ function PrivacyHe() {
 
       <h2>9. אבטחה</h2>
       <ul>
-        <li>הצפנה בתעבורה (TLS 1.3) ובמנוחה (AES-256).</li>
+        <li>הצפנה בתעבורה (TLS 1.3) ובמנוחה (AES-256, באמצעות הצפנת הדיסק של Google Cloud).</li>
         <li>הפרדה מלאה בין נתוני משתמשים.</li>
         <li>אימות דו-שלבי (2FA) זמין לכל המשתמשים.</li>
         <li>ביקורת אבטחה תקופתית; דוח אחרון: 26 במאי 2026.</li>
@@ -211,11 +212,11 @@ function PrivacyEn() {
 
       <h2>6. Third-Party Sharing</h2>
       <p>
-        Job description and user profile are sent to AI providers (Anthropic / Google / OpenAI via
-        Vercel AI Gateway) for resume generation. These providers do not use this data for model
-        training. Other operational services: Resend (email), Sentry (error monitoring, no PII),
-        Cloudflare (CDN + WAF), Google Cloud (infrastructure). We do not share with others unless
-        legally required.
+        Job description and user profile are sent to Google Cloud Vertex AI (Anthropic and Google
+        models, region europe-west1) for resume generation. These providers do not use this data for
+        model training. Other operational services: Resend (email), Sentry (error monitoring, no
+        PII), Cloudflare (CDN + WAF), Google Cloud (infrastructure). We do not share with others
+        unless legally required.
       </p>
 
       <h2>7. Cookies</h2>
@@ -245,7 +246,7 @@ function PrivacyEn() {
 
       <h2>9. Security</h2>
       <ul>
-        <li>TLS 1.3 in transit, AES-256 at rest.</li>
+        <li>TLS 1.3 in transit; AES-256 at rest via Google Cloud disk encryption.</li>
         <li>Strict tenant isolation.</li>
         <li>Two-factor authentication (2FA) available to all users.</li>
         <li>Periodic security review; last audit: 26 May 2026.</li>
