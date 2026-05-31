@@ -40,12 +40,7 @@ module "cloudsql" {
   env                               = local.env
   network_id                        = module.network.network_self_link
   private_services_connection_ready = module.network.private_services_connection
-  # Pre-launch cost cut (2026-05-31): downsized 2→1 vCPU (db-custom-2-4096 → -1-3840, ~$30/mo).
-  # REVERT to "db-custom-2-4096" before production-ready / under real load.
-  tier = "db-custom-1-3840"
-  # Pre-launch cost cut (2026-05-31): ZONAL drops the HA standby (~$90/mo).
-  # REVERT to "REGIONAL" (or remove this line) before production-ready to restore HA.
-  availability_type = "ZONAL"
+  tier                              = "db-custom-2-4096"
 
   iam_user_emails = [
     module.workload_identity.app_service_account_email,

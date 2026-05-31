@@ -28,12 +28,6 @@ variable "tier" {
   default     = "db-g1-small"
 }
 
-variable "availability_type" {
-  description = "Override Cloud SQL availability type. null = default by env (prod=REGIONAL/HA, else ZONAL)."
-  type        = string
-  default     = null
-}
-
 variable "database_version" {
   type    = string
   default = "POSTGRES_15"
