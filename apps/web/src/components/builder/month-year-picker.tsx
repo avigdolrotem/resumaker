@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 
 /**
  * MM/YYYY date picker — two selects emitting a `YYYY-MM` string.
@@ -23,7 +24,10 @@ import { useEffect, useState } from 'react';
  * the other.
  */
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// Month numbers 1–12. Labels are derived per-locale at render via
+// Intl.DateTimeFormat so the dropdown reads naturally in Hebrew/English
+// (and any future locale) instead of a hardcoded English array.
+const MONTH_NUMBERS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 // 65-year range so anyone alive can pick a graduation year + a few in
 // the future for planned events. Latest year first so the most
@@ -44,6 +48,9 @@ export function MonthYearPicker({
   disabled?: boolean;
   required?: boolean;
 }) {
+  const t = useTranslations('builder.dates');
+  const locale = useLocale();
+  const monthFormat = new Intl.DateTimeFormat(locale, { month: 'short' });
   const [year, setYear] = useState(() => value.split('-')[0] ?? '');
   const [month, setMonth] = useState(() => value.split('-')[1] ?? '');
 
@@ -88,12 +95,12 @@ export function MonthYearPicker({
           onChange={(e) => handleMonth(e.target.value)}
           disabled={disabled}
           className={selectClass}
-          aria-label={`${label} — month`}
+          aria-label={t('monthAria', { label })}
         >
-          <option value="">{disabled ? 'Present' : 'Month'}</option>
-          {MONTHS.map((m, i) => (
-            <option key={m} value={String(i + 1).padStart(2, '0')}>
-              {m}
+          <option value="">{disabled ? t('present') : t('month')}</option>
+          {MONTH_NUMBERS.map((n) => (
+            <option key={n} value={String(n).padStart(2, '0')}>
+              {monthFormat.format(new Date(2000, n - 1, 1))}
             </option>
           ))}
         </select>
@@ -102,9 +109,9 @@ export function MonthYearPicker({
           onChange={(e) => handleYear(e.target.value)}
           disabled={disabled}
           className={selectClass}
-          aria-label={`${label} — year`}
+          aria-label={t('yearAria', { label })}
         >
-          <option value="">{disabled ? '—' : 'Year'}</option>
+          <option value="">{disabled ? '—' : t('year')}</option>
           {YEARS.map((y) => (
             <option key={y} value={String(y)}>
               {y}
@@ -117,18 +124,22 @@ export function MonthYearPicker({
 }
 
 /**
- * Pretty-print a `YYYY-MM` string as "Mar 2022". Empty string → empty
- * string. Non-YYYY-MM strings pass through unchanged (legacy free-text
- * dates from older resumes).
+ * Pretty-print a `YYYY-MM` string as "Mar 2022" (locale-aware). Empty
+ * string → empty string. Non-YYYY-MM strings pass through unchanged
+ * (legacy free-text dates from older resumes).
+ *
+ * `locale` defaults to `'en-US'` so existing callers stay unchanged;
+ * the builder sections pass the active next-intl locale for natural
+ * Hebrew/English month names.
  */
-export function formatMonthYear(d: string | null | undefined): string {
+export function formatMonthYear(d: string | null | undefined, locale = 'en-US'): string {
   if (!d) return '';
   const m = /^(\d{4})-(\d{2})$/.exec(d);
   if (!m) return d;
   const year = Number(m[1]);
   const month = Number(m[2]);
   if (!year || !month) return d;
-  return new Date(year, month - 1, 1).toLocaleDateString('en-US', {
+  return new Date(year, month - 1, 1).toLocaleDateString(locale, {
     month: 'short',
     year: 'numeric',
   });

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import type { Resume } from '@resumaker/shared';
 import { Briefcase, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,8 @@ import { SectionCard } from '../section-card';
 import { SortableList } from '../sortable-list';
 import { MonthYearPicker, formatMonthYear } from '../month-year-picker';
 import { AiRewriteButton } from '../ai-rewrite-button';
+
+type T = ReturnType<typeof useTranslations>;
 
 /**
  * Work Experience section — list of inline-editable cards.
@@ -53,6 +56,9 @@ export function ExperienceSection({
   onSetEditingId,
   jobDescription,
 }: ExperienceSectionProps) {
+  const t = useTranslations('builder.sections.experience');
+  const tDates = useTranslations('builder.dates');
+  const locale = useLocale();
   const [pendingNew, setPendingNew] = useState<Experience | null>(null);
 
   const newCardId = 'new:experience';
@@ -85,7 +91,7 @@ export function ExperienceSection({
       <header className="flex items-center justify-between">
         <h2 className="text-foreground flex items-center gap-2 text-lg font-bold">
           <Briefcase className="text-brand-500 h-4 w-4" />
-          Work Experience
+          {t('heading')}
           {entries.length > 0 && (
             <span className="text-muted-foreground text-sm font-normal">({entries.length})</span>
           )}
@@ -95,11 +101,11 @@ export function ExperienceSection({
           size="sm"
           variant="outline"
           onClick={handleAdd}
-          aria-label="Add experience"
+          aria-label={t('addAria')}
           disabled={pendingNew !== null}
         >
           <Plus className="me-1 h-3.5 w-3.5" />
-          Add
+          {t('add')}
         </Button>
       </header>
 
@@ -117,16 +123,14 @@ export function ExperienceSection({
             setPendingNew(null);
             onSetEditingId(null);
           }}
-          renderRead={readExperience}
-          renderEdit={(d, onChangeDraft) => editExperience(d, onChangeDraft, jobDescription)}
+          renderRead={(d) => readExperience(d, t, tDates, locale)}
+          renderEdit={(d, onChangeDraft) => editExperience(d, onChangeDraft, t, jobDescription)}
         />
       )}
 
       {entries.length === 0 && !pendingNew && (
         <div className="border-border bg-muted/30 rounded-xl border border-dashed p-6 text-center">
-          <p className="text-muted-foreground text-sm">
-            No work experience yet. Click + Add to start.
-          </p>
+          <p className="text-muted-foreground text-sm">{t('empty')}</p>
         </div>
       )}
 
@@ -139,9 +143,9 @@ export function ExperienceSection({
             onSave={(next) => handleSaveExisting(i, next)}
             onCancel={() => onSetEditingId(null)}
             onDelete={() => handleDelete(i)}
-            renderRead={readExperience}
-            renderEdit={(d, onChangeDraft) => editExperience(d, onChangeDraft, jobDescription)}
-            deleteConfirmText={`Delete experience at ${e.company || 'this company'}?`}
+            renderRead={(d) => readExperience(d, t, tDates, locale)}
+            renderEdit={(d, onChangeDraft) => editExperience(d, onChangeDraft, t, jobDescription)}
+            deleteConfirmText={t('deleteConfirm', { company: e.company || t('deleteFallback') })}
             leading={dragHandle}
           />
         )}
@@ -150,24 +154,24 @@ export function ExperienceSection({
   );
 }
 
-function readExperience(e: Experience) {
+function readExperience(e: Experience, t: T, tDates: T, locale: string) {
   return (
     <div>
-      <p className="text-foreground font-semibold">{e.title || 'Untitled role'}</p>
+      <p className="text-foreground font-semibold">{e.title || t('untitled')}</p>
       <p className="text-muted-foreground text-sm">
         {e.company}
         {e.location && ` · ${e.location}`}
       </p>
       <p className="text-muted-foreground mt-0.5 text-xs">
-        {formatMonthYear(e.start_date)} –{' '}
-        {e.is_current ? 'Present' : formatMonthYear(e.end_date ?? '')}
+        {formatMonthYear(e.start_date, locale)} –{' '}
+        {e.is_current ? tDates('present') : formatMonthYear(e.end_date ?? '', locale)}
       </p>
       {e.description && (
         <p className="text-foreground/80 mt-2 line-clamp-2 text-sm">{e.description}</p>
       )}
       {e.highlights && e.highlights.length > 0 && (
         <p className="text-muted-foreground mt-1 text-xs">
-          {e.highlights.length} highlight{e.highlights.length === 1 ? '' : 's'}
+          {t('highlightCount', { count: e.highlights.length })}
         </p>
       )}
     </div>
@@ -177,6 +181,7 @@ function readExperience(e: Experience) {
 function editExperience(
   e: Experience,
   onChange: (next: Experience) => void,
+  t: T,
   jobDescription?: string,
 ) {
   const set = <K extends keyof Experience>(k: K, v: Experience[K]) => onChange({ ...e, [k]: v });
@@ -184,7 +189,7 @@ function editExperience(
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="sm:col-span-2">
-        <Label htmlFor="exp-company">Company *</Label>
+        <Label htmlFor="exp-company">{t('fields.company')} *</Label>
         <Input
           id="exp-company"
           value={e.company}
@@ -193,7 +198,7 @@ function editExperience(
         />
       </div>
       <div>
-        <Label htmlFor="exp-title">Title *</Label>
+        <Label htmlFor="exp-title">{t('fields.title')} *</Label>
         <Input
           id="exp-title"
           value={e.title}
@@ -202,22 +207,22 @@ function editExperience(
         />
       </div>
       <div>
-        <Label htmlFor="exp-location">Location</Label>
+        <Label htmlFor="exp-location">{t('fields.location')}</Label>
         <Input
           id="exp-location"
           value={e.location ?? ''}
           onChange={(ev) => set('location', ev.target.value)}
-          placeholder="City, Country"
+          placeholder={t('placeholders.location')}
         />
       </div>
       <MonthYearPicker
-        label="Start"
+        label={t('fields.start')}
         value={e.start_date}
         onChange={(v) => set('start_date', v)}
         required
       />
       <MonthYearPicker
-        label="End"
+        label={t('fields.end')}
         value={e.end_date ?? ''}
         onChange={(v) => set('end_date', v || null)}
         disabled={e.is_current}
@@ -232,20 +237,20 @@ function editExperience(
           }}
           className="rounded"
         />
-        Currently working here
+        {t('isCurrent')}
       </label>
       <div className="sm:col-span-2">
-        <Label htmlFor="exp-desc">Description</Label>
+        <Label htmlFor="exp-desc">{t('fields.description')}</Label>
         <Textarea
           id="exp-desc"
           rows={3}
           value={e.description ?? ''}
           onChange={(ev) => set('description', ev.target.value)}
-          placeholder="What did you do in this role?"
+          placeholder={t('placeholders.description')}
         />
       </div>
       <div className="sm:col-span-2">
-        <Label>Highlights</Label>
+        <Label>{t('fields.highlights')}</Label>
         <HighlightsEditor
           highlights={e.highlights ?? []}
           onChange={(h) => set('highlights', h)}
@@ -265,6 +270,7 @@ function HighlightsEditor({
   onChange: (h: string[]) => void;
   jobDescription?: string | undefined;
 }) {
+  const t = useTranslations('builder.sections.experience');
   return (
     <div className="space-y-2">
       {highlights.map((h, i) => (
@@ -275,14 +281,14 @@ function HighlightsEditor({
               onChange={(ev) =>
                 onChange(highlights.map((x, idx) => (idx === i ? ev.target.value : x)))
               }
-              placeholder="• Built a thing that did a thing"
+              placeholder={t('placeholders.highlight')}
             />
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => onChange(highlights.filter((_, idx) => idx !== i))}
-              aria-label="Remove highlight"
+              aria-label={t('removeHighlight')}
             >
               <X className="h-3.5 w-3.5" />
             </Button>
@@ -306,7 +312,7 @@ function HighlightsEditor({
         disabled={highlights.length >= 10}
       >
         <Plus className="me-1 h-3 w-3" />
-        Add highlight
+        {t('addHighlight')}
       </Button>
     </div>
   );

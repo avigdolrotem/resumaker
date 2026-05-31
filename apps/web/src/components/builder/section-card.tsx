@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Pencil, Trash2, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -60,6 +61,7 @@ export function SectionCard<T>({
   leading,
   deleteConfirmText,
 }: SectionCardProps<T>) {
+  const t = useTranslations('builder.card');
   const [draft, setDraft] = useState<T>(data);
   const [flash, setFlash] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -97,11 +99,11 @@ export function SectionCard<T>({
         <div className="mt-3 flex items-center justify-end gap-2">
           <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
             <X className="me-1 h-3.5 w-3.5" />
-            Cancel
+            {t('cancel')}
           </Button>
           <Button type="button" size="sm" onClick={() => onSave(draft)}>
             <Check className="me-1 h-3.5 w-3.5" />
-            Save
+            {t('save')}
           </Button>
         </div>
       </div>
@@ -133,7 +135,7 @@ export function SectionCard<T>({
         <div className="flex shrink-0 gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
           <button
             type="button"
-            aria-label="Edit"
+            aria-label={t('edit')}
             onClick={(e) => {
               e.stopPropagation();
               onEnterEdit();
@@ -144,7 +146,7 @@ export function SectionCard<T>({
           </button>
           <button
             type="button"
-            aria-label="Delete"
+            aria-label={t('delete')}
             onClick={(e) => {
               e.stopPropagation();
               setConfirmingDelete(true);
@@ -158,11 +160,11 @@ export function SectionCard<T>({
       {confirmingDelete && (
         <div
           role="alertdialog"
-          aria-label="Confirm delete"
+          aria-label={t('confirmDeleteAria')}
           onClick={(e) => e.stopPropagation()}
           className="border-border bg-background/95 absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-xl border-2 p-4"
         >
-          <p className="text-sm">{deleteConfirmText ?? 'Delete this entry?'}</p>
+          <p className="text-sm">{deleteConfirmText ?? t('confirmDelete')}</p>
           <div className="flex gap-2">
             <Button
               type="button"
@@ -173,7 +175,7 @@ export function SectionCard<T>({
                 setConfirmingDelete(false);
               }}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               type="button"
@@ -185,7 +187,7 @@ export function SectionCard<T>({
                 onDelete();
               }}
             >
-              Delete
+              {t('delete')}
             </Button>
           </div>
         </div>

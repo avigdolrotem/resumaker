@@ -435,6 +435,216 @@
     "empty": {
       "title": "הדבק תיאור משרה כדי להתחיל",
       "subtitle": "ה-AI יבנה לך קורות חיים מותאמים אישית בעברית או באנגלית"
+    },
+    "card": {
+      "edit": "עריכה",
+      "delete": "מחיקה",
+      "save": "שמירה",
+      "cancel": "ביטול",
+      "confirmDelete": "למחוק את הפריט הזה?",
+      "confirmDeleteAria": "אישור מחיקה"
+    },
+    "dates": {
+      "month": "חודש",
+      "year": "שנה",
+      "present": "עד היום",
+      "monthAria": "{label} — חודש",
+      "yearAria": "{label} — שנה"
+    },
+    "sections": {
+      "contact": {
+        "heading": "פרטי קשר",
+        "namePlaceholder": "השם שלך",
+        "links": {
+          "linkedin": "LinkedIn",
+          "github": "GitHub",
+          "website": "אתר"
+        },
+        "resetConfirm": "לאפס את כל פרטי הקשר? השם שלך יישמר.",
+        "fields": {
+          "name": "שם מלא",
+          "email": "אימייל",
+          "phone": "טלפון",
+          "location": "מיקום",
+          "linkedin": "LinkedIn",
+          "github": "GitHub",
+          "website": "אתר"
+        },
+        "placeholders": {
+          "location": "עיר, מדינה",
+          "linkedin": "https://linkedin.com/in/...",
+          "github": "https://github.com/..."
+        }
+      },
+      "summary": {
+        "heading": "תקציר אישי",
+        "ariaLabel": "תקציר אישי",
+        "clearConfirm": "לנקות את התקציר?",
+        "emptyRead": "עדיין אין תקציר. לחץ כדי לכתוב — 2-4 משפטים שמתארים את החוזקות שלך.",
+        "placeholder": "תקציר מקצועי קצר — 2-4 משפטים שמתארים את החוזקות שלך, התחום שבו אתה מתמקד ומה אתה מחפש.",
+        "charCount": "{count} / 2000 תווים"
+      },
+      "experience": {
+        "heading": "ניסיון תעסוקתי",
+        "add": "הוסף",
+        "addAria": "הוספת ניסיון תעסוקתי",
+        "empty": "עדיין אין ניסיון תעסוקתי. לחץ על + הוסף כדי להתחיל.",
+        "untitled": "תפקיד ללא שם",
+        "deleteConfirm": "למחוק את הניסיון ב{company}?",
+        "deleteFallback": "חברה זו",
+        "highlightCount": "{count, plural, one {נקודה בולטת אחת} two {# נקודות בולטות} other {# נקודות בולטות}}",
+        "fields": {
+          "company": "חברה",
+          "title": "תפקיד",
+          "location": "מיקום",
+          "start": "התחלה",
+          "end": "סיום",
+          "description": "תיאור",
+          "highlights": "נקודות בולטות"
+        },
+        "placeholders": {
+          "location": "עיר, מדינה",
+          "description": "מה עשית בתפקיד הזה?",
+          "highlight": "• הובלתי פרויקט שהשיג תוצאה"
+        },
+        "isCurrent": "עובד כאן כיום",
+        "addHighlight": "הוספת נקודה בולטת",
+        "removeHighlight": "הסרת נקודה בולטת"
+      },
+      "education": {
+        "heading": "השכלה",
+        "add": "הוסף",
+        "addAria": "הוספת השכלה",
+        "empty": "עדיין אין רשומות השכלה. לחץ על + הוסף כדי להתחיל.",
+        "untitled": "מוסד ללא שם",
+        "deleteConfirm": "למחוק את ההשכלה ב{institution}?",
+        "deleteFallback": "מוסד זה",
+        "gpaPrefix": "ממוצע",
+        "fields": {
+          "institution": "מוסד לימודים",
+          "degree": "תואר",
+          "field": "תחום לימוד",
+          "start": "התחלה",
+          "end": "סיום",
+          "gpa": "ממוצע ציונים",
+          "description": "תיאור"
+        },
+        "placeholders": {
+          "degree": "לדוגמה: B.Sc., M.Eng.",
+          "field": "לדוגמה: מדעי המחשב",
+          "gpa": "לדוגמה: 95/100 או 3.8",
+          "description": "הצטיינות, קורסים רלוונטיים, עבודת גמר…"
+        },
+        "isCurrent": "לומד כיום"
+      },
+      "projects": {
+        "heading": "פרויקטים",
+        "add": "הוסף",
+        "addAria": "הוספת פרויקט",
+        "empty": "עדיין אין פרויקטים. לחץ על + הוסף כדי להוסיף אחד.",
+        "untitled": "פרויקט ללא שם",
+        "ongoing": "פעיל",
+        "deleteConfirm": "למחוק את הפרויקט \"{name}\"?",
+        "deleteFallback": "ללא שם",
+        "fields": {
+          "name": "שם הפרויקט",
+          "url": "קישור",
+          "start": "התחלה",
+          "end": "סיום",
+          "technologies": "טכנולוגיות",
+          "description": "תיאור"
+        },
+        "placeholders": {
+          "url": "https://github.com/...",
+          "description": "מה בנית? איזו בעיה זה פתר?",
+          "technologies": "React, TypeScript, AWS…"
+        },
+        "isOngoing": "פעיל / בתהליך",
+        "techHint": "הקלד ולחץ על , או Enter כדי להוסיף",
+        "removeTech": "הסרת {tech}"
+      },
+      "certifications": {
+        "heading": "תעודות והסמכות",
+        "add": "הוסף",
+        "addAria": "הוספת תעודה",
+        "empty": "עדיין אין תעודות.",
+        "untitled": "תעודה ללא שם",
+        "viewCredential": "צפייה בתעודה",
+        "deleteConfirm": "למחוק את \"{name}\"?",
+        "deleteFallback": "תעודה זו",
+        "fields": {
+          "name": "שם",
+          "issuer": "גוף מנפיק",
+          "issued": "תאריך הנפקה",
+          "credentialUrl": "קישור לתעודה"
+        },
+        "placeholders": {
+          "name": "לדוגמה: AWS Solutions Architect Associate",
+          "issuer": "לדוגמה: Amazon",
+          "credentialUrl": "https://..."
+        }
+      },
+      "awards": {
+        "heading": "פרסים והוקרות",
+        "add": "הוסף",
+        "addAria": "הוספת פרס",
+        "empty": "עדיין אין פרסים.",
+        "untitled": "פרס ללא שם",
+        "deleteConfirm": "למחוק את \"{title}\"?",
+        "deleteFallback": "פרס זה",
+        "fields": {
+          "title": "כותרת",
+          "issuer": "גוף מנפיק",
+          "date": "תאריך",
+          "description": "תיאור"
+        },
+        "placeholders": {
+          "title": "לדוגמה: זוכה האקתון, הרצאה בכנס"
+        }
+      },
+      "skills": {
+        "heading": "כישורים",
+        "empty": "עדיין אין כישורים. התחל להקליד למטה — נציע לך מתוך הנפוצים.",
+        "placeholder": "הוספת כישור (לדוגמה: TypeScript)",
+        "max": "מקסימום 50 כישורים — הסר חלק כדי להוסיף עוד.",
+        "remove": "הסרת {skill}"
+      }
+    },
+    "import": {
+      "ariaLabel": "ייבוא קורות חיים",
+      "close": "סגור",
+      "title": "ייבוא קורות חיים",
+      "subtitle": "PDF או TXT, עד 10MB. נציג תצוגה מקדימה לפני החלה.",
+      "dropTitle": "גרור לכאן קובץ PDF או TXT",
+      "dropHint": "או לחץ כדי לבחור",
+      "parsing": "Claude קורא את קורות החיים שלך…",
+      "parsingHint": "בדרך כלל 5–15 שניות",
+      "errorTitle": "לא הצלחנו לפענח את הקובץ",
+      "tryAgain": "נסה שוב",
+      "foundTitle": "מה מצאנו:",
+      "strategyNote": "אסטרטגיית החלפה: ניסיון תעסוקתי / השכלה / פרויקטים / תעודות / פרסים מחליפים רשומות קיימות. כישורים ושפות ממוזגים (ללא כפילויות לפי שם). שדות פרטי קשר נדרסים רק כשהם אינם ריקים.",
+      "apply": "החל על קורות החיים",
+      "tryAnother": "נסה קובץ אחר",
+      "discard": "בטל",
+      "includeAria": "כלול {label} בייבוא",
+      "labels": {
+        "contact": "פרטי קשר",
+        "summary": "תקציר אישי",
+        "experience": "ניסיון תעסוקתי",
+        "education": "השכלה",
+        "projects": "פרויקטים",
+        "skills": "כישורים",
+        "certifications": "תעודות והסמכות",
+        "awards": "פרסים והוקרות",
+        "languages": "שפות"
+      },
+      "detail": {
+        "experience": "{count, plural, one {משרה אחת} two {# משרות} other {# משרות}} ({names})",
+        "education": "{count} ({names})",
+        "count": "{count}",
+        "skills": "{count} כישורים",
+        "empty": "—"
+      }
     }
   },
   "ats": {

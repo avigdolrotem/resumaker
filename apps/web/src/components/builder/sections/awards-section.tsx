@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import type { Resume } from '@resumaker/shared';
 import { Trophy, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { SectionCard } from '../section-card';
 import { SortableList } from '../sortable-list';
 import { MonthYearPicker, formatMonthYear } from '../month-year-picker';
+
+type T = ReturnType<typeof useTranslations>;
 
 /** Awards section — list of cards. Title + issuer + date + description. */
 
@@ -35,6 +38,8 @@ export function AwardsSection({
   editingId,
   onSetEditingId,
 }: AwardsSectionProps) {
+  const t = useTranslations('builder.sections.awards');
+  const locale = useLocale();
   const [pendingNew, setPendingNew] = useState<AwardEntry | null>(null);
   const newCardId = 'new:award';
 
@@ -66,7 +71,7 @@ export function AwardsSection({
       <header className="flex items-center justify-between">
         <h2 className="text-foreground flex items-center gap-2 text-lg font-bold">
           <Trophy className="text-brand-500 h-4 w-4" />
-          Awards
+          {t('heading')}
           {entries.length > 0 && (
             <span className="text-muted-foreground text-sm font-normal">({entries.length})</span>
           )}
@@ -76,11 +81,11 @@ export function AwardsSection({
           size="sm"
           variant="outline"
           onClick={handleAdd}
-          aria-label="Add award"
+          aria-label={t('addAria')}
           disabled={pendingNew !== null}
         >
           <Plus className="me-1 h-3.5 w-3.5" />
-          Add
+          {t('add')}
         </Button>
       </header>
 
@@ -98,14 +103,14 @@ export function AwardsSection({
             setPendingNew(null);
             onSetEditingId(null);
           }}
-          renderRead={readAward}
-          renderEdit={editAward}
+          renderRead={(d) => readAward(d, t, locale)}
+          renderEdit={(d, onChangeDraft) => editAward(d, onChangeDraft, t)}
         />
       )}
 
       {entries.length === 0 && !pendingNew && (
         <div className="border-border bg-muted/30 rounded-xl border border-dashed p-6 text-center">
-          <p className="text-muted-foreground text-sm">No awards yet.</p>
+          <p className="text-muted-foreground text-sm">{t('empty')}</p>
         </div>
       )}
 
@@ -118,9 +123,9 @@ export function AwardsSection({
             onSave={(next) => handleSaveExisting(i, next)}
             onCancel={() => onSetEditingId(null)}
             onDelete={() => handleDelete(i)}
-            renderRead={readAward}
-            renderEdit={editAward}
-            deleteConfirmText={`Delete "${a.title || 'this award'}"?`}
+            renderRead={(d) => readAward(d, t, locale)}
+            renderEdit={(d, onChangeDraft) => editAward(d, onChangeDraft, t)}
+            deleteConfirmText={t('deleteConfirm', { title: a.title || t('deleteFallback') })}
             leading={dragHandle}
           />
         )}
@@ -129,12 +134,14 @@ export function AwardsSection({
   );
 }
 
-function readAward(a: AwardEntry) {
+function readAward(a: AwardEntry, t: T, locale: string) {
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-foreground font-semibold">{a.title || 'Untitled award'}</p>
-        {a.date && <p className="text-muted-foreground text-xs">{formatMonthYear(a.date)}</p>}
+        <p className="text-foreground font-semibold">{a.title || t('untitled')}</p>
+        {a.date && (
+          <p className="text-muted-foreground text-xs">{formatMonthYear(a.date, locale)}</p>
+        )}
       </div>
       {a.issuer && <p className="text-muted-foreground text-sm">{a.issuer}</p>}
       {a.description && (
@@ -144,32 +151,36 @@ function readAward(a: AwardEntry) {
   );
 }
 
-function editAward(a: AwardEntry, onChange: (next: AwardEntry) => void) {
+function editAward(a: AwardEntry, onChange: (next: AwardEntry) => void, t: T) {
   const set = <K extends keyof AwardEntry>(k: K, v: AwardEntry[K]) => onChange({ ...a, [k]: v });
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="sm:col-span-2">
-        <Label htmlFor="award-title">Title *</Label>
+        <Label htmlFor="award-title">{t('fields.title')} *</Label>
         <Input
           id="award-title"
           value={a.title}
           onChange={(ev) => set('title', ev.target.value)}
           required
-          placeholder="e.g. Hackathon winner, conference talk"
+          placeholder={t('placeholders.title')}
         />
       </div>
       <div>
-        <Label htmlFor="award-issuer">Issuer</Label>
+        <Label htmlFor="award-issuer">{t('fields.issuer')}</Label>
         <Input
           id="award-issuer"
           value={a.issuer ?? ''}
           onChange={(ev) => set('issuer', ev.target.value)}
         />
       </div>
-      <MonthYearPicker label="Date" value={a.date ?? ''} onChange={(v) => set('date', v)} />
+      <MonthYearPicker
+        label={t('fields.date')}
+        value={a.date ?? ''}
+        onChange={(v) => set('date', v)}
+      />
       <div className="sm:col-span-2">
-        <Label htmlFor="award-desc">Description</Label>
+        <Label htmlFor="award-desc">{t('fields.description')}</Label>
         <Textarea
           id="award-desc"
           rows={2}

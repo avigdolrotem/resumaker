@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import type { Resume } from '@resumaker/shared';
 import { FolderGit2, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { SectionCard } from '../section-card';
 import { SortableList } from '../sortable-list';
 import { MonthYearPicker, formatMonthYear } from '../month-year-picker';
+
+type T = ReturnType<typeof useTranslations>;
 
 /**
  * Projects section — list of inline-editable cards.
@@ -44,6 +47,9 @@ export function ProjectsSection({
   editingId,
   onSetEditingId,
 }: ProjectsSectionProps) {
+  const t = useTranslations('builder.sections.projects');
+  const tDates = useTranslations('builder.dates');
+  const locale = useLocale();
   const [pendingNew, setPendingNew] = useState<Project | null>(null);
   const newCardId = 'new:project';
 
@@ -75,7 +81,7 @@ export function ProjectsSection({
       <header className="flex items-center justify-between">
         <h2 className="text-foreground flex items-center gap-2 text-lg font-bold">
           <FolderGit2 className="text-brand-500 h-4 w-4" />
-          Projects
+          {t('heading')}
           {entries.length > 0 && (
             <span className="text-muted-foreground text-sm font-normal">({entries.length})</span>
           )}
@@ -85,11 +91,11 @@ export function ProjectsSection({
           size="sm"
           variant="outline"
           onClick={handleAdd}
-          aria-label="Add project"
+          aria-label={t('addAria')}
           disabled={pendingNew !== null}
         >
           <Plus className="me-1 h-3.5 w-3.5" />
-          Add
+          {t('add')}
         </Button>
       </header>
 
@@ -107,14 +113,14 @@ export function ProjectsSection({
             setPendingNew(null);
             onSetEditingId(null);
           }}
-          renderRead={readProject}
-          renderEdit={editProject}
+          renderRead={(d) => readProject(d, t, tDates, locale)}
+          renderEdit={(d, onChangeDraft) => editProject(d, onChangeDraft, t)}
         />
       )}
 
       {entries.length === 0 && !pendingNew && (
         <div className="border-border bg-muted/30 rounded-xl border border-dashed p-6 text-center">
-          <p className="text-muted-foreground text-sm">No projects yet. Click + Add to add one.</p>
+          <p className="text-muted-foreground text-sm">{t('empty')}</p>
         </div>
       )}
 
@@ -127,9 +133,9 @@ export function ProjectsSection({
             onSave={(next) => handleSaveExisting(i, next)}
             onCancel={() => onSetEditingId(null)}
             onDelete={() => handleDelete(i)}
-            renderRead={readProject}
-            renderEdit={editProject}
-            deleteConfirmText={`Delete project "${p.name || 'untitled'}"?`}
+            renderRead={(d) => readProject(d, t, tDates, locale)}
+            renderEdit={(d, onChangeDraft) => editProject(d, onChangeDraft, t)}
+            deleteConfirmText={t('deleteConfirm', { name: p.name || t('deleteFallback') })}
             leading={dragHandle}
           />
         )}
@@ -138,21 +144,21 @@ export function ProjectsSection({
   );
 }
 
-function readProject(p: Project) {
+function readProject(p: Project, t: T, tDates: T, locale: string) {
   return (
     <div>
       <div className="flex flex-wrap items-baseline gap-2">
-        <p className="text-foreground font-semibold">{p.name || 'Untitled project'}</p>
+        <p className="text-foreground font-semibold">{p.name || t('untitled')}</p>
         {p.is_ongoing && (
           <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800 dark:bg-green-950 dark:text-green-200">
-            Ongoing
+            {t('ongoing')}
           </span>
         )}
       </div>
       {(p.start_date || p.end_date) && (
         <p className="text-muted-foreground text-xs">
-          {formatMonthYear(p.start_date ?? '')} –{' '}
-          {p.is_ongoing ? 'Present' : formatMonthYear(p.end_date ?? '')}
+          {formatMonthYear(p.start_date ?? '', locale)} –{' '}
+          {p.is_ongoing ? tDates('present') : formatMonthYear(p.end_date ?? '', locale)}
         </p>
       )}
       {p.url && (
@@ -182,13 +188,13 @@ function readProject(p: Project) {
   );
 }
 
-function editProject(p: Project, onChange: (next: Project) => void) {
+function editProject(p: Project, onChange: (next: Project) => void, t: T) {
   const set = <K extends keyof Project>(k: K, v: Project[K]) => onChange({ ...p, [k]: v });
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="sm:col-span-2">
-        <Label htmlFor="proj-name">Project name *</Label>
+        <Label htmlFor="proj-name">{t('fields.name')} *</Label>
         <Input
           id="proj-name"
           value={p.name}
@@ -197,22 +203,22 @@ function editProject(p: Project, onChange: (next: Project) => void) {
         />
       </div>
       <div className="sm:col-span-2">
-        <Label htmlFor="proj-url">URL</Label>
+        <Label htmlFor="proj-url">{t('fields.url')}</Label>
         <Input
           id="proj-url"
           type="url"
           value={p.url ?? ''}
           onChange={(ev) => set('url', ev.target.value || undefined)}
-          placeholder="https://github.com/..."
+          placeholder={t('placeholders.url')}
         />
       </div>
       <MonthYearPicker
-        label="Start"
+        label={t('fields.start')}
         value={p.start_date ?? ''}
         onChange={(v) => set('start_date', v)}
       />
       <MonthYearPicker
-        label="End"
+        label={t('fields.end')}
         value={p.end_date ?? ''}
         onChange={(v) => set('end_date', v || null)}
         disabled={p.is_ongoing}
@@ -227,20 +233,20 @@ function editProject(p: Project, onChange: (next: Project) => void) {
           }}
           className="rounded"
         />
-        Ongoing / active
+        {t('isOngoing')}
       </label>
       <div className="sm:col-span-2">
-        <Label>Technologies</Label>
-        <TechChipsInput value={p.technologies ?? []} onChange={(t) => set('technologies', t)} />
+        <Label>{t('fields.technologies')}</Label>
+        <TechChipsInput value={p.technologies ?? []} onChange={(v) => set('technologies', v)} />
       </div>
       <div className="sm:col-span-2">
-        <Label htmlFor="proj-desc">Description</Label>
+        <Label htmlFor="proj-desc">{t('fields.description')}</Label>
         <Textarea
           id="proj-desc"
           rows={3}
           value={p.description}
           onChange={(ev) => set('description', ev.target.value)}
-          placeholder="What did you build? What problem did it solve?"
+          placeholder={t('placeholders.description')}
         />
       </div>
     </div>
@@ -248,6 +254,7 @@ function editProject(p: Project, onChange: (next: Project) => void) {
 }
 
 function TechChipsInput({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  const t = useTranslations('builder.sections.projects');
   const [raw, setRaw] = useState('');
 
   function commit(text: string) {
@@ -262,16 +269,16 @@ function TechChipsInput({ value, onChange }: { value: string[]; onChange: (v: st
     <div>
       {value.length > 0 && (
         <div className="mb-1 flex flex-wrap gap-1">
-          {value.map((t) => (
+          {value.map((tech) => (
             <span
-              key={t}
+              key={tech}
               className="bg-muted text-muted-foreground inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs"
             >
-              {t}
+              {tech}
               <button
                 type="button"
-                onClick={() => onChange(value.filter((x) => x !== t))}
-                aria-label={`Remove ${t}`}
+                onClick={() => onChange(value.filter((x) => x !== tech))}
+                aria-label={t('removeTech', { tech })}
                 className="hover:text-foreground"
               >
                 <X className="h-3 w-3" />
@@ -296,10 +303,10 @@ function TechChipsInput({ value, onChange }: { value: string[]; onChange: (v: st
           }
         }}
         onBlur={() => commit(raw)}
-        placeholder="React, TypeScript, AWS…"
+        placeholder={t('placeholders.technologies')}
         disabled={value.length >= 20}
       />
-      <p className="text-muted-foreground mt-1 text-xs">Type and press , or Enter to add</p>
+      <p className="text-muted-foreground mt-1 text-xs">{t('techHint')}</p>
     </div>
   );
 }

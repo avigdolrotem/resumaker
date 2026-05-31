@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Sparkles, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { COMMON_SKILLS } from '@/lib/data/common-skills';
@@ -20,12 +21,13 @@ export interface SkillsSectionProps {
 }
 
 export function SkillsSection({ skills, onChange }: SkillsSectionProps) {
+  const t = useTranslations('builder.sections.skills');
   return (
     <section className="space-y-3">
       <header className="flex items-center justify-between">
         <h2 className="text-foreground flex items-center gap-2 text-lg font-bold">
           <Sparkles className="text-brand-500 h-4 w-4" />
-          Skills
+          {t('heading')}
           {skills.length > 0 && (
             <span className="text-muted-foreground text-sm font-normal">({skills.length})</span>
           )}
@@ -44,7 +46,7 @@ export function SkillsSection({ skills, onChange }: SkillsSectionProps) {
                 <button
                   type="button"
                   onClick={() => onChange(skills.filter((x) => x !== s))}
-                  aria-label={`Remove ${s}`}
+                  aria-label={t('remove', { skill: s })}
                   className="hover:text-brand-900 dark:hover:text-brand-50"
                 >
                   <X className="h-3 w-3" />
@@ -53,20 +55,14 @@ export function SkillsSection({ skills, onChange }: SkillsSectionProps) {
             ))}
           </div>
         ) : (
-          <p className="text-muted-foreground mb-3 text-sm">
-            No skills yet. Start typing below — we'll suggest from common ones.
-          </p>
+          <p className="text-muted-foreground mb-3 text-sm">{t('empty')}</p>
         )}
         <SkillAutocompleteInput
           existing={skills}
           onAdd={(s) => onChange([...skills, s])}
           disabled={skills.length >= 50}
         />
-        {skills.length >= 50 && (
-          <p className="text-muted-foreground mt-1 text-xs">
-            Maximum 50 skills — remove some to add more.
-          </p>
-        )}
+        {skills.length >= 50 && <p className="text-muted-foreground mt-1 text-xs">{t('max')}</p>}
       </div>
     </section>
   );
@@ -81,6 +77,7 @@ function SkillAutocompleteInput({
   onAdd: (skill: string) => void;
   disabled?: boolean;
 }) {
+  const t = useTranslations('builder.sections.skills');
   const [raw, setRaw] = useState('');
   const lower = raw.toLowerCase().trim();
   const existingLower = new Set(existing.map((s) => s.toLowerCase()));
@@ -109,7 +106,7 @@ function SkillAutocompleteInput({
             commit(raw);
           }
         }}
-        placeholder="Add a skill (e.g. TypeScript)"
+        placeholder={t('placeholder')}
         disabled={disabled}
       />
       {suggestions.length > 0 && (

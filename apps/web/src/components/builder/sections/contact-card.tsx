@@ -1,10 +1,13 @@
 'use client';
 
 import type { Resume } from '@resumaker/shared';
+import { useTranslations } from 'next-intl';
 import { User, Mail, Phone, MapPin, Linkedin, Github, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SectionCard } from '../section-card';
+
+type T = ReturnType<typeof useTranslations>;
 
 /** Contact card — single SectionCard with all contact fields. */
 
@@ -20,12 +23,13 @@ export interface ContactCardProps {
 const CARD_ID = 'contact';
 
 export function ContactCard({ contact, onChange, editingId, onSetEditingId }: ContactCardProps) {
+  const t = useTranslations('builder.sections.contact');
   return (
     <section className="space-y-3">
       <header>
         <h2 className="text-foreground flex items-center gap-2 text-lg font-bold">
           <User className="text-brand-500 h-4 w-4" />
-          Contact
+          {t('heading')}
         </h2>
       </header>
       <SectionCard
@@ -42,18 +46,18 @@ export function ContactCard({ contact, onChange, editingId, onSetEditingId }: Co
           onChange({ name: contact.name });
           onSetEditingId(null);
         }}
-        renderRead={readContact}
-        renderEdit={editContact}
-        deleteConfirmText="Reset all contact details? Your name will be kept."
+        renderRead={(c) => readContact(c, t)}
+        renderEdit={(c, onChangeDraft) => editContact(c, onChangeDraft, t)}
+        deleteConfirmText={t('resetConfirm')}
       />
     </section>
   );
 }
 
-function readContact(c: Contact) {
+function readContact(c: Contact, t: T) {
   return (
     <div>
-      <p className="text-foreground text-lg font-semibold">{c.name || 'Your name'}</p>
+      <p className="text-foreground text-lg font-semibold">{c.name || t('namePlaceholder')}</p>
       {(c.email || c.phone || c.location) && (
         <p className="text-muted-foreground mt-0.5 text-sm">
           {[c.email, c.phone, c.location].filter(Boolean).join(' · ')}
@@ -64,19 +68,19 @@ function readContact(c: Contact) {
           {c.linkedin && (
             <span className="inline-flex items-center gap-1">
               <Linkedin className="h-3 w-3" />
-              LinkedIn
+              {t('links.linkedin')}
             </span>
           )}
           {c.github && (
             <span className="inline-flex items-center gap-1">
               <Github className="h-3 w-3" />
-              GitHub
+              {t('links.github')}
             </span>
           )}
           {c.website && (
             <span className="inline-flex items-center gap-1">
               <Globe className="h-3 w-3" />
-              Website
+              {t('links.website')}
             </span>
           )}
         </div>
@@ -85,7 +89,7 @@ function readContact(c: Contact) {
   );
 }
 
-function editContact(c: Contact, onChange: (next: Contact) => void) {
+function editContact(c: Contact, onChange: (next: Contact) => void, t: T) {
   const set = <K extends keyof Contact>(k: K, v: Contact[K]) => onChange({ ...c, [k]: v });
   const setOpt = <K extends keyof Contact>(k: K, v: string) =>
     onChange({ ...c, [k]: (v || undefined) as Contact[K] });
@@ -93,7 +97,7 @@ function editContact(c: Contact, onChange: (next: Contact) => void) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="sm:col-span-2">
-        <Label htmlFor="contact-name">Full name *</Label>
+        <Label htmlFor="contact-name">{t('fields.name')} *</Label>
         <Input
           id="contact-name"
           value={c.name}
@@ -103,7 +107,7 @@ function editContact(c: Contact, onChange: (next: Contact) => void) {
       </div>
       <div>
         <Label htmlFor="contact-email">
-          <Mail className="me-1 inline h-3 w-3" /> Email
+          <Mail className="me-1 inline h-3 w-3" /> {t('fields.email')}
         </Label>
         <Input
           id="contact-email"
@@ -114,7 +118,7 @@ function editContact(c: Contact, onChange: (next: Contact) => void) {
       </div>
       <div>
         <Label htmlFor="contact-phone">
-          <Phone className="me-1 inline h-3 w-3" /> Phone
+          <Phone className="me-1 inline h-3 w-3" /> {t('fields.phone')}
         </Label>
         <Input
           id="contact-phone"
@@ -125,42 +129,42 @@ function editContact(c: Contact, onChange: (next: Contact) => void) {
       </div>
       <div className="sm:col-span-2">
         <Label htmlFor="contact-location">
-          <MapPin className="me-1 inline h-3 w-3" /> Location
+          <MapPin className="me-1 inline h-3 w-3" /> {t('fields.location')}
         </Label>
         <Input
           id="contact-location"
           value={c.location ?? ''}
           onChange={(ev) => setOpt('location', ev.target.value)}
-          placeholder="City, Country"
+          placeholder={t('placeholders.location')}
         />
       </div>
       <div>
         <Label htmlFor="contact-linkedin">
-          <Linkedin className="me-1 inline h-3 w-3" /> LinkedIn
+          <Linkedin className="me-1 inline h-3 w-3" /> {t('fields.linkedin')}
         </Label>
         <Input
           id="contact-linkedin"
           type="url"
           value={c.linkedin ?? ''}
           onChange={(ev) => setOpt('linkedin', ev.target.value)}
-          placeholder="https://linkedin.com/in/..."
+          placeholder={t('placeholders.linkedin')}
         />
       </div>
       <div>
         <Label htmlFor="contact-github">
-          <Github className="me-1 inline h-3 w-3" /> GitHub
+          <Github className="me-1 inline h-3 w-3" /> {t('fields.github')}
         </Label>
         <Input
           id="contact-github"
           type="url"
           value={c.github ?? ''}
           onChange={(ev) => setOpt('github', ev.target.value)}
-          placeholder="https://github.com/..."
+          placeholder={t('placeholders.github')}
         />
       </div>
       <div className="sm:col-span-2">
         <Label htmlFor="contact-website">
-          <Globe className="me-1 inline h-3 w-3" /> Website
+          <Globe className="me-1 inline h-3 w-3" /> {t('fields.website')}
         </Label>
         <Input
           id="contact-website"

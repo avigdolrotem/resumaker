@@ -435,6 +435,216 @@
     "empty": {
       "title": "Paste a job description to start",
       "subtitle": "AI will craft a tailored resume in Hebrew or English"
+    },
+    "card": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "confirmDelete": "Delete this entry?",
+      "confirmDeleteAria": "Confirm delete"
+    },
+    "dates": {
+      "month": "Month",
+      "year": "Year",
+      "present": "Present",
+      "monthAria": "{label} — month",
+      "yearAria": "{label} — year"
+    },
+    "sections": {
+      "contact": {
+        "heading": "Contact",
+        "namePlaceholder": "Your name",
+        "links": {
+          "linkedin": "LinkedIn",
+          "github": "GitHub",
+          "website": "Website"
+        },
+        "resetConfirm": "Reset all contact details? Your name will be kept.",
+        "fields": {
+          "name": "Full name",
+          "email": "Email",
+          "phone": "Phone",
+          "location": "Location",
+          "linkedin": "LinkedIn",
+          "github": "GitHub",
+          "website": "Website"
+        },
+        "placeholders": {
+          "location": "City, Country",
+          "linkedin": "https://linkedin.com/in/...",
+          "github": "https://github.com/..."
+        }
+      },
+      "summary": {
+        "heading": "Summary",
+        "ariaLabel": "Summary",
+        "clearConfirm": "Clear the summary?",
+        "emptyRead": "No summary yet. Click to write one — 2-4 sentences describing your strengths.",
+        "placeholder": "A brief professional summary — 2-4 sentences describing your strengths, focus, and what you're looking for.",
+        "charCount": "{count} / 2000 characters"
+      },
+      "experience": {
+        "heading": "Work Experience",
+        "add": "Add",
+        "addAria": "Add experience",
+        "empty": "No work experience yet. Click + Add to start.",
+        "untitled": "Untitled role",
+        "deleteConfirm": "Delete experience at {company}?",
+        "deleteFallback": "this company",
+        "highlightCount": "{count, plural, one {# highlight} other {# highlights}}",
+        "fields": {
+          "company": "Company",
+          "title": "Title",
+          "location": "Location",
+          "start": "Start",
+          "end": "End",
+          "description": "Description",
+          "highlights": "Highlights"
+        },
+        "placeholders": {
+          "location": "City, Country",
+          "description": "What did you do in this role?",
+          "highlight": "• Built a thing that did a thing"
+        },
+        "isCurrent": "Currently working here",
+        "addHighlight": "Add highlight",
+        "removeHighlight": "Remove highlight"
+      },
+      "education": {
+        "heading": "Education",
+        "add": "Add",
+        "addAria": "Add education",
+        "empty": "No education entries yet. Click + Add to start.",
+        "untitled": "Untitled institution",
+        "deleteConfirm": "Delete education at {institution}?",
+        "deleteFallback": "this school",
+        "gpaPrefix": "GPA",
+        "fields": {
+          "institution": "Institution",
+          "degree": "Degree",
+          "field": "Field of study",
+          "start": "Start",
+          "end": "End",
+          "gpa": "GPA",
+          "description": "Description"
+        },
+        "placeholders": {
+          "degree": "e.g. B.Sc., M.Eng.",
+          "field": "e.g. Computer Science",
+          "gpa": "e.g. 3.8 or 95/100",
+          "description": "Honors, relevant coursework, thesis…"
+        },
+        "isCurrent": "Currently studying"
+      },
+      "projects": {
+        "heading": "Projects",
+        "add": "Add",
+        "addAria": "Add project",
+        "empty": "No projects yet. Click + Add to add one.",
+        "untitled": "Untitled project",
+        "ongoing": "Ongoing",
+        "deleteConfirm": "Delete project \"{name}\"?",
+        "deleteFallback": "untitled",
+        "fields": {
+          "name": "Project name",
+          "url": "URL",
+          "start": "Start",
+          "end": "End",
+          "technologies": "Technologies",
+          "description": "Description"
+        },
+        "placeholders": {
+          "url": "https://github.com/...",
+          "description": "What did you build? What problem did it solve?",
+          "technologies": "React, TypeScript, AWS…"
+        },
+        "isOngoing": "Ongoing / active",
+        "techHint": "Type and press , or Enter to add",
+        "removeTech": "Remove {tech}"
+      },
+      "certifications": {
+        "heading": "Certifications",
+        "add": "Add",
+        "addAria": "Add certification",
+        "empty": "No certifications yet.",
+        "untitled": "Untitled certification",
+        "viewCredential": "View credential",
+        "deleteConfirm": "Delete \"{name}\"?",
+        "deleteFallback": "this certification",
+        "fields": {
+          "name": "Name",
+          "issuer": "Issuer",
+          "issued": "Issued",
+          "credentialUrl": "Credential URL"
+        },
+        "placeholders": {
+          "name": "e.g. AWS Solutions Architect Associate",
+          "issuer": "e.g. Amazon",
+          "credentialUrl": "https://..."
+        }
+      },
+      "awards": {
+        "heading": "Awards",
+        "add": "Add",
+        "addAria": "Add award",
+        "empty": "No awards yet.",
+        "untitled": "Untitled award",
+        "deleteConfirm": "Delete \"{title}\"?",
+        "deleteFallback": "this award",
+        "fields": {
+          "title": "Title",
+          "issuer": "Issuer",
+          "date": "Date",
+          "description": "Description"
+        },
+        "placeholders": {
+          "title": "e.g. Hackathon winner, conference talk"
+        }
+      },
+      "skills": {
+        "heading": "Skills",
+        "empty": "No skills yet. Start typing below — we'll suggest from common ones.",
+        "placeholder": "Add a skill (e.g. TypeScript)",
+        "max": "Maximum 50 skills — remove some to add more.",
+        "remove": "Remove {skill}"
+      }
+    },
+    "import": {
+      "ariaLabel": "Import resume",
+      "close": "Close",
+      "title": "Import resume",
+      "subtitle": "PDF or TXT, up to 10MB. We'll show a preview before applying.",
+      "dropTitle": "Drag a PDF or TXT here",
+      "dropHint": "or click to choose",
+      "parsing": "Claude is reading your resume…",
+      "parsingHint": "Usually 5–15 seconds",
+      "errorTitle": "Couldn't parse the file",
+      "tryAgain": "Try again",
+      "foundTitle": "What we found:",
+      "strategyNote": "Replace strategy: experience / education / projects / certifications / awards REPLACE existing entries. Skills + languages MERGE (dedup by name). Contact fields overwrite only when non-empty.",
+      "apply": "Apply to resume",
+      "tryAnother": "Try another file",
+      "discard": "Discard",
+      "includeAria": "Include {label} in import",
+      "labels": {
+        "contact": "Contact",
+        "summary": "Summary",
+        "experience": "Experience",
+        "education": "Education",
+        "projects": "Projects",
+        "skills": "Skills",
+        "certifications": "Certifications",
+        "awards": "Awards",
+        "languages": "Languages"
+      },
+      "detail": {
+        "experience": "{count, plural, one {# position} other {# positions}} ({names})",
+        "education": "{count} ({names})",
+        "count": "{count}",
+        "skills": "{count} skills",
+        "empty": "—"
+      }
     }
   },
   "ats": {

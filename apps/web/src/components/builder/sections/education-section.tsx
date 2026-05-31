@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import type { Resume } from '@resumaker/shared';
 import { GraduationCap, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { SectionCard } from '../section-card';
 import { SortableList } from '../sortable-list';
 import { MonthYearPicker, formatMonthYear } from '../month-year-picker';
+
+type T = ReturnType<typeof useTranslations>;
 
 /**
  * Education section — list of inline-editable cards.
@@ -45,6 +48,9 @@ export function EducationSection({
   editingId,
   onSetEditingId,
 }: EducationSectionProps) {
+  const t = useTranslations('builder.sections.education');
+  const tDates = useTranslations('builder.dates');
+  const locale = useLocale();
   const [pendingNew, setPendingNew] = useState<Education | null>(null);
   const newCardId = 'new:education';
 
@@ -76,7 +82,7 @@ export function EducationSection({
       <header className="flex items-center justify-between">
         <h2 className="text-foreground flex items-center gap-2 text-lg font-bold">
           <GraduationCap className="text-brand-500 h-4 w-4" />
-          Education
+          {t('heading')}
           {entries.length > 0 && (
             <span className="text-muted-foreground text-sm font-normal">({entries.length})</span>
           )}
@@ -86,11 +92,11 @@ export function EducationSection({
           size="sm"
           variant="outline"
           onClick={handleAdd}
-          aria-label="Add education"
+          aria-label={t('addAria')}
           disabled={pendingNew !== null}
         >
           <Plus className="me-1 h-3.5 w-3.5" />
-          Add
+          {t('add')}
         </Button>
       </header>
 
@@ -108,16 +114,14 @@ export function EducationSection({
             setPendingNew(null);
             onSetEditingId(null);
           }}
-          renderRead={readEducation}
-          renderEdit={editEducation}
+          renderRead={(d) => readEducation(d, t, tDates, locale)}
+          renderEdit={(d, onChangeDraft) => editEducation(d, onChangeDraft, t)}
         />
       )}
 
       {entries.length === 0 && !pendingNew && (
         <div className="border-border bg-muted/30 rounded-xl border border-dashed p-6 text-center">
-          <p className="text-muted-foreground text-sm">
-            No education entries yet. Click + Add to start.
-          </p>
+          <p className="text-muted-foreground text-sm">{t('empty')}</p>
         </div>
       )}
 
@@ -130,9 +134,11 @@ export function EducationSection({
             onSave={(next) => handleSaveExisting(i, next)}
             onCancel={() => onSetEditingId(null)}
             onDelete={() => handleDelete(i)}
-            renderRead={readEducation}
-            renderEdit={editEducation}
-            deleteConfirmText={`Delete education at ${e.institution || 'this school'}?`}
+            renderRead={(d) => readEducation(d, t, tDates, locale)}
+            renderEdit={(d, onChangeDraft) => editEducation(d, onChangeDraft, t)}
+            deleteConfirmText={t('deleteConfirm', {
+              institution: e.institution || t('deleteFallback'),
+            })}
             leading={dragHandle}
           />
         )}
@@ -141,30 +147,30 @@ export function EducationSection({
   );
 }
 
-function readEducation(e: Education) {
+function readEducation(e: Education, t: T, tDates: T, locale: string) {
   return (
     <div>
-      <p className="text-foreground font-semibold">{e.institution || 'Untitled institution'}</p>
+      <p className="text-foreground font-semibold">{e.institution || t('untitled')}</p>
       <p className="text-muted-foreground text-sm">
         {e.degree}
         {e.field && ` · ${e.field}`}
-        {e.gpa && ` · GPA: ${e.gpa}`}
+        {e.gpa && ` · ${t('gpaPrefix')}: ${e.gpa}`}
       </p>
       <p className="text-muted-foreground mt-0.5 text-xs">
-        {formatMonthYear(e.start_date)} –{' '}
-        {e.is_current ? 'Present' : formatMonthYear(e.end_date ?? '')}
+        {formatMonthYear(e.start_date, locale)} –{' '}
+        {e.is_current ? tDates('present') : formatMonthYear(e.end_date ?? '', locale)}
       </p>
     </div>
   );
 }
 
-function editEducation(e: Education, onChange: (next: Education) => void) {
+function editEducation(e: Education, onChange: (next: Education) => void, t: T) {
   const set = <K extends keyof Education>(k: K, v: Education[K]) => onChange({ ...e, [k]: v });
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="sm:col-span-2">
-        <Label htmlFor="edu-institution">Institution *</Label>
+        <Label htmlFor="edu-institution">{t('fields.institution')} *</Label>
         <Input
           id="edu-institution"
           value={e.institution}
@@ -173,26 +179,30 @@ function editEducation(e: Education, onChange: (next: Education) => void) {
         />
       </div>
       <div>
-        <Label htmlFor="edu-degree">Degree</Label>
+        <Label htmlFor="edu-degree">{t('fields.degree')}</Label>
         <Input
           id="edu-degree"
           value={e.degree}
           onChange={(ev) => set('degree', ev.target.value)}
-          placeholder="e.g. B.Sc., M.Eng."
+          placeholder={t('placeholders.degree')}
         />
       </div>
       <div>
-        <Label htmlFor="edu-field">Field of study</Label>
+        <Label htmlFor="edu-field">{t('fields.field')}</Label>
         <Input
           id="edu-field"
           value={e.field ?? ''}
           onChange={(ev) => set('field', ev.target.value)}
-          placeholder="e.g. Computer Science"
+          placeholder={t('placeholders.field')}
         />
       </div>
-      <MonthYearPicker label="Start" value={e.start_date} onChange={(v) => set('start_date', v)} />
       <MonthYearPicker
-        label="End"
+        label={t('fields.start')}
+        value={e.start_date}
+        onChange={(v) => set('start_date', v)}
+      />
+      <MonthYearPicker
+        label={t('fields.end')}
         value={e.end_date ?? ''}
         onChange={(v) => set('end_date', v || null)}
         disabled={e.is_current}
@@ -207,25 +217,25 @@ function editEducation(e: Education, onChange: (next: Education) => void) {
           }}
           className="rounded"
         />
-        Currently studying
+        {t('isCurrent')}
       </label>
       <div>
-        <Label htmlFor="edu-gpa">GPA</Label>
+        <Label htmlFor="edu-gpa">{t('fields.gpa')}</Label>
         <Input
           id="edu-gpa"
           value={e.gpa ?? ''}
           onChange={(ev) => set('gpa', ev.target.value)}
-          placeholder="e.g. 3.8 or 95/100"
+          placeholder={t('placeholders.gpa')}
         />
       </div>
       <div className="sm:col-span-2">
-        <Label htmlFor="edu-desc">Description</Label>
+        <Label htmlFor="edu-desc">{t('fields.description')}</Label>
         <Textarea
           id="edu-desc"
           rows={2}
           value={e.description ?? ''}
           onChange={(ev) => set('description', ev.target.value)}
-          placeholder="Honors, relevant coursework, thesis…"
+          placeholder={t('placeholders.description')}
         />
       </div>
     </div>

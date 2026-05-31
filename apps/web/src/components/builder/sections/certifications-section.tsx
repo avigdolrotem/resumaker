@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import type { Resume } from '@resumaker/shared';
 import { Award, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { SectionCard } from '../section-card';
 import { SortableList } from '../sortable-list';
 import { MonthYearPicker, formatMonthYear } from '../month-year-picker';
+
+type T = ReturnType<typeof useTranslations>;
 
 /** Certifications section — list of cards with single date + credential URL. */
 
@@ -34,6 +37,8 @@ export function CertificationsSection({
   editingId,
   onSetEditingId,
 }: CertificationsSectionProps) {
+  const t = useTranslations('builder.sections.certifications');
+  const locale = useLocale();
   const [pendingNew, setPendingNew] = useState<Certification | null>(null);
   const newCardId = 'new:certification';
 
@@ -65,7 +70,7 @@ export function CertificationsSection({
       <header className="flex items-center justify-between">
         <h2 className="text-foreground flex items-center gap-2 text-lg font-bold">
           <Award className="text-brand-500 h-4 w-4" />
-          Certifications
+          {t('heading')}
           {entries.length > 0 && (
             <span className="text-muted-foreground text-sm font-normal">({entries.length})</span>
           )}
@@ -75,11 +80,11 @@ export function CertificationsSection({
           size="sm"
           variant="outline"
           onClick={handleAdd}
-          aria-label="Add certification"
+          aria-label={t('addAria')}
           disabled={pendingNew !== null}
         >
           <Plus className="me-1 h-3.5 w-3.5" />
-          Add
+          {t('add')}
         </Button>
       </header>
 
@@ -97,14 +102,14 @@ export function CertificationsSection({
             setPendingNew(null);
             onSetEditingId(null);
           }}
-          renderRead={readCertification}
-          renderEdit={editCertification}
+          renderRead={(d) => readCertification(d, t, locale)}
+          renderEdit={(d, onChangeDraft) => editCertification(d, onChangeDraft, t)}
         />
       )}
 
       {entries.length === 0 && !pendingNew && (
         <div className="border-border bg-muted/30 rounded-xl border border-dashed p-6 text-center">
-          <p className="text-muted-foreground text-sm">No certifications yet.</p>
+          <p className="text-muted-foreground text-sm">{t('empty')}</p>
         </div>
       )}
 
@@ -117,9 +122,9 @@ export function CertificationsSection({
             onSave={(next) => handleSaveExisting(i, next)}
             onCancel={() => onSetEditingId(null)}
             onDelete={() => handleDelete(i)}
-            renderRead={readCertification}
-            renderEdit={editCertification}
-            deleteConfirmText={`Delete "${c.name || 'this certification'}"?`}
+            renderRead={(d) => readCertification(d, t, locale)}
+            renderEdit={(d, onChangeDraft) => editCertification(d, onChangeDraft, t)}
+            deleteConfirmText={t('deleteConfirm', { name: c.name || t('deleteFallback') })}
             leading={dragHandle}
           />
         )}
@@ -128,15 +133,15 @@ export function CertificationsSection({
   );
 }
 
-function readCertification(c: Certification) {
+function readCertification(c: Certification, t: T, locale: string) {
   return (
     <div>
-      <p className="text-foreground font-semibold">{c.name || 'Untitled certification'}</p>
+      <p className="text-foreground font-semibold">{c.name || t('untitled')}</p>
       {(c.issuer || c.date) && (
         <p className="text-muted-foreground text-sm">
           {c.issuer}
           {c.issuer && c.date && ' · '}
-          {c.date && formatMonthYear(c.date)}
+          {c.date && formatMonthYear(c.date, locale)}
         </p>
       )}
       {c.credential_url && (
@@ -147,47 +152,51 @@ function readCertification(c: Certification) {
           onClick={(e) => e.stopPropagation()}
           className="text-brand-600 hover:text-brand-700 mt-1 inline-block text-xs underline"
         >
-          View credential
+          {t('viewCredential')}
         </a>
       )}
     </div>
   );
 }
 
-function editCertification(c: Certification, onChange: (next: Certification) => void) {
+function editCertification(c: Certification, onChange: (next: Certification) => void, t: T) {
   const set = <K extends keyof Certification>(k: K, v: Certification[K]) =>
     onChange({ ...c, [k]: v });
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <div className="sm:col-span-2">
-        <Label htmlFor="cert-name">Name *</Label>
+        <Label htmlFor="cert-name">{t('fields.name')} *</Label>
         <Input
           id="cert-name"
           value={c.name}
           onChange={(ev) => set('name', ev.target.value)}
           required
-          placeholder="e.g. AWS Solutions Architect Associate"
+          placeholder={t('placeholders.name')}
         />
       </div>
       <div>
-        <Label htmlFor="cert-issuer">Issuer</Label>
+        <Label htmlFor="cert-issuer">{t('fields.issuer')}</Label>
         <Input
           id="cert-issuer"
           value={c.issuer ?? ''}
           onChange={(ev) => set('issuer', ev.target.value)}
-          placeholder="e.g. Amazon"
+          placeholder={t('placeholders.issuer')}
         />
       </div>
-      <MonthYearPicker label="Issued" value={c.date ?? ''} onChange={(v) => set('date', v)} />
+      <MonthYearPicker
+        label={t('fields.issued')}
+        value={c.date ?? ''}
+        onChange={(v) => set('date', v)}
+      />
       <div className="sm:col-span-2">
-        <Label htmlFor="cert-url">Credential URL</Label>
+        <Label htmlFor="cert-url">{t('fields.credentialUrl')}</Label>
         <Input
           id="cert-url"
           type="url"
           value={c.credential_url ?? ''}
           onChange={(ev) => set('credential_url', ev.target.value || undefined)}
-          placeholder="https://..."
+          placeholder={t('placeholders.credentialUrl')}
         />
       </div>
     </div>
