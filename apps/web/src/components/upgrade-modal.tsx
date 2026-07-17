@@ -149,11 +149,11 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier }: Upgr
 
         <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-            {t('later', { defaultValue: 'Maybe later' })}
+            {t('later')}
           </Button>
           <Button asChild>
             <a href={ctaHref} target={ctaHref.startsWith('mailto:') ? '_self' : '_blank'}>
-              {t('cta.label', { defaultValue: 'Join the waitlist' })}
+              {t('cta.label')}
             </a>
           </Button>
         </div>

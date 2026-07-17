@@ -710,7 +710,8 @@
       "description": "Pick the model that generates your tailored resumes. You can switch any time.",
       "recommended": "Recommended",
       "locked": "Plus or Pro only",
-      "saved": "Saved"
+      "saved": "Saved",
+      "defaultLabel": "Default model"
     },
     "danger": {
       "title": "Danger zone",

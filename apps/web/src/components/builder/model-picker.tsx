@@ -77,7 +77,7 @@ export function ModelPicker() {
   if (!state) return null;
 
   const current = state.llmModel ? getModelById(state.llmModel) : undefined;
-  const currentLabel = current?.displayName ?? t('defaultLabel', { defaultValue: 'Default model' });
+  const currentLabel = current?.displayName ?? t('defaultLabel');
 
   async function pick(model: CatalogEntry) {
     if (!state) return;
@@ -151,7 +151,7 @@ export function ModelPicker() {
                       {m.displayName}
                       {m.recommended && (
                         <span className="bg-brand-500 rounded-full px-1.5 py-0 text-[10px] text-white">
-                          {t('recommended', { defaultValue: 'Recommended' })}
+                          {t('recommended')}
                         </span>
                       )}
                     </div>

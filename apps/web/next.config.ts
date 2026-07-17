@@ -27,8 +27,22 @@ const nextConfig: NextConfig = {
   // prompts, security patterns) to client-side DevTools.
   productionBrowserSourceMaps: false,
 
-  // Strict security headers
+  // Strict security headers.
+  //
+  // HSTS and `upgrade-insecure-requests` are production-only — both tell
+  // the browser "always use HTTPS for this origin from now on," and
+  // `next dev` doesn't serve TLS. Sending them unconditionally broke local
+  // dev in Safari: WebKit honors HSTS/upgrade-insecure-requests for
+  // localhost more strictly than Chromium does, so every subresource
+  // (CSS, JS chunks, fonts) got force-upgraded to `https://localhost:3000`
+  // and failed with a TLS handshake error against a port that only speaks
+  // HTTP — the page loaded (the initial HTML request predates the
+  // upgrade), but nothing else did, so it rendered fully unstyled with a
+  // dead app shell. Chrome happened to tolerate it, which is why this went
+  // unnoticed; it was never a real Safari feature gap. Gating both behind
+  // NODE_ENV fixes it for every browser, not just Safari.
   async headers() {
+    const isProd = process.env.NODE_ENV === 'production';
     return [
       {
         source: '/:path*',
@@ -56,10 +70,14 @@ const nextConfig: NextConfig = {
               'attribution-reporting=()',
             ].join(', '),
           },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
+          ...(isProd
+            ? [
+                {
+                  key: 'Strict-Transport-Security',
+                  value: 'max-age=63072000; includeSubDomains; preload',
+                },
+              ]
+            : []),
           {
             // Production CSP. `unsafe-eval` removed (Next 16 + React 19 don't
             // require it). `unsafe-inline` on script-src remains because Next's
@@ -85,7 +103,7 @@ const nextConfig: NextConfig = {
               "base-uri 'self'",
               "form-action 'self' https://checkout.stripe.com",
               "object-src 'none'",
-              'upgrade-insecure-requests',
+              ...(isProd ? ['upgrade-insecure-requests'] : []),
             ].join('; '),
           },
         ],
