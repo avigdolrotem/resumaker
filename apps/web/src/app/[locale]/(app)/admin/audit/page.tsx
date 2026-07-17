@@ -114,7 +114,7 @@ export default async function AdminAuditPage({ searchParams }: Props) {
                     {row.metadata ? (
                       <details>
                         <summary className="hover:text-foreground cursor-pointer">view</summary>
-                        <pre className="bg-muted max-w-xs overflow-x-auto rounded-lg p-1 text-[10px]">
+                        <pre className="bg-muted max-w-xs overflow-x-auto rounded-xl p-1 text-[10px]">
                           {JSON.stringify(row.metadata, null, 2)}
                         </pre>
                       </details>

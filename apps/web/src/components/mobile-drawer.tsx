@@ -199,7 +199,7 @@ export function MobileDrawer() {
           >
             {/* Click-outside backdrop */}
             <div
-              className="absolute inset-0 bg-neutral-950/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-neutral-950/50 backdrop-blur-md"
               onClick={() => setOpen(false)}
             />
 

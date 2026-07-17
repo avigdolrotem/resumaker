@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
+import { Button } from '@/components/ui/button';
 import {
   ChevronDown,
   CreditCard,
@@ -14,6 +16,14 @@ import {
   Settings,
   UserCircle,
 } from 'lucide-react';
+
+// Shared spring + panel treatment for both dropdowns below — same
+// values as the command palette's active-row indicator and the
+// upgrade modal, so every "thing that pops open" in the app feels
+// like the same material.
+const MENU_SPRING = { type: 'spring', stiffness: 420, damping: 34 } as const;
+const menuItemClass =
+  'ease-smooth flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors duration-200 hover:bg-accent/50';
 
 /**
  * Shared bits for the two header dropdowns. Both `NewMenu` and
@@ -54,46 +64,54 @@ export function NewMenu() {
 
   return (
     <div ref={ref} className="relative">
-      <button
+      <Button
         type="button"
+        size="sm"
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="bg-brand-600 hover:bg-brand-700 focus-visible:ring-brand-500 inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-medium text-white shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       >
         <Plus className="h-4 w-4" />
         <span>{t('new')}</span>
-        <ChevronDown className={`h-3.5 w-3.5 transition ${open ? 'rotate-180' : ''}`} />
-      </button>
-      {open && (
-        <ul
-          role="menu"
-          className="border-border bg-card absolute end-0 z-50 mt-1 w-56 overflow-hidden rounded-md border shadow-lg"
-        >
-          <li role="none">
-            <Link
-              role="menuitem"
-              href="/builder"
-              onClick={() => setOpen(false)}
-              className="hover:bg-muted flex items-center gap-2 px-3 py-2 text-sm"
-            >
-              <FilePlus2 className="text-brand-500 h-4 w-4" />
-              {t('newResume')}
-            </Link>
-          </li>
-          <li role="none">
-            <Link
-              role="menuitem"
-              href="/cover-letters/new"
-              onClick={() => setOpen(false)}
-              className="hover:bg-muted flex items-center gap-2 px-3 py-2 text-sm"
-            >
-              <Mail className="text-brand-500 h-4 w-4" />
-              {t('newCoverLetter')}
-            </Link>
-          </li>
-        </ul>
-      )}
+        <ChevronDown
+          className={`h-3.5 w-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </Button>
+      <AnimatePresence>
+        {open && (
+          <motion.ul
+            role="menu"
+            initial={{ opacity: 0, scale: 0.96, y: -6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: -4 }}
+            transition={MENU_SPRING}
+            className="glass-strong shadow-glass-lg absolute end-0 z-50 mt-2 w-56 overflow-hidden rounded-2xl p-1.5"
+          >
+            <li role="none">
+              <Link
+                role="menuitem"
+                href="/builder"
+                onClick={() => setOpen(false)}
+                className={menuItemClass}
+              >
+                <FilePlus2 className="text-brand-500 h-4 w-4" />
+                {t('newResume')}
+              </Link>
+            </li>
+            <li role="none">
+              <Link
+                role="menuitem"
+                href="/cover-letters/new"
+                onClick={() => setOpen(false)}
+                className={menuItemClass}
+              >
+                <Mail className="text-brand-500 h-4 w-4" />
+                {t('newCoverLetter')}
+              </Link>
+            </li>
+          </motion.ul>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -141,7 +159,7 @@ export function UserAvatarMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={name || t('account')}
-        className="bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-200 hover:ring-brand-300 focus-visible:ring-brand-500 inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full text-xs font-semibold transition hover:ring-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+        className="bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-200 hover:ring-brand-300 focus-visible:ring-brand-500 ease-smooth inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full text-xs font-semibold transition-all duration-200 hover:ring-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       >
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element -- external OAuth image, sizes vary
@@ -150,63 +168,69 @@ export function UserAvatarMenu() {
           <span aria-hidden>{initials}</span>
         )}
       </button>
-      {open && (
-        <ul
-          role="menu"
-          className="border-border bg-card absolute end-0 z-50 mt-1 w-60 overflow-hidden rounded-md border shadow-lg"
-        >
-          <li className="border-border border-b px-3 py-2">
-            <p className="truncate text-sm font-medium">{name || t('account')}</p>
-            <p className="text-muted-foreground truncate text-xs" dir="ltr">
-              {session.user.email}
-            </p>
-          </li>
-          <li role="none">
-            <Link
-              role="menuitem"
-              href="/profile"
-              onClick={() => setOpen(false)}
-              className="hover:bg-muted flex items-center gap-2 px-3 py-2 text-sm"
-            >
-              <UserCircle className="h-4 w-4" />
-              {t('profile')}
-            </Link>
-          </li>
-          <li role="none">
-            <Link
-              role="menuitem"
-              href="/account/billing"
-              onClick={() => setOpen(false)}
-              className="hover:bg-muted flex items-center gap-2 px-3 py-2 text-sm"
-            >
-              <CreditCard className="h-4 w-4" />
-              {t('billing')}
-            </Link>
-          </li>
-          <li role="none">
-            <Link
-              role="menuitem"
-              href="/settings"
-              onClick={() => setOpen(false)}
-              className="hover:bg-muted flex items-center gap-2 px-3 py-2 text-sm"
-            >
-              <Settings className="h-4 w-4" />
-              {t('settings')}
-            </Link>
-          </li>
-          <li role="none" className="border-border border-t">
-            <button
-              type="button"
-              role="menuitem"
-              onClick={handleSignOut}
-              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-            >
-              <LogOut className="h-4 w-4" />
-              {t('signOut')}
-            </button>
-          </li>
-        </ul>
-      )}
+      <AnimatePresence>
+        {open && (
+          <motion.ul
+            role="menu"
+            initial={{ opacity: 0, scale: 0.96, y: -6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: -4 }}
+            transition={MENU_SPRING}
+            className="glass-strong shadow-glass-lg absolute end-0 z-50 mt-2 w-60 overflow-hidden rounded-2xl p-1.5"
+          >
+            <li className="border-border/60 mb-1 border-b px-3 py-2">
+              <p className="truncate text-sm font-medium">{name || t('account')}</p>
+              <p className="text-muted-foreground truncate text-xs" dir="ltr">
+                {session.user.email}
+              </p>
+            </li>
+            <li role="none">
+              <Link
+                role="menuitem"
+                href="/profile"
+                onClick={() => setOpen(false)}
+                className={menuItemClass}
+              >
+                <UserCircle className="h-4 w-4" />
+                {t('profile')}
+              </Link>
+            </li>
+            <li role="none">
+              <Link
+                role="menuitem"
+                href="/account/billing"
+                onClick={() => setOpen(false)}
+                className={menuItemClass}
+              >
+                <CreditCard className="h-4 w-4" />
+                {t('billing')}
+              </Link>
+            </li>
+            <li role="none">
+              <Link
+                role="menuitem"
+                href="/settings"
+                onClick={() => setOpen(false)}
+                className={menuItemClass}
+              >
+                <Settings className="h-4 w-4" />
+                {t('settings')}
+              </Link>
+            </li>
+            <li role="none" className="border-border/60 mt-1 border-t pt-1">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleSignOut}
+                className="ease-smooth flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-600 transition-colors duration-200 hover:bg-red-500/10 dark:text-red-400"
+              >
+                <LogOut className="h-4 w-4" />
+                {t('signOut')}
+              </button>
+            </li>
+          </motion.ul>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

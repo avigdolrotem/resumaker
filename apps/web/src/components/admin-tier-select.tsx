@@ -48,8 +48,8 @@ export function AdminTierSelect({ userId, currentTier }: { userId: string; curre
 
   const colorMap: Record<Tier, string> = {
     free: 'bg-muted text-foreground',
-    plus: 'bg-amber-100 text-amber-800',
-    pro: 'bg-violet-100 text-violet-800',
+    plus: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+    pro: 'bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-200',
   };
 
   return (
@@ -58,7 +58,7 @@ export function AdminTierSelect({ userId, currentTier }: { userId: string; curre
         value={tier}
         onChange={(e) => void handleChange(e.target.value as Tier)}
         disabled={pending}
-        className={`rounded px-2 py-0.5 text-xs font-medium ${colorMap[tier]} focus:ring-brand-500 cursor-pointer border-0 focus:outline-none focus:ring-2`}
+        className={`ease-smooth rounded-full px-2 py-0.5 text-xs font-medium transition-colors duration-200 ${colorMap[tier]} focus:ring-brand-500 cursor-pointer border-0 focus:outline-none focus:ring-2`}
         aria-label="User tier"
       >
         <option value="free">free</option>

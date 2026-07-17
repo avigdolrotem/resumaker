@@ -171,7 +171,7 @@ export default function AdminCouponsPage() {
                         size="sm"
                         variant="outline"
                         onClick={() => void handleDelete(row.code)}
-                        className="text-red-600"
+                        className="text-red-600 dark:text-red-400"
                       >
                         Delete
                       </Button>

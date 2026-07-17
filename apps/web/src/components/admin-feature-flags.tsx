@@ -51,7 +51,7 @@ export function AdminFeatureFlags({ userId, initial }: { userId: string; initial
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="font-medium">Job-hunt beta</p>
-          <p className="text-xs text-neutral-500">
+          <p className="text-muted-foreground text-xs">
             Unlocks /jobs + /applications + AI fit-scoring for this user.
           </p>
         </div>
@@ -61,12 +61,12 @@ export function AdminFeatureFlags({ userId, initial }: { userId: string; initial
           aria-checked={Boolean(flags.jobHuntBeta)}
           disabled={busy}
           onClick={() => toggle('jobHuntBeta')}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition disabled:opacity-50 ${
-            flags.jobHuntBeta ? 'bg-violet-600' : 'bg-neutral-300'
+          className={`ease-smooth relative inline-flex h-6 w-11 items-center rounded-full shadow-inner transition-colors duration-200 disabled:opacity-50 ${
+            flags.jobHuntBeta ? 'bg-brand-600' : 'bg-muted'
           }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+            className={`ease-snappy inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
               flags.jobHuntBeta ? 'translate-x-6' : 'translate-x-1'
             }`}
           />

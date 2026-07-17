@@ -41,11 +41,11 @@ export function AdminRoleSelect({ userId, currentRole }: { userId: string; curre
   }
 
   const colorMap: Record<Role, string> = {
-    admin: 'bg-purple-100 text-purple-700',
-    support: 'bg-indigo-100 text-indigo-700',
+    admin: 'bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-200',
+    support: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200',
     user: 'bg-muted text-foreground',
-    suspended: 'bg-red-100 text-red-700',
-    hr: 'bg-emerald-100 text-emerald-700',
+    suspended: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200',
+    hr: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200',
   };
 
   return (
@@ -54,7 +54,7 @@ export function AdminRoleSelect({ userId, currentRole }: { userId: string; curre
         value={role}
         onChange={(e) => void handleChange(e.target.value as Role)}
         disabled={pending}
-        className={`rounded px-2 py-0.5 text-xs font-medium ${colorMap[role]} focus:ring-brand-500 cursor-pointer border-0 focus:outline-none focus:ring-2`}
+        className={`ease-smooth rounded-full px-2 py-0.5 text-xs font-medium transition-colors duration-200 ${colorMap[role]} focus:ring-brand-500 cursor-pointer border-0 focus:outline-none focus:ring-2`}
       >
         <option value="user">user</option>
         <option value="admin">admin</option>

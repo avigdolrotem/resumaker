@@ -4,6 +4,7 @@ import { db, schema } from '@/db';
 import { Card, CardContent } from '@/components/ui/card';
 import { requireJobHuntBetaPage } from '@/lib/beta-gate';
 import { ApplicationsList } from '@/components/applications-list';
+import { Briefcase } from 'lucide-react';
 
 /**
  * /applications — tracker view. Lists every application the current user
@@ -39,14 +40,17 @@ export default async function ApplicationsPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
         <p className="text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
 
       {rows.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="text-muted-foreground py-16 text-center">
-            {t('empty')}
+          <CardContent className="py-16 text-center">
+            <div className="bg-brand-50 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+              <Briefcase className="text-brand-600 h-8 w-8" />
+            </div>
+            <p className="text-muted-foreground text-sm">{t('empty')}</p>
           </CardContent>
         </Card>
       ) : (

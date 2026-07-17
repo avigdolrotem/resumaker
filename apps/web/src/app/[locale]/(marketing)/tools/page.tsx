@@ -41,10 +41,7 @@ export default async function ToolsPage({ params }: { params: Promise<{ locale: 
   ];
 
   return (
-    <main
-      id="main"
-      className="dark:from-background dark:to-card/30 relative min-h-screen overflow-hidden bg-gradient-to-b from-neutral-50 to-white"
-    >
+    <div className="dark:from-background dark:to-card/30 from-background/0 to-background relative min-h-screen overflow-hidden bg-gradient-to-b">
       <AnimatedMeshBg intensity="subtle" />
       <section className="container relative mx-auto max-w-4xl px-4 py-20">
         <ScrollReveal>
@@ -76,6 +73,6 @@ export default async function ToolsPage({ params }: { params: Promise<{ locale: 
           ))}
         </div>
       </section>
-    </main>
+    </div>
   );
 }

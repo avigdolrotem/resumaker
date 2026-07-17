@@ -2,10 +2,10 @@
 
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { X, Sparkles, Lock } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 /**
  * Feature names — typed so telemetry stays clean. Add new ones as
@@ -81,84 +81,82 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier }: Upgr
     };
   }, [open, onOpenChange]);
 
-  if (!open || !portalTargetRef.current) return null;
+  if (!portalTargetRef.current) return null;
 
   // CTA is a mailto: to match the existing pricing-page waitlist UX
   // when PAYMENT_PROVIDER=none. Once payments go live, swap the
   // translation key's value to a /pricing href and this code is
   // unchanged.
-  const ctaHref = t('cta.href', {
-    feature,
-    defaultValue: `mailto:hello@resumaker.co.il?subject=Waitlist%20-%20${encodeURIComponent(feature)}`,
-  });
+  const ctaHref = t('cta.href');
 
   const titleId = `upgrade-modal-title-${feature}`;
   const descId = `upgrade-modal-desc-${feature}`;
 
   return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
-      aria-describedby={descId}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-    >
-      <div
-        className="motion-safe:animate-in motion-safe:fade-in absolute inset-0 bg-neutral-950/60 backdrop-blur-sm motion-safe:duration-150"
-        onClick={() => onOpenChange(false)}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          'bg-card border-border relative w-full max-w-md rounded-xl border p-6 shadow-2xl',
-          'motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200',
-        )}
-      >
-        <button
-          ref={closeRef}
-          type="button"
-          onClick={() => onOpenChange(false)}
-          aria-label={t('close')}
-          className="text-muted-foreground hover:bg-muted hover:text-foreground absolute end-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md transition"
+    <AnimatePresence>
+      {open && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          aria-describedby={descId}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
         >
-          <X className="h-4 w-4" />
-        </button>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            className="absolute inset-0 bg-neutral-950/50 backdrop-blur-md"
+            onClick={() => onOpenChange(false)}
+            aria-hidden
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 4 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+            className="glass-strong shadow-glass-lg relative w-full max-w-md rounded-2xl p-6"
+          >
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={() => onOpenChange(false)}
+              aria-label={t('close')}
+              className="text-muted-foreground hover:bg-accent/60 hover:text-foreground ease-smooth absolute end-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200"
+            >
+              <X className="h-4 w-4" />
+            </button>
 
-        <div className="bg-brand-50 dark:bg-brand-900/40 mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg">
-          {requiredTier === 'pro' ? (
-            <Sparkles className="text-brand-600 dark:text-brand-300 h-5 w-5" />
-          ) : (
-            <Lock className="text-brand-600 dark:text-brand-300 h-5 w-5" />
-          )}
+            <div className="from-brand-500/15 to-brand-500/5 mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br">
+              {requiredTier === 'pro' ? (
+                <Sparkles className="text-brand-600 dark:text-brand-300 h-5 w-5" />
+              ) : (
+                <Lock className="text-brand-600 dark:text-brand-300 h-5 w-5" />
+              )}
+            </div>
+
+            <h2 id={titleId} className="text-foreground text-lg font-semibold">
+              {t(`features.${feature}.title`)}
+            </h2>
+            <p id={descId} className="text-muted-foreground mt-2 text-sm">
+              {t(`features.${feature}.body`)}
+            </p>
+
+            <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                {t('later')}
+              </Button>
+              <Button asChild>
+                <a href={ctaHref} target={ctaHref.startsWith('mailto:') ? '_self' : '_blank'}>
+                  {t('cta.label')}
+                </a>
+              </Button>
+            </div>
+          </motion.div>
         </div>
-
-        <h2 id={titleId} className="text-foreground text-lg font-semibold">
-          {t(`features.${feature}.title`, {
-            defaultValue:
-              requiredTier === 'pro' ? 'This is a Pro feature' : 'This is a Plus feature',
-          })}
-        </h2>
-        <p id={descId} className="text-muted-foreground mt-2 text-sm">
-          {t(`features.${feature}.body`, {
-            defaultValue:
-              requiredTier === 'pro'
-                ? 'Resumaker Pro is launching soon. Join the waitlist and we’ll email you when it’s ready.'
-                : 'Resumaker Plus is launching soon. Join the waitlist and we’ll email you when it’s ready.',
-          })}
-        </p>
-
-        <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-            {t('later')}
-          </Button>
-          <Button asChild>
-            <a href={ctaHref} target={ctaHref.startsWith('mailto:') ? '_self' : '_blank'}>
-              {t('cta.label')}
-            </a>
-          </Button>
-        </div>
-      </div>
-    </div>,
+      )}
+    </AnimatePresence>,
     portalTargetRef.current,
   );
 }

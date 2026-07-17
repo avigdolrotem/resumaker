@@ -49,10 +49,7 @@ export default function SalaryEstimatorPage() {
   }
 
   return (
-    <main
-      id="main"
-      className="dark:from-background dark:to-card/30 relative min-h-screen overflow-hidden bg-gradient-to-b from-neutral-50 to-white py-20"
-    >
+    <div className="dark:from-background dark:to-card/30 from-background/0 to-background relative min-h-screen overflow-hidden bg-gradient-to-b py-20">
       <AnimatedMeshBg intensity="subtle" />
       <div className="container relative mx-auto max-w-2xl px-4">
         <div className="mb-10 text-center">
@@ -145,6 +142,6 @@ export default function SalaryEstimatorPage() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }

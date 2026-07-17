@@ -89,13 +89,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <GridPattern size={40} />
         <div
           aria-hidden
-          className="dark:from-background/0 dark:via-background/60 dark:to-background pointer-events-none absolute inset-0 bg-gradient-to-b from-white/0 via-white/60 to-white"
+          className="from-background/0 via-background/60 to-background pointer-events-none absolute inset-0 bg-gradient-to-b"
         />
 
         <div className="container relative mx-auto grid items-center gap-12 px-4 lg:grid-cols-2 lg:gap-16">
           <div className="text-center lg:text-start">
             <ScrollReveal>
-              <div className="border-brand-200/60 dark:border-brand-800/60 text-brand-700 dark:text-brand-200 dark:bg-card/70 inline-flex items-center gap-2 rounded-full border bg-white/70 px-4 py-1.5 text-xs font-medium shadow-sm backdrop-blur">
+              <div className="border-brand-200/60 dark:border-brand-800/60 text-brand-700 dark:text-brand-200 bg-card/70 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-medium shadow-sm backdrop-blur">
                 <span className="relative flex h-2 w-2">
                   <span className="bg-brand-400 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
                   <span className="bg-brand-500 relative inline-flex h-2 w-2 rounded-full" />
@@ -174,7 +174,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       {/* ─── FEATURES ─── */}
-      <section className="dark:from-background dark:to-card/30 relative overflow-hidden bg-gradient-to-b from-neutral-50 to-white py-24">
+      <section className="dark:from-background dark:to-card/30 from-muted/60 to-background relative overflow-hidden bg-gradient-to-b py-24">
         <GridPattern size={48} className="opacity-50 dark:opacity-20" />
         <div className="container relative mx-auto px-4">
           <ScrollReveal>
@@ -240,7 +240,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 <div className="relative">
                   <div className="from-brand-500 to-brand-700 shadow-brand-500/30 relative z-10 mx-auto flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-xl transition group-hover:scale-105">
                     <s.Icon className="h-10 w-10" />
-                    <span className="text-brand-700 ring-brand-100 absolute -end-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white text-sm font-bold shadow-md ring-2">
+                    <span className="text-brand-700 ring-brand-100 dark:text-brand-200 dark:ring-brand-800/60 bg-background absolute -end-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold shadow-md ring-2">
                       {i + 1}
                     </span>
                   </div>

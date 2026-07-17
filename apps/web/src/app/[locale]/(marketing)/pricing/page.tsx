@@ -79,7 +79,7 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
   });
 
   return (
-    <main className="relative overflow-hidden">
+    <div className="relative overflow-hidden">
       <AnimatedMeshBg intensity="subtle" className="fixed" />
       <div className="container relative mx-auto max-w-6xl px-4 py-16">
         <header className="mx-auto max-w-2xl text-center">
@@ -101,6 +101,6 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
           locale={locale}
         />
       </div>
-    </main>
+    </div>
   );
 }

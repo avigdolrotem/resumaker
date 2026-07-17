@@ -383,7 +383,7 @@ export default async function ExamplesPage({ params }: { params: Promise<{ local
       <GridPattern size={48} className="opacity-40" />
       <div
         aria-hidden
-        className="dark:from-background/40 dark:via-background/70 dark:to-background pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-white/70 to-white"
+        className="from-background/40 via-background/70 to-background pointer-events-none absolute inset-0 bg-gradient-to-b"
       />
 
       <div className="container relative mx-auto px-4 py-16">

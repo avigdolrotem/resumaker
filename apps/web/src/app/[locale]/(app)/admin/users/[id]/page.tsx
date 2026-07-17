@@ -319,10 +319,10 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                           g.status === 'success'
-                            ? 'bg-green-100 text-green-700'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-200'
                             : g.status === 'rejected_input'
-                              ? 'bg-amber-100 text-amber-700'
-                              : 'bg-red-100 text-red-700'
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-200'
+                              : 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-200'
                         }`}
                       >
                         {g.status}
@@ -367,7 +367,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                   {e.metadata != null && (
                     <details className="text-muted-foreground text-xs">
                       <summary className="hover:text-foreground cursor-pointer">metadata</summary>
-                      <pre className="bg-muted mt-1 max-w-xl overflow-x-auto rounded-lg p-2 text-[10px]">
+                      <pre className="bg-muted mt-1 max-w-xl overflow-x-auto rounded-xl p-2 text-[10px]">
                         {JSON.stringify(e.metadata, null, 2)}
                       </pre>
                     </details>

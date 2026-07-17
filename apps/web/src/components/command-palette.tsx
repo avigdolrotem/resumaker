@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
@@ -277,8 +278,6 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, filtered, activeIndex, runItem]);
 
-  if (!open) return null;
-
   // Group items by `group` for the list rendering.
   const grouped: Record<CommandItem['group'], CommandItem[]> = {
     Navigate: [],
@@ -291,114 +290,135 @@ export function CommandPalette() {
   let runningIndex = 0;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('ariaLabel')}
-      className="fixed inset-0 z-[100] flex items-start justify-center bg-neutral-950/60 p-4 pt-[15vh] backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) setOpen(false);
-      }}
-    >
-      <div className="border-border bg-card w-full max-w-xl overflow-hidden rounded-2xl border shadow-2xl">
-        {/* Header: search input + kbd hint */}
-        <div className="border-border flex items-center gap-3 border-b px-4 py-3">
-          <Search className="text-muted-foreground h-4 w-4" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setActiveIndex(0);
-            }}
-            placeholder={t('placeholder')}
-            className="placeholder:text-muted-foreground flex-1 bg-transparent text-sm outline-none"
-            aria-label={t('search')}
-          />
-          <kbd className="border-border bg-muted text-muted-foreground hidden rounded border px-1.5 py-0.5 font-mono text-[10px] sm:inline-block">
-            ESC
-          </kbd>
-        </div>
-
-        {/* Results */}
-        <div className="max-h-[60vh] overflow-y-auto py-2">
-          {filtered.length === 0 ? (
-            <div className="text-muted-foreground px-4 py-12 text-center text-sm">
-              {t('noMatches', { query })}
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('ariaLabel')}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
+          className="fixed inset-0 z-[100] flex items-start justify-center bg-neutral-950/50 p-4 pt-[15vh] backdrop-blur-md"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setOpen(false);
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: -8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: -4 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+            className="glass-strong shadow-glass-lg w-full max-w-xl overflow-hidden rounded-2xl"
+          >
+            {/* Header: search input + kbd hint */}
+            <div className="border-border/60 flex items-center gap-3 border-b px-4 py-3">
+              <Search className="text-muted-foreground h-4 w-4" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setActiveIndex(0);
+                }}
+                placeholder={t('placeholder')}
+                className="placeholder:text-muted-foreground flex-1 bg-transparent text-sm outline-none"
+                aria-label={t('search')}
+              />
+              <kbd className="border-border/60 bg-background/60 text-muted-foreground hidden rounded-md border px-1.5 py-0.5 font-mono text-[10px] sm:inline-block">
+                ESC
+              </kbd>
             </div>
-          ) : (
-            (['Navigate', 'Actions', 'Account'] as const).map((groupName) => {
-              const groupItems = grouped[groupName];
-              if (groupItems.length === 0) return null;
-              return (
-                <div key={groupName} className="mb-2">
-                  <div className="text-muted-foreground px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider">
-                    {t(`groups.${groupName}`)}
-                  </div>
-                  {groupItems.map((it) => {
-                    const idx = runningIndex++;
-                    const isActive = idx === activeIndex;
-                    return (
-                      <button
-                        key={it.id}
-                        type="button"
-                        role="option"
-                        aria-selected={isActive}
-                        onMouseEnter={() => setActiveIndex(idx)}
-                        onClick={() => void runItem(it)}
-                        className={`flex w-full items-center gap-3 px-3 py-2 text-sm transition ${
-                          isActive
-                            ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-100'
-                            : 'text-foreground hover:bg-muted'
-                        }`}
-                      >
-                        <it.Icon
-                          className={`h-4 w-4 shrink-0 ${
-                            isActive
-                              ? 'text-brand-600 dark:text-brand-300'
-                              : 'text-muted-foreground'
-                          }`}
-                        />
-                        <span className="flex-1 text-start">{it.label}</span>
-                        {isActive && (
-                          <ArrowRight className="text-brand-600 dark:text-brand-300 h-4 w-4" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              );
-            })
-          )}
-        </div>
 
-        {/* Footer hint */}
-        <div className="border-border text-muted-foreground flex items-center justify-between border-t px-4 py-2 text-[11px]">
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="h-3 w-3" />
-            <span>{t('footer.quickNav')}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span>
-              <kbd className="border-border bg-muted mx-0.5 rounded border px-1.5 py-0.5 font-mono">
-                ↑↓
-              </kbd>
-              {t('footer.navigate')}
-            </span>
-            <span>
-              <kbd className="border-border bg-muted mx-0.5 rounded border px-1.5 py-0.5 font-mono">
-                ↵
-              </kbd>
-              {t('footer.select')}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Shortcut keys={['mod', 'K']} /> {t('footer.toggle')}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+            {/* Results */}
+            <div className="max-h-[60vh] overflow-y-auto py-2">
+              {filtered.length === 0 ? (
+                <div className="text-muted-foreground px-4 py-12 text-center text-sm">
+                  {t('noMatches', { query })}
+                </div>
+              ) : (
+                (['Navigate', 'Actions', 'Account'] as const).map((groupName) => {
+                  const groupItems = grouped[groupName];
+                  if (groupItems.length === 0) return null;
+                  return (
+                    <div key={groupName} className="mb-2">
+                      <div className="text-muted-foreground px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider">
+                        {t(`groups.${groupName}`)}
+                      </div>
+                      {groupItems.map((it) => {
+                        const idx = runningIndex++;
+                        const isActive = idx === activeIndex;
+                        return (
+                          <button
+                            key={it.id}
+                            type="button"
+                            role="option"
+                            aria-selected={isActive}
+                            onMouseEnter={() => setActiveIndex(idx)}
+                            onClick={() => void runItem(it)}
+                            className={`ease-smooth relative mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors duration-200 ${
+                              isActive
+                                ? 'text-brand-700 dark:text-brand-100'
+                                : 'text-foreground hover:bg-accent/40'
+                            }`}
+                          >
+                            {isActive && (
+                              <motion.span
+                                layoutId="command-palette-active-item"
+                                className="from-brand-500/15 via-brand-500/10 to-brand-500/15 absolute inset-0 -z-10 rounded-xl bg-gradient-to-r"
+                                transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+                              />
+                            )}
+                            <it.Icon
+                              className={`h-4 w-4 shrink-0 ${
+                                isActive
+                                  ? 'text-brand-600 dark:text-brand-300'
+                                  : 'text-muted-foreground'
+                              }`}
+                            />
+                            <span className="flex-1 text-start">{it.label}</span>
+                            {isActive && (
+                              <ArrowRight className="text-brand-600 dark:text-brand-300 h-4 w-4" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Footer hint */}
+            <div className="border-border/60 text-muted-foreground flex items-center justify-between border-t px-4 py-2 text-[11px]">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="h-3 w-3" />
+                <span>{t('footer.quickNav')}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span>
+                  <kbd className="border-border/60 bg-background/60 mx-0.5 rounded-md border px-1.5 py-0.5 font-mono">
+                    ↑↓
+                  </kbd>
+                  {t('footer.navigate')}
+                </span>
+                <span>
+                  <kbd className="border-border/60 bg-background/60 mx-0.5 rounded-md border px-1.5 py-0.5 font-mono">
+                    ↵
+                  </kbd>
+                  {t('footer.select')}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Shortcut keys={['mod', 'K']} /> {t('footer.toggle')}
+                </span>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -425,7 +445,7 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
       type="button"
       onClick={open}
       aria-label={t('ariaLabel')}
-      className={`border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground inline-flex h-9 items-center gap-2 rounded-md border px-3 text-sm transition ${
+      className={`border-input bg-background/60 text-muted-foreground hover:border-brand-400/40 hover:bg-background hover:text-foreground ease-smooth inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 ${
         className ?? ''
       }`}
     >

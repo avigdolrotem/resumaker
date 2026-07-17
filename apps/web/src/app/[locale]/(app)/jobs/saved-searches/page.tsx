@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Search, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -121,8 +122,8 @@ export default function SavedSearchesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            <Plus className="me-2 inline h-4 w-4" />
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Plus className="h-4 w-4" />
             New saved search
           </CardTitle>
           <CardDescription>Leave a field empty to skip that filter.</CardDescription>
@@ -194,6 +195,7 @@ export default function SavedSearchesPage() {
                 type="checkbox"
                 checked={remoteOnly}
                 onChange={(e) => setRemoteOnly(e.target.checked)}
+                className="accent-brand-600 h-4 w-4 rounded"
               />
               Remote only
             </label>
@@ -210,58 +212,70 @@ export default function SavedSearchesPage() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-muted-foreground text-sm">Loading…</p>
+            <p className="text-muted-foreground animate-pulse text-sm">Loading…</p>
           ) : searches.length === 0 ? (
-            <p className="text-muted-foreground text-sm">None yet.</p>
+            <div className="animate-fade-in flex flex-col items-center gap-3 py-8 text-center">
+              <div className="bg-brand-50 dark:bg-brand-950/40 flex h-11 w-11 items-center justify-center rounded-full">
+                <Search className="text-brand-500 h-5 w-5" />
+              </div>
+              <p className="text-muted-foreground text-sm">None yet.</p>
+            </div>
           ) : (
             <ul className="divide-border divide-y">
-              {searches.map((s) => (
-                <li
-                  key={s.id}
-                  className="ease-smooth hover:bg-accent/40 -mx-2 flex items-start justify-between gap-3 rounded-xl px-2 py-3 transition-colors duration-300"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium">{s.name}</p>
-                    <p className="text-muted-foreground text-xs">
-                      {[
-                        s.query.q && `"${s.query.q}"`,
-                        s.query.company && `@${s.query.company}`,
-                        s.query.source,
-                        s.query.remote && 'remote',
-                      ]
-                        .filter(Boolean)
-                        .join(' · ') || 'any job'}
-                    </p>
-                    <p className="text-muted-foreground mt-1 text-[10px]">
-                      {s.lastNotifiedAt
-                        ? `Last digest: ${new Date(s.lastNotifiedAt).toLocaleDateString()}`
-                        : 'No digest sent yet'}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={s.alertFrequency}
-                      onChange={(e) =>
-                        updateFreq(s.id, e.target.value as 'daily' | 'weekly' | 'off')
-                      }
-                      className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 ease-smooth focus-visible:ring-brand-500/18 rounded-lg border px-2 py-1 text-xs backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
-                    >
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="off">Off</option>
-                    </select>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 text-red-600 hover:bg-red-50"
-                      onClick={() => remove(s.id)}
-                      aria-label="Delete"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </li>
-              ))}
+              <AnimatePresence initial={false}>
+                {searches.map((s) => (
+                  <motion.li
+                    key={s.id}
+                    layout
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                    className="ease-smooth hover:bg-accent/40 -mx-2 flex items-start justify-between gap-3 rounded-xl px-2 py-3 transition-colors duration-300"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium">{s.name}</p>
+                      <p className="text-muted-foreground text-xs">
+                        {[
+                          s.query.q && `"${s.query.q}"`,
+                          s.query.company && `@${s.query.company}`,
+                          s.query.source,
+                          s.query.remote && 'remote',
+                        ]
+                          .filter(Boolean)
+                          .join(' · ') || 'any job'}
+                      </p>
+                      <p className="text-muted-foreground mt-1 text-[10px]">
+                        {s.lastNotifiedAt
+                          ? `Last digest: ${new Date(s.lastNotifiedAt).toLocaleDateString()}`
+                          : 'No digest sent yet'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={s.alertFrequency}
+                        onChange={(e) =>
+                          updateFreq(s.id, e.target.value as 'daily' | 'weekly' | 'off')
+                        }
+                        className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 ease-smooth focus-visible:ring-brand-500/18 rounded-lg border px-2 py-1 text-xs backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
+                      >
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="off">Off</option>
+                      </select>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-red-600 hover:bg-red-50"
+                        onClick={() => remove(s.id)}
+                        aria-label="Delete"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </motion.li>
+                ))}
+              </AnimatePresence>
             </ul>
           )}
         </CardContent>

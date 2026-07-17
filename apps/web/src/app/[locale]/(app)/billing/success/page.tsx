@@ -27,7 +27,7 @@ export default async function BillingSuccessPage({
       <div className="animate-liquid-pop mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50">
         <CheckCircle2 className="h-10 w-10 text-emerald-500" />
       </div>
-      <h1 className="text-3xl font-bold sm:text-4xl">{t('title')}</h1>
+      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t('title')}</h1>
       <p className="text-muted-foreground mt-3 max-w-md text-lg">{t('subtitle')}</p>
       <Button asChild size="lg" className="mt-8">
         <Link href="/dashboard">{t('cta')}</Link>

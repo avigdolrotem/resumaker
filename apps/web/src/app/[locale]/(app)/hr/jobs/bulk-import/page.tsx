@@ -48,7 +48,7 @@ export default function BulkImportPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Bulk import jobs</h1>
         <p className="text-muted-foreground mt-1">
@@ -82,7 +82,7 @@ export default function BulkImportPage() {
       </Card>
 
       {error && (
-        <Card className="border-red-200">
+        <Card className="animate-liquid-pop border-red-200">
           <CardContent className="pt-5">
             <p className="text-sm text-red-600">{error}</p>
           </CardContent>
@@ -90,9 +90,9 @@ export default function BulkImportPage() {
       )}
 
       {result && (
-        <Card>
+        <Card className="animate-liquid-pop">
           <CardContent className="space-y-2 pt-5">
-            <p className="font-medium text-green-700">
+            <p className="font-medium text-emerald-700">
               {result.imported} job{result.imported !== 1 ? 's' : ''} imported successfully.
             </p>
             {result.errors.length > 0 && (

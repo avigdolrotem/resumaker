@@ -32,13 +32,14 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
       {/* Backdrop layers — same recipe as the marketing hero */}
       <AnimatedMeshBg intensity="subtle" />
       <GridPattern size={48} className="opacity-40 dark:opacity-15" />
-      {/* Light-mode scrim that fades content out toward the bottom; in
-          dark mode we tint the scrim with the dark background color
-          instead of forcing white — that was the white-on-white culprit
-          on auth pages. */}
+      {/* Scrim that fades content out toward the bottom, tinted with the
+          theme's own background token on both sides — dark mode used to
+          get a hardcoded white scrim forced over it (the white-on-white
+          culprit on auth pages); token-based on both ends means it can't
+          drift out of sync with whichever theme is active. */}
       <div
         aria-hidden
-        className="dark:from-background/0 dark:via-background/40 dark:to-background/80 pointer-events-none absolute inset-0 bg-gradient-to-b from-white/0 via-white/40 to-white/80"
+        className="from-background/0 via-background/40 to-background/80 pointer-events-none absolute inset-0 bg-gradient-to-b"
       />
 
       <header className="relative z-10">

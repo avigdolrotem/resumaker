@@ -68,7 +68,7 @@ export default async function AdminPage() {
           label="Users"
           value={(usersStat?.value ?? 0).toLocaleString()}
           delta={usersTodayStat?.value ? `+${usersTodayStat.value} today` : undefined}
-          color="from-indigo-500 to-violet-600"
+          color="from-brand-500 to-brand-700"
         />
         <MetricCard
           Icon={FileText}
@@ -87,7 +87,7 @@ export default async function AdminPage() {
           Icon={Activity}
           label="Est. cost"
           value={`$${estimatedCost.toFixed(2)}`}
-          color="from-purple-500 to-purple-700"
+          color="from-accent-500 to-accent-700"
         />
         <MetricCard
           Icon={AlertTriangle}
@@ -213,9 +213,9 @@ function MetricCard({
 function StatusBadge({ status }: { status: string }) {
   const styles =
     status === 'success'
-      ? 'bg-green-100 text-green-700'
+      ? 'bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-200'
       : status === 'rejected_input'
-        ? 'bg-amber-100 text-amber-700'
-        : 'bg-red-100 text-red-700';
+        ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-200'
+        : 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-200';
   return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles}`}>{status}</span>;
 }

@@ -62,7 +62,7 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold">{t('title')}</h1>
-            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+            <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-200">
               {t('betaBadge')}
             </span>
           </div>
@@ -84,8 +84,12 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
         </Card>
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
-          {jobs.map((j) => (
-            <Card key={j.id} className="hover:border-violet-300">
+          {jobs.map((j, i) => (
+            <Card
+              key={j.id}
+              className="animate-slide-up hover:border-violet-300"
+              style={{ animationDelay: `${Math.min(i, 8) * 40}ms`, animationFillMode: 'backwards' }}
+            >
               <CardContent className="space-y-2 pt-5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">

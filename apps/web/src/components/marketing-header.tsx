@@ -34,73 +34,74 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
   const isAuthed = Boolean(session);
 
   return (
-    <header className="sticky top-0 z-40">
-      <div
-        className="border-border/40 bg-background/65 relative border-b backdrop-blur-2xl backdrop-saturate-150"
+    // Floating glass island, matching design-system/components/navigation.html
+    // and the (app) header — same shell on both signed-in and signed-out
+    // shells so the transition between them (e.g. marketing → dashboard)
+    // doesn't feel like two different products.
+    <div className="sticky top-3 z-40 mt-3 px-3 sm:top-4 sm:mt-4 sm:px-4">
+      <header
+        className="glass-strong shadow-glass-lg relative mx-auto flex h-16 max-w-7xl items-center justify-between rounded-full px-4"
         style={{
-          // Same brand-tinted lift used in the app header — keeps both
-          // shells visually consistent across signed-in / signed-out.
-          boxShadow: 'inset 0 1px 0 hsl(252 75% 55% / 0.08), 0 1px 0 0 hsl(252 75% 55% / 0.04)',
+          boxShadow: 'inset 0 1px 0 hsl(252 75% 90% / 0.35), 0 12px 34px hsl(260 55% 20% / 0.14)',
         }}
       >
-        {/* Brand-tinted gradient line at the bottom edge */}
+        {/* Brand-tinted sheen along the top edge, inset past the pill's
+            rounded corners. */}
         <div
           aria-hidden
-          className="from-brand-500/0 via-brand-500/40 to-brand-500/0 absolute inset-x-0 bottom-0 h-px bg-gradient-to-r"
+          className="from-brand-500/0 via-brand-500/50 to-brand-500/0 pointer-events-none absolute inset-x-16 top-0 h-px bg-gradient-to-r"
         />
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Logo size="md" href={isAuthed ? '/dashboard' : '/'} />
+        <Logo size="md" href={isAuthed ? '/dashboard' : '/'} />
 
-          {/* Desktop cmd+K trigger — center column, hidden on mobile
-              where the hamburger drawer is the equivalent. */}
-          <CommandPaletteTrigger className="mx-4 hidden max-w-xs flex-1 md:inline-flex" />
+        {/* Desktop cmd+K trigger — center column, hidden on mobile
+            where the hamburger drawer is the equivalent. */}
+        <CommandPaletteTrigger className="mx-4 hidden max-w-xs flex-1 md:inline-flex" />
 
-          <nav className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="/examples"
-              className="text-foreground/80 hover:text-brand-700 hover:bg-accent/60 dark:hover:text-brand-200 ease-snappy hidden rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 md:inline"
-            >
-              {t('home')}
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-foreground/80 hover:text-brand-700 hover:bg-accent/60 dark:hover:text-brand-200 ease-snappy hidden rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 md:inline"
-            >
-              {t('pricing')}
-            </Link>
-            <LocaleSwitcher />
-            <ThemeToggle />
+        <nav className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/examples"
+            className="text-foreground/80 hover:text-brand-700 hover:bg-accent/60 dark:hover:text-brand-200 ease-snappy hidden rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 md:inline"
+          >
+            {t('home')}
+          </Link>
+          <Link
+            href="/pricing"
+            className="text-foreground/80 hover:text-brand-700 hover:bg-accent/60 dark:hover:text-brand-200 ease-snappy hidden rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 md:inline"
+          >
+            {t('pricing')}
+          </Link>
+          <LocaleSwitcher />
+          <ThemeToggle />
 
-            {isAuthed ? (
-              // Signed in: show "Dashboard" CTA so the user knows they
-              // can jump back into the app from any marketing page. No
-              // duplicate "Sign in" / "Sign up" links (those are for
-              // anonymous visitors only).
-              <GlowButton href="/dashboard" size="md">
-                <LayoutDashboard className="h-4 w-4" />
-                {t('dashboard')}
+          {isAuthed ? (
+            // Signed in: show "Dashboard" CTA so the user knows they
+            // can jump back into the app from any marketing page. No
+            // duplicate "Sign in" / "Sign up" links (those are for
+            // anonymous visitors only).
+            <GlowButton href="/dashboard" size="md">
+              <LayoutDashboard className="h-4 w-4" />
+              {t('dashboard')}
+            </GlowButton>
+          ) : (
+            // Sign-in is now the primary (glowing) CTA, sign-up the
+            // secondary text link. Per user request — they're an
+            // existing user testing repeatedly and sign-in is the
+            // common-path action.
+            <>
+              <Link
+                href="/sign-up"
+                className="text-foreground/80 hover:text-brand-700 hover:bg-accent/60 dark:hover:text-brand-200 ease-snappy hidden rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 md:inline"
+              >
+                {t('signUp')}
+              </Link>
+              <GlowButton href="/sign-in" size="md">
+                {t('signIn')}
               </GlowButton>
-            ) : (
-              // Sign-in is now the primary (glowing) CTA, sign-up the
-              // secondary text link. Per user request — they're an
-              // existing user testing repeatedly and sign-in is the
-              // common-path action.
-              <>
-                <Link
-                  href="/sign-up"
-                  className="text-foreground/80 hover:text-brand-700 hover:bg-accent/60 dark:hover:text-brand-200 ease-snappy hidden rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 md:inline"
-                >
-                  {t('signUp')}
-                </Link>
-                <GlowButton href="/sign-in" size="md">
-                  {t('signIn')}
-                </GlowButton>
-              </>
-            )}
-            <MobileDrawer />
-          </nav>
-        </div>
-      </div>
-    </header>
+            </>
+          )}
+          <MobileDrawer />
+        </nav>
+      </header>
+    </div>
   );
 }

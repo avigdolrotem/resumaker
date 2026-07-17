@@ -21,7 +21,7 @@ export function LocaleSwitcher() {
           { locale: otherLocale },
         )
       }
-      className="hover:text-brand-600 text-foreground text-sm font-medium"
+      className="hover:text-brand-600 text-foreground ease-smooth rounded-full px-2 py-1 text-sm font-medium transition-colors duration-200"
     >
       {label}
     </button>

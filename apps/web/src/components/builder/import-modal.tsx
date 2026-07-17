@@ -82,7 +82,7 @@ export function ImportModal({ open, onClose, onApply }: ImportModalProps) {
           type="button"
           onClick={close}
           aria-label={t('close')}
-          className="text-muted-foreground hover:text-foreground hover:bg-muted ease-snappy absolute end-4 top-4 rounded-full p-1 transition-colors duration-200 active:scale-90"
+          className="text-muted-foreground hover:text-foreground hover:bg-accent/60 ease-snappy absolute end-4 top-4 rounded-full p-1 transition-colors duration-200 active:scale-90"
         >
           <X className="h-5 w-5" />
         </button>
@@ -286,7 +286,7 @@ function PreviewRow({
         type="checkbox"
         checked={ok}
         onChange={(e) => onToggle(e.target.checked)}
-        className="mt-0.5 rounded"
+        className="accent-brand-600 mt-0.5 h-4 w-4 rounded"
         aria-label={t('includeAria', { label })}
       />
       <span>

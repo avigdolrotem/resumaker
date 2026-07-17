@@ -39,9 +39,15 @@ export function GlowButton({
   return (
     <Link
       href={href}
-      className={`ease-snappy group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.96] ${sizeClass}`}
+      className={`ease-snappy group relative inline-flex items-center justify-center gap-2 rounded-full font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.96] ${sizeClass}`}
     >
-      {/* Glow ring */}
+      {/* Glow ring — deliberately extends past the pill's edge to read as
+          a soft halo, not a hard-edged fill. The parent must NOT clip
+          overflow, or this gets cut into a flat rectangular box instead
+          of a blurred glow (this was the "shallow rectangle" artifact
+          around the sign-in/CTA buttons). The two layers below don't
+          need ancestor clipping — each already paints its own exact
+          rounded-full shape, so they can't spill regardless. */}
       <span
         aria-hidden
         className="from-brand-500 to-brand-500 absolute -inset-0.5 rounded-full bg-gradient-to-r via-purple-500 opacity-75 blur-md transition group-hover:opacity-100 group-hover:blur-lg"
@@ -49,12 +55,13 @@ export function GlowButton({
       {/* Solid background */}
       <span
         aria-hidden
-        className="from-brand-600 to-brand-800 absolute inset-0 rounded-full bg-gradient-to-br"
+        className="from-brand-600 to-brand-800 absolute inset-0 overflow-hidden rounded-full bg-gradient-to-br"
       />
-      {/* Shine pass on hover */}
+      {/* Shine pass on hover — clipped to its own rounded box so the
+          sweep doesn't spill past the corners. */}
       <span
         aria-hidden
-        className="ease-snappy absolute inset-0 -translate-x-full rounded-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+        className="ease-snappy absolute inset-0 -translate-x-full overflow-hidden rounded-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
       />
       {/* Content above all layers */}
       <span className="relative z-10 inline-flex items-center gap-2">{children}</span>

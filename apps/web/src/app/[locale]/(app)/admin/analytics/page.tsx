@@ -148,7 +148,7 @@ export default async function AdminAnalyticsPage() {
                           className="rounded-full px-1.5 py-0.5"
                           style={{
                             backgroundColor: `rgba(59,130,246,${pct / 100})`,
-                            color: pct > 50 ? '#fff' : '#374151',
+                            color: pct > 50 ? '#fff' : 'var(--color-muted-foreground)',
                           }}
                         >
                           {pct}%

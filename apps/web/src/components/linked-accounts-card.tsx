@@ -147,7 +147,7 @@ export function LinkedAccountsCard() {
         {loading ? (
           <div className="space-y-2">
             {[1, 2].map((i) => (
-              <div key={i} className="bg-muted h-14 animate-pulse rounded-lg" />
+              <div key={i} className="bg-muted h-14 animate-pulse rounded-xl" />
             ))}
           </div>
         ) : (
@@ -158,7 +158,7 @@ export function LinkedAccountsCard() {
             return (
               <div
                 key={provider}
-                className="border-border bg-card flex items-center justify-between gap-3 rounded-lg border p-3"
+                className="border-border/60 bg-muted/30 ease-smooth flex items-center justify-between gap-3 rounded-xl border p-3 transition-colors duration-300"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <div
@@ -208,7 +208,7 @@ export function LinkedAccountsCard() {
           // Unlinking ALL providers in that case would lock them out;
           // the API also rejects that, but the warning helps users
           // proactively set a password.
-          <div className="flex gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-200">
+          <div className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-200">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
               You don&apos;t have a password set. Add one in the security section above before

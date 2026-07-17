@@ -53,7 +53,7 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
   const status = await fetchHealth();
 
   return (
-    <main className="relative mx-auto max-w-3xl overflow-hidden px-4 py-12">
+    <div className="relative mx-auto max-w-3xl overflow-hidden px-4 py-12">
       <h1 className="text-3xl font-bold">{isHe ? 'סטטוס מערכת' : 'System status'}</h1>
       <p className="text-muted-foreground mt-2">
         {isHe ? 'מתעדכן כל 30 שניות. בעדכון נכון לתאריך:' : 'Refreshed every 30 seconds. As of:'}{' '}
@@ -111,6 +111,6 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
           {isHe ? 'פנה לתמיכה' : 'Contact support'}
         </a>
       </p>
-    </main>
+    </div>
   );
 }

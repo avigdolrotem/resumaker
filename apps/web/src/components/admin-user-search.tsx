@@ -66,7 +66,7 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)}
-          className="focus:ring-brand-500 border-input bg-background text-foreground h-10 rounded-md border px-3 text-sm focus:outline-none focus:ring-2"
+          className="border-input bg-background/60 text-foreground ease-smooth focus-visible:border-brand-400/60 focus-visible:bg-background focus-visible:ring-brand-500/18 h-10 rounded-xl border px-3 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
         >
           <option value="all">All roles</option>
           <option value="user">user</option>
@@ -140,7 +140,7 @@ export function AdminUserSearch({ users }: { users: AdminUser[] }) {
                         URL manually — the page existed but was orphaned. */}
                     <Link
                       href={`/admin/users/${u.id}`}
-                      className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs"
+                      className="text-muted-foreground hover:bg-accent hover:text-foreground inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs transition-colors"
                       aria-label={`View user ${u.email}`}
                     >
                       View

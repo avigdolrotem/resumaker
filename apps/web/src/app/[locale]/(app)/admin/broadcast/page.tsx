@@ -153,7 +153,7 @@ export default function AdminBroadcastPage() {
                     <td className="py-2 uppercase">{row.locale}</td>
                     <td className="py-2">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${row.status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${row.status === 'sent' ? 'bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-200' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-200'}`}
                       >
                         {row.status}
                       </span>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { Copy, RefreshCw, Save, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -128,7 +129,7 @@ export default function NewCoverLetterPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{t('newTitle')}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('newTitle')}</h1>
           <p className="text-muted-foreground mt-2">{t('subtitle')}</p>
         </div>
         {/* Same picker as the resume builder — backed by the global
@@ -192,69 +193,114 @@ export default function NewCoverLetterPage() {
 
         {/* Preview */}
         <div className="lg:sticky lg:top-24 lg:self-start">
-          {error && (
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="pt-6 text-red-800">{error}</CardContent>
-            </Card>
-          )}
+          {/* error/empty/loading/result are mutually exclusive — `generate()`
+              always clears error+letter before setting loading, so exactly
+              one branch below is ever true. AnimatePresence + a per-branch
+              key gives the panel a liquid cross-fade instead of an instant
+              snap between states, matching the spring recipe in
+              upgrade-modal.tsx. */}
+          <AnimatePresence mode="wait">
+            {error && (
+              <motion.div
+                key="error"
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+              >
+                <Card className="border-red-200 bg-red-50">
+                  <CardContent className="pt-6 text-red-800">{error}</CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-          {!letter && !loading && !error && (
-            <Card className="border-dashed">
-              <CardContent className="text-muted-foreground py-24 text-center">
-                {t('empty')}
-              </CardContent>
-            </Card>
-          )}
+            {!letter && !loading && !error && (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+              >
+                <Card className="border-dashed">
+                  <CardContent className="text-muted-foreground py-24 text-center">
+                    {t('empty')}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-          {loading && (
-            <Card>
-              <CardContent className="py-24 text-center" role="status" aria-live="polite">
-                <LiquidSpinner size={32} className="mx-auto mb-4" />
-                <p className="text-muted-foreground">{t('generating')}</p>
-              </CardContent>
-            </Card>
-          )}
+            {loading && (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+              >
+                <Card>
+                  <CardContent className="py-24 text-center" role="status" aria-live="polite">
+                    <LiquidSpinner size={32} className="mx-auto mb-4" />
+                    <p className="text-muted-foreground">{t('generating')}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-          {letter && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between text-base">
-                  <span>{t('title')}</span>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={copyToClipboard}>
-                      <Copy className="me-1 h-4 w-4" />
-                      {t('copy')}
-                    </Button>
-                    {!savedId && (
-                      <Button variant="outline" size="sm" onClick={handleSave} disabled={saving}>
-                        <Save className="me-1 h-4 w-4" />
-                        {saving ? '…' : 'Save'}
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setLetter(null);
-                        setSavedId(null);
-                        void generate({
-                          preventDefault: () => {},
-                        } as React.FormEvent<HTMLFormElement>);
-                      }}
-                    >
-                      <RefreshCw className="me-1 h-4 w-4" />
-                      {t('regenerate')}
-                    </Button>
-                  </div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-foreground whitespace-pre-wrap text-sm leading-relaxed">
-                  {letter}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            {letter && (
+              <motion.div
+                key="letter"
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between text-base">
+                      <span>{t('title')}</span>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" onClick={copyToClipboard}>
+                          <Copy className="me-1 h-4 w-4" />
+                          {t('copy')}
+                        </Button>
+                        {!savedId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleSave}
+                            disabled={saving}
+                          >
+                            <Save className="me-1 h-4 w-4" />
+                            {saving ? '…' : 'Save'}
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setLetter(null);
+                            setSavedId(null);
+                            void generate({
+                              preventDefault: () => {},
+                            } as React.FormEvent<HTMLFormElement>);
+                          }}
+                        >
+                          <RefreshCw className="me-1 h-4 w-4" />
+                          {t('regenerate')}
+                        </Button>
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-foreground whitespace-pre-wrap text-sm leading-relaxed">
+                      {letter}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

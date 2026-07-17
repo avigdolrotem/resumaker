@@ -92,9 +92,9 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
       <AnimatedMeshBg intensity="subtle" />
       <div
         aria-hidden
-        className="dark:from-background/40 dark:via-background/70 dark:to-background pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-white/70 to-white"
+        className="from-background/40 via-background/70 to-background pointer-events-none absolute inset-0 bg-gradient-to-b"
       />
-      <main className="relative mx-auto max-w-3xl px-4 py-12">
+      <div className="relative mx-auto max-w-3xl px-4 py-12">
         <ScrollReveal>
           <h1 className="text-3xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground mt-2">{t('subtitle')}</p>
@@ -127,7 +127,7 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
             </a>
           </p>
         </GlassPanel>
-      </main>
+      </div>
     </div>
   );
 }

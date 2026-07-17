@@ -138,12 +138,12 @@ export function ModelPicker() {
                   onClick={() => pick(m)}
                   disabled={saving === m.id}
                   className={cn(
-                    'flex w-full items-center justify-between gap-2 px-3 py-2 text-start text-sm transition',
+                    'ease-smooth flex w-full items-center justify-between gap-2 px-3 py-2 text-start text-sm transition-colors duration-200',
                     selected
-                      ? 'bg-brand-50 dark:bg-brand-900/30'
+                      ? 'from-brand-500/15 via-brand-500/10 to-brand-500/15 bg-gradient-to-r'
                       : allowed
-                        ? 'hover:bg-muted'
-                        : 'hover:bg-muted/60 opacity-70',
+                        ? 'hover:bg-accent/40'
+                        : 'hover:bg-accent/20 opacity-70',
                   )}
                 >
                   <div className="min-w-0 flex-1">

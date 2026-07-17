@@ -53,10 +53,10 @@ export function TemplatePicker({ value, onChange, userTier }: Props) {
             aria-pressed={selected}
             aria-label={t(`${tpl.id}.name`)}
             className={[
-              'group relative aspect-[3/4] overflow-hidden rounded-lg border-2 transition',
+              'ease-smooth group relative aspect-[3/4] overflow-hidden rounded-xl border-2 transition-all duration-300',
               selected
-                ? 'border-violet-600 ring-2 ring-violet-200'
-                : 'border-border hover:border-violet-400',
+                ? 'border-brand-600 ring-brand-200 dark:ring-brand-800/60 ring-2'
+                : 'border-border hover:border-brand-400',
               locked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
             ].join(' ')}
           >
@@ -66,7 +66,7 @@ export function TemplatePicker({ value, onChange, userTier }: Props) {
               <p className="text-[10px] text-white/80">{t(`${tpl.id}.subtitle`)}</p>
             </div>
             {selected && (
-              <span className="absolute end-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-violet-600 text-white">
+              <span className="bg-brand-600 absolute end-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-white shadow-md">
                 <Check className="h-3.5 w-3.5" />
               </span>
             )}

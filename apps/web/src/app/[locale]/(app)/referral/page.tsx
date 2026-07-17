@@ -69,7 +69,7 @@ export default function ReferralPage() {
         <div className="animate-liquid-pop mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-violet-600 text-white shadow-lg shadow-purple-500/30">
           <Gift className="h-7 w-7" />
         </div>
-        <h1 className="text-3xl font-bold">{t('title')}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
         <p className="text-muted-foreground mt-3">{t('subtitle')}</p>
       </div>
 

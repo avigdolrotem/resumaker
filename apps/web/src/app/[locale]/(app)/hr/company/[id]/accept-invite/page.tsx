@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
+import { Building2, CheckCircle2, Loader2, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -46,24 +47,40 @@ export default function AcceptInvitePage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
+    <div className="flex min-h-[60vh] items-center justify-center p-6">
       <Card className="animate-liquid-pop w-full max-w-md">
         <CardHeader>
-          <CardTitle>Company Invitation</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="text-brand-600 h-5 w-5" />
+            Company Invitation
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {status === 'idle' && token && (
-            <>
+            <div className="animate-fade-in space-y-4">
               <p className="text-muted-foreground">
                 You have been invited to join a company on Resumaker.
               </p>
               <Button onClick={() => void handleAccept()}>Accept invitation</Button>
-            </>
+            </div>
           )}
-          {status === 'loading' && <p className="text-muted-foreground">Accepting…</p>}
-          {status === 'success' && <p className="text-green-600">{message}</p>}
+          {status === 'loading' && (
+            <p className="text-muted-foreground animate-fade-in flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Accepting…
+            </p>
+          )}
+          {status === 'success' && (
+            <p className="animate-fade-in flex items-center gap-2 text-emerald-600">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              {message}
+            </p>
+          )}
           {status === 'error' && (
-            <p className="text-red-600">{message || 'Invalid or expired invite.'}</p>
+            <p className="animate-fade-in flex items-center gap-2 text-red-600">
+              <XCircle className="h-4 w-4 shrink-0" />
+              {message || 'Invalid or expired invite.'}
+            </p>
           )}
         </CardContent>
       </Card>

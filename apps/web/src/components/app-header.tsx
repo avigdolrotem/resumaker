@@ -22,24 +22,27 @@ export function AppHeader() {
   const { data: session, isPending } = useSession();
 
   return (
-    <header
-      className="border-border/50 bg-background/75 sticky top-0 z-40 border-b backdrop-blur-2xl backdrop-saturate-150"
-      style={{
-        // Subtle brand gradient at the very top — invisible-ish in light
-        // mode (a hair of violet), more noticeable in dark mode where
-        // it adds depth to an otherwise flat surface.
-        boxShadow: 'inset 0 1px 0 hsl(252 75% 55% / 0.08), 0 1px 0 0 hsl(252 75% 55% / 0.04)',
-      }}
-    >
-      {/* Animated brand-tinted glow bar at the bottom edge — adds
-          life to the header without being noisy. Only renders if
-          motion is allowed (respects prefers-reduced-motion via the
-          underlying CSS). */}
-      <div
-        aria-hidden
-        className="from-brand-500/0 via-brand-500/40 to-brand-500/0 absolute inset-x-0 bottom-0 h-px bg-gradient-to-r"
-      />
-      <div className="container mx-auto flex h-16 items-center justify-between gap-2 px-4">
+    // Outer sticky wrapper owns the viewport offset — the header itself
+    // floats as a detached glass island (per design-system/components/
+    // navigation.html) rather than docking edge-to-edge like a
+    // conventional bar. `px-3` keeps it off the screen edges on mobile
+    // too, not just desktop.
+    <div className="sticky top-3 z-40 mt-3 px-3 sm:top-4 sm:mt-4 sm:px-4">
+      <header
+        className="glass-strong shadow-glass-lg relative mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 rounded-full px-4"
+        style={{
+          // Inner top highlight (glass "sheen") + a soft ambient drop
+          // shadow so the pill visibly lifts off the page instead of
+          // reading as a flat rounded box.
+          boxShadow: 'inset 0 1px 0 hsl(252 75% 90% / 0.35), 0 12px 34px hsl(260 55% 20% / 0.14)',
+        }}
+      >
+        {/* Brand-tinted sheen along the top edge, inset past the pill's
+            rounded corners so it doesn't poke outside the curve. */}
+        <div
+          aria-hidden
+          className="from-brand-500/0 via-brand-500/50 to-brand-500/0 pointer-events-none absolute inset-x-16 top-0 h-px bg-gradient-to-r"
+        />
         <Logo size="md" href="/dashboard" />
 
         {/* Center: command-palette trigger. Desktop only — mobile gets
@@ -82,7 +85,7 @@ export function AppHeader() {
           <NavLink href="/settings" icon={<Settings className="h-4 w-4" />} label={t('settings')} />
 
           {/* Divider only when desktop nav items are visible */}
-          <div className="bg-border mx-2 hidden h-6 w-px md:block" />
+          <div className="bg-border/60 mx-2 hidden h-6 w-px md:block" />
 
           {/* Locale + theme: desktop only. Both are available in the
               mobile drawer. Keeps the mobile bar uncluttered so the
@@ -112,8 +115,8 @@ export function AppHeader() {
               every nav item + theme + locale + profile + sign-out. */}
           <MobileDrawer />
         </nav>
-      </div>
-    </header>
+      </header>
+    </div>
   );
 }
 

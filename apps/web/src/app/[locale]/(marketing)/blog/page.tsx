@@ -31,11 +31,11 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
   }
 
   return (
-    <main id="main" className="relative min-h-screen overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden">
       <AnimatedMeshBg intensity="subtle" />
       <div
         aria-hidden
-        className="dark:from-background/40 dark:via-background/70 dark:to-background pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-white/70 to-white"
+        className="from-background/40 via-background/70 to-background pointer-events-none absolute inset-0 bg-gradient-to-b"
       />
       <section className="container relative mx-auto max-w-4xl px-4 py-20">
         <ScrollReveal>
@@ -82,6 +82,6 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
           <p className="text-muted-foreground py-16 text-center">{t('noPosts')}</p>
         )}
       </section>
-    </main>
+    </div>
   );
 }

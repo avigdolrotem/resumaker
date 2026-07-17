@@ -88,7 +88,7 @@ function VerifyPendingInner() {
           {t('verifyPending.instruction')}
         </p>
 
-        <div className="bg-muted/40 text-muted-foreground space-y-1.5 rounded-md border p-3 text-xs">
+        <div className="bg-muted/40 text-muted-foreground space-y-1.5 rounded-xl border p-3 text-xs">
           <p>{t('verifyPending.spam')}</p>
           <p>{t('verifyPending.ttl')}</p>
         </div>

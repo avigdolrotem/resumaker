@@ -3,6 +3,7 @@ import { Link } from '@/i18n/navigation';
 import { notFound } from 'next/navigation';
 import type { Locale } from '@/i18n/routing';
 import { getAllPostMeta, getPostContent } from '@/lib/blog/posts';
+import { ScrollReveal } from '@/components/scroll-reveal';
 import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
 import { Calendar, User, ArrowLeft, ArrowRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -39,23 +40,26 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   return (
-    <main id="main" className="bg-background min-h-screen">
-      <article className="container mx-auto max-w-3xl px-4 py-20">
-        <Link
-          href="/blog"
-          className="text-brand-700 hover:text-brand-900 dark:text-brand-300 dark:hover:text-brand-100 mb-8 inline-flex items-center gap-1.5 text-sm font-medium transition"
-        >
-          <BackIcon className="h-4 w-4" />
-          {t('backToBlog')}
-        </Link>
+    // The (marketing) layout's own <main id="main"> already wraps every
+    // page, so this is a plain <div> — a second <main> would be an
+    // invalid nested landmark with a duplicate id.
+    <div className="relative min-h-screen overflow-hidden">
+      <AnimatedMeshBg intensity="subtle" />
+      <div
+        aria-hidden
+        className="from-background/40 via-background/70 to-background pointer-events-none absolute inset-0 bg-gradient-to-b"
+      />
+      <article className="container relative mx-auto max-w-3xl px-4 py-20">
+        <ScrollReveal>
+          <Link
+            href="/blog"
+            className="text-brand-700 hover:text-brand-900 dark:text-brand-300 dark:hover:text-brand-100 ease-smooth mb-8 inline-flex items-center gap-1.5 text-sm font-medium transition-colors"
+          >
+            <BackIcon className="h-4 w-4" />
+            {t('backToBlog')}
+          </Link>
 
-        <header className="relative mb-10 overflow-hidden rounded-3xl py-8">
-          <AnimatedMeshBg intensity="subtle" />
-          <div
-            aria-hidden
-            className="dark:from-background/50 dark:via-background/85 dark:to-background/95 pointer-events-none absolute inset-0 bg-gradient-to-b from-white/50 via-white/85 to-white/95"
-          />
-          <div className="relative">
+          <header className="glass bg-card/70 rounded-2xl p-8 sm:p-10">
             <div className="text-muted-foreground mb-4 flex flex-wrap items-center gap-4 text-sm">
               <span className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" />
@@ -71,13 +75,17 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
             <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{post.meta.title}</h1>
             <p className="text-muted-foreground mt-4 text-xl">{post.meta.summary}</p>
-          </div>
-        </header>
+          </header>
+        </ScrollReveal>
 
-        <div className="prose prose-neutral dark:prose-invert max-w-none">
-          <ReactMarkdown>{post.content}</ReactMarkdown>
-        </div>
+        <ScrollReveal delay={0.1}>
+          <div className="glass bg-card/70 mt-10 rounded-2xl p-8 sm:p-10">
+            <div className="prose prose-neutral dark:prose-invert max-w-none">
+              <ReactMarkdown>{post.content}</ReactMarkdown>
+            </div>
+          </div>
+        </ScrollReveal>
       </article>
-    </main>
+    </div>
   );
 }

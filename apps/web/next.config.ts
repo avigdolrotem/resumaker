@@ -80,9 +80,17 @@ const nextConfig: NextConfig = {
             : []),
           {
             // Production CSP. `unsafe-eval` removed (Next 16 + React 19 don't
-            // require it). `unsafe-inline` on script-src remains because Next's
-            // hydration script is inlined; nonce-based CSP for that is the
-            // post-launch tightening goal.
+            // require it at runtime). `unsafe-inline` on script-src remains
+            // because Next's hydration script is inlined; nonce-based CSP for
+            // that is the post-launch tightening goal.
+            //
+            // Dev-only exception: React's development build still calls
+            // eval() itself (for reconstructing component stack traces in
+            // warnings/errors) even though production never does — without
+            // 'unsafe-eval' here, every dev session logs a permanent "1
+            // Issue" console error that has nothing to do with real app
+            // code, drowning out actual problems. Scoped to !isProd so
+            // production keeps the tighter policy.
             //
             // `img-src` narrowed to explicit hosts instead of `https:` wildcard
             // so we don't allow loading from arbitrary trackers if the app is
@@ -90,7 +98,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline'",
+              `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}`,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
               "img-src 'self' data: blob: https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://*.stripe.com https://*.lemonsqueezy.com",

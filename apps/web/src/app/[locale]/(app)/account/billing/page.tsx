@@ -39,6 +39,11 @@ export default async function AccountBillingPage({
   if (!session) redirect(`/${locale}/sign-in?next=/account/billing`);
 
   const t = await getTranslations({ locale, namespace: 'billing' });
+  // `billing.pageTitle`/`pageSubtitle` are the /pricing marketing page's
+  // copy ("Simple pricing…") — wrong for this settings page. Reuse the
+  // nav label instead (same convention as every other page here: h1 text
+  // == nav.<page> == the label already shown in the header/avatar menu).
+  const tNav = await getTranslations({ locale, namespace: 'nav' });
 
   const userId = session.user.id;
   const [tier, resumeCount, generationsToday, coverLettersThisMonth, sub] = await Promise.all([
@@ -68,6 +73,10 @@ export default async function AccountBillingPage({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">{tNav('billing')}</h1>
+      </div>
+
       {/* Current plan */}
       <Card>
         <CardHeader>
@@ -75,9 +84,9 @@ export default async function AccountBillingPage({
             <div>
               <CardTitle className="flex items-center gap-2 text-2xl">
                 {tier === 'pro' ? (
-                  <Crown className="text-violet-500" />
+                  <Crown className="h-6 w-6 text-violet-500" />
                 ) : tier === 'plus' ? (
-                  <ShieldCheck className="text-amber-500" />
+                  <ShieldCheck className="h-6 w-6 text-amber-500" />
                 ) : null}
                 {limits.displayName[locale]}
               </CardTitle>
@@ -170,7 +179,7 @@ function UsageTile({
 
   return (
     <div>
-      <p className="text-muted-foreground text-xs font-medium uppercase tracking-wide">{label}</p>
+      <p className="text-muted-foreground text-xs font-medium uppercase tracking-wider">{label}</p>
       <p className="mt-1 text-2xl font-bold">
         {current}
         <span className="text-muted-foreground ms-1 text-sm font-normal">
