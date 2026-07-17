@@ -1,4 +1,7 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { ScrollReveal } from '@/components/scroll-reveal';
+import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
+import { GlassPanel } from '@/components/ui-effects/glass-panel';
 
 /**
  * /[locale]/faq — frequently asked questions.
@@ -85,35 +88,46 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
   const questions = locale === 'he' ? QUESTIONS_HE : QUESTIONS_EN;
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-bold">{t('title')}</h1>
-      <p className="text-muted-foreground mt-2">{t('subtitle')}</p>
+    <div className="relative overflow-hidden">
+      <AnimatedMeshBg intensity="subtle" />
+      <div
+        aria-hidden
+        className="dark:from-background/40 dark:via-background/70 dark:to-background pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-white/70 to-white"
+      />
+      <main className="relative mx-auto max-w-3xl px-4 py-12">
+        <ScrollReveal>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
+          <p className="text-muted-foreground mt-2">{t('subtitle')}</p>
+        </ScrollReveal>
 
-      <div className="mt-8 space-y-2">
-        {questions.map((item, i) => (
-          <details
-            key={i}
-            className="border-border bg-card group rounded-lg border p-4 open:bg-violet-50/30"
-          >
-            <summary className="cursor-pointer list-none font-medium">
-              <span className="me-2 inline-block text-violet-600 transition group-open:rotate-90">
-                ▶
-              </span>
-              {item.q}
-            </summary>
-            <p className="text-foreground mt-3 text-sm leading-relaxed">{item.a}</p>
-          </details>
-        ))}
-      </div>
+        <div className="mt-8 space-y-3">
+          {questions.map((item, i) => (
+            <ScrollReveal key={i} delay={i * 0.04}>
+              <details className="glass-subtle ease-smooth open:glass open:border-brand-300/50 dark:open:border-brand-700/50 group rounded-2xl p-4 transition-all duration-300">
+                <summary className="cursor-pointer list-none font-medium">
+                  <span className="text-brand-600 dark:text-brand-400 ease-snappy me-2 inline-block transition-transform duration-300 group-open:rotate-90">
+                    ▶
+                  </span>
+                  {item.q}
+                </summary>
+                <p className="text-foreground mt-3 text-sm leading-relaxed">{item.a}</p>
+              </details>
+            </ScrollReveal>
+          ))}
+        </div>
 
-      <div className="mt-12 rounded-lg border border-violet-200 bg-violet-50 p-6 text-center">
-        <p className="text-sm">
-          {locale === 'he' ? 'לא מצאת תשובה? ' : "Didn't find your answer? "}
-          <a href={`/${locale}/contact`} className="font-medium text-violet-700 hover:underline">
-            {locale === 'he' ? 'פנה אלינו' : 'Contact us'}
-          </a>
-        </p>
-      </div>
-    </main>
+        <GlassPanel intensity="subtle" className="mt-12 p-6 text-center">
+          <p className="text-sm">
+            {locale === 'he' ? 'לא מצאת תשובה? ' : "Didn't find your answer? "}
+            <a
+              href={`/${locale}/contact`}
+              className="text-brand-700 dark:text-brand-300 font-medium hover:underline"
+            >
+              {locale === 'he' ? 'פנה אלינו' : 'Contact us'}
+            </a>
+          </p>
+        </GlassPanel>
+      </main>
+    </div>
   );
 }

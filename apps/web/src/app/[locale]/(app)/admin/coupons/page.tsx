@@ -126,7 +126,7 @@ export default function AdminCouponsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <div className="glass-subtle overflow-hidden rounded-2xl">
         <CardHeader>
           <CardTitle className="text-base">All coupons</CardTitle>
         </CardHeader>
@@ -157,7 +157,7 @@ export default function AdminCouponsPage() {
               </thead>
               <tbody className="divide-border divide-y">
                 {rows.map((row) => (
-                  <tr key={row.id}>
+                  <tr key={row.id} className="hover:bg-accent/40 transition-colors">
                     <td className="py-2 font-mono font-medium">{row.code}</td>
                     <td className="py-2">{row.discountPercent}%</td>
                     <td className="py-2">
@@ -182,7 +182,7 @@ export default function AdminCouponsPage() {
             </table>
           )}
         </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

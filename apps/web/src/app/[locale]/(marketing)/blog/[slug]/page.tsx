@@ -3,6 +3,7 @@ import { Link } from '@/i18n/navigation';
 import { notFound } from 'next/navigation';
 import type { Locale } from '@/i18n/routing';
 import { getAllPostMeta, getPostContent } from '@/lib/blog/posts';
+import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
 import { Calendar, User, ArrowLeft, ArrowRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import type { Metadata } from 'next';
@@ -42,31 +43,38 @@ export default async function BlogPostPage({ params }: Props) {
       <article className="container mx-auto max-w-3xl px-4 py-20">
         <Link
           href="/blog"
-          className="text-brand-700 hover:text-brand-900 mb-8 inline-flex items-center gap-1.5 text-sm font-medium transition"
+          className="text-brand-700 hover:text-brand-900 dark:text-brand-300 dark:hover:text-brand-100 mb-8 inline-flex items-center gap-1.5 text-sm font-medium transition"
         >
           <BackIcon className="h-4 w-4" />
           {t('backToBlog')}
         </Link>
 
-        <header className="mb-10">
-          <div className="text-muted-foreground mb-4 flex flex-wrap items-center gap-4 text-sm">
-            <span className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4" />
-              {new Date(post.meta.publishedAt).toLocaleDateString(
-                locale === 'he' ? 'he-IL' : 'en-US',
-                { year: 'numeric', month: 'long', day: 'numeric' },
-              )}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <User className="h-4 w-4" />
-              {post.meta.author}
-            </span>
+        <header className="relative mb-10 overflow-hidden rounded-3xl py-8">
+          <AnimatedMeshBg intensity="subtle" />
+          <div
+            aria-hidden
+            className="dark:from-background/50 dark:via-background/85 dark:to-background/95 pointer-events-none absolute inset-0 bg-gradient-to-b from-white/50 via-white/85 to-white/95"
+          />
+          <div className="relative">
+            <div className="text-muted-foreground mb-4 flex flex-wrap items-center gap-4 text-sm">
+              <span className="flex items-center gap-1.5">
+                <Calendar className="h-4 w-4" />
+                {new Date(post.meta.publishedAt).toLocaleDateString(
+                  locale === 'he' ? 'he-IL' : 'en-US',
+                  { year: 'numeric', month: 'long', day: 'numeric' },
+                )}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <User className="h-4 w-4" />
+                {post.meta.author}
+              </span>
+            </div>
+            <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{post.meta.title}</h1>
+            <p className="text-muted-foreground mt-4 text-xl">{post.meta.summary}</p>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{post.meta.title}</h1>
-          <p className="text-muted-foreground mt-4 text-xl">{post.meta.summary}</p>
         </header>
 
-        <div className="prose prose-neutral max-w-none">
+        <div className="prose prose-neutral dark:prose-invert max-w-none">
           <ReactMarkdown>{post.content}</ReactMarkdown>
         </div>
       </article>

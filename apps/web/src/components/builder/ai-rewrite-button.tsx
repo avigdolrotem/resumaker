@@ -68,7 +68,7 @@ export function AiRewriteButton({
           onReplace(undoValue);
           setUndoValue(null);
         }}
-        className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
+        className="text-muted-foreground hover:text-foreground ease-snappy inline-flex items-center gap-1 text-xs transition-colors duration-200"
       >
         <Undo2 className="h-3 w-3" />
         Undo rewrite
@@ -86,7 +86,7 @@ export function AiRewriteButton({
       }}
       disabled={loading || !value.trim()}
       title={error ?? 'Rewrite with AI'}
-      className="text-brand-500 hover:text-brand-700 inline-flex items-center gap-1 text-xs disabled:opacity-40"
+      className="text-brand-500 hover:text-brand-700 ease-snappy inline-flex items-center gap-1 text-xs transition-colors duration-200 disabled:opacity-40"
     >
       {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
       {loading ? 'Rewriting…' : error ? 'Try again' : 'Rewrite with AI'}

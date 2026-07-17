@@ -1,0 +1,58 @@
+<!-- @dsCard group="Backgrounds" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Liquid Background</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; overflow: hidden; background: #0d0818; height: 100vh; }
+  .stage { position: relative; width: 100%; height: 100vh; }
+
+  /* Gooey merge: blur then sharpen the alpha channel so overlapping
+     blobs fuse into one continuous liquid surface instead of showing
+     two separate translucent circles crossing. */
+  svg { position: absolute; width: 0; height: 0; }
+
+  .goo { filter: url(#goo); position: absolute; inset: 0; }
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    mix-blend-mode: screen;
+  }
+  .b1 { width: 480px; height: 480px; left: 5%; top: 10%; background: radial-gradient(circle at 30% 30%, #a78bfa, #6d28d9 70%); animation: drift1 24s var(--spring-smooth, ease-in-out) infinite; }
+  .b2 { width: 420px; height: 420px; right: 8%; top: 30%; background: radial-gradient(circle at 40% 40%, #f0abfc, #c026d3 70%); animation: drift2 28s ease-in-out infinite; }
+  .b3 { width: 380px; height: 380px; left: 30%; bottom: 5%; background: radial-gradient(circle at 50% 30%, #67e8f9, #0891b2 70%); animation: drift3 32s ease-in-out infinite; }
+
+  @keyframes drift1 { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(80px,-50px) scale(1.15); } 66% { transform: translate(-40px,60px) scale(0.9); } }
+  @keyframes drift2 { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(-70px,40px) scale(1.1); } 66% { transform: translate(50px,-60px) scale(0.92); } }
+  @keyframes drift3 { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(60px,50px) scale(1.08); } 66% { transform: translate(-60px,-30px) scale(0.95); } }
+
+  .grain { position: absolute; inset: 0; opacity: 0.04; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+
+  .label { position: absolute; bottom: 32px; left: 32px; color: rgba(255,255,255,0.55); font-family: -apple-system, sans-serif; font-size: 13px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .blob { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+  <svg><defs>
+    <filter id="goo">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur" />
+      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -11" result="goo" />
+      <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+    </filter>
+  </defs></svg>
+  <div class="stage">
+    <div class="goo">
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+      <div class="blob b3"></div>
+    </div>
+    <div class="grain"></div>
+    <div class="label">AmbientLiquidBg — replaces AnimatedMeshBg site-wide; blobs fuse via SVG goo filter instead of just overlapping translucent circles</div>
+  </div>
+</body>
+</html>

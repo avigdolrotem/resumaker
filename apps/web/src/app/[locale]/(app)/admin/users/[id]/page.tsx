@@ -78,7 +78,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
     <div className="space-y-6">
       <Link
         href="/admin"
-        className="hover:text-brand-600 text-muted-foreground inline-flex items-center gap-1 text-sm transition"
+        className="hover:text-brand-600 text-muted-foreground ease-snappy hover:bg-accent/60 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm transition-all duration-200"
       >
         <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
         Back to admin
@@ -94,7 +94,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                 {user.email}
               </CardDescription>
               {user.deletedAt && (
-                <div className="mt-2 inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700">
+                <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
                   <ShieldAlert className="h-3 w-3" />
                   Soft-deleted {new Date(user.deletedAt).toLocaleString()}
                 </div>
@@ -210,9 +210,11 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         </Card>
       </div>
 
-      {/* Resumes + Cover letters side-by-side */}
+      {/* Resumes + Cover letters side-by-side — glass-subtle list wrappers,
+          flat rows (a simple bg tint on hover, no lift) since these are
+          scannable lists rather than page-level chrome. */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
+        <div className="glass-subtle overflow-hidden rounded-2xl">
           <CardHeader>
             <CardTitle className="text-base">Recent resumes</CardTitle>
           </CardHeader>
@@ -222,7 +224,10 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             ) : (
               <ul className="divide-border divide-y">
                 {userResumes.map((r) => (
-                  <li key={r.id} className="flex items-center justify-between py-2 text-sm">
+                  <li
+                    key={r.id}
+                    className="hover:bg-accent/40 -mx-2 flex items-center justify-between rounded-lg px-2 py-2 text-sm transition-colors"
+                  >
                     <div>
                       <p className="font-medium">{r.title}</p>
                       <p className="text-muted-foreground text-xs">
@@ -237,9 +242,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               </ul>
             )}
           </CardContent>
-        </Card>
+        </div>
 
-        <Card>
+        <div className="glass-subtle overflow-hidden rounded-2xl">
           <CardHeader>
             <CardTitle className="text-base">Recent cover letters</CardTitle>
           </CardHeader>
@@ -249,7 +254,10 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             ) : (
               <ul className="divide-border divide-y">
                 {userCoverLetters.map((l) => (
-                  <li key={l.id} className="flex items-center justify-between py-2 text-sm">
+                  <li
+                    key={l.id}
+                    className="hover:bg-accent/40 -mx-2 flex items-center justify-between rounded-lg px-2 py-2 text-sm transition-colors"
+                  >
                     <div>
                       <p className="line-clamp-1 font-medium">{l.title}</p>
                       <p className="text-muted-foreground text-xs">
@@ -264,11 +272,11 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               </ul>
             )}
           </CardContent>
-        </Card>
+        </div>
       </div>
 
-      {/* Recent generations */}
-      <Card>
+      {/* Recent generations — glass-subtle, no hover-lift table wrapper */}
+      <div className="glass-subtle overflow-hidden rounded-2xl">
         <CardHeader>
           <CardTitle className="text-base">Recent generations</CardTitle>
           <CardDescription>Last 10 LLM calls</CardDescription>
@@ -300,7 +308,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               </thead>
               <tbody className="divide-border divide-y">
                 {userGenerations.map((g) => (
-                  <tr key={g.id}>
+                  <tr key={g.id} className="hover:bg-accent/40 transition-colors">
                     <td className="text-muted-foreground py-2 ps-1 text-xs" dir="ltr">
                       {new Date(g.createdAt).toLocaleString()}
                     </td>
@@ -309,7 +317,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                     </td>
                     <td className="py-2">
                       <span
-                        className={`rounded px-2 py-0.5 text-xs font-medium ${
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                           g.status === 'success'
                             ? 'bg-green-100 text-green-700'
                             : g.status === 'rejected_input'
@@ -332,10 +340,10 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             </table>
           )}
         </CardContent>
-      </Card>
+      </div>
 
-      {/* Audit timeline */}
-      <Card>
+      {/* Audit timeline — glass-subtle, flat rows */}
+      <div className="glass-subtle overflow-hidden rounded-2xl">
         <CardHeader>
           <CardTitle className="text-base">Audit timeline</CardTitle>
           <CardDescription>Last 20 events</CardDescription>
@@ -344,17 +352,22 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
           {userAuditEvents.length === 0 ? (
             <p className="text-muted-foreground text-sm">No events recorded</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {userAuditEvents.map((e) => (
-                <li key={e.id} className="flex items-start gap-3 text-sm">
+                <li
+                  key={e.id}
+                  className="hover:bg-accent/40 -mx-2 flex items-start gap-3 rounded-lg px-2 py-1.5 text-sm transition-colors"
+                >
                   <span className="text-muted-foreground font-mono text-xs" dir="ltr">
                     {new Date(e.createdAt).toLocaleTimeString()}
                   </span>
-                  <span className="bg-muted rounded px-2 py-0.5 font-mono text-xs">{e.event}</span>
+                  <span className="bg-muted rounded-full px-2 py-0.5 font-mono text-xs">
+                    {e.event}
+                  </span>
                   {e.metadata != null && (
                     <details className="text-muted-foreground text-xs">
                       <summary className="hover:text-foreground cursor-pointer">metadata</summary>
-                      <pre className="bg-muted mt-1 max-w-xl overflow-x-auto rounded p-2 text-[10px]">
+                      <pre className="bg-muted mt-1 max-w-xl overflow-x-auto rounded-lg p-2 text-[10px]">
                         {JSON.stringify(e.metadata, null, 2)}
                       </pre>
                     </details>
@@ -364,7 +377,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             </ul>
           )}
         </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -393,7 +406,7 @@ function StatTile({
     <Card>
       <CardContent className="pt-6">
         <div className="flex items-center gap-3">
-          <div className="bg-brand-50 text-brand-600 flex h-10 w-10 items-center justify-center rounded-lg">
+          <div className="bg-brand-50 text-brand-600 flex h-10 w-10 items-center justify-center rounded-xl">
             <Icon className="h-5 w-5" />
           </div>
           <div>

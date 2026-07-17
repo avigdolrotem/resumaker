@@ -45,7 +45,7 @@ export default async function AdminAnalyticsPage() {
     <div className="space-y-6">
       <Link
         href="/admin"
-        className="hover:text-brand-600 text-muted-foreground inline-flex items-center gap-1 text-sm transition"
+        className="hover:text-brand-600 text-muted-foreground ease-snappy hover:bg-accent/60 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm transition-all duration-200"
       >
         <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
         Back to admin
@@ -115,8 +115,9 @@ export default async function AdminAnalyticsPage() {
         </CardContent>
       </Card>
 
-      {/* Cohort heatmap */}
-      <Card>
+      {/* Cohort heatmap — glass-subtle, no hover-lift: dense grid of cells
+          stays flat + scannable per the admin design note. */}
+      <div className="glass-subtle overflow-hidden rounded-2xl">
         <CardHeader>
           <CardTitle className="text-base">Cohort Retention (8 weeks)</CardTitle>
           <CardDescription>% of cohort active each subsequent week</CardDescription>
@@ -136,7 +137,7 @@ export default async function AdminAnalyticsPage() {
             </thead>
             <tbody className="divide-border divide-y">
               {(cohortData.cohortTable ?? []).map((row) => (
-                <tr key={row.cohortWeek}>
+                <tr key={row.cohortWeek} className="hover:bg-accent/40 transition-colors">
                   <td className="text-muted-foreground py-1 pe-4 font-mono">{row.cohortWeek}</td>
                   {row.weeks.map((pct, wi) => (
                     <td key={wi} className="px-2 py-1 text-center">
@@ -144,7 +145,7 @@ export default async function AdminAnalyticsPage() {
                         <span className="text-muted-foreground/50">—</span>
                       ) : (
                         <span
-                          className="rounded px-1 py-0.5"
+                          className="rounded-full px-1.5 py-0.5"
                           style={{
                             backgroundColor: `rgba(59,130,246,${pct / 100})`,
                             color: pct > 50 ? '#fff' : '#374151',
@@ -163,7 +164,7 @@ export default async function AdminAnalyticsPage() {
             <p className="text-muted-foreground text-center text-sm">No data yet</p>
           )}
         </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

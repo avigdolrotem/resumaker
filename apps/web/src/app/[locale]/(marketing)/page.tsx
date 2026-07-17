@@ -361,7 +361,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <div className="mt-10 flex justify-center">
               <Link
                 href="/sign-up"
-                className="text-brand-700 group inline-flex h-14 items-center gap-2 rounded-xl bg-white px-10 text-lg font-semibold shadow-2xl transition hover:scale-[1.03] hover:shadow-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40"
+                className="text-brand-700 ease-snappy group inline-flex h-14 items-center gap-2 rounded-full bg-white px-10 text-lg font-semibold shadow-2xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/40 active:scale-[0.96]"
               >
                 {t('hero.cta')}
                 <ArrowIcon className="h-5 w-5 transition group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
@@ -386,7 +386,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 <a
                   href="mailto:hello@resumaker.co.il"
                   aria-label="Email"
-                  className="transition hover:text-white"
+                  className="ease-snappy inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/10 hover:text-white active:scale-[0.96]"
                 >
                   <Mail className="h-5 w-5" />
                 </a>
@@ -517,10 +517,10 @@ function PricingCard({
 }) {
   return (
     <div
-      className={`group relative rounded-2xl border p-8 transition hover:-translate-y-1 hover:shadow-xl ${
+      className={`ease-smooth group relative rounded-2xl p-8 transition-all duration-500 hover:-translate-y-1 ${
         featured
-          ? 'border-brand-300 dark:border-brand-700 to-brand-50 dark:from-card dark:to-brand-950/30 shadow-brand-500/10 bg-gradient-to-b from-white shadow-xl'
-          : 'hover:border-brand-200 dark:hover:border-brand-700 border-border bg-card'
+          ? 'glass border-brand-300/50 dark:border-brand-700/50 shadow-brand-500/10 hover:shadow-glass-lg shadow-xl'
+          : 'glass-subtle hover:glass border-border hover:border-brand-200 dark:hover:border-brand-700'
       }`}
     >
       {/* Featured cards get an outer glow ring on hover */}
@@ -552,10 +552,10 @@ function PricingCard({
         </ul>
         <Link
           href={ctaHref}
-          className={`mt-8 inline-flex h-11 w-full items-center justify-center rounded-md text-sm font-medium transition ${
+          className={`ease-snappy mt-8 inline-flex h-11 w-full items-center justify-center rounded-full text-sm font-medium transition-all duration-200 active:scale-[0.96] ${
             featured
-              ? 'bg-brand-600 hover:bg-brand-700 text-white shadow-md'
-              : 'hover:border-brand-300 hover:bg-brand-50 dark:hover:border-brand-700 dark:hover:bg-brand-950/40 border-border text-foreground bg-card border'
+              ? 'from-brand-500 to-accent-500 hover:shadow-brand-500/30 bg-gradient-to-br text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl'
+              : 'glass hover:glass-strong text-foreground hover:-translate-y-0.5'
           }`}
         >
           {cta}

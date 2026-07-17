@@ -78,7 +78,7 @@ export function FitScorePanel({ resume, jobDescription }: FitScorePanelProps) {
     : Zap;
 
   return (
-    <div className="border-border bg-card mb-3 rounded-xl border p-4 shadow-sm">
+    <div className="glass-subtle mb-3 rounded-2xl p-4">
       <div className="flex items-center justify-between">
         <h3 className="text-foreground text-sm font-semibold">Job fit</h3>
         {loading && <Loader2 className="text-muted-foreground h-3 w-3 animate-spin" />}

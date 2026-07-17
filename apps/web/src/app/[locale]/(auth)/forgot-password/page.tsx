@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <Card>
+      <Card className="animate-liquid-pop">
         <CardHeader>
           <CardTitle>{t('forgot.sentTitle')}</CardTitle>
           <CardDescription>{t('forgot.sentSubtitle')}</CardDescription>
@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Card>
+    <Card className="animate-liquid-pop">
       <CardHeader>
         <CardTitle>{t('forgot.title')}</CardTitle>
         <CardDescription>{t('forgot.subtitle')}</CardDescription>

@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { FileSearch, Loader2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
 
 interface ATSScanResult {
   score: number;
@@ -53,8 +55,12 @@ export default function ATSScannerPage() {
         : 'text-red-600';
 
   return (
-    <main id="main" className="min-h-screen bg-gradient-to-b from-neutral-50 to-white py-20">
-      <div className="container mx-auto max-w-2xl px-4">
+    <main
+      id="main"
+      className="dark:from-background dark:to-card/30 relative min-h-screen overflow-hidden bg-gradient-to-b from-neutral-50 to-white py-20"
+    >
+      <AnimatedMeshBg intensity="subtle" />
+      <div className="container relative mx-auto max-w-2xl px-4">
         <div className="mb-10 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 text-white shadow-lg">
             <FileSearch className="h-7 w-7" />
@@ -64,32 +70,29 @@ export default function ATSScannerPage() {
           <p className="text-muted-foreground/80 mt-1 text-xs">{t('noAuthRequired')}</p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="border-border bg-card rounded-2xl border p-8 shadow-sm"
-        >
+        <form onSubmit={handleSubmit} className="glass animate-liquid-pop rounded-2xl p-8">
           <div className="grid gap-5">
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium">{t('fields.jobDescription')}</span>
-              <textarea
+              <Textarea
                 value={jd}
                 onChange={(e) => setJd(e.target.value)}
                 placeholder={t('fields.jdPlaceholder')}
                 required
                 rows={6}
-                className="border-input w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="focus-visible:ring-purple-500/18 focus-visible:border-purple-400/60"
               />
             </label>
 
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium">{t('fields.resumeText')}</span>
-              <textarea
+              <Textarea
                 value={resume}
                 onChange={(e) => setResume(e.target.value)}
                 placeholder={t('fields.resumePlaceholder')}
                 required
                 rows={8}
-                className="border-input w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="focus-visible:ring-purple-500/18 focus-visible:border-purple-400/60"
               />
             </label>
           </div>
@@ -97,7 +100,7 @@ export default function ATSScannerPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-purple-700 text-sm font-medium text-white transition hover:bg-purple-800 disabled:opacity-60"
+            className="ease-snappy mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-purple-600 to-violet-700 text-sm font-medium text-white shadow-lg shadow-purple-500/30 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-500/45 active:scale-[0.96] disabled:pointer-events-none disabled:opacity-60 disabled:active:scale-100"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? t('scanning') : t('scan')}
@@ -105,27 +108,29 @@ export default function ATSScannerPage() {
         </form>
 
         {error && (
-          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="glass-subtle mt-6 rounded-xl border-red-200/60 p-4 text-sm text-red-700 dark:border-red-800/50 dark:text-red-300">
             {error}
           </div>
         )}
 
         {result && (
           <div className="mt-6 space-y-4">
-            <div className="border-border bg-card rounded-2xl border p-8 text-center">
+            <div className="glass animate-liquid-pop rounded-2xl p-8 text-center">
               <div className={`text-6xl font-bold ${scoreColor}`}>{result.score}%</div>
               <div className="text-muted-foreground mt-2 text-sm">{t('result.atsScore')}</div>
               <p className="text-foreground mt-4 text-sm">{result.summary}</p>
             </div>
 
             {result.missing.length > 0 && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-                <h3 className="mb-3 font-semibold text-red-900">{t('result.missingKeywords')}</h3>
+              <div className="rounded-xl border border-red-200/60 bg-red-50/70 p-6 backdrop-blur-md dark:border-red-800/50 dark:bg-red-950/30">
+                <h3 className="mb-3 font-semibold text-red-900 dark:text-red-200">
+                  {t('result.missingKeywords')}
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {result.missing.map((kw) => (
                     <span
                       key={kw}
-                      className="rounded-full bg-red-100 px-3 py-1 text-xs text-red-800"
+                      className="rounded-full bg-red-100 px-3 py-1 text-xs text-red-800 dark:bg-red-950/60 dark:text-red-200"
                     >
                       {kw}
                     </span>
@@ -135,15 +140,15 @@ export default function ATSScannerPage() {
             )}
 
             {result.matched.length > 0 && (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-6">
-                <h3 className="mb-3 font-semibold text-emerald-900">
+              <div className="rounded-xl border border-emerald-200/60 bg-emerald-50/70 p-6 backdrop-blur-md dark:border-emerald-800/50 dark:bg-emerald-950/30">
+                <h3 className="mb-3 font-semibold text-emerald-900 dark:text-emerald-200">
                   {t('result.matchedKeywords')}
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {result.matched.map((kw) => (
                     <span
                       key={kw}
-                      className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-800"
+                      className="rounded-full bg-emerald-100 px-3 py-1 text-xs text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200"
                     >
                       {kw}
                     </span>

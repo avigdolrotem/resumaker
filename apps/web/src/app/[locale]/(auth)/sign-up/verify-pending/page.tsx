@@ -55,7 +55,7 @@ function VerifyPendingInner() {
   }
 
   return (
-    <Card className="border-brand-200/50 dark:border-brand-800/50 shadow-brand-500/10 bg-card/80 relative overflow-hidden shadow-2xl backdrop-blur-xl">
+    <Card className="border-brand-200/50 dark:border-brand-800/50 shadow-brand-500/10 animate-liquid-pop relative overflow-hidden">
       <div
         aria-hidden
         className="from-brand-500 to-brand-500 absolute inset-x-0 top-0 h-1 bg-gradient-to-r via-purple-500"
@@ -112,7 +112,7 @@ function VerifyPendingInner() {
           type="button"
           onClick={handleResend}
           disabled={resendDisabled}
-          className="border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-950/40 focus-visible:ring-brand-500 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border bg-transparent text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-brand-950/40 focus-visible:ring-brand-500 ease-snappy inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border bg-transparent text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {status === 'sending' && (
             <span

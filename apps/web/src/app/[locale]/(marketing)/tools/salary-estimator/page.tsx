@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { DollarSign, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
 
 interface SalaryResult {
   min: number;
@@ -47,8 +49,12 @@ export default function SalaryEstimatorPage() {
   }
 
   return (
-    <main id="main" className="min-h-screen bg-gradient-to-b from-neutral-50 to-white py-20">
-      <div className="container mx-auto max-w-2xl px-4">
+    <main
+      id="main"
+      className="dark:from-background dark:to-card/30 relative min-h-screen overflow-hidden bg-gradient-to-b from-neutral-50 to-white py-20"
+    >
+      <AnimatedMeshBg intensity="subtle" />
+      <div className="container relative mx-auto max-w-2xl px-4">
         <div className="mb-10 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg">
             <DollarSign className="h-7 w-7" />
@@ -57,26 +63,23 @@ export default function SalaryEstimatorPage() {
           <p className="text-muted-foreground mt-3">{t('description')}</p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="border-border bg-card rounded-2xl border p-8 shadow-sm"
-        >
+        <form onSubmit={handleSubmit} className="glass animate-liquid-pop rounded-2xl p-8">
           <div className="grid gap-5">
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium">{t('fields.role')}</span>
-              <input
+              <Input
                 type="text"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 placeholder={t('fields.rolePlaceholder')}
                 required
-                className="border-input w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="focus-visible:ring-emerald-500/18 focus-visible:border-emerald-400/60"
               />
             </label>
 
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium">{t('fields.years')}</span>
-              <input
+              <Input
                 type="number"
                 value={years}
                 onChange={(e) => setYears(e.target.value)}
@@ -84,30 +87,30 @@ export default function SalaryEstimatorPage() {
                 min={0}
                 max={40}
                 required
-                className="border-input w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="focus-visible:ring-emerald-500/18 focus-visible:border-emerald-400/60"
               />
             </label>
 
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium">{t('fields.location')}</span>
-              <input
+              <Input
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder={t('fields.locationPlaceholder')}
                 required
-                className="border-input w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="focus-visible:ring-emerald-500/18 focus-visible:border-emerald-400/60"
               />
             </label>
 
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium">{t('fields.industry')}</span>
-              <input
+              <Input
                 type="text"
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
                 placeholder={t('fields.industryPlaceholder')}
-                className="border-input w-full rounded-md border px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                className="focus-visible:ring-emerald-500/18 focus-visible:border-emerald-400/60"
               />
             </label>
           </div>
@@ -115,7 +118,7 @@ export default function SalaryEstimatorPage() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-md bg-emerald-600 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
+            className="ease-snappy mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-sm font-medium text-white shadow-lg shadow-emerald-500/30 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-500/45 active:scale-[0.96] disabled:pointer-events-none disabled:opacity-60 disabled:active:scale-100"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? t('estimating') : t('estimate')}
@@ -123,20 +126,22 @@ export default function SalaryEstimatorPage() {
         </form>
 
         {error && (
-          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="glass-subtle mt-6 rounded-xl border-red-200/60 p-4 text-sm text-red-700 dark:border-red-800/50 dark:text-red-300">
             {error}
           </div>
         )}
 
         {result && (
-          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-8">
-            <h2 className="mb-4 text-lg font-bold text-emerald-900">{t('result.title')}</h2>
-            <div className="mb-4 text-4xl font-bold text-emerald-700">
+          <div className="animate-liquid-pop mt-6 rounded-2xl border border-emerald-200/60 bg-emerald-50/70 p-8 backdrop-blur-md dark:border-emerald-800/50 dark:bg-emerald-950/30">
+            <h2 className="mb-4 text-lg font-bold text-emerald-900 dark:text-emerald-200">
+              {t('result.title')}
+            </h2>
+            <div className="mb-4 text-4xl font-bold text-emerald-700 dark:text-emerald-300">
               {result.currency}
               {result.min.toLocaleString()} – {result.currency}
               {result.max.toLocaleString()}
             </div>
-            <p className="text-sm text-emerald-800">{result.rationale}</p>
+            <p className="text-sm text-emerald-800 dark:text-emerald-200">{result.rationale}</p>
           </div>
         )}
       </div>

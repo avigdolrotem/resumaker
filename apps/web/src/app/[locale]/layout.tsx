@@ -217,6 +217,15 @@ export default async function LocaleLayout({
             dir={dir}
             richColors
             closeButton
+            toastOptions={{
+              // Liquid-glass toast shell — sonner owns the enter/exit
+              // animation itself, so this only restyles the surface
+              // (frosted glass + pill radius) to match the rest of the
+              // redesign, not the motion.
+              classNames: {
+                toast: 'glass-strong !rounded-2xl !shadow-glass-lg',
+              },
+            }}
           />
         </NextIntlClientProvider>
       </body>

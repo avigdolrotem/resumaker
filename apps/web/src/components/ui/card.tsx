@@ -6,10 +6,13 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        // Semantic tokens so the card flips automatically in dark mode.
-        // The light-on-light bug was reported because this used to be
-        // `bg-card text-foreground border-border`.
-        'border-border bg-card text-card-foreground rounded-xl border shadow-sm',
+        // Frosted glass surface (globals.css `glass` utility) over the
+        // semantic `bg-card` fallback, so cards read as translucent
+        // glass wherever there's something behind them to blur, and
+        // still look correct if `backdrop-filter` isn't supported.
+        // `duration-slow`/`ease-smooth` = the "liquid settle" curve for
+        // hover lift, per design-system/components/cards.html.
+        'glass bg-card/70 text-card-foreground ease-smooth hover:shadow-glass-lg relative overflow-hidden rounded-2xl transition-all duration-500 hover:-translate-y-1',
         className,
       )}
       {...props}

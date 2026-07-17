@@ -90,7 +90,7 @@ function SortableRow({
       {...attributes}
       {...listeners}
       aria-label="Drag to reorder"
-      className="text-muted-foreground hover:text-foreground cursor-grab touch-none p-1 active:cursor-grabbing"
+      className="text-muted-foreground hover:text-foreground ease-snappy cursor-grab touch-none rounded-full p-1 transition-colors duration-200 active:scale-90 active:cursor-grabbing"
     >
       <GripVertical className="h-3.5 w-3.5" />
     </button>

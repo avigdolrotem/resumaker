@@ -36,7 +36,7 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
   return (
     <header className="sticky top-0 z-40">
       <div
-        className="border-border/50 bg-background/80 supports-[backdrop-filter]:bg-background/70 relative border-b backdrop-blur-xl"
+        className="border-border/40 bg-background/65 relative border-b backdrop-blur-2xl backdrop-saturate-150"
         style={{
           // Same brand-tinted lift used in the app header — keeps both
           // shells visually consistent across signed-in / signed-out.
@@ -58,13 +58,13 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
           <nav className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/examples"
-              className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 hidden rounded-md px-2 py-1 text-sm font-medium transition-colors md:inline"
+              className="text-foreground/80 hover:text-brand-700 hover:bg-accent/60 dark:hover:text-brand-200 ease-snappy hidden rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 md:inline"
             >
               {t('home')}
             </Link>
             <Link
               href="/pricing"
-              className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 hidden rounded-md px-2 py-1 text-sm font-medium transition-colors md:inline"
+              className="text-foreground/80 hover:text-brand-700 hover:bg-accent/60 dark:hover:text-brand-200 ease-snappy hidden rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 md:inline"
             >
               {t('pricing')}
             </Link>
@@ -88,7 +88,7 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
               <>
                 <Link
                   href="/sign-up"
-                  className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 hidden rounded-md px-2 py-1 text-sm font-medium transition-colors md:inline"
+                  className="text-foreground/80 hover:text-brand-700 hover:bg-accent/60 dark:hover:text-brand-200 ease-snappy hidden rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 md:inline"
                 >
                   {t('signUp')}
                 </Link>

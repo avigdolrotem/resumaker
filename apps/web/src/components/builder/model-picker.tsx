@@ -115,7 +115,7 @@ export function ModelPicker() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="border-border bg-card hover:border-brand-300 inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition"
+        className="glass hover:glass-strong ease-snappy inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm transition-all duration-200 active:scale-[0.96]"
       >
         <Sparkles className="text-brand-500 h-3.5 w-3.5" />
         <span className="max-w-[140px] truncate">{currentLabel}</span>
@@ -124,7 +124,7 @@ export function ModelPicker() {
       {open && (
         <ul
           role="listbox"
-          className="border-border bg-card absolute end-0 z-50 mt-1 w-72 overflow-hidden rounded-md border shadow-lg"
+          className="glass-strong animate-liquid-pop absolute end-0 z-50 mt-1 w-72 overflow-hidden rounded-2xl"
         >
           {MODEL_CATALOG.map((m) => {
             const allowed = tierOrder[state.tier] >= tierOrder[m.minTier];

@@ -34,20 +34,20 @@ export function SkillsSection({ skills, onChange }: SkillsSectionProps) {
         </h2>
       </header>
 
-      <div className="border-border bg-card rounded-xl border p-4 shadow-sm">
+      <div className="glass-subtle rounded-2xl p-4">
         {skills.length > 0 ? (
           <div className="mb-3 flex flex-wrap gap-1.5">
             {skills.map((s) => (
               <span
                 key={s}
-                className="bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-200 inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-sm"
+                className="bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-200 ease-snappy inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm transition-transform duration-200 hover:-translate-y-0.5"
               >
                 {s}
                 <button
                   type="button"
                   onClick={() => onChange(skills.filter((x) => x !== s))}
                   aria-label={t('remove', { skill: s })}
-                  className="hover:text-brand-900 dark:hover:text-brand-50"
+                  className="hover:text-brand-900 dark:hover:text-brand-50 ease-snappy transition-colors duration-200"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -110,13 +110,13 @@ function SkillAutocompleteInput({
         disabled={disabled}
       />
       {suggestions.length > 0 && (
-        <div className="border-border bg-card absolute z-20 mt-1 w-full overflow-hidden rounded-md border shadow-lg">
+        <div className="glass-strong animate-liquid-pop absolute z-20 mt-1 w-full overflow-hidden rounded-2xl">
           {suggestions.map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => commit(s)}
-              className="hover:bg-muted block w-full px-3 py-1.5 text-start text-sm"
+              className="hover:bg-muted block w-full px-3 py-1.5 text-start text-sm transition-colors duration-200"
             >
               {s}
             </button>

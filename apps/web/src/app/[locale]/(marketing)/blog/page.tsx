@@ -3,6 +3,7 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { getPostsByLocale } from '@/lib/blog/posts';
 import { ScrollReveal } from '@/components/scroll-reveal';
+import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
 import { ArrowRight, ArrowLeft, Calendar, User } from 'lucide-react';
 import type { Metadata } from 'next';
 
@@ -30,8 +31,13 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
   }
 
   return (
-    <main id="main" className="min-h-screen bg-gradient-to-b from-neutral-50 to-white">
-      <section className="container mx-auto max-w-4xl px-4 py-20">
+    <main id="main" className="relative min-h-screen overflow-hidden">
+      <AnimatedMeshBg intensity="subtle" />
+      <div
+        aria-hidden
+        className="dark:from-background/40 dark:via-background/70 dark:to-background pointer-events-none absolute inset-0 bg-gradient-to-b from-white/40 via-white/70 to-white"
+      />
+      <section className="container relative mx-auto max-w-4xl px-4 py-20">
         <ScrollReveal>
           <div className="mb-16 text-center">
             <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{t('title')}</h1>
@@ -42,7 +48,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
         <div className="grid gap-8">
           {posts.map((post, i) => (
             <ScrollReveal key={post.slug} delay={i * 0.05}>
-              <article className="hover:border-brand-200 hover:shadow-brand-500/10 border-border bg-card rounded-2xl border p-8 transition hover:-translate-y-0.5 hover:shadow-lg">
+              <article className="glass bg-card/70 ease-smooth hover:border-brand-200/60 hover:shadow-glass-lg dark:hover:border-brand-700/60 relative overflow-hidden rounded-2xl p-8 transition-all duration-500 hover:-translate-y-1">
                 <div className="text-muted-foreground flex flex-wrap items-center gap-4 text-sm">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4" />
@@ -62,7 +68,7 @@ export default async function BlogPage({ params }: { params: Promise<{ locale: s
 
                 <Link
                   href={`/blog/${post.slug}` as '/blog/[slug]'}
-                  className="text-brand-700 hover:text-brand-900 mt-6 inline-flex items-center gap-1.5 text-sm font-medium transition"
+                  className="text-brand-700 hover:text-brand-900 dark:text-brand-300 dark:hover:text-brand-100 mt-6 inline-flex items-center gap-1.5 text-sm font-medium transition"
                 >
                   {t('readMore')}
                   <ArrowIcon className="h-4 w-4" />

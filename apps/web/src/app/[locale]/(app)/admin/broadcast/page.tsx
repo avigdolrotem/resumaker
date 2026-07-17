@@ -103,7 +103,7 @@ export default function AdminBroadcastPage() {
                 id="locale"
                 value={locale}
                 onChange={(e) => setLocale(e.target.value)}
-                className="border-border w-full rounded-md border px-3 py-2 text-sm"
+                className="border-input bg-background/60 focus-visible:border-brand-400/60 focus-visible:ring-brand-500/18 ease-smooth w-full rounded-xl border px-3.5 py-2 text-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
               >
                 <option value="he">Hebrew (he)</option>
                 <option value="en">English (en)</option>
@@ -117,7 +117,7 @@ export default function AdminBroadcastPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <div className="glass-subtle overflow-hidden rounded-2xl">
         <CardHeader>
           <CardTitle className="text-base">Past broadcasts</CardTitle>
         </CardHeader>
@@ -148,12 +148,12 @@ export default function AdminBroadcastPage() {
               </thead>
               <tbody className="divide-border divide-y">
                 {rows.map((row) => (
-                  <tr key={row.id}>
+                  <tr key={row.id} className="hover:bg-accent/40 transition-colors">
                     <td className="py-2">{row.subject}</td>
                     <td className="py-2 uppercase">{row.locale}</td>
                     <td className="py-2">
                       <span
-                        className={`rounded px-2 py-0.5 text-xs font-medium ${row.status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${row.status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}
                       >
                         {row.status}
                       </span>
@@ -172,7 +172,7 @@ export default function AdminBroadcastPage() {
             </table>
           )}
         </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

@@ -92,7 +92,7 @@ export function ApplicationsList({ rows, locale }: { rows: Row[]; locale: 'he' |
                 <select
                   value={r.status}
                   onChange={(e) => changeStatus(r.id, e.target.value as Status)}
-                  className="border-input bg-background text-foreground rounded-md border px-2 py-1 text-sm"
+                  className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 focus-visible:bg-background ease-smooth focus-visible:ring-brand-500/18 rounded-lg border px-2 py-1 text-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
                 >
                   {STATUSES.map((s) => (
                     <option key={s} value={s}>

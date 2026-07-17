@@ -67,7 +67,7 @@ export default function AdminMaintenancePage() {
                 type="checkbox"
                 checked={state.enabled}
                 onChange={(e) => setState((s) => ({ ...s, enabled: e.target.checked }))}
-                className="border-input h-4 w-4 rounded"
+                className="border-input accent-brand-600 h-4 w-4 rounded"
               />
               <Label htmlFor="enabled" className="cursor-pointer font-medium">
                 Maintenance mode enabled
@@ -122,9 +122,9 @@ export default function AdminMaintenancePage() {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="flex items-center gap-3">
+          <div className="glass-subtle inline-flex items-center gap-2.5 rounded-full px-4 py-2">
             <div
-              className={`h-3 w-3 rounded-full ${state.enabled ? 'bg-red-500' : 'bg-green-500'}`}
+              className={`h-2.5 w-2.5 rounded-full ${state.enabled ? 'bg-red-500' : 'bg-green-500'}`}
             />
             <span className="text-sm font-medium">
               {state.enabled ? 'Maintenance mode is ON' : 'Site is live'}

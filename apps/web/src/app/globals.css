@@ -1,6 +1,16 @@
 @import 'tailwindcss';
 
 /*
+ * `tailwind.config.ts` is NOT loaded — Tailwind v4 only reads a JS
+ * config via an explicit `@config` directive, and this project has
+ * none. It's kept around solely as the `shadcn` CLI's config pointer
+ * (see apps/web/components.json). Every real theme token and plugin
+ * lives here, CSS-first.
+ */
+@plugin 'tailwindcss-animate';
+@plugin '@tailwindcss/typography';
+
+/*
  * Tailwind dark-mode custom variant: fires whenever `.dark` is on an
  * ancestor. The two dark themes (purple / gray) share the variant so
  * `dark:bg-card` works in both; the THEME-specific styling lives in
@@ -64,6 +74,217 @@
   --radius: 0.5rem;
 
   --font-sans: var(--font-heebo), var(--font-inter), system-ui, sans-serif;
+
+  /* ── Liquid glass — surface tokens (light) ──────────────────────
+   * Translucent layered surfaces. Values are flipped per dark theme
+   * below; components should reach for `bg-glass`/`border-glass`
+   * rather than hand-rolled rgba so the whole site reflects a theme
+   * change in one place.
+   */
+  --color-glass-subtle: rgb(255 255 255 / 32%);
+  --color-glass: rgb(255 255 255 / 55%);
+  --color-glass-strong: rgb(255 255 255 / 74%);
+  --color-glass-border: rgb(255 255 255 / 65%);
+  --color-glass-border-strong: rgb(255 255 255 / 90%);
+
+  /* Backdrop blur scale used for glass surfaces (shares the
+     blur and backdrop-blur utility namespace). */
+  --blur-glass-sm: 12px;
+  --blur-glass: 20px;
+  --blur-glass-lg: 32px;
+
+  --shadow-glass: 0 8px 32px rgb(76 29 149 / 14%), inset 0 1.5px 0 rgb(255 255 255 / 55%);
+  --shadow-glass-lg: 0 16px 48px rgb(76 29 149 / 18%), inset 0 1.5px 0 rgb(255 255 255 / 55%);
+
+  /* ── Motion — the two curves used for every interactive element
+   * site-wide.
+   *   snappy = elastic overshoot — buttons, toggles, chips, anything
+   *            the user just "poked".
+   *   smooth = fluid ease-out, no overshoot — panels, page/section
+   *            transitions, anything that should feel like liquid
+   *            settling into place.
+   */
+  --ease-snappy: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* ── Animations ──────────────────────────────────────────────────
+   * Migrated in from the dead tailwind.config.ts (see note above) plus
+   * new liquid-glass entries. Keyframes are defined below as plain
+   * CSS — Tailwind v4 just needs the name to match.
+   */
+  --animate-fade-in: fadeIn 0.3s ease-out;
+  --animate-slide-up: slideUp 0.4s ease-out;
+  --animate-blob-1: blob1 22s ease-in-out infinite;
+  --animate-blob-2: blob2 26s ease-in-out infinite;
+  --animate-blob-3: blob3 30s ease-in-out infinite;
+  --animate-gradient-x: gradientX 8s ease infinite;
+  --animate-shimmer: shimmer 2s linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  /* Modal/card/toast entrance — elastic pop-in, matches the Claude
+     Design "liquid glass" preview (design-system/components/modal-toast.html). */
+  --animate-liquid-pop: liquidPop 0.5s var(--ease-snappy);
+  /* Toast slide-in from the trailing edge. */
+  --animate-liquid-slide-in: liquidSlideIn 0.5s var(--ease-snappy);
+  /* Specular sheen sweep across primary buttons/CTAs on hover. */
+  --animate-shine: shine 0.9s var(--ease-snappy);
+  /* Conic-gradient liquid loading spinner. */
+  --animate-liquid-spin: liquidSpin 1s linear infinite;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes slideUp {
+  0% {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes blob1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(60px, -40px) scale(1.1);
+  }
+  66% {
+    transform: translate(-30px, 40px) scale(0.95);
+  }
+}
+@keyframes blob2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-50px, 30px) scale(1.05);
+  }
+  66% {
+    transform: translate(40px, -30px) scale(0.95);
+  }
+}
+@keyframes blob3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(40px, 50px) scale(1.08);
+  }
+  66% {
+    transform: translate(-40px, -20px) scale(0.97);
+  }
+}
+@keyframes gradientX {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes liquidPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes liquidSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+[dir='rtl'] .animate-liquid-slide-in {
+  animation-name: liquidSlideInRtl;
+}
+@keyframes liquidSlideInRtl {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes shine {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+@keyframes liquidSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── LIQUID GLASS — composable surface utilities ───────────────────
+ * `glass` / `glass-subtle` / `glass-strong` bundle the
+ * background+blur+border+shadow recipe from the Claude Design preview
+ * (design-system/foundations/tokens.html) into one class so components
+ * don't hand-roll four utilities every time. Built with `@utility` so
+ * they still take Tailwind variants (`hover:glass-strong`, etc).
+ */
+@utility glass-subtle {
+  background-color: var(--color-glass-subtle);
+  backdrop-filter: blur(var(--blur-glass-sm)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--blur-glass-sm)) saturate(180%);
+  border: 1px solid var(--color-glass-border);
+  box-shadow: var(--shadow-glass);
+}
+@utility glass {
+  background-color: var(--color-glass);
+  backdrop-filter: blur(var(--blur-glass)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(180%);
+  border: 1px solid var(--color-glass-border);
+  box-shadow: var(--shadow-glass);
+}
+@utility glass-strong {
+  background-color: var(--color-glass-strong);
+  backdrop-filter: blur(var(--blur-glass-lg)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--blur-glass-lg)) saturate(180%);
+  border: 1px solid var(--color-glass-border-strong);
+  box-shadow: var(--shadow-glass-lg);
 }
 
 /* ─── DARK THEMES ──────────────────────────────────────────────────
@@ -110,6 +331,16 @@
   --color-border: hsl(258 32% 26%);
   --color-input: hsl(258 35% 22%);
   --color-ring: hsl(252 88% 74%);
+
+  /* Glass surfaces on dark-purple — tinted with the brand hue so
+     panels read as "frosted violet glass" rather than grey smoke. */
+  --color-glass-subtle: hsl(258 45% 20% / 30%);
+  --color-glass: hsl(258 45% 18% / 55%);
+  --color-glass-strong: hsl(258 42% 20% / 75%);
+  --color-glass-border: hsl(258 60% 80% / 16%);
+  --color-glass-border-strong: hsl(258 60% 85% / 28%);
+  --shadow-glass: 0 8px 32px rgb(0 0 0 / 45%), inset 0 1px 0 rgb(255 255 255 / 8%);
+  --shadow-glass-lg: 0 20px 56px rgb(0 0 0 / 55%), inset 0 1px 0 rgb(255 255 255 / 8%);
 }
 
 /*
@@ -134,6 +365,16 @@
   --color-border: hsl(0 0% 22%);
   --color-input: hsl(0 0% 18%);
   --color-ring: hsl(252 78% 72%);
+
+  /* Glass surfaces on dark-gray — neutral, desaturated smoked glass to
+     match this theme's "system dark" feel. */
+  --color-glass-subtle: hsl(0 0% 12% / 30%);
+  --color-glass: hsl(0 0% 10% / 55%);
+  --color-glass-strong: hsl(0 0% 12% / 75%);
+  --color-glass-border: hsl(0 0% 100% / 12%);
+  --color-glass-border-strong: hsl(0 0% 100% / 22%);
+  --shadow-glass: 0 8px 32px rgb(0 0 0 / 50%), inset 0 1px 0 rgb(255 255 255 / 6%);
+  --shadow-glass-lg: 0 20px 56px rgb(0 0 0 / 60%), inset 0 1px 0 rgb(255 255 255 / 6%);
 }
 
 @layer base {
@@ -145,9 +386,54 @@
       'calt' 1;
   }
 
+  /* Site-wide accessibility safety net — the redesign leans heavily on
+     motion (liquid-pop entrances, sheen sweeps, drifting backgrounds),
+     so this is the backstop for any element that forgets a per-component
+     reduced-motion guard. Framer Motion components already check
+     `useReducedMotion()` in JS (see components/scroll-reveal.tsx) — this
+     only needs to catch plain CSS `animation`/`transition` usage. Matches
+     the commitment made on the accessibility page
+     (app/[locale]/legal/accessibility/page.tsx). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   [lang='he'] {
     font-feature-settings:
       'kern' 1,
       'liga' 1;
+  }
+}
+
+/* ─── View Transitions — card → editor morph ────────────────────────
+ * Powers the dashboard resume-card → builder preview-card shared-
+ * element transition (lib/hooks/use-view-transition-nav.ts). Only
+ * elements that set `view-transition-name` (inline style) morph as a
+ * group; everything else gets the browser's default cross-fade, which
+ * we retune here to the site's own "liquid settle" curve instead of
+ * the UA stylesheet's default.
+ *
+ * `::view-transition-*` pseudo-elements render in the browser's
+ * top-layer overlay, not the normal document tree, so this lives
+ * outside `@layer base` — Tailwind's layer ordering has no bearing on
+ * whether it applies.
+ */
+::view-transition-group(*) {
+  animation-duration: 0.42s;
+  animation-timing-function: var(--ease-smooth);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

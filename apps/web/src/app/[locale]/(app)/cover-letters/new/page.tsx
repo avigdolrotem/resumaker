@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ModelPicker } from '@/components/builder/model-picker';
+import { LiquidSpinner } from '@/components/ui-effects/liquid-spinner';
 import { apiFetch, ApiTierError } from '@/lib/api-client';
 
 type Tone = 'formal' | 'friendly' | 'enthusiastic';
@@ -174,7 +175,7 @@ export default function NewCoverLetterPage() {
                   id="tone"
                   value={tone}
                   onChange={(e) => setTone(e.target.value as Tone)}
-                  className="focus-visible:ring-brand-500 border-input bg-card flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                  className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 focus-visible:bg-background ease-smooth focus-visible:ring-brand-500/18 flex h-10 w-full rounded-xl border px-3.5 py-2 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
                 >
                   <option value="formal">{t('tones.formal')}</option>
                   <option value="friendly">{t('tones.friendly')}</option>
@@ -208,7 +209,7 @@ export default function NewCoverLetterPage() {
           {loading && (
             <Card>
               <CardContent className="py-24 text-center" role="status" aria-live="polite">
-                <div className="border-brand-200 border-t-brand-600 mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2" />
+                <LiquidSpinner size={32} className="mx-auto mb-4" />
                 <p className="text-muted-foreground">{t('generating')}</p>
               </CardContent>
             </Card>

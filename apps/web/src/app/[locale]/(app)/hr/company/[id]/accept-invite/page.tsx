@@ -47,7 +47,7 @@ export default function AcceptInvitePage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
-      <Card className="w-full max-w-md">
+      <Card className="animate-liquid-pop w-full max-w-md">
         <CardHeader>
           <CardTitle>Company Invitation</CardTitle>
         </CardHeader>

@@ -22,6 +22,11 @@ import { FitScorePanel } from '@/components/builder/fit-score-panel';
 import { applyImportedProfile } from '@/lib/builder/apply-import';
 import type { Tier } from '@/lib/billing/limits';
 import { Sparkles, Save as SaveIcon, Check as CheckIcon, Loader2, Upload } from 'lucide-react';
+import { LiquidSpinner } from '@/components/ui-effects/liquid-spinner';
+import {
+  navigateWithViewTransition,
+  useSignalViewTransitionReady,
+} from '@/lib/hooks/use-view-transition-nav';
 import type { Resume, ATSScore } from '@resumaker/shared';
 
 type Industry = 'tech' | 'healthcare' | 'finance' | 'general';
@@ -96,6 +101,13 @@ export default function BuilderPage() {
   const [advancedContent, setAdvancedContent] = useState<Resume | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const router = useRouter();
+
+  // Tells an in-flight card→editor view transition (triggered from the
+  // dashboard grid) that the real preview is on screen and it's safe to
+  // take its "after" snapshot — see lib/hooks/use-view-transition-nav.ts.
+  // Firing this once `result` exists covers both the edit-hydration path
+  // and fresh-generate; it's a no-op when nothing's pending.
+  useSignalViewTransitionReady(Boolean(result));
 
   /**
    * Resolve the Resume the advanced editor should display: prefer
@@ -413,7 +425,7 @@ export default function BuilderPage() {
 
       {mode === 'advanced' && (
         <div className="space-y-4">
-          <div className="border-border bg-card flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 shadow-sm">
+          <div className="glass-subtle flex flex-wrap items-center justify-between gap-3 rounded-2xl p-3">
             <div className="flex items-center gap-2">
               <Sparkles className="text-brand-500 h-4 w-4" />
               <span className="text-foreground text-sm font-medium">Advanced editor</span>
@@ -585,7 +597,7 @@ export default function BuilderPage() {
                     id="industry"
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value as Industry)}
-                    className="border-input bg-card flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+                    className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 focus-visible:ring-brand-500/18 ease-smooth flex h-10 w-full rounded-xl border px-3.5 py-2 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
                   >
                     <option value="tech">{t('industries.tech')}</option>
                     <option value="healthcare">{t('industries.healthcare')}</option>
@@ -599,7 +611,7 @@ export default function BuilderPage() {
                     id="locale"
                     value={locale}
                     onChange={(e) => setLocale(e.target.value as LocaleChoice)}
-                    className="border-input bg-card flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+                    className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 focus-visible:ring-brand-500/18 ease-smooth flex h-10 w-full rounded-xl border px-3.5 py-2 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
                   >
                     <option value="auto">{t('locales.auto')}</option>
                     <option value="he">{t('locales.he')}</option>
@@ -635,7 +647,7 @@ export default function BuilderPage() {
           {hydrating && !result && (
             <Card>
               <CardContent className="py-24 text-center">
-                <div className="border-brand-200 border-t-brand-600 mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2" />
+                <LiquidSpinner size={32} className="mx-auto mb-4" />
                 <p className="text-muted-foreground">
                   {t.has('actions.loadingExisting') ? t('actions.loadingExisting') : 'Loading…'}
                 </p>
@@ -655,7 +667,7 @@ export default function BuilderPage() {
           {loading && (
             <Card>
               <CardContent className="py-24 text-center">
-                <div className="border-brand-200 border-t-brand-600 mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2" />
+                <LiquidSpinner size={32} className="mx-auto mb-4" />
                 <p className="text-muted-foreground">{t('generating')}</p>
               </CardContent>
             </Card>
@@ -667,7 +679,7 @@ export default function BuilderPage() {
               <Card>
                 <CardContent className="flex flex-wrap items-center gap-2 pt-6">
                   {savedId ? (
-                    <span className="rounded-md bg-green-50 px-3 py-2 text-sm font-medium text-green-700">
+                    <span className="rounded-full bg-green-50 px-3.5 py-2 text-sm font-medium text-green-700 dark:bg-green-950/50 dark:text-green-300">
                       {t('actions.saved')}
                     </span>
                   ) : (
@@ -686,7 +698,11 @@ export default function BuilderPage() {
                         resumeId={savedId}
                         isHebrew={result.metadata.detectedLocale === 'he'}
                       />
-                      <Button size="sm" variant="ghost" onClick={() => router.push('/dashboard')}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => navigateWithViewTransition(() => router.push('/dashboard'))}
+                      >
                         {t('actions.backToDashboard')}
                       </Button>
                     </>
@@ -697,7 +713,11 @@ export default function BuilderPage() {
               {atsScore && (
                 <AtsScoreCard score={atsScore} isHebrew={result.metadata.detectedLocale === 'he'} />
               )}
-              <ResumePreview resume={result.resume} metadata={result.metadata} />
+              <ResumePreview
+                resume={result.resume}
+                metadata={result.metadata}
+                viewTransitionName={editingId ? `resume-card-${editingId}` : undefined}
+              />
             </div>
           )}
         </div>

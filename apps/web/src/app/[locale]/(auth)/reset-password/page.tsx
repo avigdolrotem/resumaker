@@ -57,7 +57,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <Card>
+    <Card className="animate-liquid-pop">
       <CardHeader>
         <CardTitle>{t('reset.title')}</CardTitle>
         <CardDescription>{t('reset.subtitle')}</CardDescription>

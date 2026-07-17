@@ -76,7 +76,7 @@ export default function SignUpPage() {
   }
 
   return (
-    <Card className="border-brand-200/50 dark:border-brand-800/50 shadow-brand-500/10 bg-card/80 relative overflow-hidden shadow-2xl backdrop-blur-xl">
+    <Card className="border-brand-200/50 dark:border-brand-800/50 shadow-brand-500/10 animate-liquid-pop relative overflow-hidden">
       <div
         aria-hidden
         className="from-brand-500 to-brand-500 absolute inset-x-0 top-0 h-1 bg-gradient-to-r via-purple-500"
@@ -119,19 +119,19 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={loading}
-            className="group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-md text-sm font-semibold text-white transition-all disabled:cursor-not-allowed disabled:opacity-60"
+            className="ease-snappy group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-full text-sm font-semibold text-white transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <span
               aria-hidden
-              className="from-brand-500 to-brand-500 absolute -inset-0.5 rounded-md bg-gradient-to-r via-purple-500 opacity-75 blur-md transition group-hover:opacity-100 group-disabled:opacity-30"
+              className="from-brand-500 to-brand-500 absolute -inset-0.5 rounded-full bg-gradient-to-r via-purple-500 opacity-75 blur-md transition group-hover:opacity-100 group-disabled:opacity-30"
             />
             <span
               aria-hidden
-              className="from-brand-600 to-brand-800 absolute inset-0 rounded-md bg-gradient-to-br"
+              className="from-brand-600 to-brand-800 absolute inset-0 rounded-full bg-gradient-to-br"
             />
             <span
               aria-hidden
-              className="absolute inset-0 -translate-x-full rounded-md bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+              className="ease-snappy absolute inset-0 -translate-x-full rounded-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
             />
             <span className="relative z-10 inline-flex items-center gap-2">
               {loading && (

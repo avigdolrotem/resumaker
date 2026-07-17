@@ -1,5 +1,12 @@
 import type { Config } from 'tailwindcss';
 
+// NOT loaded by the build — Tailwind v4 only reads a JS config via an
+// explicit `@config` directive, and src/app/globals.css has none. This
+// file is kept solely as the `shadcn` CLI's config pointer
+// (components.json → tailwind.config). All real tokens, keyframes, and
+// plugins (`tailwindcss-animate`, `@tailwindcss/typography`) live in
+// globals.css `@theme`/`@plugin` — treat that file as the source of
+// truth and keep this one a best-effort mirror.
 const config: Config = {
   // packages/ui was removed in the prelaunch-4 dead-code cleanup; only
   // the local src tree contributes utility classes now.
@@ -13,18 +20,20 @@ const config: Config = {
         heading: ['var(--font-heebo)', 'var(--font-inter)', 'system-ui', 'sans-serif'],
       },
       colors: {
-        // Brand palette — bluish-violet ("indigo-ish")
+        // Brand palette — bluish-violet ("indigo-ish"). Mirrors the
+        // --color-brand-* ramp in globals.css (hue 252).
         brand: {
-          50: 'hsl(258, 100%, 97%)',
-          100: 'hsl(258, 95%, 93%)',
-          200: 'hsl(258, 90%, 85%)',
-          300: 'hsl(258, 85%, 75%)',
-          400: 'hsl(258, 80%, 65%)',
-          500: 'hsl(258, 75%, 55%)',
-          600: 'hsl(258, 70%, 45%)',
-          700: 'hsl(258, 70%, 35%)',
-          800: 'hsl(258, 70%, 25%)',
-          900: 'hsl(258, 75%, 15%)',
+          50: 'hsl(252, 100%, 97%)',
+          100: 'hsl(252, 95%, 93%)',
+          200: 'hsl(252, 90%, 85%)',
+          300: 'hsl(252, 85%, 75%)',
+          400: 'hsl(252, 80%, 65%)',
+          500: 'hsl(252, 75%, 55%)',
+          600: 'hsl(252, 70%, 47%)',
+          700: 'hsl(252, 72%, 38%)',
+          800: 'hsl(252, 75%, 28%)',
+          900: 'hsl(252, 80%, 18%)',
+          950: 'hsl(252, 85%, 9%)',
         },
       },
       animation: {

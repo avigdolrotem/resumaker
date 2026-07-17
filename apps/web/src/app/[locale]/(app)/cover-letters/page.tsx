@@ -73,7 +73,7 @@ export default async function CoverLettersPage() {
               href={`/cover-letters/${l.id}` as any}
               className="group block"
             >
-              <Card className="hover:border-brand-300 hover:shadow-brand-500/5 h-full transition hover:-translate-y-0.5 hover:shadow-md">
+              <Card className="hover:border-brand-300 h-full">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <CardTitle className="line-clamp-2 text-base">{l.title}</CardTitle>

@@ -20,6 +20,10 @@ import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import {
+  navigateWithViewTransition,
+  useSignalViewTransitionReady,
+} from '@/lib/hooks/use-view-transition-nav';
 
 interface ResumeRow {
   id: string;
@@ -50,6 +54,13 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
   // Local optimistic copy so a delete removes the tile immediately even if
   // the user's network is slow. Reconciles with server on router.refresh().
   const [localList, setLocalList] = useState(resumes);
+
+  // The grid's own data is already resolved by the time this client
+  // component mounts (passed in as a prop from the server-rendered
+  // dashboard page) — so "ready" is immediate. This only matters when
+  // the user navigated *back* here from the builder via
+  // navigateWithViewTransition; it's a harmless no-op on a fresh visit.
+  useSignalViewTransitionReady(true);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -165,12 +176,25 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
             return (
               <Card
                 key={r.id}
-                className="hover:border-brand-300 hover:shadow-brand-500/5 group relative h-full transition hover:-translate-y-0.5 hover:shadow-md"
+                className="hover:border-brand-300 group relative h-full"
+                style={{ viewTransitionName: `resume-card-${r.id}` }}
               >
                 <Link
                   href={{ pathname: '/builder', query: { id: r.id } }}
                   className="block"
                   aria-label={isHebrew ? `ערוך ${r.title}` : `Edit ${r.title}`}
+                  onClick={(e) => {
+                    // Let modified clicks (open in new tab/window) and
+                    // non-primary buttons behave natively — the morph
+                    // only makes sense for an in-place navigation.
+                    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+                      return;
+                    }
+                    e.preventDefault();
+                    navigateWithViewTransition(() =>
+                      router.push({ pathname: '/builder', query: { id: r.id } }),
+                    );
+                  }}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
@@ -266,7 +290,7 @@ function CardActionsMenu({
   if (isConfirming) {
     return (
       <div
-        className="bg-card absolute end-2 top-2 z-10 flex items-center gap-1 rounded-md border p-1 shadow-md"
+        className="glass-strong animate-liquid-pop absolute end-2 top-2 z-10 flex items-center gap-1 rounded-xl p-1"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === 'Escape') {
@@ -318,7 +342,7 @@ function CardActionsMenu({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="text-muted-foreground hover:bg-accent hover:text-foreground rounded-md p-1 opacity-0 transition focus:opacity-100 group-hover:opacity-100"
+        className="text-muted-foreground hover:bg-accent hover:text-foreground ease-snappy rounded-full p-1 opacity-0 transition-all duration-200 focus:opacity-100 active:scale-90 group-hover:opacity-100"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={isHebrew ? 'תפריט פעולות' : 'Actions menu'}
@@ -328,7 +352,7 @@ function CardActionsMenu({
       {open && (
         <div
           role="menu"
-          className="bg-card absolute end-0 top-full mt-1 min-w-[10rem] rounded-md border py-1 text-sm shadow-md"
+          className="glass-strong animate-liquid-pop absolute end-0 top-full mt-1 min-w-[10rem] overflow-hidden rounded-2xl py-1 text-sm"
         >
           <Link
             role="menuitem"

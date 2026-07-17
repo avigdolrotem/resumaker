@@ -75,12 +75,12 @@ export function MonthYearPicker({
 
   // The base + disabled classes use semantic tokens so the picker
   // works in light + both dark variants.
-  const selectClass = `flex-1 rounded-md border px-2 py-2 text-sm shadow-sm transition-colors
-    focus:outline-none focus:ring-2 focus:ring-brand-500
+  const selectClass = `flex-1 rounded-xl border px-2.5 py-2 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 ease-smooth
+    focus:outline-none focus:ring-4 focus:ring-brand-500/18
     ${
       disabled
         ? 'cursor-not-allowed border-border bg-muted text-muted-foreground'
-        : 'border-input bg-background text-foreground hover:border-brand-300'
+        : 'border-input bg-background/60 text-foreground hover:border-brand-300 focus:border-brand-400/60 focus:bg-background'
     }`;
 
   return (

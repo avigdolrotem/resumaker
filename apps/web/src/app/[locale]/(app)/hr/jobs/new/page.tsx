@@ -101,6 +101,7 @@ export default function HrPostJobPage() {
                     type="checkbox"
                     checked={remote}
                     onChange={(e) => setRemote(e.target.checked)}
+                    className="accent-brand-600 h-4 w-4 rounded"
                   />
                   {locale === 'he' ? 'עבודה מרחוק' : 'Remote'}
                 </label>

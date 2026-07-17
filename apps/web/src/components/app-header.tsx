@@ -1,7 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
+import { motion } from 'framer-motion';
+import { Link, usePathname } from '@/i18n/navigation';
 import { useSession } from '@/lib/auth-client';
 import { LayoutDashboard, Settings, Mail, Briefcase, TrendingUp } from 'lucide-react';
 import { LocaleSwitcher } from './locale-switcher';
@@ -22,7 +23,7 @@ export function AppHeader() {
 
   return (
     <header
-      className="border-border/60 bg-background/85 sticky top-0 z-40 border-b backdrop-blur-xl"
+      className="border-border/50 bg-background/75 sticky top-0 z-40 border-b backdrop-blur-2xl backdrop-saturate-150"
       style={{
         // Subtle brand gradient at the very top — invisible-ish in light
         // mode (a hair of violet), more noticeable in dark mode where
@@ -46,7 +47,11 @@ export function AppHeader() {
         <CommandPaletteTrigger className="mx-4 hidden max-w-xs flex-1 md:inline-flex" />
 
         <nav className="flex items-center gap-1">
-          {/* Desktop nav links — md+. Icon-only on md, icon+label on lg+. */}
+          {/* Desktop nav links — md+. Icon-only on md, icon+label on lg+.
+              `pathname` drives the shared-layout sliding pill (see
+              NavLink below) — framer-motion's `layoutId` animates the
+              pill from the previous active link to the new one instead
+              of it just popping into place. */}
           <NavLink
             href="/dashboard"
             icon={<LayoutDashboard className="h-4 w-4" />}
@@ -121,19 +126,42 @@ function NavLink({
   icon: React.ReactNode;
   label: string;
 }) {
+  const pathname = usePathname();
+  const active = pathname === href || pathname.startsWith(`${href}/`);
+
   return (
     <Link
       href={href}
-      className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 group relative hidden items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors md:inline-flex"
+      aria-current={active ? 'page' : undefined}
+      className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 group relative hidden items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors md:inline-flex"
     >
-      {/* Soft brand-tinted hover background that fades in on hover —
-          replaces the flat hover:bg-brand-50 with something that
-          plays nicer with dark themes. */}
+      {/* Sliding active pill — same `layoutId` shared across every
+          NavLink instance means framer-motion animates it from the
+          previous active link's position/size to this one instead of
+          snapping, whenever `active` flips true here. Glass surface so
+          it reads as "liquid" rather than a flat highlight. */}
+      {active && (
+        <motion.span
+          layoutId="app-nav-active-pill"
+          className="glass absolute inset-0 -z-10 rounded-full"
+          transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+        />
+      )}
+      {/* Soft brand-tinted hover background — only for the inactive
+          state, so it doesn't fight with the active pill above. */}
+      {!active && (
+        <span
+          aria-hidden
+          className="from-brand-500/0 via-brand-500/10 to-brand-500/0 absolute inset-0 -z-10 rounded-full bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-100"
+        />
+      )}
       <span
-        aria-hidden
-        className="from-brand-500/0 via-brand-500/10 to-brand-500/0 absolute inset-0 -z-10 rounded-md bg-gradient-to-br opacity-0 transition-opacity group-hover:opacity-100"
-      />
-      <span className="text-brand-500 group-hover:text-brand-600 dark:text-brand-400 dark:group-hover:text-brand-300 transition-colors">
+        className={
+          active
+            ? 'text-brand-600 dark:text-brand-300 transition-colors'
+            : 'text-brand-500 group-hover:text-brand-600 dark:text-brand-400 dark:group-hover:text-brand-300 transition-colors'
+        }
+      >
         {icon}
       </span>
       <span className="hidden lg:inline">{label}</span>

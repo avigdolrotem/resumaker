@@ -29,7 +29,7 @@ export function GlowButton({
     return (
       <Link
         href={href}
-        className={`hover:border-brand-300/60 hover:text-brand-700 text-foreground group relative inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/5 font-medium backdrop-blur transition hover:bg-white ${sizeClass}`}
+        className={`glass hover:glass-strong text-foreground ease-snappy group relative inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.96] ${sizeClass}`}
       >
         {children}
       </Link>
@@ -39,22 +39,22 @@ export function GlowButton({
   return (
     <Link
       href={href}
-      className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl font-semibold text-white transition-all duration-300 ${sizeClass}`}
+      className={`ease-snappy group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.96] ${sizeClass}`}
     >
       {/* Glow ring */}
       <span
         aria-hidden
-        className="from-brand-500 to-brand-500 absolute -inset-0.5 rounded-xl bg-gradient-to-r via-purple-500 opacity-75 blur-md transition group-hover:opacity-100 group-hover:blur-lg"
+        className="from-brand-500 to-brand-500 absolute -inset-0.5 rounded-full bg-gradient-to-r via-purple-500 opacity-75 blur-md transition group-hover:opacity-100 group-hover:blur-lg"
       />
       {/* Solid background */}
       <span
         aria-hidden
-        className="from-brand-600 to-brand-800 absolute inset-0 rounded-xl bg-gradient-to-br"
+        className="from-brand-600 to-brand-800 absolute inset-0 rounded-full bg-gradient-to-br"
       />
       {/* Shine pass on hover */}
       <span
         aria-hidden
-        className="absolute inset-0 -translate-x-full rounded-xl bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
+        className="ease-snappy absolute inset-0 -translate-x-full rounded-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
       />
       {/* Content above all layers */}
       <span className="relative z-10 inline-flex items-center gap-2">{children}</span>

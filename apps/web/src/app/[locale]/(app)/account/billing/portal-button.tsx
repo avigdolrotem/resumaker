@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { LiquidSpinner } from '@/components/ui-effects/liquid-spinner';
 
 /**
  * Opens the Stripe Customer Portal in a new tab. Server-side route
@@ -29,14 +30,9 @@ export function BillingPortalButton({ label }: { label: string }) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => void openPortal()}
-      disabled={loading}
-      className="border-border bg-card text-foreground hover:bg-accent inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition disabled:opacity-60"
-    >
-      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+    <Button type="button" variant="outline" onClick={() => void openPortal()} disabled={loading}>
+      {loading && <LiquidSpinner size={16} />}
       {label}
-    </button>
+    </Button>
   );
 }

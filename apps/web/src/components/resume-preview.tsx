@@ -23,9 +23,20 @@ interface PreviewMetadata {
 export function ResumePreview({
   resume,
   metadata,
+  viewTransitionName,
 }: {
   resume: Resume;
   metadata?: PreviewMetadata;
+  /**
+   * Ties this Card to the dashboard grid card it grew out of (or will
+   * shrink back into) for the shared-element view transition — see
+   * lib/hooks/use-view-transition-nav.ts. Only set when we're in
+   * edit-mode for an existing resume; a freshly-generated resume never
+   * had a card to morph from. `| undefined` (not just `?`) because the
+   * call site passes an explicit `editingId ? ... : undefined` ternary
+   * and this project has `exactOptionalPropertyTypes: true`.
+   */
+  viewTransitionName?: string | undefined;
 }) {
   const lang = resume.metadata?.language;
   const isHebrew = lang === 'he';
@@ -40,7 +51,7 @@ export function ResumePreview({
   const presentLabel = isHebrew ? 'היום' : 'Present';
 
   return (
-    <Card>
+    <Card style={viewTransitionName ? { viewTransitionName } : undefined}>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>{resume.contact.name}</span>

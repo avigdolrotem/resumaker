@@ -13,6 +13,7 @@ import { auth } from '@/lib/auth';
 import { getUserTier } from '@/lib/billing/tier';
 import { TIER_LIMITS, TIER_ORDER, type Tier } from '@/lib/billing/limits';
 import { getProviderInfo } from '@/lib/billing/provider';
+import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
 import { PricingClient } from './pricing-client';
 
 export const dynamic = 'force-dynamic';
@@ -78,25 +79,28 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
   });
 
   return (
-    <main className="container mx-auto max-w-6xl px-4 py-16">
-      <header className="mx-auto max-w-2xl text-center">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{t('pageTitle')}</h1>
-        <p className="text-muted-foreground mt-4 text-lg">{t('pageSubtitle')}</p>
-        {!checkoutReady && (
-          <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-amber-50 px-4 py-1.5 text-sm font-medium text-amber-800">
-            <Sparkles className="h-4 w-4" />
-            {t('comingSoonBanner')}
-          </div>
-        )}
-      </header>
+    <main className="relative overflow-hidden">
+      <AnimatedMeshBg intensity="subtle" className="fixed" />
+      <div className="container relative mx-auto max-w-6xl px-4 py-16">
+        <header className="mx-auto max-w-2xl text-center">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{t('pageTitle')}</h1>
+          <p className="text-muted-foreground mt-4 text-lg">{t('pageSubtitle')}</p>
+          {!checkoutReady && (
+            <div className="glass-subtle mt-6 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium text-amber-800 dark:text-amber-200">
+              <Sparkles className="h-4 w-4" />
+              {t('comingSoonBanner')}
+            </div>
+          )}
+        </header>
 
-      <PricingClient
-        tiers={tiers}
-        currentTier={currentTier}
-        checkoutReady={checkoutReady}
-        isAuthed={Boolean(session)}
-        locale={locale}
-      />
+        <PricingClient
+          tiers={tiers}
+          currentTier={currentTier}
+          checkoutReady={checkoutReady}
+          isAuthed={Boolean(session)}
+          locale={locale}
+        />
+      </div>
     </main>
   );
 }

@@ -1,0 +1,80 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Glass Navigation</title>
+<style>
+  :root { --brand-400: hsl(252 80% 65%); --accent-500: hsl(270 75% 58%); --spring-snappy: cubic-bezier(0.34, 1.56, 0.64, 1); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 40px;
+    font-family: -apple-system, 'Inter', system-ui, sans-serif;
+    background: radial-gradient(circle at 50% 0%, #3b1f7a 0%, #1a1030 55%, #0d0818 100%);
+    color: white;
+  }
+
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 18px; border-radius: 999px;
+    background: rgba(20,14,38,0.55);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+    max-width: 720px; margin: 0 auto 60px;
+  }
+  .brand { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-400), var(--accent-500)); }
+
+  /* Pill nav with a sliding glass indicator behind the active item */
+  .pillnav { position: relative; display: flex; gap: 4px; background: rgba(255,255,255,0.05); border-radius: 999px; padding: 4px; }
+  .pillnav a { position: relative; z-index: 1; padding: 8px 16px; font-size: 13px; color: rgba(255,255,255,0.6); text-decoration: none; border-radius: 999px; transition: color 0.3s; }
+  .pillnav a.active { color: white; }
+  .indicator {
+    position: absolute; top: 4px; left: 4px; height: calc(100% - 8px); width: 92px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(167,139,250,0.9), rgba(192,38,211,0.7));
+    box-shadow: 0 4px 14px rgba(139,92,246,0.5);
+    transition: transform 0.45s var(--spring-snappy), width 0.45s var(--spring-snappy);
+  }
+  .pillnav:hover .indicator { transform: translateX(96px); width: 76px; }
+
+  .avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #f0abfc, #67e8f9); }
+
+  /* Mobile bottom dock — glass, floating */
+  .dock {
+    position: relative; max-width: 320px; margin: 0 auto; display: flex; justify-content: space-around;
+    padding: 14px 20px; border-radius: 28px;
+    background: rgba(20,14,38,0.5);
+    backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 10px 34px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .dock button { background: none; border: none; color: rgba(255,255,255,0.55); font-size: 20px; cursor: pointer; transition: transform 0.25s var(--spring-snappy), color 0.25s; }
+  .dock button.active { color: white; transform: translateY(-4px) scale(1.15); }
+
+  h2 { text-align:center; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); margin-bottom: 20px; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span> Resumaker</div>
+    <div class="pillnav">
+      <div class="indicator"></div>
+      <a class="active" href="#">Dashboard</a>
+      <a href="#">Applications</a>
+      <a href="#">Jobs</a>
+    </div>
+    <div class="avatar"></div>
+  </div>
+
+  <h2>Mobile dock</h2>
+  <div class="dock">
+    <button class="active">⌂</button>
+    <button>▤</button>
+    <button>✦</button>
+    <button>◎</button>
+  </div>
+</body>
+</html>

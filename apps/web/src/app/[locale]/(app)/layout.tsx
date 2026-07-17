@@ -6,6 +6,7 @@ import { AppHeader } from '@/components/app-header';
 import { Link } from '@/i18n/navigation';
 import { SessionGuard } from '@/components/session-guard';
 import { ApiUpgradeListener } from '@/components/api-upgrade-listener';
+import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
 
 /**
  * Layout for all signed-in app pages. Redirects to /sign-in if no session.
@@ -29,7 +30,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="bg-background flex min-h-screen flex-col">
+    <div className="bg-background relative flex min-h-screen flex-col overflow-x-hidden">
+      {/* Ambient liquid backdrop, fixed to the viewport so it stays put
+          under scrolling content — this is what makes the glass cards
+          site-wide (not just the dashboard) actually have something
+          translucent to blur. Low intensity + low opacity so dense
+          pages (tables, forms) stay readable. */}
+      <AnimatedMeshBg intensity="subtle" className="fixed opacity-30 dark:opacity-40" />
       {/* Layer B: client-side watchdog that force-reloads if the
           session ever flips from truthy to null while the operator is
           on a page (e.g. their session is revoked mid-tab). Server
@@ -42,7 +49,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           sites don't manage modal state themselves. */}
       <ApiUpgradeListener />
       <AppHeader />
-      <main id="main" className="text-foreground container mx-auto flex-1 px-4 py-8">
+      <main id="main" className="text-foreground container relative z-10 mx-auto flex-1 px-4 py-8">
         {children}
       </main>
       <AppLegalFooter />
@@ -52,21 +59,27 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
 function AppLegalFooter() {
   return (
-    <footer className="border-border text-muted-foreground border-t py-4 text-xs">
+    <footer className="border-border/50 text-muted-foreground relative z-10 border-t py-4 text-xs">
       <div className="container mx-auto flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4">
-        <Link href="/privacy" className="hover:text-foreground transition">
+        <Link href="/privacy" className="hover:text-foreground ease-snappy transition-colors">
           Privacy
         </Link>
-        <Link href="/terms" className="hover:text-foreground transition">
+        <Link href="/terms" className="hover:text-foreground ease-snappy transition-colors">
           Terms
         </Link>
-        <Link href="/legal/accessibility" className="hover:text-foreground transition">
+        <Link
+          href="/legal/accessibility"
+          className="hover:text-foreground ease-snappy transition-colors"
+        >
           Accessibility
         </Link>
-        <Link href="/legal/data-retention" className="hover:text-foreground transition">
+        <Link
+          href="/legal/data-retention"
+          className="hover:text-foreground ease-snappy transition-colors"
+        >
           Data retention
         </Link>
-        <Link href="/contact" className="hover:text-foreground transition">
+        <Link href="/contact" className="hover:text-foreground ease-snappy transition-colors">
           Contact
         </Link>
         <span className="text-muted-foreground/60">·</span>

@@ -64,13 +64,11 @@ export default async function HrJobsPage({ params }: { params: Promise<{ locale:
       </div>
 
       {myJobs.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="text-muted-foreground py-16 text-center">
-            {locale === 'he'
-              ? 'לא פרסמת עדיין משרות. לחץ "פרסם משרה" כדי להתחיל.'
-              : 'You haven\'t posted any jobs yet. Click "Post a job" to start.'}
-          </CardContent>
-        </Card>
+        <div className="glass-subtle text-muted-foreground border-border rounded-2xl border-2 border-dashed py-16 text-center">
+          {locale === 'he'
+            ? 'לא פרסמת עדיין משרות. לחץ "פרסם משרה" כדי להתחיל.'
+            : 'You haven\'t posted any jobs yet. Click "Post a job" to start.'}
+        </div>
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
           {myJobs.map((j) => (

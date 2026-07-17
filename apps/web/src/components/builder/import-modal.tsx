@@ -2,8 +2,9 @@
 
 import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Upload, X, Loader2, Check, FileText } from 'lucide-react';
+import { Upload, X, Check, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LiquidSpinner } from '@/components/ui-effects/liquid-spinner';
 import { type ParsedImport, type ImportOpts, DEFAULT_OPTS } from '@/lib/builder/apply-import';
 
 /**
@@ -75,13 +76,13 @@ export function ImportModal({ open, onClose, onApply }: ImportModalProps) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="border-border bg-card relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border p-6 shadow-2xl"
+        className="glass-strong animate-liquid-pop relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl p-6"
       >
         <button
           type="button"
           onClick={close}
           aria-label={t('close')}
-          className="text-muted-foreground hover:text-foreground absolute end-4 top-4"
+          className="text-muted-foreground hover:text-foreground hover:bg-muted ease-snappy absolute end-4 top-4 rounded-full p-1 transition-colors duration-200 active:scale-90"
         >
           <X className="h-5 w-5" />
         </button>
@@ -106,7 +107,7 @@ export function ImportModal({ open, onClose, onApply }: ImportModalProps) {
                 fileRef.current?.click();
               }
             }}
-            className="border-border hover:border-brand-300 bg-muted/30 cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-colors"
+            className="border-border hover:border-brand-300 bg-muted/30 ease-smooth cursor-pointer rounded-2xl border-2 border-dashed p-10 text-center transition-colors duration-300"
           >
             <Upload className="text-muted-foreground mx-auto h-8 w-8" />
             <p className="text-foreground mt-2 text-sm font-medium">{t('dropTitle')}</p>
@@ -126,14 +127,14 @@ export function ImportModal({ open, onClose, onApply }: ImportModalProps) {
 
         {step === 'parsing' && (
           <div className="flex flex-col items-center gap-3 py-10">
-            <Loader2 className="text-brand-500 h-8 w-8 animate-spin" />
+            <LiquidSpinner size={32} />
             <p className="text-muted-foreground text-sm">{t('parsing')}</p>
             <p className="text-muted-foreground/70 text-xs">{t('parsingHint')}</p>
           </div>
         )}
 
         {step === 'error' && (
-          <div className="text-destructive border-destructive/30 bg-destructive/10 rounded-md border p-3 text-sm">
+          <div className="text-destructive border-destructive/30 bg-destructive/10 rounded-xl border p-3 text-sm">
             <p className="font-medium">{t('errorTitle')}</p>
             <p className="text-xs">{error}</p>
             <Button type="button" size="sm" variant="outline" className="mt-3" onClick={reset}>
@@ -144,7 +145,7 @@ export function ImportModal({ open, onClose, onApply }: ImportModalProps) {
 
         {step === 'preview' && parsed && (
           <div className="space-y-4">
-            <div className="border-border bg-muted/30 rounded-md border p-3">
+            <div className="border-border bg-muted/30 rounded-xl border p-3">
               <p className="mb-2 flex items-center gap-1.5 text-sm font-medium">
                 <FileText className="h-3.5 w-3.5" />
                 {t('foundTitle')}

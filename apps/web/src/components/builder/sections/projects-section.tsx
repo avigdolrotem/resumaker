@@ -119,7 +119,7 @@ export function ProjectsSection({
       )}
 
       {entries.length === 0 && !pendingNew && (
-        <div className="border-border bg-muted/30 rounded-xl border border-dashed p-6 text-center">
+        <div className="border-border bg-muted/30 rounded-2xl border border-dashed p-6 text-center">
           <p className="text-muted-foreground text-sm">{t('empty')}</p>
         </div>
       )}

@@ -1,0 +1,122 @@
+<!-- @dsCard group="Foundations" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Resumaker Liquid Glass — Foundations</title>
+<style>
+  :root {
+    --brand-400: hsl(252 80% 65%);
+    --brand-500: hsl(252 75% 55%);
+    --brand-600: hsl(252 70% 47%);
+    --accent-500: hsl(270 75% 58%);
+
+    /* ── Glass surface tokens — light ───────────────────────────── */
+    --glass-bg-subtle: rgba(255, 255, 255, 0.32);
+    --glass-bg: rgba(255, 255, 255, 0.55);
+    --glass-bg-strong: rgba(255, 255, 255, 0.74);
+    --glass-border: rgba(255, 255, 255, 0.65);
+    --glass-border-inner: rgba(255, 255, 255, 0.9);
+    --glass-shadow: 0 8px 32px rgba(76, 29, 149, 0.14), inset 0 1.5px 0 rgba(255, 255, 255, 0.55);
+    --glass-blur: 20px;
+    --glass-saturate: 180%;
+
+    /* ── Motion tokens ───────────────────────────────────────────
+       snappy  = elastic overshoot, for things the user just "poked"
+                 (buttons, toggles, chips)
+       smooth  = fluid ease-out, no overshoot, for things that should
+                 feel like liquid settling (panels, page transitions)
+       press   = quick linear-ish compress for the instant of contact
+    */
+    --spring-snappy: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --spring-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+    --spring-press: cubic-bezier(0.4, 0, 0.2, 1);
+    --duration-fast: 180ms;
+    --duration-base: 320ms;
+    --duration-slow: 600ms;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, 'Inter', system-ui, sans-serif;
+    background: radial-gradient(circle at 20% 20%, #2d1b69 0%, #1a1030 45%, #0d0818 100%);
+    color: white;
+    padding: 48px;
+    min-height: 100vh;
+  }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  p.lede { color: rgba(255,255,255,0.6); margin: 0 0 40px; max-width: 640px; line-height: 1.5; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.5); margin: 40px 0 16px; }
+
+  .ramp { display: flex; gap: 8px; margin-bottom: 8px; }
+  .swatch { flex: 1; height: 64px; border-radius: 12px; display: flex; align-items: flex-end; padding: 8px; font-size: 11px; font-family: monospace; }
+
+  .glass-row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .glass-demo {
+    width: 220px; height: 140px; border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 4px;
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    position: relative; overflow: hidden;
+    font-size: 13px;
+  }
+  .glass-demo::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(135deg, var(--glass-border-inner) 0%, transparent 30%);
+    opacity: 0.5; pointer-events: none;
+  }
+  .subtle { background: var(--glass-bg-subtle); }
+  .default { background: var(--glass-bg); }
+  .strong { background: var(--glass-bg-strong); }
+  .glass-demo b { font-size: 14px; }
+  .glass-demo span { color: rgba(255,255,255,0.55); font-size: 11px; font-family: monospace; }
+
+  .curve-row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .curve-card { width: 240px; }
+  .track { position: relative; height: 48px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); overflow: hidden; }
+  .ball { position: absolute; top: 6px; left: 6px; width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-400), var(--accent-500)); box-shadow: 0 4px 14px rgba(139,92,246,0.5); }
+  .curve-label { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 8px; font-family: monospace; }
+  .snappy .ball { animation: travel-snappy 1.8s var(--spring-snappy) infinite; }
+  .smooth .ball { animation: travel-smooth 1.8s var(--spring-smooth) infinite; }
+  @keyframes travel-snappy { 0%, 15% { left: 6px; } 50%, 65% { left: calc(100% - 42px); } 100% { left: 6px; } }
+  @keyframes travel-smooth { 0%, 15% { left: 6px; } 50%, 65% { left: calc(100% - 42px); } 100% { left: 6px; } }
+</style>
+</head>
+<body>
+  <h1>Liquid Glass — Foundations</h1>
+  <p class="lede">Core tokens for Resumaker's redesign: translucent layered glass surfaces with specular edges, plus a two-curve motion system (snappy / smooth) used for every interactive element site-wide, not just the dashboard.</p>
+
+  <h2>Brand ramp (unchanged)</h2>
+  <div class="ramp">
+    <div class="swatch" style="background:hsl(252 100% 97%); color:#333">50</div>
+    <div class="swatch" style="background:hsl(252 90% 85%); color:#333">200</div>
+    <div class="swatch" style="background:hsl(252 80% 65%); color:#fff">400</div>
+    <div class="swatch" style="background:hsl(252 75% 55%); color:#fff">500</div>
+    <div class="swatch" style="background:hsl(252 70% 47%); color:#fff">600</div>
+    <div class="swatch" style="background:hsl(252 75% 28%); color:#fff">800</div>
+  </div>
+
+  <h2>Glass surface intensities</h2>
+  <div class="glass-row">
+    <div class="glass-demo subtle"><b>Subtle</b><span>bg/32% blur/20</span></div>
+    <div class="glass-demo default"><b>Default</b><span>bg/55% blur/20</span></div>
+    <div class="glass-demo strong"><b>Strong</b><span>bg/74% blur/20</span></div>
+  </div>
+
+  <h2>Motion curves</h2>
+  <div class="curve-row">
+    <div class="curve-card snappy">
+      <div class="track"><div class="ball"></div></div>
+      <div class="curve-label">--spring-snappy · buttons, toggles, chips</div>
+    </div>
+    <div class="curve-card smooth">
+      <div class="track"><div class="ball"></div></div>
+      <div class="curve-label">--spring-smooth · panels, page transitions</div>
+    </div>
+  </div>
+</body>
+</html>

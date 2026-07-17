@@ -101,8 +101,9 @@ export default async function AdminPage() {
         />
       </div>
 
-      {/* Users table (searchable, filterable) */}
-      <Card>
+      {/* Users table (searchable, filterable) — glass-subtle, no hover-lift:
+          dense scan surface stays flat + fast per the admin design note. */}
+      <div className="glass-subtle overflow-hidden rounded-2xl">
         <CardHeader>
           <CardTitle>Users</CardTitle>
           <CardDescription>Last 50 sign-ups — searchable + role-filterable</CardDescription>
@@ -110,10 +111,10 @@ export default async function AdminPage() {
         <CardContent>
           <AdminUserSearch users={recentUsers} />
         </CardContent>
-      </Card>
+      </div>
 
       {/* Generations table */}
-      <Card>
+      <div className="glass-subtle overflow-hidden rounded-2xl">
         <CardHeader>
           <CardTitle>Recent generations</CardTitle>
           <CardDescription>Last 15 LLM calls</CardDescription>
@@ -145,7 +146,7 @@ export default async function AdminPage() {
             </thead>
             <tbody className="divide-border divide-y">
               {recentGenerations.map((g) => (
-                <tr key={g.id}>
+                <tr key={g.id} className="hover:bg-accent/40 transition-colors">
                   <td className="text-muted-foreground py-2 ps-1 text-xs">
                     {new Date(g.createdAt).toLocaleTimeString()}
                   </td>
@@ -169,7 +170,7 @@ export default async function AdminPage() {
             </tbody>
           </table>
         </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -199,7 +200,7 @@ function MetricCard({
             {delta && <p className="text-muted-foreground mt-1 text-xs">{delta}</p>}
           </div>
           <div
-            className={`flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-md ${color}`}
+            className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md ${color}`}
           >
             <Icon className="h-5 w-5" />
           </div>
@@ -216,5 +217,5 @@ function StatusBadge({ status }: { status: string }) {
       : status === 'rejected_input'
         ? 'bg-amber-100 text-amber-700'
         : 'bg-red-100 text-red-700';
-  return <span className={`rounded px-2 py-0.5 text-xs font-medium ${styles}`}>{status}</span>;
+  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles}`}>{status}</span>;
 }

@@ -24,6 +24,7 @@ import { TIER_LIMITS } from '@/lib/billing/limits';
 import { getProviderInfo } from '@/lib/billing/provider';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { BillingPortalButton } from './portal-button';
 
 export const dynamic = 'force-dynamic';
@@ -82,7 +83,7 @@ export default async function AccountBillingPage({
               </CardTitle>
               <CardDescription>{t('currentTier')}</CardDescription>
               {grantedByAdmin && (
-                <p className="mt-2 inline-flex items-center gap-1 rounded bg-violet-50 px-2 py-1 text-xs text-violet-800">
+                <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-xs text-violet-800 dark:bg-violet-950 dark:text-violet-300">
                   <CheckCircle2 className="h-3 w-3" />
                   {t('grantedByAdmin')}
                 </p>
@@ -99,12 +100,11 @@ export default async function AccountBillingPage({
               {isPaid && hasProviderCustomer ? (
                 <BillingPortalButton label={t('openPortal')} />
               ) : (
-                <Link
-                  href="/pricing"
-                  className="bg-brand-600 hover:bg-brand-700 inline-flex items-center rounded-lg px-4 py-2 text-sm font-medium text-white transition"
-                >
-                  {tier === 'free' ? t('gate.upgradeCta') : t('manage')}
-                </Link>
+                <Button asChild>
+                  <Link href="/pricing">
+                    {tier === 'free' ? t('gate.upgradeCta') : t('manage')}
+                  </Link>
+                </Button>
               )}
             </div>
           </div>
@@ -180,7 +180,7 @@ function UsageTile({
       {!isUnlimited && !isDisabled && (
         <div className="bg-muted mt-2 h-1.5 overflow-hidden rounded-full">
           <div
-            className={`h-full rounded-full ${isNearLimit ? 'bg-amber-500' : 'bg-brand-500'}`}
+            className={`ease-smooth h-full rounded-full transition-all duration-500 ${isNearLimit ? 'bg-amber-500' : 'bg-brand-500'}`}
             style={{ width: `${pct}%` }}
           />
         </div>

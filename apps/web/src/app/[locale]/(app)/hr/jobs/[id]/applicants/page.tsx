@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation';
 import { and, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
-import { Card, CardContent } from '@/components/ui/card';
 import { NextResponse } from 'next/server';
 
 export default async function ApplicantsPage({
@@ -50,21 +49,24 @@ export default async function ApplicantsPage({
       </div>
 
       {applicants.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="text-muted-foreground py-16 text-center">
-            {isHe ? 'אין מועמדים שנתנו הסכמה עדיין.' : 'No opted-in applicants yet.'}
-          </CardContent>
-        </Card>
+        <div className="glass-subtle text-muted-foreground border-border rounded-2xl border-2 border-dashed py-16 text-center">
+          {isHe ? 'אין מועמדים שנתנו הסכמה עדיין.' : 'No opted-in applicants yet.'}
+        </div>
       ) : (
-        <div className="space-y-3">
-          {applicants.map((a) => (
-            <Card key={a.applicationId}>
-              <CardContent className="space-y-1 pt-5">
+        // Flat, scannable list — glass-subtle wrapper, no per-row hover-lift
+        // (dense list of applicants, per the admin design note).
+        <div className="glass-subtle overflow-hidden rounded-2xl">
+          <ul className="divide-border divide-y">
+            {applicants.map((a) => (
+              <li
+                key={a.applicationId}
+                className="hover:bg-accent/40 space-y-1 px-6 py-4 transition-colors"
+              >
                 <p className="font-medium">{(a.name ?? isHe) ? 'ללא שם' : 'No name'}</p>
                 <p className="text-muted-foreground text-sm">{a.email}</p>
                 <p className="text-muted-foreground text-xs">
                   {isHe ? 'סטטוס: ' : 'Status: '}
-                  {a.status}
+                  <span className="bg-muted rounded-full px-2 py-0.5 font-medium">{a.status}</span>
                   {a.appliedAt && (
                     <span className="ms-2">
                       {isHe ? '· הגיש/ה ב' : '· Applied '}
@@ -72,9 +74,9 @@ export default async function ApplicantsPage({
                     </span>
                   )}
                 </p>
-              </CardContent>
-            </Card>
-          ))}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

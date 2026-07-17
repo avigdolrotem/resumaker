@@ -1,0 +1,82 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Glass Buttons</title>
+<style>
+  :root {
+    --brand-400: hsl(252 80% 65%); --brand-500: hsl(252 75% 55%); --brand-600: hsl(252 70% 47%);
+    --accent-500: hsl(270 75% 58%);
+    --spring-snappy: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --duration-fast: 180ms;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 56px;
+    font-family: -apple-system, 'Inter', system-ui, sans-serif;
+    background: radial-gradient(circle at 25% 15%, #3b1f7a 0%, #1a1030 50%, #0d0818 100%);
+    display: flex; flex-direction: column; gap: 28px; align-items: flex-start;
+  }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+
+  button { font-family: inherit; font-size: 14px; font-weight: 600; border: none; cursor: pointer; border-radius: 999px; padding: 12px 24px; display: inline-flex; align-items: center; gap: 8px; transition: transform var(--duration-fast) var(--spring-snappy), box-shadow var(--duration-fast) var(--spring-snappy), background var(--duration-fast) var(--spring-snappy); }
+  button:active { transform: scale(0.94); }
+
+  /* Primary — liquid gradient glass with a moving specular sheen */
+  .primary {
+    color: white;
+    background: linear-gradient(135deg, var(--brand-400), var(--accent-500));
+    box-shadow: 0 6px 20px rgba(139,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.4);
+    position: relative; overflow: hidden;
+  }
+  .primary::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(120deg, transparent 20%, rgba(255,255,255,0.35) 45%, transparent 70%);
+    transform: translateX(-120%); transition: transform 0.6s var(--spring-snappy);
+  }
+  .primary:hover::after { transform: translateX(120%); }
+  .primary:hover { box-shadow: 0 10px 28px rgba(139,92,246,0.6), inset 0 1px 0 rgba(255,255,255,0.5); transform: translateY(-1px); }
+
+  /* Glass secondary — frosted, translucent, border highlight */
+  .glass {
+    color: white;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.22);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .glass:hover { background: rgba(255,255,255,0.2); transform: translateY(-1px); }
+
+  .ghost { color: rgba(255,255,255,0.8); background: transparent; }
+  .ghost:hover { background: rgba(255,255,255,0.08); }
+
+  .destructive { color: white; background: linear-gradient(135deg, #f87171, #dc2626); box-shadow: 0 6px 18px rgba(220,38,38,0.4); }
+
+  .icon { width: 44px; height: 44px; padding: 0; justify-content: center; border-radius: 50%; }
+
+  label { color: rgba(255,255,255,0.45); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: -12px; }
+</style>
+</head>
+<body>
+  <label>Primary — liquid gradient, sheen sweeps on hover, elastic press</label>
+  <div class="row">
+    <button class="primary">Generate resume</button>
+    <button class="primary">Continue →</button>
+  </div>
+
+  <label>Glass — frosted translucent, for use over imagery/gradients</label>
+  <div class="row">
+    <button class="glass">Preview</button>
+    <button class="glass">Save draft</button>
+    <button class="glass icon">＋</button>
+  </div>
+
+  <label>Ghost / Destructive</label>
+  <div class="row">
+    <button class="ghost">Cancel</button>
+    <button class="destructive">Delete</button>
+  </div>
+</body>
+</html>

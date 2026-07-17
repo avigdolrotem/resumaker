@@ -89,7 +89,7 @@ export function OnboardingChecklist({
                 {item.href && !item.done ? (
                   <Link
                     href={item.href}
-                    className="hover:bg-brand-50/40 dark:hover:bg-brand-950/30 -mx-2 block rounded-md px-2 py-1.5 transition"
+                    className="hover:bg-brand-50/40 dark:hover:bg-brand-950/30 ease-smooth -mx-2 block rounded-xl px-2 py-1.5 transition-colors duration-300"
                   >
                     {content}
                   </Link>

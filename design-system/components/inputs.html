@@ -1,0 +1,65 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Glass Inputs</title>
+<style>
+  :root { --brand-400: hsl(252 80% 65%); --accent-500: hsl(270 75% 58%); --spring-smooth: cubic-bezier(0.22, 1, 0.36, 1); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 56px;
+    font-family: -apple-system, 'Inter', system-ui, sans-serif;
+    background: radial-gradient(circle at 30% 30%, #3b1f7a 0%, #1a1030 55%, #0d0818 100%);
+    color: white; display: flex; flex-direction: column; gap: 22px; max-width: 380px;
+  }
+  label { font-size: 12px; color: rgba(255,255,255,0.55); }
+  .field { position: relative; }
+  input, textarea {
+    width: 100%; font-family: inherit; font-size: 14px; color: white;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 14px; padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.3s var(--spring-smooth), box-shadow 0.3s var(--spring-smooth), background 0.3s;
+  }
+  input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.35); }
+  input:focus, textarea:focus {
+    border-color: rgba(167,139,250,0.6);
+    background: rgba(255,255,255,0.1);
+    box-shadow: 0 0 0 4px rgba(139,92,246,0.18), 0 0 24px rgba(139,92,246,0.25);
+  }
+
+  /* Liquid focus ring — a soft glow that expands in on focus */
+  .field::after {
+    content: ''; position: absolute; inset: -2px; border-radius: 16px; pointer-events: none;
+    box-shadow: 0 0 0 0 rgba(139,92,246,0);
+    opacity: 0; transition: opacity 0.3s var(--spring-smooth);
+  }
+  .field:focus-within::after { opacity: 1; }
+
+  textarea { min-height: 90px; resize: vertical; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+  .switch { width: 46px; height: 26px; border-radius: 999px; background: rgba(255,255,255,0.12); position: relative; cursor: pointer; transition: background 0.3s; border: 1px solid rgba(255,255,255,0.15); }
+  .switch.on { background: linear-gradient(135deg, var(--brand-400), var(--accent-500)); }
+  .knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: white; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .switch.on .knob { transform: translateX(20px); }
+</style>
+</head>
+<body>
+  <div class="field">
+    <label>Job title</label>
+    <input placeholder="Senior Product Designer" value="Senior Product Designer" />
+  </div>
+  <div class="field">
+    <label>Summary</label>
+    <textarea placeholder="Write a short professional summary…">Product designer with 6 years of experience shipping design systems at scale.</textarea>
+  </div>
+  <div class="toggle-row">
+    <label>Auto-tailor to job description</label>
+    <div class="switch on"><div class="knob"></div></div>
+  </div>
+</body>
+</html>

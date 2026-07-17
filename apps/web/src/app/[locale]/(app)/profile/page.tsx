@@ -115,7 +115,7 @@ export default function ProfilePage() {
                 id="locale"
                 value={locale}
                 onChange={(e) => setLocale(e.target.value as 'he' | 'en')}
-                className="focus:ring-brand-500 border-input bg-card flex h-10 w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 focus-visible:bg-background ease-smooth focus-visible:ring-brand-500/18 flex h-10 w-full rounded-xl border px-3.5 py-2 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
               >
                 <option value="he">עברית (Hebrew)</option>
                 <option value="en">English</option>

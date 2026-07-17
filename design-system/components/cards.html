@@ -1,0 +1,75 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Glass Cards</title>
+<style>
+  :root { --brand-400: hsl(252 80% 65%); --accent-500: hsl(270 75% 58%); --spring-smooth: cubic-bezier(0.22, 1, 0.36, 1); }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 56px;
+    font-family: -apple-system, 'Inter', system-ui, sans-serif;
+    background: radial-gradient(circle at 70% 20%, #3b1f7a 0%, #1a1030 50%, #0d0818 100%);
+    display: flex; gap: 24px; flex-wrap: wrap;
+  }
+  .card {
+    width: 300px; border-radius: 20px; padding: 24px;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+    color: white;
+    position: relative; overflow: hidden;
+    transition: transform 0.4s var(--spring-smooth), box-shadow 0.4s var(--spring-smooth), border-color 0.4s var(--spring-smooth);
+  }
+  .card::before {
+    content: ''; position: absolute; width: 260px; height: 260px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(167,139,250,0.35), transparent 70%);
+    top: -120px; left: -80px; pointer-events: none;
+    transition: transform 0.6s var(--spring-smooth);
+  }
+  .card:hover { transform: translateY(-6px) scale(1.015); border-color: rgba(167,139,250,0.4); box-shadow: 0 16px 40px rgba(109,40,217,0.35), inset 0 1px 0 rgba(255,255,255,0.2); }
+  .card:hover::before { transform: translate(30px, 30px); }
+
+  .card h3 { margin: 0 0 6px; font-size: 17px; }
+  .card p { margin: 0 0 16px; font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 999px; background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.3); color: #d8c9fc; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
+  .stat { font-size: 22px; font-weight: 700; }
+  .stat-label { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .featured { background: linear-gradient(160deg, rgba(167,139,250,0.22), rgba(255,255,255,0.06)); border-color: rgba(167,139,250,0.35); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <span class="badge">● Active</span>
+    <h3 style="margin-top:14px">Senior Product Designer</h3>
+    <p>Applied to Figma · 2 days ago</p>
+    <div class="stat-row">
+      <div><div class="stat">87%</div><div class="stat-label">ATS match</div></div>
+      <div><div class="stat">3</div><div class="stat-label">tailored</div></div>
+    </div>
+  </div>
+
+  <div class="card featured">
+    <span class="badge">✦ AI suggested</span>
+    <h3 style="margin-top:14px">Optimize for this role</h3>
+    <p>We found 4 keyword gaps between your resume and this listing.</p>
+    <div class="stat-row">
+      <div><div class="stat">+12%</div><div class="stat-label">projected lift</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Referral program</h3>
+    <p>Invite a friend, you both get a free month of Pro.</p>
+    <div class="stat-row">
+      <div><div class="stat">2</div><div class="stat-label">invites sent</div></div>
+      <div><div class="stat">1</div><div class="stat-label">joined</div></div>
+    </div>
+  </div>
+</body>
+</html>

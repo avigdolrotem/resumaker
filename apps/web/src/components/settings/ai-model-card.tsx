@@ -84,11 +84,11 @@ export function AIModelCard() {
                 onClick={() => allowed && pick(m)}
                 disabled={!allowed || saving === m.id}
                 className={cn(
-                  'relative rounded-lg border p-4 text-left transition',
+                  'ease-smooth relative rounded-2xl border p-4 text-left transition-all duration-300 active:scale-[0.98]',
                   selected || isRecommendedDefault
                     ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/30'
-                    : 'border-border hover:border-brand-300',
-                  !allowed && 'cursor-not-allowed opacity-50',
+                    : 'border-border hover:border-brand-300 hover:-translate-y-0.5',
+                  !allowed && 'cursor-not-allowed opacity-50 active:scale-100',
                 )}
               >
                 <div className="flex items-center justify-between">

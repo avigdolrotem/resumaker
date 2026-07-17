@@ -53,7 +53,7 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
   const status = await fetchHealth();
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12">
+    <main className="relative mx-auto max-w-3xl overflow-hidden px-4 py-12">
       <h1 className="text-3xl font-bold">{isHe ? 'סטטוס מערכת' : 'System status'}</h1>
       <p className="text-muted-foreground mt-2">
         {isHe ? 'מתעדכן כל 30 שניות. בעדכון נכון לתאריך:' : 'Refreshed every 30 seconds. As of:'}{' '}
@@ -61,8 +61,10 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
       </p>
 
       <div
-        className={`mt-6 rounded-lg border p-6 ${
-          status.overall ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'
+        className={`ease-smooth mt-6 rounded-2xl border p-6 backdrop-blur-md transition-all duration-500 ${
+          status.overall
+            ? 'border-emerald-200/60 bg-emerald-50/70 dark:border-emerald-800/50 dark:bg-emerald-950/30'
+            : 'border-amber-200/60 bg-amber-50/70 dark:border-amber-800/50 dark:bg-amber-950/30'
         }`}
       >
         <p className="text-lg font-semibold">
@@ -81,7 +83,7 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
         {status.deps.map((d) => (
           <li
             key={d.name}
-            className="border-border bg-card flex items-center justify-between rounded-md border px-4 py-3"
+            className="glass-subtle ease-smooth flex items-center justify-between rounded-xl px-4 py-3 transition-all duration-500 hover:-translate-y-0.5"
           >
             <div>
               <p className="font-medium">{d.name}</p>
@@ -89,7 +91,9 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
             </div>
             <span
               className={`rounded-full px-3 py-0.5 text-xs font-medium ${
-                d.ok ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                d.ok
+                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200'
+                  : 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-200'
               }`}
             >
               {d.ok ? (isHe ? 'תקין' : 'OK') : isHe ? 'תקלה' : 'Down'}
@@ -100,7 +104,10 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
 
       <p className="text-muted-foreground mt-8 text-xs">
         {isHe ? 'בעיה מתמשכת? ' : 'Ongoing issue? '}
-        <a href={`/${locale}/contact`} className="text-violet-700 hover:underline">
+        <a
+          href={`/${locale}/contact`}
+          className="text-brand-600 dark:text-brand-300 font-medium hover:underline"
+        >
           {isHe ? 'פנה לתמיכה' : 'Contact support'}
         </a>
       </p>

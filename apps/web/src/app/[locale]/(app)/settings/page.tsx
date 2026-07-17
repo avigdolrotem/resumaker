@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   User,
@@ -119,13 +120,28 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => setTab(it.id)}
                 className={[
-                  'flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition',
-                  active
-                    ? 'bg-violet-100 font-medium text-violet-800'
-                    : 'text-foreground hover:bg-accent',
+                  'ease-snappy group relative flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors duration-200',
+                  active ? 'text-brand-700 dark:text-brand-200 font-medium' : 'text-foreground',
                 ].join(' ')}
                 aria-current={active ? 'page' : undefined}
               >
+                {/* Sliding active pill — shared `layoutId` across every tab
+                    button so framer-motion animates it to the newly-active
+                    tab instead of it just popping into place, matching the
+                    header NavLink pattern (see components/app-header.tsx). */}
+                {active && (
+                  <motion.span
+                    layoutId="settings-tab-active-pill"
+                    className="glass absolute inset-0 -z-10 rounded-xl"
+                    transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+                  />
+                )}
+                {!active && (
+                  <span
+                    aria-hidden
+                    className="bg-accent absolute inset-0 -z-10 rounded-xl opacity-0 transition-opacity group-hover:opacity-100"
+                  />
+                )}
                 <Icon className="h-4 w-4" />
                 <span>{tNav.has(it.key) ? tNav(it.key) : it.key}</span>
               </button>
@@ -217,7 +233,7 @@ function AdminTab() {
             <li key={l.href}>
               <Link
                 href={l.href}
-                className="hover:bg-muted -mx-3 flex items-center justify-between gap-3 rounded-md px-3 py-3 transition"
+                className="hover:bg-muted ease-smooth -mx-3 flex items-center justify-between gap-3 rounded-xl px-3 py-3 transition-all duration-300 hover:-translate-y-0.5"
               >
                 <div className="min-w-0">
                   <div className="font-medium">{l.label}</div>
@@ -697,7 +713,7 @@ function RegionalTab() {
             id="tz"
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
-            className="border-input bg-background text-foreground flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+            className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 focus-visible:bg-background ease-smooth focus-visible:ring-brand-500/18 flex h-10 w-full rounded-xl border px-3.5 py-2 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
           >
             <option value="Asia/Jerusalem">Asia/Jerusalem (Israel)</option>
             <option value="Europe/London">Europe/London (UK)</option>
@@ -713,7 +729,7 @@ function RegionalTab() {
             id="df"
             value={dateFormat}
             onChange={(e) => setDateFormat(e.target.value as typeof dateFormat)}
-            className="border-input bg-background text-foreground flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+            className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 focus-visible:bg-background ease-smooth focus-visible:ring-brand-500/18 flex h-10 w-full rounded-xl border px-3.5 py-2 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
           >
             <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2026)</option>
             <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2026)</option>

@@ -176,7 +176,7 @@ export function MobileDrawer() {
         onClick={() => setOpen(true)}
         aria-label="Open menu"
         aria-expanded={open}
-        className="text-foreground hover:bg-muted inline-flex h-9 w-9 items-center justify-center rounded-md transition md:hidden"
+        className="text-foreground hover:bg-accent/70 ease-snappy inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 active:scale-90 md:hidden"
       >
         <Menu className="h-5 w-5" />
       </button>
@@ -210,15 +210,15 @@ export function MobileDrawer() {
               previous attempt silently fell back to LTR everywhere,
               which made the Hebrew drawer slide leftward across the
               entire viewport — looked broken). */}
-            <div className="bg-card resumaker-drawer-panel absolute inset-y-0 end-0 flex w-[85%] max-w-sm flex-col shadow-2xl">
-              <div className="border-border flex items-center justify-between border-b px-4 py-3">
+            <div className="glass-strong resumaker-drawer-panel absolute inset-y-0 end-0 flex w-[85%] max-w-sm flex-col rounded-s-3xl">
+              <div className="border-border/50 flex items-center justify-between border-b px-4 py-3">
                 <Logo size="sm" href={session ? '/dashboard' : '/'} />
                 <button
                   ref={closeRef}
                   type="button"
                   onClick={() => setOpen(false)}
                   aria-label="Close menu"
-                  className="text-foreground hover:bg-muted inline-flex h-9 w-9 items-center justify-center rounded-md transition"
+                  className="text-foreground hover:bg-accent/70 ease-snappy inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 active:scale-90"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -230,7 +230,7 @@ export function MobileDrawer() {
                     return (
                       <div
                         key={`divider-${it.label}`}
-                        className="border-border text-muted-foreground mt-3 border-t px-4 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider"
+                        className="border-border/50 text-muted-foreground mt-3 border-t px-4 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-wider"
                       >
                         {it.label}
                       </div>
@@ -242,7 +242,7 @@ export function MobileDrawer() {
                         key={it.label}
                         type="button"
                         onClick={() => void handleSignOut()}
-                        className="text-foreground hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-start text-sm font-medium transition"
+                        className="text-foreground hover:bg-accent/60 ease-snappy mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-xl px-3 py-3 text-start text-sm font-medium transition-all duration-200"
                       >
                         <it.Icon className="text-muted-foreground h-4 w-4" />
                         {it.label}
@@ -254,7 +254,7 @@ export function MobileDrawer() {
                       key={it.href}
                       href={it.href}
                       onClick={() => setOpen(false)}
-                      className="text-foreground hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition"
+                      className="text-foreground hover:bg-accent/60 ease-snappy mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200"
                     >
                       <it.Icon className="text-muted-foreground h-4 w-4" />
                       {it.label}
@@ -264,7 +264,7 @@ export function MobileDrawer() {
               </nav>
 
               {session && (
-                <div className="border-border border-t px-4 py-3">
+                <div className="border-border/50 border-t px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="bg-brand-100 dark:bg-brand-900/40 flex h-9 w-9 items-center justify-center rounded-full">
                       <UserCircle className="text-brand-700 dark:text-brand-200 h-5 w-5" />
@@ -299,10 +299,10 @@ export function MobileDrawer() {
               to   { transform: translateX(0); }
             }
             [dir='ltr'] .resumaker-drawer-panel {
-              animation: resumakerDrawerSlideFromRight 0.25s ease-out;
+              animation: resumakerDrawerSlideFromRight 0.4s var(--ease-smooth);
             }
             [dir='rtl'] .resumaker-drawer-panel {
-              animation: resumakerDrawerSlideFromLeft 0.25s ease-out;
+              animation: resumakerDrawerSlideFromLeft 0.4s var(--ease-smooth);
             }
             @media (prefers-reduced-motion: reduce) {
               .resumaker-drawer-panel { animation: none; }

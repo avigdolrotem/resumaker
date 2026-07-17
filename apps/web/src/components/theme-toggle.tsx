@@ -115,7 +115,7 @@ export function ThemeToggle() {
         aria-label="Change theme"
         aria-expanded={open}
         aria-haspopup="menu"
-        className="hover:bg-brand-50 hover:text-brand-700 dark:hover:bg-brand-900/40 dark:hover:text-brand-100 text-foreground dark:text-muted-foreground/50 inline-flex h-9 w-9 items-center justify-center rounded-md text-sm transition"
+        className="hover:bg-accent/60 hover:text-brand-700 dark:hover:text-brand-100 text-foreground dark:text-muted-foreground/50 ease-snappy inline-flex h-9 w-9 items-center justify-center rounded-full text-sm transition-all duration-200 active:scale-90"
       >
         <CurrentIcon className="h-4 w-4" />
       </button>
@@ -128,10 +128,10 @@ export function ThemeToggle() {
           // outside-click handler from interfering with the radio
           // selection (some browsers fire document handlers ahead of
           // React's synthetic event in certain scenarios).
-          className="border-border bg-card absolute end-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-xl border shadow-2xl"
+          className="glass-strong animate-liquid-pop absolute end-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="border-border text-muted-foreground border-b px-3 py-2 text-xs font-semibold uppercase tracking-wider">
+          <div className="border-border/50 text-muted-foreground border-b px-3 py-2 text-xs font-semibold uppercase tracking-wider">
             Theme
           </div>
           {options.map((o) => {
@@ -147,7 +147,7 @@ export function ThemeToggle() {
                   e.stopPropagation();
                   applyTheme(o.value);
                 }}
-                className="hover:bg-muted flex w-full items-start gap-3 px-3 py-2.5 text-start text-sm transition"
+                className="hover:bg-accent/60 ease-snappy flex w-full items-start gap-3 px-3 py-2.5 text-start text-sm transition-all duration-150"
               >
                 <o.Icon className="text-brand-600 dark:text-brand-300 mt-0.5 h-4 w-4 shrink-0" />
                 <div className="min-w-0 flex-1">

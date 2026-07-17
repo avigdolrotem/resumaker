@@ -47,13 +47,11 @@ export default async function HrCompanyListPage({
       </div>
 
       {memberships.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="text-muted-foreground py-16 text-center">
-            {isHe
-              ? 'אין חברות עדיין. לחץ "צור חברה" כדי להתחיל.'
-              : 'No companies yet. Click "Create company" to get started.'}
-          </CardContent>
-        </Card>
+        <div className="glass-subtle text-muted-foreground border-border rounded-2xl border-2 border-dashed py-16 text-center">
+          {isHe
+            ? 'אין חברות עדיין. לחץ "צור חברה" כדי להתחיל.'
+            : 'No companies yet. Click "Create company" to get started.'}
+        </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {memberships.map((m) => (

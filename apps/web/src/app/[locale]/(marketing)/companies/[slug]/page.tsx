@@ -3,6 +3,8 @@ import { eq, and } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
+import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
+import { GlassPanel } from '@/components/ui-effects/glass-panel';
 
 interface Props {
   params: Promise<{ locale: string; slug: string }>;
@@ -32,69 +34,76 @@ export default async function CompanyPublicPage({ params }: Props) {
   const isHe = locale === 'he';
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 px-4 py-12">
-      <div className="flex items-center gap-4">
-        {company.logoUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={company.logoUrl}
-            alt={company.name}
-            className="h-16 w-16 rounded-lg object-contain"
-          />
-        )}
-        <div>
-          <h1 className="text-4xl font-bold">{company.name}</h1>
-          {company.websiteUrl && (
-            <a
-              href={company.websiteUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-sm text-blue-600 underline"
-            >
-              {company.websiteUrl}
-            </a>
+    <div className="relative overflow-hidden py-12">
+      <AnimatedMeshBg intensity="subtle" />
+      <div className="relative z-10 mx-auto max-w-3xl space-y-8 px-4">
+        <GlassPanel intensity="subtle" animateIn className="flex items-center gap-4 p-6 sm:p-8">
+          {company.logoUrl && (
+            <div className="glass-subtle flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={company.logoUrl}
+                alt={company.name}
+                className="h-full w-full object-contain"
+              />
+            </div>
           )}
-        </div>
-      </div>
-
-      {company.description && (
-        <p className="text-muted-foreground leading-relaxed">{company.description}</p>
-      )}
-
-      <section>
-        <h2 className="mb-4 text-2xl font-semibold">{isHe ? 'משרות פתוחות' : 'Open positions'}</h2>
-
-        {activeJobs.length === 0 ? (
-          <p className="text-muted-foreground">
-            {isHe ? 'אין משרות פתוחות כרגע.' : 'No open positions at this time.'}
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {activeJobs.map((job) => (
-              <Card key={job.id}>
-                <CardContent className="pt-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <h3 className="font-medium">{job.title}</h3>
-                      <p className="text-muted-foreground text-sm">
-                        {job.location ?? (isHe ? 'מיקום לא צוין' : 'Location not specified')}
-                        {job.remote && ` · ${isHe ? 'מרחוק' : 'Remote'}`}
-                        {job.seniority && ` · ${job.seniority}`}
-                      </p>
-                    </div>
-                    <Link
-                      href={`/jobs/${job.id}`}
-                      className="shrink-0 rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white hover:bg-neutral-700"
-                    >
-                      {isHe ? 'הגש מועמדות' : 'Apply'}
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div>
+            <h1 className="text-4xl font-bold">{company.name}</h1>
+            {company.websiteUrl && (
+              <a
+                href={company.websiteUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand-600 dark:text-brand-300 text-sm hover:underline"
+              >
+                {company.websiteUrl}
+              </a>
+            )}
           </div>
+        </GlassPanel>
+
+        {company.description && (
+          <p className="text-muted-foreground leading-relaxed">{company.description}</p>
         )}
-      </section>
+
+        <section>
+          <h2 className="mb-4 text-2xl font-semibold">
+            {isHe ? 'משרות פתוחות' : 'Open positions'}
+          </h2>
+
+          {activeJobs.length === 0 ? (
+            <p className="text-muted-foreground">
+              {isHe ? 'אין משרות פתוחות כרגע.' : 'No open positions at this time.'}
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {activeJobs.map((job) => (
+                <Card key={job.id}>
+                  <CardContent className="pt-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1">
+                        <h3 className="font-medium">{job.title}</h3>
+                        <p className="text-muted-foreground text-sm">
+                          {job.location ?? (isHe ? 'מיקום לא צוין' : 'Location not specified')}
+                          {job.remote && ` · ${isHe ? 'מרחוק' : 'Remote'}`}
+                          {job.seniority && ` · ${job.seniority}`}
+                        </p>
+                      </div>
+                      <Link
+                        href={`/jobs/${job.id}`}
+                        className="bg-brand-600 hover:bg-brand-700 ease-snappy shrink-0 rounded-full px-4 py-1.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.96]"
+                      >
+                        {isHe ? 'הגש מועמדות' : 'Apply'}
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

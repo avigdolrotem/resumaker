@@ -21,9 +21,18 @@ export default async function PrivacyPage({ params }: { params: Promise<{ locale
   const isHebrew = locale === 'he';
 
   return (
-    <article className="prose mx-auto max-w-3xl px-4 py-12">
-      {isHebrew ? <PrivacyHe /> : <PrivacyEn />}
-    </article>
+    <div className="relative overflow-hidden py-12">
+      {/* Static, non-animated wash — legal text needs stillness, not
+          drifting blobs. Just enough atmosphere to match the rest of
+          the site without competing with the reading experience. */}
+      <div
+        aria-hidden
+        className="from-brand-50/50 via-background to-background dark:from-brand-950/20 pointer-events-none absolute inset-0 bg-gradient-to-b"
+      />
+      <article className="glass-subtle prose prose-neutral dark:prose-invert relative mx-auto max-w-3xl rounded-3xl px-6 py-10 sm:px-10 sm:py-12">
+        {isHebrew ? <PrivacyHe /> : <PrivacyEn />}
+      </article>
+    </div>
   );
 }
 

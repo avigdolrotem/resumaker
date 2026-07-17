@@ -101,7 +101,7 @@ export function ResumeInlineEditor({ resumeId, initialContent, isHebrew, onSaved
 
   return (
     <div className="space-y-4">
-      <div className="border-border bg-background/95 sticky top-0 z-10 -mx-4 flex items-center justify-between border-b px-4 py-3 backdrop-blur">
+      <div className="border-border bg-background/80 sticky top-0 z-10 -mx-4 flex items-center justify-between border-b px-4 py-3 backdrop-blur-xl backdrop-saturate-150">
         <h2 className="text-lg font-semibold">{isHebrew ? 'עריכת קורות חיים' : 'Edit resume'}</h2>
         <Button onClick={save} disabled={saving} size="sm">
           <Save className="me-2 h-4 w-4" />
@@ -529,7 +529,7 @@ function ListSection<T>({
           </p>
         )}
         {items.map((item, i) => (
-          <div key={i} className="border-border rounded-lg border p-3">
+          <div key={i} className="glass-subtle rounded-2xl p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-muted-foreground flex items-center gap-2 text-xs">
                 <GripVertical className="h-3.5 w-3.5" />#{i + 1}

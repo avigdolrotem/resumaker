@@ -259,9 +259,12 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="divide-border divide-y">
+            <ul className="divide-border/70 divide-y">
               {recentActivity.map((a) => (
-                <li key={a.id} className="flex items-center justify-between py-3">
+                <li
+                  key={a.id}
+                  className="ease-smooth hover:bg-accent/40 -mx-2 flex items-center justify-between rounded-xl px-2 py-3 transition-colors duration-300"
+                >
                   <div className="flex items-center gap-3">
                     <div
                       className={`flex h-8 w-8 items-center justify-center rounded-full ${

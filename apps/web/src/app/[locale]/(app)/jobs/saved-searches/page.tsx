@@ -165,7 +165,7 @@ export default function SavedSearchesPage() {
                   id="source"
                   value={source}
                   onChange={(e) => setSource(e.target.value)}
-                  className="border-input bg-card flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+                  className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 focus-visible:bg-background ease-smooth focus-visible:ring-brand-500/18 flex h-10 w-full rounded-xl border px-3.5 py-2 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
                 >
                   <option value="">Any</option>
                   <option value="greenhouse">Greenhouse</option>
@@ -181,7 +181,7 @@ export default function SavedSearchesPage() {
                   id="freq"
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly' | 'off')}
-                  className="border-input bg-card flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+                  className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 focus-visible:bg-background ease-smooth focus-visible:ring-brand-500/18 flex h-10 w-full rounded-xl border px-3.5 py-2 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
                 >
                   <option value="daily">Daily digest</option>
                   <option value="weekly">Weekly</option>
@@ -216,7 +216,10 @@ export default function SavedSearchesPage() {
           ) : (
             <ul className="divide-border divide-y">
               {searches.map((s) => (
-                <li key={s.id} className="flex items-start justify-between gap-3 py-3">
+                <li
+                  key={s.id}
+                  className="ease-smooth hover:bg-accent/40 -mx-2 flex items-start justify-between gap-3 rounded-xl px-2 py-3 transition-colors duration-300"
+                >
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{s.name}</p>
                     <p className="text-muted-foreground text-xs">
@@ -241,7 +244,7 @@ export default function SavedSearchesPage() {
                       onChange={(e) =>
                         updateFreq(s.id, e.target.value as 'daily' | 'weekly' | 'off')
                       }
-                      className="border-input bg-card rounded-md border px-2 py-1 text-xs"
+                      className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 ease-smooth focus-visible:ring-brand-500/18 rounded-lg border px-2 py-1 text-xs backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
                     >
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>

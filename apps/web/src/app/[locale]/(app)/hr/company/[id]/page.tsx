@@ -91,7 +91,7 @@ export default function CompanyDetailPage() {
       {company.websiteUrl && (
         <a
           href={company.websiteUrl}
-          className="text-sm text-blue-600 underline"
+          className="hover:text-brand-600 text-sm text-blue-600 underline transition-colors duration-200"
           target="_blank"
           rel="noreferrer"
         >
@@ -99,13 +99,17 @@ export default function CompanyDetailPage() {
         </a>
       )}
 
-      <Card>
+      {/* Member list — glass-subtle, flat rows (scannable list, not chrome) */}
+      <div className="glass-subtle overflow-hidden rounded-2xl">
         <CardHeader>
           <CardTitle>Team members</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-1">
           {company.companyMembers.map((m) => (
-            <div key={m.id} className="flex items-center justify-between gap-2">
+            <div
+              key={m.id}
+              className="hover:bg-accent/40 -mx-2 flex items-center justify-between gap-2 rounded-lg px-2 py-2 transition-colors"
+            >
               <div>
                 <p className="text-sm font-medium">{m.user.name ?? m.user.email}</p>
                 <p className="text-muted-foreground text-xs">{m.role}</p>
@@ -118,7 +122,7 @@ export default function CompanyDetailPage() {
             </div>
           ))}
         </CardContent>
-      </Card>
+      </div>
 
       <Card>
         <CardHeader>
@@ -142,7 +146,7 @@ export default function CompanyDetailPage() {
                 id="role"
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as 'recruiter' | 'viewer')}
-                className="border-input bg-background block w-full rounded-md border px-3 py-2 text-sm"
+                className="border-input bg-background/60 focus-visible:border-brand-400/60 focus-visible:ring-brand-500/18 ease-smooth block w-full rounded-xl border px-3.5 py-2 text-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
               >
                 <option value="recruiter">Recruiter</option>
                 <option value="viewer">Viewer</option>

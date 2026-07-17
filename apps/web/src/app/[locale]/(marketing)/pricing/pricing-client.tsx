@@ -53,7 +53,7 @@ export function PricingClient({
         <div
           role="tablist"
           aria-label={locale === 'he' ? 'בחר תקופת חיוב' : 'Select billing period'}
-          className="bg-muted inline-flex rounded-full p-1"
+          className="glass-subtle inline-flex rounded-full p-1"
         >
           {INTERVAL_ORDER.map((intv) => (
             <button
@@ -62,7 +62,7 @@ export function PricingClient({
               role="tab"
               aria-selected={interval === intv}
               onClick={() => setInterval(intv)}
-              className={`relative rounded-full px-4 py-2 text-sm font-medium transition ${
+              className={`ease-snappy relative rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 active:scale-[0.96] ${
                 interval === intv
                   ? 'text-foreground bg-card shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -175,14 +175,14 @@ function TierCard({
 
   return (
     <div
-      className={`bg-card relative flex flex-col rounded-2xl border p-6 shadow-sm ${
+      className={`ease-smooth relative flex flex-col rounded-2xl p-6 transition-all duration-500 hover:-translate-y-1 ${
         isFeatured
-          ? 'border-brand-500 ring-brand-200 dark:ring-brand-700/40 ring-4'
-          : 'border-border'
+          ? 'glass ring-brand-200 dark:ring-brand-700/40 hover:shadow-glass-lg ring-4'
+          : 'glass-subtle hover:glass'
       }`}
     >
       {isFeatured && (
-        <span className="bg-brand-500 absolute -top-3 start-6 rounded-full px-3 py-0.5 text-xs font-semibold text-white">
+        <span className="from-brand-500 to-accent-500 absolute -top-3 start-6 rounded-full bg-gradient-to-br px-3 py-0.5 text-xs font-semibold text-white shadow-md">
           {locale === 'he' ? 'הכי פופולרי' : 'Most popular'}
         </span>
       )}
@@ -223,28 +223,28 @@ function TierCard({
           <button
             type="button"
             disabled
-            className="text-muted-foreground bg-muted w-full cursor-not-allowed rounded-lg px-4 py-2.5 text-sm font-medium"
+            className="text-muted-foreground bg-muted w-full cursor-not-allowed rounded-full px-4 py-2.5 text-sm font-medium"
           >
             {t('currentTier')}
           </button>
         ) : isFree ? (
           <Link
             href="/sign-up"
-            className="bg-brand-600 hover:bg-brand-700 block w-full rounded-lg px-4 py-2.5 text-center text-sm font-medium text-white transition"
+            className="from-brand-500 to-accent-500 hover:shadow-brand-500/30 ease-snappy block w-full rounded-full bg-gradient-to-br px-4 py-2.5 text-center text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.96]"
           >
             {t('subscribe', { tier: t('free') })}
           </Link>
         ) : !isAuthed ? (
           <Link
             href="/sign-in"
-            className="bg-brand-600 hover:bg-brand-700 block w-full rounded-lg px-4 py-2.5 text-center text-sm font-medium text-white transition"
+            className="from-brand-500 to-accent-500 hover:shadow-brand-500/30 ease-snappy block w-full rounded-full bg-gradient-to-br px-4 py-2.5 text-center text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.96]"
           >
             {t('subscribe', { tier: tier.displayName })}
           </Link>
         ) : !checkoutReady ? (
           <a
             href="mailto:hello@resumaker.co.il?subject=Waitlist%20-%20Pricing"
-            className="block w-full rounded-lg border-2 border-amber-300 bg-amber-50 px-4 py-2.5 text-center text-sm font-medium text-amber-900 transition hover:bg-amber-100 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-100 dark:hover:bg-amber-900/40"
+            className="glass-subtle ease-snappy block w-full rounded-full px-4 py-2.5 text-center text-sm font-medium text-amber-900 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.96] dark:text-amber-100"
           >
             {t('joinWaitlist')}
           </a>
@@ -252,7 +252,7 @@ function TierCard({
           <button
             type="button"
             disabled
-            className="bg-muted text-muted-foreground/80 w-full cursor-not-allowed rounded-lg px-4 py-2.5 text-sm font-medium"
+            className="bg-muted text-muted-foreground/80 w-full cursor-not-allowed rounded-full px-4 py-2.5 text-sm font-medium"
           >
             {locale === 'he' ? 'לא זמין' : 'Not available'}
           </button>
@@ -262,7 +262,7 @@ function TierCard({
             onClick={() => void startCheckout()}
             disabled={loading}
             aria-busy={loading}
-            className="bg-brand-600 hover:bg-brand-700 inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition disabled:opacity-60"
+            className="from-brand-500 to-accent-500 hover:shadow-brand-500/30 ease-snappy inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.96] disabled:pointer-events-none disabled:opacity-60 disabled:active:scale-100"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {t('subscribe', { tier: tier.displayName })}

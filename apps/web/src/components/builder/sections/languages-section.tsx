@@ -59,13 +59,13 @@ export function LanguagesSection({ languages, onChange }: LanguagesSectionProps)
         </h2>
       </header>
 
-      <div className="border-border bg-card rounded-xl border p-4 shadow-sm">
+      <div className="glass-subtle rounded-2xl p-4">
         {languages.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-1.5">
             {languages.map((l) => (
               <span
                 key={l.name}
-                className="bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-200 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm"
+                className="bg-brand-50 text-brand-800 dark:bg-brand-950 dark:text-brand-200 ease-snappy inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-sm transition-transform duration-200 hover:-translate-y-0.5"
               >
                 {l.name}
                 <span className="text-brand-600/70 dark:text-brand-300/70 text-xs">
@@ -75,7 +75,7 @@ export function LanguagesSection({ languages, onChange }: LanguagesSectionProps)
                   type="button"
                   onClick={() => onChange(languages.filter((x) => x.name !== l.name))}
                   aria-label={`Remove ${l.name}`}
-                  className="hover:text-brand-900 dark:hover:text-brand-50"
+                  className="hover:text-brand-900 dark:hover:text-brand-50 ease-snappy transition-colors duration-200"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -111,7 +111,7 @@ export function LanguagesSection({ languages, onChange }: LanguagesSectionProps)
               value={level}
               onChange={(e) => setLevel(e.target.value as LanguageLevel)}
               disabled={languages.length >= 10}
-              className="border-input bg-background text-foreground focus:ring-brand-500 rounded-md border px-2 py-2 text-sm shadow-sm focus:outline-none focus:ring-2"
+              className="border-input bg-background/60 text-foreground focus:border-brand-400/60 focus:bg-background ease-smooth focus:ring-brand-500/18 rounded-xl border px-2.5 py-2 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-4"
             >
               {LEVELS.map((l) => (
                 <option key={l.value} value={l.value}>

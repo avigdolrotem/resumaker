@@ -1,5 +1,6 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { Sparkles, ListChecks } from 'lucide-react';
 
 /**
@@ -28,7 +29,7 @@ export function BuilderModeToggle({
   onChange: (m: BuilderMode) => void;
 }) {
   return (
-    <div className="border-border bg-card inline-flex items-center gap-1 rounded-xl border p-1 shadow-sm">
+    <div className="glass-subtle inline-flex items-center gap-1 rounded-2xl p-1">
       <ModeButton
         active={mode === 'basic'}
         onClick={() => onChange('basic')}
@@ -65,12 +66,26 @@ function ModeButton({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`group relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-        active
-          ? 'from-brand-600 to-brand-700 shadow-brand-500/30 bg-gradient-to-br text-white shadow-md'
-          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+      className={`ease-snappy group relative flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-200 active:scale-[0.96] ${
+        active ? 'text-white' : 'text-muted-foreground hover:text-foreground'
       }`}
     >
+      {/* Sliding active pill — shared `layoutId` across both buttons so
+          framer-motion animates it between Basic/Advanced instead of it
+          just popping into place, matching the header NavLink pattern. */}
+      {active && (
+        <motion.span
+          layoutId="builder-mode-active-pill"
+          className="from-brand-600 to-brand-700 shadow-brand-500/30 absolute inset-0 -z-10 rounded-xl bg-gradient-to-br shadow-md"
+          transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+        />
+      )}
+      {!active && (
+        <span
+          aria-hidden
+          className="bg-muted absolute inset-0 -z-10 rounded-xl opacity-0 transition-opacity group-hover:opacity-100"
+        />
+      )}
       <Icon className="h-4 w-4" />
       <span className="hidden sm:inline">{label}</span>
       <span

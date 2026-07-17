@@ -94,7 +94,7 @@ export function SectionCard<T>({
 
   if (isEditing) {
     return (
-      <div className="border-brand-300 bg-card relative rounded-xl border-2 p-4 shadow-sm transition-colors">
+      <div className="glass border-brand-300/70 dark:border-brand-500/50 ease-smooth relative rounded-2xl border-2 p-4 transition-colors duration-300">
         {renderEdit(draft, setDraft)}
         <div className="mt-3 flex items-center justify-end gap-2">
           <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
@@ -123,10 +123,10 @@ export function SectionCard<T>({
       }}
       data-flash={flash || undefined}
       aria-live={flash ? 'polite' : undefined}
-      className={`group relative cursor-pointer rounded-xl border p-4 shadow-sm transition-all duration-700 hover:-translate-y-px hover:shadow-md ${
+      className={`ease-smooth hover:shadow-glass-lg group relative cursor-pointer rounded-2xl border p-4 transition-all duration-500 hover:-translate-y-0.5 ${
         flash
           ? 'border-green-500 bg-green-50 dark:bg-green-950/30'
-          : 'border-border bg-card hover:border-brand-300'
+          : 'glass-subtle hover:border-brand-300'
       }`}
     >
       {leading && <div className="absolute left-1 top-1/2 -translate-y-1/2">{leading}</div>}
@@ -140,7 +140,7 @@ export function SectionCard<T>({
               e.stopPropagation();
               onEnterEdit();
             }}
-            className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-md p-1.5"
+            className="text-muted-foreground hover:bg-muted hover:text-foreground ease-snappy rounded-full p-1.5 transition-colors duration-200 active:scale-90"
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
@@ -151,7 +151,7 @@ export function SectionCard<T>({
               e.stopPropagation();
               setConfirmingDelete(true);
             }}
-            className="text-destructive hover:bg-destructive/10 rounded-md p-1.5"
+            className="text-destructive hover:bg-destructive/10 ease-snappy rounded-full p-1.5 transition-colors duration-200 active:scale-90"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
@@ -162,7 +162,7 @@ export function SectionCard<T>({
           role="alertdialog"
           aria-label={t('confirmDeleteAria')}
           onClick={(e) => e.stopPropagation()}
-          className="border-border bg-background/95 absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-xl border-2 p-4"
+          className="border-border bg-background/95 animate-liquid-pop absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 p-4 backdrop-blur-sm"
         >
           <p className="text-sm">{deleteConfirmText ?? t('confirmDelete')}</p>
           <div className="flex gap-2">

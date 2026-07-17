@@ -63,7 +63,7 @@ export function JobHuntPreview() {
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">{j.source} · 2d ago</span>
-                  <span className="rounded bg-violet-100 px-2 py-0.5 font-medium text-violet-700">
+                  <span className="rounded-full bg-violet-100 px-2 py-0.5 font-medium text-violet-700 dark:bg-violet-950 dark:text-violet-300">
                     {j.fit}/10
                   </span>
                 </div>

@@ -5,6 +5,8 @@ import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
 import { GridPattern } from '@/components/ui-effects/grid-pattern';
 import { AnimatedGradientText } from '@/components/ui-effects/animated-gradient-text';
 import { GlowButton } from '@/components/ui-effects/glow-button';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Mail,
   Phone,
@@ -421,10 +423,7 @@ function SampleResumeCard({ sample, isHebrew }: { sample: SampleResume; isHebrew
   const L = labels(sample.locale);
 
   return (
-    <div
-      dir={dir}
-      className="border-border bg-card shadow-brand-500/5 hover:shadow-brand-500/10 relative overflow-hidden rounded-2xl border shadow-xl transition hover:shadow-2xl"
-    >
+    <Card dir={dir}>
       {/* Brand gradient strip */}
       <div
         aria-hidden
@@ -543,7 +542,7 @@ function SampleResumeCard({ sample, isHebrew }: { sample: SampleResume; isHebrew
                   {g.items.map((it) => (
                     <span
                       key={it}
-                      className="bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-200 rounded-md px-2 py-0.5 text-xs font-medium"
+                      className="bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-200 rounded-full px-2 py-0.5 text-xs font-medium"
                     >
                       {it}
                     </span>
@@ -580,14 +579,11 @@ function SampleResumeCard({ sample, isHebrew }: { sample: SampleResume; isHebrew
             </span>
           ))}
         </div>
-        <Link
-          href="/sign-up"
-          className="bg-brand-600 hover:bg-brand-700 inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-white shadow-sm transition"
-        >
-          {isHebrew ? 'בנה דומה' : 'Build similar'}
-        </Link>
+        <Button asChild size="sm">
+          <Link href="/sign-up">{isHebrew ? 'בנה דומה' : 'Build similar'}</Link>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }
 

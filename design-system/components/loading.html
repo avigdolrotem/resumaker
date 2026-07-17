@@ -1,0 +1,48 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Glass Loading States</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 56px;
+    font-family: -apple-system, 'Inter', system-ui, sans-serif;
+    background: radial-gradient(circle at 40% 20%, #3b1f7a 0%, #1a1030 55%, #0d0818 100%);
+    color: white; display: flex; gap: 28px; align-items: flex-start;
+  }
+  .panel {
+    width: 280px; padding: 20px; border-radius: 20px;
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.13);
+  }
+  .skel { border-radius: 8px; background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.16) 50%, rgba(255,255,255,0.06) 75%); background-size: 200% 100%; animation: shimmer 1.8s linear infinite; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  .avatar-skel { width: 44px; height: 44px; border-radius: 50%; margin-bottom: 14px; }
+  .line { height: 12px; margin-bottom: 10px; }
+  .line.w60 { width: 60%; } .line.w80 { width: 80%; } .line.w40 { width: 40%; }
+
+  /* Liquid spinner — a blob that squashes/stretches while orbiting,
+     used instead of a plain ring spinner to match the fluid language */
+  .spin-wrap { width: 64px; height: 64px; position: relative; }
+  .liquid-spin { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(from 0deg, transparent, #a78bfa); animation: rotate 1s linear infinite; -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), black calc(100% - 6px)); mask: radial-gradient(farthest-side, transparent calc(100% - 6px), black calc(100% - 6px)); }
+  @keyframes rotate { to { transform: rotate(360deg); } }
+
+  .caption { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 14px; }
+</style>
+</head>
+<body>
+  <div class="panel">
+    <div class="skel avatar-skel"></div>
+    <div class="skel line w80"></div>
+    <div class="skel line w60"></div>
+    <div class="skel line w40"></div>
+  </div>
+  <div class="panel" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:180px;">
+    <div class="spin-wrap"><div class="liquid-spin"></div></div>
+    <div class="caption">Tailoring your resume…</div>
+  </div>
+</body>
+</html>
