@@ -8,7 +8,7 @@
 
 ## What This Is
 
-Resumaker is a production resume builder targeted at the Israeli job market. Paste a job description (or URL), get back an ATS-optimized resume tailored to that role, available in Hebrew or English with automatic language detection. Built on a microservices architecture with industry-grade DevOps practices.
+Resumaker is a production resume builder targeted at the Israeli job market. Paste a job description (or URL), get back an ATS-optimized resume tailored to that role, available in Hebrew or English with automatic language detection. Built as a single Next.js deployment (the `packages/*` workspaces below are in-process libraries, not separate services) with industry-grade DevOps practices.
 
 ## Highlights
 
@@ -19,60 +19,64 @@ Resumaker is a production resume builder targeted at the Israeli job market. Pas
 - 🎨 **5 custom-designed templates** with React-PDF rendering
 - 🔐 **Better Auth** with email + OAuth + 2FA + passkeys
 - 💳 **Stripe-ready** subscription infrastructure
-- ☁️ **AWS infrastructure** defined as code (OpenTofu)
+- ☁️ **GCP infrastructure** defined as code (OpenTofu)
 - 🔒 **Security-first** — gitleaks, trivy, OWASP Top 10 hardening
-- 🌐 **Cloud-native** — Docker, Kubernetes (EKS), Helm, ArgoCD
+- 🌐 **Cloud-native** — Docker, Kubernetes (GKE), Helm
 
 ## Architecture
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full picture.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — note: that doc predates the
+AWS→GCP migration (see `docs/superpowers/plans/2026-05-26-gcp-migration.md`)
+and still describes an earlier Vercel/AWS/microservices design. Treat the
+diagram below and `infra/` (OpenTofu + Helm) as the source of truth until
+ARCHITECTURE.md gets a proper rewrite.
 
 Quick view:
 
 ```
-Browser → Cloudflare → Next.js (Vercel) → API Gateway →
-   ├─ Better Auth (sessions, OAuth, MFA)
-   ├─ Resume Generator Service (LLM orchestrator + safety layer)
-   ├─ ATS Scorer Service
-   ├─ Job Description Parser (paste + URL fetch)
-   ├─ Billing Service (Stripe)
-   └─ Postgres (RDS) + S3 (resumes) + Redis (rate limits)
+Browser → Cloudflare → Next.js (GKE, single deployment) → Better Auth (sessions, OAuth, MFA)
+   ├─ Resume generation (LLM orchestrator + safety layer, in-process)
+   ├─ ATS scoring
+   ├─ Job description parsing (paste + URL fetch)
+   ├─ Billing (Stripe / Lemon Squeezy)
+   └─ Cloud SQL (Postgres) + Memorystore (Redis) + GCS (file storage)
 ```
 
 ## Tech Stack
 
-| Layer      | Choice                                                                   |
-| ---------- | ------------------------------------------------------------------------ |
-| Frontend   | Next.js 16, TypeScript, Tailwind v4, shadcn/ui, Aceternity UI, next-intl |
-| Backend    | Node.js, Hono/Fastify, microservices                                     |
-| Database   | PostgreSQL (AWS RDS) + Redis (ElastiCache)                               |
-| Auth       | Better Auth                                                              |
-| AI         | Claude Sonnet (default), Gemini, GPT-5 (premium tier)                    |
-| Storage    | AWS S3                                                                   |
-| Infra      | AWS (il-central-1) via OpenTofu                                          |
-| Containers | Docker + EKS + Helm                                                      |
-| GitOps     | ArgoCD                                                                   |
-| CI/CD      | GitHub Actions                                                           |
-| Monitoring | Sentry + Grafana + Prometheus + Loki                                     |
-| Payments   | Stripe                                                                   |
+| Layer      | Choice                                                                                          |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| Frontend   | Next.js 16, TypeScript, Tailwind v4, shadcn/ui, next-intl                                       |
+| Backend    | Next.js API routes (single deployment; `packages/*` are in-process libs, not separate services) |
+| Database   | PostgreSQL (Cloud SQL) + Redis (Memorystore)                                                    |
+| Auth       | Better Auth                                                                                     |
+| AI         | Claude Sonnet (default), Gemini, GPT-5 (premium tier)                                           |
+| Storage    | Google Cloud Storage (GCS)                                                                      |
+| Infra      | GCP (europe-west1) via OpenTofu                                                                 |
+| Containers | Docker + GKE + Helm                                                                             |
+| GitOps     | ArgoCD                                                                                          |
+| CI/CD      | GitHub Actions                                                                                  |
+| Monitoring | Sentry + Grafana + Prometheus + Loki                                                            |
+| Payments   | Stripe + Lemon Squeezy                                                                          |
 
 ## Project Structure
 
 ```
 resumaker/
 ├── apps/
-│   ├── web/              # Next.js 16 frontend (HE/EN i18n)
-│   └── api/              # Backend services
+│   ├── web/              # Next.js 16 app — frontend + all API routes (HE/EN i18n)
+│   └── api/              # Empty — not in use
 ├── packages/
 │   ├── shared/           # Shared types, Zod schemas
-│   ├── ui/               # Reusable UI components
 │   ├── ai-safety/        # LLM prompt injection defense
+│   ├── job-engine/       # Job description parsing
 │   ├── resume-engine/    # Resume generation logic
 │   └── ats-scorer/       # ATS keyword scoring
 ├── infra/
-│   ├── tofu/             # OpenTofu IaC (AWS)
+│   ├── tofu/             # OpenTofu IaC (GCP)
 │   ├── ansible/          # Config management
-│   └── helm/             # Kubernetes charts
+│   ├── helm/             # Kubernetes charts
+│   └── gitops/           # ArgoCD manifests (dormant — see deploy.yml)
 ├── docs/                 # Architecture & design docs
 ├── scripts/              # Build & deploy automation
 ├── tests/                # E2E, integration, security tests
@@ -81,35 +85,40 @@ resumaker/
 
 ## Getting Started
 
-Single-environment deployment — there is no local-dev workflow.
-All development happens against the production cluster.
-
 ```bash
-# 1. Install deps + run tests + typecheck
+# Install deps + run tests + typecheck
 pnpm install
 pnpm -r test && pnpm -r typecheck
 
-# 2. Deploy
-git tag v0.1.0 && git push --tags
-# → CI builds container, pushes to ECR, ArgoCD rolls
+# Run the web app locally (needs a reachable Postgres + Redis — see
+# apps/web/.env.example for the variables env.ts requires)
+pnpm dev
 ```
 
-See [docs/PRE_LAUNCH.md](docs/PRE_LAUNCH.md) for the full deploy checklist.
+**Deploying is a manual step, not automatic.** Pushing a `v*.*.*` tag (or
+running the `Deploy (GCP)` workflow manually) builds, scans, and pushes a
+container image to Artifact Registry — it does **not** roll it out.
+ArgoCD isn't installed yet (`infra/gitops/` is dormant until repo variable
+`ARGOCD_ENABLED=true`), and the GKE control plane is IP-allowlisted to the
+operator's network, so a GitHub-hosted runner can't reach it either. The
+image-build job prints the exact `helm upgrade` command to run from an
+allowlisted host — see `.github/workflows/deploy.yml` and
+[docs/PRE_LAUNCH.md](docs/PRE_LAUNCH.md) for the full checklist.
 
 ## Documentation
 
-| Document                                    | Purpose                               |
-| ------------------------------------------- | ------------------------------------- |
-| [PRE_LAUNCH.md](docs/PRE_LAUNCH.md)         | Step-by-step launch checklist         |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md)     | System architecture and data flow     |
-| [STACK.md](docs/STACK.md)                   | Technology choices and trade-offs     |
-| [SECURITY.md](docs/SECURITY.md)             | Security model and threat analysis    |
-| [AI_SAFETY.md](docs/AI_SAFETY.md)           | LLM safety layer design               |
-| [INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md) | AWS infrastructure details            |
-| [AUTH.md](docs/AUTH.md)                     | Authentication & authorization design |
-| [MICROSERVICES.md](docs/MICROSERVICES.md)   | Service boundaries & communication    |
-| [DEVOPS.md](docs/DEVOPS.md)                 | CI/CD and operational practices       |
-| [runbooks/](docs/runbooks/)                 | On-call playbooks                     |
+| Document                                    | Purpose                                                                         |
+| ------------------------------------------- | ------------------------------------------------------------------------------- |
+| [PRE_LAUNCH.md](docs/PRE_LAUNCH.md)         | Step-by-step launch checklist                                                   |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)     | System architecture and data flow                                               |
+| [STACK.md](docs/STACK.md)                   | Technology choices and trade-offs                                               |
+| [SECURITY.md](docs/SECURITY.md)             | Security model and threat analysis                                              |
+| [AI_SAFETY.md](docs/AI_SAFETY.md)           | LLM safety layer design                                                         |
+| [INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md) | Infrastructure details (⚠️ pre-GCP-migration, stale — see `infra/` for current) |
+| [AUTH.md](docs/AUTH.md)                     | Authentication & authorization design                                           |
+| [MICROSERVICES.md](docs/MICROSERVICES.md)   | ⚠️ Describes an earlier microservices design not reflected in this codebase     |
+| [DEVOPS.md](docs/DEVOPS.md)                 | CI/CD and operational practices                                                 |
+| [runbooks/](docs/runbooks/)                 | On-call playbooks                                                               |
 
 ## License
 
