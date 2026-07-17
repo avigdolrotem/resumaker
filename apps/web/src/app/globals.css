@@ -264,25 +264,45 @@
  * (design-system/foundations/tokens.html) into one class so components
  * don't hand-roll four utilities every time. Built with `@utility` so
  * they still take Tailwind variants (`hover:glass-strong`, etc).
+ *
+ * The backdrop-filter is set via Tailwind's OWN composition variables
+ * (--tw-backdrop-blur / --tw-backdrop-saturate) instead of a literal
+ * `backdrop-filter: blur(...) saturate(...)` value. Tailwind v4's
+ * transition-all (and other filter/backdrop utilities) registers a rule like
+ * `backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-saturate,) ...`
+ * so composite filter properties animate smoothly — and that rule is
+ * emitted AFTER custom @utility rules in the generated stylesheet, so
+ * any element that also has e.g. `transition-all` (true of every glass
+ * surface here — Card uses it) had its backdrop-filter silently
+ * clobbered back to `none` (all the individual --tw-backdrop-* vars
+ * were empty, since only the literal shorthand was ever set). Setting
+ * the same variables Tailwind reads makes both rules agree, whichever
+ * one the cascade actually applies.
  */
 @utility glass-subtle {
   background-color: var(--color-glass-subtle);
-  backdrop-filter: blur(var(--blur-glass-sm)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--blur-glass-sm)) saturate(180%);
+  --tw-backdrop-blur: blur(var(--blur-glass-sm));
+  --tw-backdrop-saturate: saturate(180%);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-saturate,);
+  backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-saturate,);
   border: 1px solid var(--color-glass-border);
   box-shadow: var(--shadow-glass);
 }
 @utility glass {
   background-color: var(--color-glass);
-  backdrop-filter: blur(var(--blur-glass)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(180%);
+  --tw-backdrop-blur: blur(var(--blur-glass));
+  --tw-backdrop-saturate: saturate(180%);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-saturate,);
+  backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-saturate,);
   border: 1px solid var(--color-glass-border);
   box-shadow: var(--shadow-glass);
 }
 @utility glass-strong {
   background-color: var(--color-glass-strong);
-  backdrop-filter: blur(var(--blur-glass-lg)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--blur-glass-lg)) saturate(180%);
+  --tw-backdrop-blur: blur(var(--blur-glass-lg));
+  --tw-backdrop-saturate: saturate(180%);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-saturate,);
+  backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-saturate,);
   border: 1px solid var(--color-glass-border-strong);
   box-shadow: var(--shadow-glass-lg);
 }
