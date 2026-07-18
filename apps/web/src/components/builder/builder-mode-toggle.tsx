@@ -66,6 +66,7 @@ function ModeButton({
       type="button"
       onClick={onClick}
       aria-pressed={active}
+      aria-label={`${label} — ${hint}`}
       className={`ease-snappy group relative flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-200 active:scale-[0.96] ${
         active ? 'text-white' : 'text-muted-foreground hover:text-foreground'
       }`}
@@ -87,7 +88,7 @@ function ModeButton({
         />
       )}
       <Icon className="h-4 w-4" />
-      <span className="hidden sm:inline">{label}</span>
+      <span>{label}</span>
       <span
         className={`hidden text-[10px] font-normal lg:inline ${
           active ? 'text-white/80' : 'text-muted-foreground/70'

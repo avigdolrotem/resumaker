@@ -26,6 +26,15 @@ export async function GET(): Promise<Response> {
       locale: true,
       emailVerified: true,
       createdAt: true,
+      // These four round-trip through PATCH /api/account/preferences.
+      // Without them here, every tab that reads them (Notifications,
+      // Date & time) shows a save as successful, then silently reverts
+      // to the default on the next load/reload — the value was always
+      // persisted correctly, this endpoint just never sent it back.
+      marketingOptIn: true,
+      notificationPrefs: true,
+      timezone: true,
+      dateFormat: true,
     },
   });
   if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
