@@ -1,11 +1,18 @@
 /**
- * POST /api/billing/checkout — start a payment provider checkout session.
+ * POST /api/billing/checkout — start a payment provider checkout session,
+ * OR change plan in place if the user already has a live subscription.
  *
- * Provider-agnostic: dispatches via `lib/billing/provider`. Returns a
- * URL the client redirects to. Returns 503 when no provider is configured.
+ * Provider-agnostic: dispatches via `lib/billing/provider`. When the
+ * caller has no existing recurring subscription, returns a URL to
+ * redirect to (Stripe/LS-hosted checkout). When they already have one,
+ * `purchaseOrChangePlan` swaps it in place with proration instead of
+ * starting a second, independent subscription — see the doc comment on
+ * that function for why a plain new-checkout would double-bill.
+ * Returns 503 when no provider is configured.
  *
  * Body: { priceKey: 'pro_monthly' | 'pro_yearly' | 'premium_monthly' | 'premium_yearly' }
- * Returns: { url: string }
+ * Returns: { url: string } for a new checkout, or { changed: true } when
+ * an existing subscription was updated in place (nothing to redirect to).
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -14,7 +21,7 @@ import { headers } from 'next/headers';
 import { getLocale } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { env } from '@/lib/env';
-import { startCheckout, getActiveProvider } from '@/lib/billing/provider';
+import { purchaseOrChangePlan, getActiveProvider } from '@/lib/billing/provider';
 import { auditEvent } from '@/lib/audit';
 import { logger } from '@/lib/observability';
 
@@ -58,7 +65,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   const rawLocale = await getLocale();
   const locale: 'he' | 'en' = rawLocale === 'he' ? 'he' : 'en';
 
-  const result = await startCheckout({
+  const result = await purchaseOrChangePlan({
     userId: session.user.id,
     userEmail: session.user.email,
     priceKey: body.priceKey,
@@ -70,6 +77,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   if (!result.ok) {
     const statusByCode: Record<typeof result.code, number> = {
       DISABLED: 503,
+      NO_SUBSCRIPTION: 404,
       PRICE_MISSING: 500,
       PROVIDER_ERROR: 502,
     };
@@ -81,6 +89,15 @@ export async function POST(req: NextRequest): Promise<Response> {
       { error: result.message, code: result.code },
       { status: statusByCode[result.code] },
     );
+  }
+
+  if (result.mode === 'changed') {
+    auditEvent({
+      userId: session.user.id,
+      event: 'billing_checkout_started',
+      metadata: { priceKey: body.priceKey, changedInPlace: true },
+    });
+    return NextResponse.json({ changed: true });
   }
 
   auditEvent({

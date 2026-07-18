@@ -16,7 +16,7 @@ import { useTranslations } from 'next-intl';
 import { Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from '@/i18n/navigation';
-import type { Tier, BillingInterval } from '@/lib/billing/limits';
+import { TIER_ORDER, type Tier, type BillingInterval } from '@/lib/billing/limits';
 
 interface TierData {
   id: Tier;
@@ -90,13 +90,30 @@ export function PricingClient({
             key={tier.id}
             tier={tier}
             interval={interval}
-            isCurrent={currentTier === tier.id}
+            currentTier={currentTier}
             checkoutReady={checkoutReady}
             isAuthed={isAuthed}
             locale={locale}
           />
         ))}
       </div>
+
+      {checkoutReady && (
+        <p className="text-muted-foreground mt-8 text-center text-xs">
+          {t.rich('agreeToTerms', {
+            terms: (chunks) => (
+              <Link href="/terms" className="hover:text-foreground underline transition-colors">
+                {chunks}
+              </Link>
+            ),
+            privacy: (chunks) => (
+              <Link href="/privacy" className="hover:text-foreground underline transition-colors">
+                {chunks}
+              </Link>
+            ),
+          })}
+        </p>
+      )}
     </>
   );
 }
@@ -104,14 +121,14 @@ export function PricingClient({
 function TierCard({
   tier,
   interval,
-  isCurrent,
+  currentTier,
   checkoutReady,
   isAuthed,
   locale,
 }: {
   tier: TierData;
   interval: BillingInterval;
-  isCurrent: boolean;
+  currentTier: Tier;
   checkoutReady: boolean;
   isAuthed: boolean;
   locale: string;
@@ -120,6 +137,16 @@ function TierCard({
   const [loading, setLoading] = useState(false);
   const isFeatured = tier.id === 'plus';
   const isFree = tier.id === 'free';
+  // Anonymous visitors get `currentTier: 'free'` as a placeholder (the
+  // server has no session to check) — without the `isAuthed` guard that
+  // makes the Free card read as "Your current plan" (disabled) for
+  // every signed-out visitor, when what they actually have is no plan
+  // at all. Only treat it as "current" once there's a real session to
+  // back that claim.
+  const isCurrent = isAuthed && currentTier === tier.id;
+  const isPaidUser = isAuthed && currentTier !== 'free';
+  const isDowngrade =
+    isAuthed && !isCurrent && TIER_ORDER.indexOf(tier.id) < TIER_ORDER.indexOf(currentTier);
 
   // Pick the price the user toggled into. -1 means "not offered for
   // this tier × interval" (e.g. Free doesn't have a yearly).
@@ -160,8 +187,21 @@ function TierCard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ priceKey }),
       });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data.url) {
+      const data = (await res.json()) as { url?: string; changed?: boolean; error?: string };
+      if (!res.ok) {
+        toast.error(data.error ?? 'Failed to start checkout');
+        return;
+      }
+      if (data.changed) {
+        // Existing subscription was swapped in place (see
+        // purchaseOrChangePlan) — nothing to redirect to. Reload so the
+        // new tier is reflected everywhere (this card, the header, the
+        // billing page) instead of prop-drilling a refetch.
+        toast.success(t('planChanged'));
+        window.location.reload();
+        return;
+      }
+      if (!data.url) {
         toast.error(data.error ?? 'Failed to start checkout');
         return;
       }
@@ -228,12 +268,25 @@ function TierCard({
             {t('currentTier')}
           </button>
         ) : isFree ? (
-          <Link
-            href="/sign-up"
-            className="from-brand-500 to-accent-500 hover:shadow-brand-500/30 ease-snappy block w-full rounded-full bg-gradient-to-br px-4 py-2.5 text-center text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.96]"
-          >
-            {t('subscribe', { tier: t('free') })}
-          </Link>
+          isPaidUser ? (
+            // A paying user looking at the Free card is really asking
+            // "how do I downgrade" — that's a cancellation, which needs
+            // the fuller context (renewal date, usage) the billing page
+            // already shows, not a bare click here.
+            <Link
+              href="/account/billing"
+              className="glass-subtle ease-snappy block w-full rounded-full px-4 py-2.5 text-center text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.96]"
+            >
+              {t('cancelSubscription')}
+            </Link>
+          ) : (
+            <Link
+              href="/sign-up"
+              className="from-brand-500 to-accent-500 hover:shadow-brand-500/30 ease-snappy block w-full rounded-full bg-gradient-to-br px-4 py-2.5 text-center text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.96]"
+            >
+              {t('getStarted')}
+            </Link>
+          )
         ) : !isAuthed ? (
           <Link
             href="/sign-in"
@@ -265,7 +318,9 @@ function TierCard({
             className="from-brand-500 to-accent-500 hover:shadow-brand-500/30 ease-snappy inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.96] disabled:pointer-events-none disabled:opacity-60 disabled:active:scale-100"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t('subscribe', { tier: tier.displayName })}
+            {isDowngrade
+              ? t('downgradeTo', { tier: tier.displayName })
+              : t('subscribe', { tier: tier.displayName })}
           </button>
         )}
       </div>

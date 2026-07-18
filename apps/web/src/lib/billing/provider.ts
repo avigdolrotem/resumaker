@@ -16,13 +16,24 @@
  */
 
 import { eq } from 'drizzle-orm';
+import type Stripe from 'stripe';
 import { db, schema } from '@/db';
 import { env } from '@/lib/env';
-import { getStripe, PRICE_IDS as STRIPE_PRICE_IDS } from './stripe';
+import { auditEvent } from '@/lib/audit';
+import { logger } from '@/lib/observability';
+import {
+  getStripe,
+  resolvePriceId,
+  getPeriodEndUnix,
+  mapStripeStatus,
+  PRICE_IDS as STRIPE_PRICE_IDS,
+} from './stripe';
 import {
   createCheckoutUrl as lsCreateCheckoutUrl,
   getCustomerPortalUrl as lsGetCustomerPortalUrl,
   getPortalUrl as lsGetPortalUrl,
+  updateSubscriptionPlan as lsUpdateSubscriptionPlan,
+  setSubscriptionCancelled as lsSetSubscriptionCancelled,
   getVariantId,
 } from './lemonsqueezy';
 
@@ -176,6 +187,341 @@ export async function startCheckout(args: {
     ok: false,
     code: 'PROVIDER_ERROR',
     message: `Unknown PAYMENT_PROVIDER: ${provider as string}`,
+  };
+}
+
+// ─── SUBSCRIPTION SYNC (Stripe) ─────────────────────────────────────
+
+/**
+ * Write a Stripe subscription object's current state into our DB row.
+ *
+ * Shared by the webhook handler (`customer.subscription.updated`/
+ * `created`) AND `changeSubscriptionPlan` below, which calls this
+ * directly on the object `subscriptions.update()` returns so the tier
+ * change is reflected immediately instead of waiting on the webhook
+ * round-trip. Idempotent — the webhook's own delivery of the same
+ * update is a harmless re-sync of identical data.
+ */
+export async function syncSubscriptionFromStripe(
+  userId: string,
+  sub: Stripe.Subscription,
+): Promise<void> {
+  const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
+  const priceId = sub.items.data[0]?.price.id;
+  if (!priceId) {
+    logger.warn({ subId: sub.id }, 'stripe.subscription.no_price');
+    return;
+  }
+
+  const resolved = resolvePriceId(priceId);
+  if (!resolved) {
+    logger.warn({ priceId, subId: sub.id }, 'stripe.subscription.unknown_price');
+    return;
+  }
+
+  const periodEndUnix = getPeriodEndUnix(sub) ?? Math.floor(Date.now() / 1000);
+  const stripeStatus = mapStripeStatus(sub.status);
+
+  await db
+    .insert(schema.subscriptions)
+    .values({
+      userId,
+      provider: 'stripe',
+      tier: resolved.tier,
+      status: stripeStatus,
+      stripeCustomerId: customerId,
+      stripeSubscriptionId: sub.id,
+      stripePriceId: priceId,
+      currentPeriodEnd: new Date(periodEndUnix * 1000),
+      cancelAtPeriodEnd: sub.cancel_at_period_end,
+    })
+    .onConflictDoUpdate({
+      target: schema.subscriptions.userId,
+      set: {
+        provider: 'stripe',
+        tier: resolved.tier,
+        status: stripeStatus,
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: sub.id,
+        stripePriceId: priceId,
+        currentPeriodEnd: new Date(periodEndUnix * 1000),
+        cancelAtPeriodEnd: sub.cancel_at_period_end,
+        updatedAt: new Date(),
+      },
+    });
+
+  auditEvent({
+    userId,
+    event: 'billing_subscription_updated',
+    metadata: {
+      stripeSubscriptionId: sub.id,
+      tier: resolved.tier,
+      interval: resolved.interval,
+      status: sub.status,
+    },
+  });
+}
+
+// ─── PLAN CHANGE (upgrade/downgrade an existing subscription) ───────
+
+export type ChangePlanResult =
+  | { ok: true }
+  | {
+      ok: false;
+      code: 'DISABLED' | 'NO_SUBSCRIPTION' | 'PRICE_MISSING' | 'PROVIDER_ERROR';
+      message: string;
+    };
+
+/**
+ * Swap an EXISTING subscription to a different tier/interval in place,
+ * with proration — instead of starting a brand-new Checkout Session
+ * (which would leave the old subscription running and double-bill the
+ * customer). Both providers are configured to charge/credit the
+ * prorated difference immediately: Stripe via `proration_behavior:
+ * 'always_invoice'`, LemonSqueezy via `invoiceImmediately: true`. The
+ * customer sees the fair price difference right away and gets the new
+ * tier's access immediately, rather than a surprise line item next
+ * cycle.
+ *
+ * Only for recurring subscriptions — one-time "Job Hunt Pack" price
+ * keys aren't a subscription Stripe/LS can update in place, so callers
+ * should route those through `startCheckout` as a fresh purchase.
+ */
+export async function changeSubscriptionPlan(args: {
+  userId: string;
+  priceKey: PriceKey;
+}): Promise<ChangePlanResult> {
+  const provider = getActiveProvider();
+  if (provider === 'none') {
+    return { ok: false, code: 'DISABLED', message: 'Payments are not enabled yet.' };
+  }
+
+  const sub = await db.query.subscriptions.findFirst({
+    where: eq(schema.subscriptions.userId, args.userId),
+    columns: { provider: true, stripeSubscriptionId: true, lsSubscriptionId: true },
+  });
+  if (!sub) {
+    return { ok: false, code: 'NO_SUBSCRIPTION', message: 'No subscription to change.' };
+  }
+
+  if (sub.provider === 'stripe') {
+    if (!sub.stripeSubscriptionId) {
+      return { ok: false, code: 'NO_SUBSCRIPTION', message: 'No active Stripe subscription.' };
+    }
+    const priceId = STRIPE_PRICE_IDS[args.priceKey];
+    if (!priceId) {
+      return {
+        ok: false,
+        code: 'PRICE_MISSING',
+        message: `Stripe price id missing for ${args.priceKey}`,
+      };
+    }
+    try {
+      const stripe = getStripe();
+      const current = await stripe.subscriptions.retrieve(sub.stripeSubscriptionId);
+      const itemId = current.items.data[0]?.id;
+      if (!itemId) {
+        return { ok: false, code: 'PROVIDER_ERROR', message: 'Subscription has no billable item.' };
+      }
+      const updated = await stripe.subscriptions.update(sub.stripeSubscriptionId, {
+        items: [{ id: itemId, price: priceId }],
+        proration_behavior: 'always_invoice',
+        metadata: { userId: args.userId, priceKey: args.priceKey },
+      });
+      await syncSubscriptionFromStripe(args.userId, updated);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, code: 'PROVIDER_ERROR', message: (err as Error).message };
+    }
+  }
+
+  if (sub.provider === 'lemonsqueezy') {
+    if (!sub.lsSubscriptionId) {
+      return {
+        ok: false,
+        code: 'NO_SUBSCRIPTION',
+        message: 'No active LemonSqueezy subscription.',
+      };
+    }
+    const variantId = getVariantId(args.priceKey);
+    if (!variantId) {
+      return {
+        ok: false,
+        code: 'PRICE_MISSING',
+        message: `LemonSqueezy variant id missing for ${args.priceKey}`,
+      };
+    }
+    try {
+      await lsUpdateSubscriptionPlan(sub.lsSubscriptionId, variantId);
+      // No optimistic DB write here — same precedent as startCheckout's
+      // LS branch below: LS fires subscription_updated for plan changes
+      // the same way it does for new subscriptions, and the existing LS
+      // webhook handler picks up the new variant/tier from there.
+      auditEvent({
+        userId: args.userId,
+        event: 'billing_subscription_updated',
+        metadata: { provider: 'lemonsqueezy', priceKey: args.priceKey },
+      });
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, code: 'PROVIDER_ERROR', message: (err as Error).message };
+    }
+  }
+
+  return {
+    ok: false,
+    code: 'NO_SUBSCRIPTION',
+    message: 'Current plan was not purchased through a payment provider.',
+  };
+}
+
+/**
+ * Start a checkout for a NEW subscriber, or transparently switch to
+ * `changeSubscriptionPlan` when the user already has a live recurring
+ * subscription — the caller (the /api/billing/checkout route) doesn't
+ * need to know the difference. This is what actually prevents the
+ * double-billing bug: without this check, an existing Plus subscriber
+ * clicking "Upgrade to Pro" would start a second, independent Stripe
+ * subscription rather than replacing the first.
+ *
+ * One-time "Job Hunt Pack" (`_quarterly`) purchases always go through
+ * a fresh checkout — they're a different product class (a payment, not
+ * a subscription) and there's nothing to update in place.
+ */
+export type PurchaseOrChangeResult =
+  | { ok: true; mode: 'redirect'; url: string }
+  | { ok: true; mode: 'changed' }
+  | {
+      ok: false;
+      code: 'DISABLED' | 'NO_SUBSCRIPTION' | 'PRICE_MISSING' | 'PROVIDER_ERROR';
+      message: string;
+    };
+
+export async function purchaseOrChangePlan(args: {
+  userId: string;
+  userEmail: string;
+  priceKey: PriceKey;
+  successUrl: string;
+  cancelUrl: string;
+  locale?: 'he' | 'en';
+}): Promise<PurchaseOrChangeResult> {
+  const isOneTime = args.priceKey.endsWith('_quarterly');
+
+  if (!isOneTime) {
+    const existing = await db.query.subscriptions.findFirst({
+      where: eq(schema.subscriptions.userId, args.userId),
+      columns: {
+        provider: true,
+        stripeSubscriptionId: true,
+        lsSubscriptionId: true,
+        status: true,
+      },
+    });
+    const hasLiveSubscription =
+      existing &&
+      existing.status !== 'canceled' &&
+      ((existing.provider === 'stripe' && existing.stripeSubscriptionId) ||
+        (existing.provider === 'lemonsqueezy' && existing.lsSubscriptionId));
+
+    if (hasLiveSubscription) {
+      const result = await changeSubscriptionPlan({ userId: args.userId, priceKey: args.priceKey });
+      if (!result.ok) return result;
+      return { ok: true, mode: 'changed' };
+    }
+  }
+
+  const result = await startCheckout(args);
+  if (!result.ok) return result;
+  return { ok: true, mode: 'redirect', url: result.url };
+}
+
+// ─── CANCEL / RESUME ────────────────────────────────────────────────
+
+export type CancelPlanResult =
+  | { ok: true }
+  | { ok: false; code: 'DISABLED' | 'NO_SUBSCRIPTION' | 'PROVIDER_ERROR'; message: string };
+
+/**
+ * Schedule (or undo) cancellation of the user's own subscription.
+ * Always "at period end", never immediate — the user keeps full access
+ * through what they already paid for, matching the cancellation policy
+ * described in /terms (Section 6) and the product's stated preference:
+ * cancel now, keep access until the current paid period ends.
+ *
+ * (Immediate, full cancellation still exists separately for account
+ * deletion — see /api/account's DELETE handler — since a deleted
+ * account has no dashboard left to retain access to.)
+ */
+export async function setSubscriptionCancellation(args: {
+  userId: string;
+  cancel: boolean;
+}): Promise<CancelPlanResult> {
+  const provider = getActiveProvider();
+  if (provider === 'none') {
+    return { ok: false, code: 'DISABLED', message: 'Payments are not enabled yet.' };
+  }
+
+  const sub = await db.query.subscriptions.findFirst({
+    where: eq(schema.subscriptions.userId, args.userId),
+    columns: { provider: true, stripeSubscriptionId: true, lsSubscriptionId: true },
+  });
+  if (!sub) {
+    return { ok: false, code: 'NO_SUBSCRIPTION', message: 'No subscription to cancel.' };
+  }
+
+  if (sub.provider === 'stripe') {
+    if (!sub.stripeSubscriptionId) {
+      return { ok: false, code: 'NO_SUBSCRIPTION', message: 'No active Stripe subscription.' };
+    }
+    try {
+      const updated = await getStripe().subscriptions.update(sub.stripeSubscriptionId, {
+        cancel_at_period_end: args.cancel,
+      });
+      await syncSubscriptionFromStripe(args.userId, updated);
+      auditEvent({
+        userId: args.userId,
+        event: args.cancel
+          ? 'billing_subscription_cancel_scheduled'
+          : 'billing_subscription_cancel_undone',
+        metadata: { provider: 'stripe' },
+      });
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, code: 'PROVIDER_ERROR', message: (err as Error).message };
+    }
+  }
+
+  if (sub.provider === 'lemonsqueezy') {
+    if (!sub.lsSubscriptionId) {
+      return {
+        ok: false,
+        code: 'NO_SUBSCRIPTION',
+        message: 'No active LemonSqueezy subscription.',
+      };
+    }
+    try {
+      // LS's "cancelled" state is inherently a grace period until
+      // `ends_at` — there's no separate immediate-vs-scheduled flag
+      // like Stripe's; a cancelled LS subscription already keeps access
+      // until period end by design. See lemonsqueezy.ts.
+      await lsSetSubscriptionCancelled(sub.lsSubscriptionId, args.cancel);
+      auditEvent({
+        userId: args.userId,
+        event: args.cancel
+          ? 'billing_subscription_cancel_scheduled'
+          : 'billing_subscription_cancel_undone',
+        metadata: { provider: 'lemonsqueezy' },
+      });
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, code: 'PROVIDER_ERROR', message: (err as Error).message };
+    }
+  }
+
+  return {
+    ok: false,
+    code: 'NO_SUBSCRIPTION',
+    message: 'Current plan was not purchased through a payment provider.',
   };
 }
 

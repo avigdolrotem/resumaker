@@ -29,6 +29,7 @@ import {
   createCheckout,
   getSubscription,
   getCustomer,
+  updateSubscription,
 } from '@lemonsqueezy/lemonsqueezy.js';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/observability';
@@ -164,6 +165,47 @@ export async function createCheckoutUrl(args: {
   const url = data?.data.attributes.url;
   if (!url) throw new Error('LemonSqueezy returned no checkout URL');
   return url;
+}
+
+/**
+ * Switch an existing subscription to a different variant (plan change),
+ * charging/crediting the prorated difference immediately rather than
+ * waiting for the next renewal — mirrors Stripe's `always_invoice`
+ * behavior in provider.ts's `changeSubscriptionPlan`, so upgrade/
+ * downgrade feels the same regardless of which provider is active.
+ */
+export async function updateSubscriptionPlan(
+  subscriptionId: string,
+  variantId: string,
+): Promise<void> {
+  ensureLemonSqueezy();
+  const { error } = await updateSubscription(subscriptionId, {
+    variantId: Number(variantId),
+    invoiceImmediately: true,
+  });
+  if (error) {
+    throw new Error(`LemonSqueezy updateSubscription (plan change) failed: ${error.message}`);
+  }
+}
+
+/**
+ * Schedule or undo cancellation. Setting `cancelled: true` puts the
+ * subscription into LS's "cancelled" status, which — per LS's own
+ * model — keeps the customer's access active until `ends_at` (the
+ * current period end), not immediately. Setting it back to `false`
+ * resumes normal billing. There is no separate "immediate" variant in
+ * LS's API; `cancelSubscription()` (the dedicated endpoint) produces
+ * the same grace-period behavior as this update call.
+ */
+export async function setSubscriptionCancelled(
+  subscriptionId: string,
+  cancelled: boolean,
+): Promise<void> {
+  ensureLemonSqueezy();
+  const { error } = await updateSubscription(subscriptionId, { cancelled });
+  if (error) {
+    throw new Error(`LemonSqueezy updateSubscription (cancellation) failed: ${error.message}`);
+  }
 }
 
 /**

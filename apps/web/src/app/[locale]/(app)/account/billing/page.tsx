@@ -26,6 +26,7 @@ import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BillingPortalButton } from './portal-button';
+import { CancelSubscriptionButton } from './cancel-button';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,6 +71,10 @@ export default async function AccountBillingPage({
   // Show portal button if user has either provider's customer record
   const hasProviderCustomer = Boolean(sub?.stripeCustomerId || sub?.lsCustomerId);
   const grantedByAdmin = Boolean(sub?.grantedBy);
+  const cancelAtPeriodEnd = Boolean(sub?.cancelAtPeriodEnd);
+  const periodEndLabel = sub?.currentPeriodEnd
+    ? new Date(sub.currentPeriodEnd).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US')
+    : null;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -97,17 +102,29 @@ export default async function AccountBillingPage({
                   {t('grantedByAdmin')}
                 </p>
               )}
-              {sub?.currentPeriodEnd && (
+              {periodEndLabel && (
                 <p className="text-muted-foreground mt-2 text-xs">
-                  {sub.cancelAtPeriodEnd ? '⚠ ' : ''}
-                  {locale === 'he' ? 'תאריך החיוב הבא: ' : 'Next renewal: '}
-                  <span dir="ltr">{new Date(sub.currentPeriodEnd).toLocaleDateString()}</span>
+                  {cancelAtPeriodEnd ? '⚠ ' : ''}
+                  {cancelAtPeriodEnd
+                    ? locale === 'he'
+                      ? 'המנוי יבוטל בתאריך: '
+                      : 'Cancels on: '
+                    : locale === 'he'
+                      ? 'תאריך החיוב הבא: '
+                      : 'Next renewal: '}
+                  <span dir="ltr">{periodEndLabel}</span>
                 </p>
               )}
             </div>
-            <div>
+            <div className="flex flex-col items-end gap-2">
               {isPaid && hasProviderCustomer ? (
-                <BillingPortalButton label={t('openPortal')} />
+                <>
+                  <BillingPortalButton label={t('openPortal')} />
+                  <CancelSubscriptionButton
+                    cancelAtPeriodEnd={cancelAtPeriodEnd}
+                    periodEndLabel={periodEndLabel}
+                  />
+                </>
               ) : (
                 <Button asChild>
                   <Link href="/pricing">

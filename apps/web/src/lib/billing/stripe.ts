@@ -87,3 +87,41 @@ export function constructWebhookEvent(rawBody: string, signature: string): Strip
   }
   return getStripe().webhooks.constructEvent(rawBody, signature, env.STRIPE_WEBHOOK_SECRET);
 }
+
+/**
+ * Stripe API 2024+ moved `current_period_end` from the item to the
+ * subscription itself. Older versions had it on the item. Read both
+ * to be safe across SDK upgrades.
+ *
+ * Shared by the webhook handler and any direct API call (e.g. a
+ * subscriptions.update() for an in-place plan change) that needs to
+ * persist the same period-end shape.
+ */
+export function getPeriodEndUnix(sub: Stripe.Subscription): number | null {
+  // SDK shape moves between versions — read both spots safely via index access.
+  const subRecord = sub as unknown as Record<string, unknown>;
+  const topLevel = subRecord['current_period_end'];
+  if (typeof topLevel === 'number') return topLevel;
+  const itemRecord = sub.items.data[0] as unknown as Record<string, unknown> | undefined;
+  const item = itemRecord?.['current_period_end'];
+  return typeof item === 'number' ? item : null;
+}
+
+/** Map a Stripe subscription status to our internal status enum. */
+export function mapStripeStatus(
+  s: Stripe.Subscription.Status,
+): 'active' | 'past_due' | 'canceled' | 'incomplete' | 'trialing' {
+  switch (s) {
+    case 'active':
+    case 'trialing':
+      return s;
+    case 'past_due':
+    case 'unpaid':
+      return 'past_due';
+    case 'canceled':
+    case 'incomplete_expired':
+      return 'canceled';
+    default:
+      return 'incomplete';
+  }
+}

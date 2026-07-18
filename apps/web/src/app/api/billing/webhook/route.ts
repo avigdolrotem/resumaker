@@ -21,7 +21,13 @@ import { eq } from 'drizzle-orm';
 import type Stripe from 'stripe';
 import { db, schema } from '@/db';
 import { env } from '@/lib/env';
-import { constructWebhookEvent, getStripe, resolvePriceId } from '@/lib/billing/stripe';
+import {
+  constructWebhookEvent,
+  getStripe,
+  resolvePriceId,
+  getPeriodEndUnix,
+} from '@/lib/billing/stripe';
+import { syncSubscriptionFromStripe } from '@/lib/billing/provider';
 import { logger } from '@/lib/observability';
 import { auditEvent } from '@/lib/audit';
 import { isUniqueViolation } from '@/lib/db-errors';
@@ -261,96 +267,6 @@ async function handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
     event: 'billing_payment_failed',
     metadata: { stripeInvoiceId: invoice.id, amount: invoice.amount_due },
   });
-}
-
-async function syncSubscriptionFromStripe(userId: string, sub: Stripe.Subscription): Promise<void> {
-  const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id;
-  const priceId = sub.items.data[0]?.price.id;
-  if (!priceId) {
-    logger.warn({ subId: sub.id }, 'stripe.subscription.no_price');
-    return;
-  }
-
-  const resolved = resolvePriceId(priceId);
-  if (!resolved) {
-    logger.warn({ priceId, subId: sub.id }, 'stripe.subscription.unknown_price');
-    return;
-  }
-
-  const periodEndUnix = getPeriodEndUnix(sub) ?? Math.floor(Date.now() / 1000);
-  const stripeStatus = mapStripeStatus(sub.status);
-
-  await db
-    .insert(schema.subscriptions)
-    .values({
-      userId,
-      provider: 'stripe',
-      tier: resolved.tier,
-      status: stripeStatus,
-      stripeCustomerId: customerId,
-      stripeSubscriptionId: sub.id,
-      stripePriceId: priceId,
-      currentPeriodEnd: new Date(periodEndUnix * 1000),
-      cancelAtPeriodEnd: sub.cancel_at_period_end,
-    })
-    .onConflictDoUpdate({
-      target: schema.subscriptions.userId,
-      set: {
-        provider: 'stripe',
-        tier: resolved.tier,
-        status: stripeStatus,
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: sub.id,
-        stripePriceId: priceId,
-        currentPeriodEnd: new Date(periodEndUnix * 1000),
-        cancelAtPeriodEnd: sub.cancel_at_period_end,
-        updatedAt: new Date(),
-      },
-    });
-
-  auditEvent({
-    userId,
-    event: 'billing_subscription_updated',
-    metadata: {
-      stripeSubscriptionId: sub.id,
-      tier: resolved.tier,
-      interval: resolved.interval,
-      status: sub.status,
-    },
-  });
-}
-
-/**
- * Stripe API 2024+ moved `current_period_end` from the item to the
- * subscription itself. Older versions had it on the item. Read both
- * to be safe across SDK upgrades.
- */
-function getPeriodEndUnix(sub: Stripe.Subscription): number | null {
-  // SDK shape moves between versions — read both spots safely via index access.
-  const subRecord = sub as unknown as Record<string, unknown>;
-  const topLevel = subRecord['current_period_end'];
-  if (typeof topLevel === 'number') return topLevel;
-  const itemRecord = sub.items.data[0] as unknown as Record<string, unknown> | undefined;
-  const item = itemRecord?.['current_period_end'];
-  return typeof item === 'number' ? item : null;
-}
-
-function mapStripeStatus(
-  s: Stripe.Subscription.Status,
-): 'active' | 'past_due' | 'canceled' | 'incomplete' | 'trialing' {
-  switch (s) {
-    case 'active':
-    case 'trialing':
-      return s;
-    case 'past_due':
-    case 'unpaid':
-      return 'past_due';
-    case 'canceled':
-    case 'incomplete_expired':
-      return 'canceled';
-    default:
-      return 'incomplete';
-  }
 }
 
 async function findUserIdByCustomer(customerId: string): Promise<string | null> {

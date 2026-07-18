@@ -58,6 +58,8 @@ export type AuditEventName =
   | 'billing_subscription_created'
   | 'billing_subscription_updated'
   | 'billing_subscription_canceled'
+  | 'billing_subscription_cancel_scheduled'
+  | 'billing_subscription_cancel_undone'
   | 'billing_payment_failed'
   | 'billing_portal_opened';
 

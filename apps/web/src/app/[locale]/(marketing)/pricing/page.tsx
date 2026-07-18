@@ -14,6 +14,7 @@ import { getUserTier } from '@/lib/billing/tier';
 import { TIER_LIMITS, TIER_ORDER, type Tier } from '@/lib/billing/limits';
 import { getProviderInfo } from '@/lib/billing/provider';
 import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
+import { Link } from '@/i18n/navigation';
 import { PricingClient } from './pricing-client';
 
 export const dynamic = 'force-dynamic';
@@ -101,6 +102,29 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
           locale={locale}
         />
       </div>
+
+      {/* Legal footer — the (marketing) layout has none by default (unlike
+          the (app) layout's AppLegalFooter), which left this specific
+          page, the one place checkout actually starts, with no visible
+          Terms/Privacy link at all. Scoped to this page rather than the
+          shared marketing layout since /pricing is the one marketing
+          page where that omission is a real gap, not every marketing
+          page needing it. */}
+      <footer className="border-border/50 text-muted-foreground relative z-10 mt-16 border-t py-4 text-xs">
+        <div className="container mx-auto flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4">
+          <Link href="/privacy" className="hover:text-foreground ease-snappy transition-colors">
+            {locale === 'he' ? 'פרטיות' : 'Privacy'}
+          </Link>
+          <Link href="/terms" className="hover:text-foreground ease-snappy transition-colors">
+            {locale === 'he' ? 'תנאי שימוש' : 'Terms'}
+          </Link>
+          <Link href="/contact" className="hover:text-foreground ease-snappy transition-colors">
+            {locale === 'he' ? 'צור קשר' : 'Contact'}
+          </Link>
+          <span className="text-muted-foreground/60">·</span>
+          <span>© 2026 Resumaker</span>
+        </div>
+      </footer>
     </div>
   );
 }
