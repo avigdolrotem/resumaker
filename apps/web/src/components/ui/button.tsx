@@ -11,10 +11,17 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Liquid gradient primary — brand→accent sheen sweeps across on
-        // hover (the ::before below), colored glow deepens on hover/lift.
+        // Liquid gradient primary — colored glow deepens on hover/lift.
+        // Used to also sweep a shine stripe across on hover (the
+        // `::before` this variant no longer sets) — WebKit renders that
+        // sweep's clip incorrectly whenever a backdrop-filter element
+        // (e.g. the app header) is present anywhere on the page,
+        // producing a flat rectangular smear past the pill. Confirmed
+        // via A/B testing on glow-button.tsx's identical pattern before
+        // removing it here too — see that file's comment for the full
+        // investigation.
         default:
-          "from-brand-500 to-accent-500 shadow-brand-500/30 before:ease-snappy hover:shadow-brand-500/45 bg-gradient-to-br text-white shadow-lg before:absolute before:inset-0 before:-translate-x-[120%] before:bg-gradient-to-r before:from-transparent before:via-white/35 before:to-transparent before:transition-transform before:duration-700 before:content-[''] hover:-translate-y-0.5 hover:shadow-xl hover:before:translate-x-[120%]",
+          'from-brand-500 to-accent-500 shadow-brand-500/30 hover:shadow-brand-500/45 bg-gradient-to-br text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl',
         destructive:
           'to-destructive text-destructive-foreground shadow-destructive/30 hover:shadow-destructive/45 focus-visible:ring-destructive bg-gradient-to-br from-red-500 shadow-lg hover:-translate-y-0.5 hover:shadow-xl',
         // Frosted glass — the `glass` surface utility (globals.css),

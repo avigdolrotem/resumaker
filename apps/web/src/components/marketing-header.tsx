@@ -84,7 +84,7 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
             // can jump back into the app from any marketing page. No
             // duplicate "Sign in" / "Sign up" links (those are for
             // anonymous visitors only).
-            <GlowButton href="/dashboard" size="md" glow={false}>
+            <GlowButton href="/dashboard" size="md">
               <LayoutDashboard className="h-4 w-4" />
               {t('dashboard')}
             </GlowButton>
@@ -100,7 +100,7 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
               >
                 {t('signUp')}
               </Link>
-              <GlowButton href="/sign-in" size="md" glow={false}>
+              <GlowButton href="/sign-in" size="md">
                 {t('signIn')}
               </GlowButton>
             </>
