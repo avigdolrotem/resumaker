@@ -172,13 +172,14 @@ async function extractJobData(content: string, modelString: string): Promise<Ext
 }
 
 /**
- * Fetch a job posting URL and use an LLM (default:
- * anthropic/claude-haiku-4-5@20251001) to extract structured job data.
- * Returns a NormalizedJob with source="manual".
+ * Fetch a job posting URL and use an LLM (default: google/gemini-2.5-flash
+ * — see apps/web/src/lib/llm/models.ts for why Haiku 4.5 isn't the default
+ * right now) to extract structured job data. Returns a NormalizedJob with
+ * source="manual".
  */
 export async function importJobFromUrl(
   url: string,
-  modelString = 'anthropic/claude-haiku-4-5@20251001',
+  modelString = 'google/gemini-2.5-flash',
 ): Promise<NormalizedJob> {
   let content = '';
   try {

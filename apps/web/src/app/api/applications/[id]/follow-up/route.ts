@@ -59,7 +59,7 @@ export async function POST(
 
   try {
     const response = await generateText({
-      model: 'anthropic/claude-haiku-4-5@20251001',
+      model: 'google/gemini-2.5-flash',
       maxOutputTokens: 600,
       system: `Generate a ${promptKind} email in ${isHebrew ? 'Hebrew' : 'English'}. Return JSON only: {"subject":"...","body":"..."}. Be concise (5-8 sentences body max), warm but professional, no platitudes.`,
       prompt: `Candidate: ${guard.user.name ?? '[name]'}

@@ -5,6 +5,25 @@
 
 import { z } from 'zod';
 
+/**
+ * LLMs occasionally emit the literal string "null" (or an empty string)
+ * for an optional URL field instead of actually omitting it — every
+ * model we've tested (Vertex Anthropic and Vertex Gemini alike) does
+ * this occasionally for contact.website/linkedin/github when the source
+ * profile has nothing there. Treat both the same as "not provided"
+ * instead of failing `.url()` validation and 502ing the whole
+ * generation over one empty field.
+ */
+function optionalUrl(maxLength?: number) {
+  const base = maxLength ? z.string().max(maxLength).url() : z.string().url();
+  return z.preprocess((val) => {
+    if (typeof val === 'string' && ['', 'null', 'n/a', 'none'].includes(val.trim().toLowerCase())) {
+      return undefined;
+    }
+    return val;
+  }, base.optional());
+}
+
 // Locales the resume PDF templates can render. Hebrew + English are the
 // primary languages of the app; Arabic + Russian are supported as second
 // tier (Israeli market includes large Arab and Russian-speaking
@@ -20,9 +39,9 @@ export const ContactSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().max(50).optional(),
   location: z.string().max(200).optional(),
-  linkedin: z.string().url().optional(),
-  github: z.string().url().optional(),
-  website: z.string().url().optional(),
+  linkedin: optionalUrl(),
+  github: optionalUrl(),
+  website: optionalUrl(),
 });
 
 /**
@@ -70,7 +89,7 @@ export const ProjectSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(1000),
   technologies: z.array(z.string().max(50)).max(20).optional(),
-  url: z.string().url().max(500).optional(),
+  url: optionalUrl(500),
   start_date: z.string().optional(),
   end_date: z.string().nullable().optional(),
   /** "Ongoing / active." When true, end_date renders as "Present". */
@@ -123,7 +142,7 @@ export const ResumeSchema = z.object({
         issuer: z.string().max(200).optional(),
         date: z.string().optional(),
         /** Optional link to the credential / certificate page. */
-        credential_url: z.string().url().max(500).optional(),
+        credential_url: optionalUrl(500),
       }),
     )
     .max(10)

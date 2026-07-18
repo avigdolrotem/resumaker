@@ -80,19 +80,29 @@ const EnvSchema = z
     // GKE), so no API key is read from env. Project + location override
     // the SDK's auto-detection.
     GOOGLE_VERTEX_PROJECT: z.string().optional(),
+    // Must be a REAL env var here (not just this default) — the Vertex
+    // SDK reads process.env directly and doesn't know this zod default
+    // exists, so if no .env file sets GOOGLE_VERTEX_LOCATION explicitly,
+    // every LLM call throws AI_LoadSettingError before any network call.
     GOOGLE_VERTEX_LOCATION: z.string().default('europe-west1'),
+    // All three defaults below are Gemini, not Claude, as of 2026-07-18:
+    // the Anthropic publisher has never been enabled in this GCP
+    // project's Vertex AI Model Garden (a one-time Console action, not
+    // a code fix) — see the long comment in lib/llm/models.ts for how
+    // that was confirmed. Once it's enabled, DEFAULT_LLM_MODEL can go
+    // back to anthropic/claude-sonnet-4-5@20250929.
     DEFAULT_LLM_MODEL: z
       .string()
       .regex(/^[a-z]+\/[a-z0-9.@\-]+$/, 'Must be provider/model format')
-      .default('anthropic/claude-sonnet-4-5@20250929'),
+      .default('google/gemini-2.5-pro'),
     FALLBACK_LLM_MODEL: z
       .string()
       .regex(/^[a-z]+\/[a-z0-9.@\-]+$/, 'Must be provider/model format')
-      .default('anthropic/claude-haiku-4-5@20251001'),
+      .default('google/gemini-2.5-flash'),
     PARSE_LLM_MODEL: z
       .string()
       .regex(/^[a-z]+\/[a-z0-9.@\-]+$/, 'Must be provider/model format')
-      .default('anthropic/claude-haiku-4-5@20251001'),
+      .default('google/gemini-2.5-flash'),
     LLM_MAX_TOKENS: z.coerce.number().int().positive().default(4096),
     LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
     LLM_CONCURRENCY_LIMIT: z.coerce.number().int().positive().default(20),

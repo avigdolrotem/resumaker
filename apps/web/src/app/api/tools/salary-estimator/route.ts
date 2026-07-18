@@ -71,10 +71,19 @@ Respond with ONLY a JSON object (no markdown):
     const response = await generateText({
       model: env.FALLBACK_LLM_MODEL,
       prompt,
-      maxOutputTokens: 256,
+      // Was 256 and silently truncating every request — see the ATS
+      // scanner route for the full explanation (Gemini 2.5's default-on
+      // "thinking" spends the output-token budget on invisible
+      // reasoning before any visible text). disableThinking is the real
+      // fix; 512 is just headroom for the visible JSON + ```json fence.
+      maxOutputTokens: 512,
+      disableThinking: true,
     });
 
-    const text = response.text || '{}';
+    // Strip a ```json ... ``` (or bare ```) fence if present — models
+    // occasionally wrap structured output in one despite an explicit
+    // "no markdown" instruction.
+    const text = (response.text || '{}').replace(/^```(?:json)?\s*|\s*```$/g, '').trim();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('No JSON in response');
 

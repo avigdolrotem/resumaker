@@ -2,8 +2,8 @@
  * Resume file import — extract text from PDF/TXT uploads and parse it
  * into our profile structure via the LLM.
  *
- * Locked to PARSE_LLM_MODEL (Haiku). This is a background utility,
- * not user-facing model selection.
+ * Locked to PARSE_LLM_MODEL (Gemini 2.5 Flash by default — see env.ts).
+ * This is a background utility, not user-facing model selection.
  */
 
 import { z } from 'zod';

@@ -83,10 +83,22 @@ Respond with ONLY a JSON object (no markdown):
     const response = await generateText({
       model: env.FALLBACK_LLM_MODEL,
       prompt,
-      maxOutputTokens: 512,
+      // Was 512 and silently truncating every request: Gemini 2.5's
+      // "thinking" is on by default and spends output tokens on
+      // invisible reasoning before any visible text — one repro spent
+      // 487 of 512 tokens thinking and left 21 for the actual answer,
+      // never reaching a closing `}`. disableThinking below is the real
+      // fix (this task needs zero reasoning); 1024 is just headroom for
+      // the visible JSON (up to 15+15 keyword strings plus a summary)
+      // plus the ```json fence Gemini adds despite being told not to.
+      maxOutputTokens: 1024,
+      disableThinking: true,
     });
 
-    const text = response.text || '{}';
+    // Strip a ```json ... ``` (or bare ```) fence if present, then match
+    // the JSON object — models occasionally wrap structured output in
+    // one despite an explicit "no markdown" instruction.
+    const text = (response.text || '{}').replace(/^```(?:json)?\s*|\s*```$/g, '').trim();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error('No JSON in response');
 

@@ -29,7 +29,7 @@ describe('provider.generateText', () => {
     });
 
     const result = await generateText({
-      model: 'anthropic/claude-haiku-4-5@20251001',
+      model: 'anthropic/claude-sonnet-4-5@20250929',
       system: 'be brief',
       prompt: 'say hi',
       maxOutputTokens: 100,
@@ -38,7 +38,7 @@ describe('provider.generateText', () => {
     expect(result.text).toBe('hello');
     expect(ai.generateText).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: { __model: 'anthropic/claude-haiku-4-5@20251001' },
+        model: { __model: 'anthropic/claude-sonnet-4-5@20250929' },
         system: 'be brief',
         prompt: 'say hi',
         maxOutputTokens: 100,
@@ -52,7 +52,7 @@ describe('provider.generateText', () => {
       usage: { inputTokens: 10, outputTokens: 4, totalTokens: 14 },
     });
     const result = await generateText({
-      model: 'anthropic/claude-haiku-4-5@20251001',
+      model: 'anthropic/claude-sonnet-4-5@20250929',
       prompt: '.',
     });
     expect(result.usage).toEqual({ inputTokens: 10, outputTokens: 4, totalTokens: 14 });
@@ -68,7 +68,7 @@ describe('provider.generateObject', () => {
     });
 
     const result = await generateObject({
-      model: 'anthropic/claude-haiku-4-5@20251001',
+      model: 'anthropic/claude-sonnet-4-5@20250929',
       schema: Schema,
       prompt: 'score it',
     });
@@ -77,7 +77,7 @@ describe('provider.generateObject', () => {
     expect(ai.generateObject).toHaveBeenCalledWith(
       expect.objectContaining({
         schema: Schema,
-        model: { __model: 'anthropic/claude-haiku-4-5@20251001' },
+        model: { __model: 'anthropic/claude-sonnet-4-5@20250929' },
       }),
     );
   });

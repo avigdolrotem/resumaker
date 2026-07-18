@@ -57,23 +57,28 @@ describe('GET /api/user/llm-model', () => {
   });
 });
 
+// Catalog is Gemini-only right now — Anthropic is commented out in
+// lib/llm/models.ts pending a Vertex AI Model Garden entitlement fix
+// (see the long comment there). claude-opus-4-1@20250805 below is
+// deliberately NOT in the live catalog, so "picking a pro-only model as
+// a plus user" (402, tier_gate) has no live coverage until Claude
+// entries are restored — right now that id just 400s as unknown, same
+// as a typo would. Add a dedicated 402 case back once Opus returns.
 describe('PATCH /api/user/llm-model', () => {
-  it('stores a valid model id', async () => {
+  it('rejects an id that is not in the (currently Gemini-only) catalog', async () => {
     const req = new NextRequest('http://localhost/api/user/llm-model', {
       method: 'PATCH',
-      body: JSON.stringify({ llmModel: 'anthropic/claude-opus-4@20250515' }),
+      body: JSON.stringify({ llmModel: 'anthropic/claude-opus-4-1@20250805' }),
       headers: { 'content-type': 'application/json' },
     });
     const res = await PATCH(req);
-    // Pro user picking Opus would be 200; plus user picking Opus = 402.
-    // Here getUserTier returns 'plus' but minTier of opus is 'pro' → expect 402.
-    expect(res.status).toBe(402);
+    expect(res.status).toBe(400);
   });
 
-  it('stores a model the tier can pick (Plus → Sonnet)', async () => {
+  it('stores a model the tier can pick (Plus → Gemini Pro)', async () => {
     const req = new NextRequest('http://localhost/api/user/llm-model', {
       method: 'PATCH',
-      body: JSON.stringify({ llmModel: 'anthropic/claude-sonnet-4-5@20250929' }),
+      body: JSON.stringify({ llmModel: 'google/gemini-2.5-pro' }),
       headers: { 'content-type': 'application/json' },
     });
     const res = await PATCH(req);
@@ -90,13 +95,13 @@ describe('PATCH /api/user/llm-model', () => {
     expect(res.status).toBe(400);
   });
 
-  it('rejects free user trying to choose any model', async () => {
+  it('rejects free user trying to choose a plus-tier model', async () => {
     const tierMod = await import('@/lib/billing/tier');
     vi.mocked(tierMod.getUserTier).mockResolvedValueOnce('free');
 
     const req = new NextRequest('http://localhost/api/user/llm-model', {
       method: 'PATCH',
-      body: JSON.stringify({ llmModel: 'anthropic/claude-sonnet-4-5@20250929' }),
+      body: JSON.stringify({ llmModel: 'google/gemini-2.5-pro' }),
       headers: { 'content-type': 'application/json' },
     });
     const res = await PATCH(req);

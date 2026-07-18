@@ -80,6 +80,12 @@ export async function POST(req: NextRequest): Promise<Response> {
       system,
       prompt,
       maxOutputTokens: 512,
+      // Same class of task as tools/ats-scanner (quick structured
+      // classification, no multi-step reasoning needed) — see that
+      // route for why disableThinking matters for Gemini specifically:
+      // without it, "thinking" can silently eat most of a modest output
+      // budget before any visible/schema-conforming output is produced.
+      disableThinking: true,
       schemaName: 'fit_score',
       schemaDescription: 'Structured assessment of how well the resume fits the job.',
     });

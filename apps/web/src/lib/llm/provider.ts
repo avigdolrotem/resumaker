@@ -43,6 +43,24 @@ function resolveModel(modelString: string) {
   }
 }
 
+/**
+ * Gemini 2.5 models "think" by default — reasoning tokens come out of
+ * the same maxOutputTokens budget as the visible response, silently.
+ * For a quick single-shot JSON/text answer (no multi-step reasoning
+ * needed) that can eat the entire budget before any visible text is
+ * produced: a 512-token budget on gemini-2.5-flash returned 487
+ * reasoning tokens and 21 text tokens, truncating mid-response every
+ * time. `disableThinking` sets thinkingBudget: 0 (only takes effect for
+ * `google/*` models — Claude's extended thinking is a different
+ * mechanism entirely and isn't affected). Prefer this over just raising
+ * maxOutputTokens for anything that doesn't need reasoning: it's also
+ * faster and cheaper.
+ */
+function thinkingProviderOptions(disableThinking: boolean | undefined, modelString: string) {
+  if (!disableThinking || !modelString.startsWith('google/')) return undefined;
+  return { vertex: { thinkingConfig: { thinkingBudget: 0 } } };
+}
+
 export interface GenerateTextArgs {
   /** Format: `provider/model`, e.g. `anthropic/claude-sonnet-4-5@20250929`. */
   model: string;
@@ -50,6 +68,8 @@ export interface GenerateTextArgs {
   system?: string;
   maxOutputTokens?: number;
   temperature?: number;
+  /** See `thinkingProviderOptions` above. Ignored for `anthropic/*` models. */
+  disableThinking?: boolean;
 }
 
 export interface GenerateTextResult {
@@ -58,6 +78,7 @@ export interface GenerateTextResult {
 }
 
 export async function generateText(args: GenerateTextArgs): Promise<GenerateTextResult> {
+  const providerOptions = thinkingProviderOptions(args.disableThinking, args.model);
   const result = await aiGenerateText({
     model: resolveModel(args.model),
     prompt: args.prompt,
@@ -65,6 +86,7 @@ export async function generateText(args: GenerateTextArgs): Promise<GenerateText
     ...(args.system !== undefined && { system: args.system }),
     ...(args.maxOutputTokens !== undefined && { maxOutputTokens: args.maxOutputTokens }),
     ...(args.temperature !== undefined && { temperature: args.temperature }),
+    ...(providerOptions !== undefined && { providerOptions }),
   });
   return { text: result.text, usage: result.usage };
 }
@@ -77,6 +99,8 @@ export interface GenerateObjectArgs<T> {
   maxOutputTokens?: number;
   schemaName?: string;
   schemaDescription?: string;
+  /** See `thinkingProviderOptions` above. Ignored for `anthropic/*` models. */
+  disableThinking?: boolean;
 }
 
 export interface GenerateObjectResult<T> {
@@ -87,6 +111,7 @@ export interface GenerateObjectResult<T> {
 export async function generateObject<T>(
   args: GenerateObjectArgs<T>,
 ): Promise<GenerateObjectResult<T>> {
+  const providerOptions = thinkingProviderOptions(args.disableThinking, args.model);
   const result = await aiGenerateObject({
     model: resolveModel(args.model),
     schema: args.schema,
@@ -96,6 +121,7 @@ export async function generateObject<T>(
     ...(args.maxOutputTokens !== undefined && { maxOutputTokens: args.maxOutputTokens }),
     ...(args.schemaName !== undefined && { schemaName: args.schemaName }),
     ...(args.schemaDescription !== undefined && { schemaDescription: args.schemaDescription }),
+    ...(providerOptions !== undefined && { providerOptions }),
   });
   return { object: result.object as T, usage: result.usage };
 }

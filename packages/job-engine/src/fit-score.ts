@@ -49,11 +49,12 @@ function profileToText(profile: UserProfile): string {
 }
 
 /**
- * Use an LLM (default: anthropic/claude-haiku-4-5@20251001) to score how
+ * Use an LLM (default: google/gemini-2.5-flash — see apps/web/src/lib/llm/
+ * models.ts for why Haiku 4.5 isn't the default right now) to score how
  * well a candidate profile fits a job.  Returns a FitScore — never throws.
  */
 export async function computeFitScore(opts: ComputeFitScoreOpts): Promise<FitScore> {
-  const { profile, job, modelString = 'anthropic/claude-haiku-4-5@20251001' } = opts;
+  const { profile, job, modelString = 'google/gemini-2.5-flash' } = opts;
   const profileText = profileToText(profile).slice(0, 4_000);
   const jdText = `Company: ${job.company}\nTitle: ${job.title}\n\n${job.description}`.slice(
     0,

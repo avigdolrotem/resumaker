@@ -77,8 +77,9 @@ export const users = pgTable(
     avatar: text('avatar'),
     /**
      * User-selected LLM for resume generation. Gateway-format string
-     * (e.g. `anthropic/claude-sonnet-4-6`). NULL = use tier default.
-     * Only Plus/Pro tiers can set this; Free is locked to Haiku.
+     * (e.g. `anthropic/claude-sonnet-4-5@20250929`). NULL = use tier
+     * default. Only Plus/Pro tiers can set this; Free is locked to the
+     * tier default (see lib/llm/models.ts).
      * Resolved at request time by `resolveModelForUser` — never trust
      * this field without re-checking the tier gate, since users can
      * downgrade after setting a Pro-only model.

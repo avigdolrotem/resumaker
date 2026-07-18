@@ -50,8 +50,11 @@ describe('generateResume', () => {
       userProfile: {},
     });
 
+    // env.DEFAULT_LLM_MODEL is Gemini right now, not Anthropic — see the
+    // long comment in lib/llm/models.ts (Vertex AI Model Garden isn't
+    // enabled for the Anthropic publisher on this GCP project yet).
     expect(vi.mocked(provider.generateObject)).toHaveBeenCalledWith(
-      expect.objectContaining({ model: expect.stringMatching(/^anthropic\//) }),
+      expect.objectContaining({ model: expect.stringMatching(/^google\//) }),
     );
   });
 
