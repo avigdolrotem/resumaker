@@ -17,11 +17,28 @@ export function GlowButton({
   children,
   size = 'lg',
   variant = 'primary',
+  glow = true,
 }: {
   href: LinkHref;
   children: ReactNode;
   size?: 'md' | 'lg';
   variant?: 'primary' | 'ghost';
+  /**
+   * Set false to drop the ambient box-shadow glow while keeping
+   * everything else (gradient fill, shine sweep, hover lift). WebKit
+   * fails to clip a blurred, non-inset box-shadow to a rounded-full
+   * element's curve when that element sits inside an ancestor with
+   * `backdrop-filter` — confirmed via direct comparison in dark theme:
+   * this exact glow renders as a clean soft halo on the homepage hero
+   * CTA (no backdrop-filter ancestor) but as a flat rectangular smear
+   * on the header's Sign in CTA (nested inside the header's
+   * `backdrop-filter`), independent of the shadow's blur radius —
+   * varying blur 0-28px made no difference, only removing the shadow
+   * did. Both header components pass `glow={false}` for exactly this
+   * reason; the hero/examples usages keep the default glow since
+   * they're not inside a backdrop-filter surface.
+   */
+  glow?: boolean;
 }) {
   const sizeClass = size === 'lg' ? 'h-14 px-8 text-base' : 'h-11 px-6 text-sm';
 
@@ -39,24 +56,25 @@ export function GlowButton({
   return (
     <Link
       href={href}
-      className={`ease-snappy group relative inline-flex items-center justify-center gap-2 rounded-full font-semibold text-white shadow-[0_0_20px_2px_rgba(139,92,246,0.55)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_28px_6px_rgba(139,92,246,0.75)] active:scale-[0.96] ${sizeClass}`}
+      className={`ease-snappy group relative inline-flex items-center justify-center gap-2 rounded-full font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.96] ${glow ? 'shadow-[0_0_20px_2px_rgba(139,92,246,0.55)] hover:shadow-[0_0_28px_6px_rgba(139,92,246,0.75)]' : ''} ${sizeClass}`}
     >
       {/* The glow used to be a separate absolutely-positioned, blurred
           span spilling past the pill's edge (`-inset-0.5 blur-md`) —
           that's the standard trick for a soft halo, and it's what
-          components/ui/button.tsx's outline variant still does. But
-          WebKit/Safari specifically was rendering that span's
-          rectangular filter bounding box as a visible flat-edged smear
-          past the button instead of a soft round glow (confirmed via
-          webkit-engine screenshots — Chromium rendered it fine, so this
-          never showed up in prior testing). A box-shadow glow on the
-          link itself sidesteps the whole class of bug: box-shadow is
-          native to the border-radius, there's no separate filtered
-          element whose bounding box can show through. Matches how
-          ui/button.tsx's default variant already does its shadow glow
-          (shadow-brand-500/30 hover:shadow-brand-500/45) — same idea,
-          just a stronger/more diffuse tint since this is the
-          higher-contrast "glow" CTA specifically. */}
+          components/ui/button.tsx's outline variant still does. WebKit
+          rendered that span's rectangular filter bounding box as a
+          flat-edged smear past the button instead of a soft round glow,
+          so it was switched to a box-shadow directly on the link
+          instead (native to the border-radius, no separate filtered
+          element to leak). That fixed it standalone, but NOT inside a
+          `backdrop-filter` ancestor: WebKit also fails to clip a
+          blurred, non-inset box-shadow to a rounded-full descendant's
+          curve when an ancestor has backdrop-filter — same rectangular
+          smear, just one level up the DOM. Confirmed by A/B — the
+          identical shadow classes render clean on the hero CTA (no
+          backdrop-filter ancestor) and broken on the header CTA (is
+          one), independent of blur radius. Hence the `glow` prop: off
+          for header usage, on everywhere else. */}
       {/* Solid background */}
       <span
         aria-hidden

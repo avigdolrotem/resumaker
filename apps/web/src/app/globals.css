@@ -332,11 +332,22 @@
  *   - border from 18% → 26% L so dividers are visible
  *   - input from 16% → 22% L so form fields are scannable on the bg
  *   - foreground micro-bump 96% → 97% for crisper headlines
+ *
+ * Background/card lightened again 2026-07-19 — "welcoming" feedback:
+ * 6% L read as closer to black-with-a-tint than an actual dark purple,
+ * cold rather than inviting. Bumped bg 6%→9% L (and card 12%→14% to
+ * preserve most of the "lifts cleanly off the bg" gap the note above
+ * was about). Left every other token alone — foreground/muted-
+ * foreground/border/input were already tuned for contrast against a
+ * darker bg, and a 3-point lift only makes their contrast against text
+ * marginally more generous, never less (background moving toward
+ * lighter, text staying put, gap barely changes at these extremes —
+ * still ~90 points of L between bg and foreground either way).
  */
 .dark[data-theme='dark-purple'] {
-  --color-background: hsl(258 50% 6%);
+  --color-background: hsl(258 45% 9%);
   --color-foreground: hsl(252 30% 97%);
-  --color-card: hsl(258 45% 12%);
+  --color-card: hsl(258 42% 14%);
   --color-card-foreground: hsl(252 30% 97%);
   --color-primary: hsl(252 88% 74%);
   --color-primary-foreground: hsl(258 50% 8%);
