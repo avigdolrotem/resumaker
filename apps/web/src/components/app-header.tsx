@@ -57,6 +57,17 @@ export function AppHeader() {
         />
         <Logo size="md" href="/dashboard" />
 
+        {/* "+ New" sits to the left of the search bar, not among the
+            plain nav links — it's the one filled/brand-colored button
+            in the header, so grouping it with the flat text links (its
+            old spot, right after Dashboard) made it look like a stray
+            mis-styled link rather than a primary CTA. Left of search
+            mirrors how Linear/Vercel place their primary "create"
+            action: right next to the logo, ahead of navigation. */}
+        <div className="hidden md:flex md:items-center">
+          <NewMenu />
+        </div>
+
         {/* Center: command-palette trigger. Desktop only — mobile gets
             the cmd+K via the drawer's first item. */}
         <CommandPaletteTrigger className="mx-4 hidden max-w-xs flex-1 md:inline-flex" />
@@ -72,15 +83,7 @@ export function AppHeader() {
             icon={<LayoutDashboard className="h-4 w-4" />}
             label={t('dashboard')}
           />
-          {/* "+ New" dropdown consolidates the create actions
-              (resume + cover letter) — replaces the old standalone
-              Builder NavLink, which got lopsided once cover letters
-              joined. Sits as the first action after Dashboard so it's
-              the most prominent CTA. */}
-          <div className="hidden md:flex md:items-center">
-            <NewMenu />
-          </div>
-          {/* Cover Letters — sits between New and Jobs in the
+          {/* Cover Letters — sits between Dashboard and Jobs in the
               canonical top-bar order. Renders only when signed in
               (this is the (app) header). */}
           <NavLink

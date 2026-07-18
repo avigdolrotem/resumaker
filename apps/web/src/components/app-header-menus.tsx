@@ -55,7 +55,9 @@ function useDismissable(open: boolean, close: () => void) {
  * "+ New ▾" header CTA. Consolidates the two create actions (resume +
  * cover letter) under one prominent button — the resume builder used
  * to be a top-level NavLink, but adding cover letters made the nav
- * lopsided. Brand-coloured to stand out.
+ * lopsided. Brand-coloured to stand out. Sits just right of the logo
+ * (left of the search bar) — see the comment at its call site in
+ * app-header.tsx for why.
  */
 export function NewMenu() {
   const t = useTranslations('nav');
@@ -85,7 +87,12 @@ export function NewMenu() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: -4 }}
             transition={MENU_SPRING}
-            className="glass-strong shadow-glass-lg absolute end-0 z-50 mt-2 w-56 overflow-hidden rounded-2xl p-1.5"
+            // start-0 (not end-0, unlike UserAvatarMenu) — this button
+            // now lives right after the logo near the header's start
+            // edge, so anchoring the menu's end edge would swing it
+            // toward the outside of the pill instead of into the
+            // header's open space.
+            className="glass-strong shadow-glass-lg absolute start-0 z-50 mt-2 w-56 overflow-hidden rounded-2xl p-1.5"
           >
             <li role="none">
               <Link
