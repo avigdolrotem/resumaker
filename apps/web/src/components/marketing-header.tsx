@@ -40,9 +40,15 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
     // doesn't feel like two different products.
     <div className="sticky top-3 z-40 mt-3 px-3 sm:top-4 sm:mt-4 sm:px-4">
       <header
-        className="glass-strong shadow-glass-lg relative mx-auto flex h-16 max-w-7xl items-center justify-between rounded-full px-4"
+        className="glass-strong relative mx-auto flex h-16 max-w-7xl items-center justify-between rounded-full px-4"
         style={{
-          boxShadow: 'inset 0 1px 0 hsl(252 75% 90% / 0.35), 0 12px 34px hsl(260 55% 20% / 0.14)',
+          // Blur capped at 16px, not the shadow-glass-lg token's 48px —
+          // see the matching comment in app-header.tsx for why: past
+          // ~24px, a rounded-full + backdrop-filter element's box-shadow
+          // renders as a flat-edged rectangular smear in WebKit/Safari
+          // instead of following the pill's curve (this was the white
+          // glow users saw floating past the header on Safari).
+          boxShadow: 'inset 0 1px 0 hsl(252 75% 90% / 0.35), 0 8px 16px hsl(260 55% 20% / 0.14)',
         }}
       >
         {/* Brand-tinted sheen along the top edge, inset past the pill's

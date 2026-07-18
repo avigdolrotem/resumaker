@@ -29,12 +29,24 @@ export function AppHeader() {
     // too, not just desktop.
     <div className="sticky top-3 z-40 mt-3 px-3 sm:top-4 sm:mt-4 sm:px-4">
       <header
-        className="glass-strong shadow-glass-lg relative mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 rounded-full px-4"
+        className="glass-strong relative mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 rounded-full px-4"
         style={{
           // Inner top highlight (glass "sheen") + a soft ambient drop
           // shadow so the pill visibly lifts off the page instead of
-          // reading as a flat rounded box.
-          boxShadow: 'inset 0 1px 0 hsl(252 75% 90% / 0.35), 0 12px 34px hsl(260 55% 20% / 0.14)',
+          // reading as a flat rounded box. Blur capped at 16px — a
+          // rounded-full element with backdrop-filter AND a box-shadow
+          // blurred past ~24px renders as a flat-edged rectangular smear
+          // in WebKit/Safari instead of following the pill's curve
+          // (confirmed via webkit-engine screenshots at 12/20/34px; 34px
+          // — the original value — was the "shallow rectangle" users
+          // saw floating past the header on Safari). This is also why
+          // shadow-glass-lg isn't used here despite being the standard
+          // elevation token: its 48px blur is well past the safe range.
+          // Not otherwise a risk on rounded-2xl surfaces (cards, modals)
+          // — their natural shape is close enough to the blur's own
+          // falloff that the clipping error isn't visible; specific to
+          // rounded-full pills like this header.
+          boxShadow: 'inset 0 1px 0 hsl(252 75% 90% / 0.35), 0 8px 16px hsl(260 55% 20% / 0.14)',
         }}
       >
         {/* Brand-tinted sheen along the top edge, inset past the pill's

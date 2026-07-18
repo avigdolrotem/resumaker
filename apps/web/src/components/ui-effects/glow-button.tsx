@@ -39,25 +39,24 @@ export function GlowButton({
   return (
     <Link
       href={href}
-      className={`ease-snappy group relative inline-flex items-center justify-center gap-2 rounded-full font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.96] ${sizeClass}`}
+      className={`ease-snappy group relative inline-flex items-center justify-center gap-2 rounded-full font-semibold text-white shadow-[0_0_20px_2px_rgba(139,92,246,0.55)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_28px_6px_rgba(139,92,246,0.75)] active:scale-[0.96] ${sizeClass}`}
     >
-      {/* Glow ring — deliberately extends past the pill's edge to read as
-          a soft halo, not a hard-edged fill. The parent must NOT clip
-          overflow, or this gets cut into a flat rectangular box instead
-          of a blurred glow (this was the "shallow rectangle" artifact
-          around the sign-in/CTA buttons). The two layers below don't
-          need ancestor clipping — each already paints its own exact
-          rounded-full shape, so they can't spill regardless.
-          pointer-events-none on all three: they're decorative overlays
-          inside an <a>, and since the glow ring intentionally spills
-          outside the link's own box, an adjacent element (e.g. the
-          mobile-header burger, which sits close by on narrow viewports)
-          can end up underneath that spill — without this, the glow
-          silently steals clicks meant for whatever's actually there. */}
-      <span
-        aria-hidden
-        className="from-brand-500 to-brand-500 pointer-events-none absolute -inset-0.5 rounded-full bg-gradient-to-r via-purple-500 opacity-75 blur-md transition group-hover:opacity-100 group-hover:blur-lg"
-      />
+      {/* The glow used to be a separate absolutely-positioned, blurred
+          span spilling past the pill's edge (`-inset-0.5 blur-md`) —
+          that's the standard trick for a soft halo, and it's what
+          components/ui/button.tsx's outline variant still does. But
+          WebKit/Safari specifically was rendering that span's
+          rectangular filter bounding box as a visible flat-edged smear
+          past the button instead of a soft round glow (confirmed via
+          webkit-engine screenshots — Chromium rendered it fine, so this
+          never showed up in prior testing). A box-shadow glow on the
+          link itself sidesteps the whole class of bug: box-shadow is
+          native to the border-radius, there's no separate filtered
+          element whose bounding box can show through. Matches how
+          ui/button.tsx's default variant already does its shadow glow
+          (shadow-brand-500/30 hover:shadow-brand-500/45) — same idea,
+          just a stronger/more diffuse tint since this is the
+          higher-contrast "glow" CTA specifically. */}
       {/* Solid background */}
       <span
         aria-hidden
