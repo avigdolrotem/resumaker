@@ -97,7 +97,13 @@ function TermsHe() {
         </li>
         <li>
           <strong>ביטול שירות מתמשך</strong> — ניתן לבטל מנוי מתמשך בכל עת דרך עמוד החיוב. הביטול
-          ייכנס לתוקף בסוף מחזור החיוב הנוכחי; לא תחויבו מחזור חיוב נוסף.
+          ייכנס לתוקף בסוף מחזור החיוב הנוכחי; לא תחויבו מחזור חיוב נוסף, והגישה למסלול הקיים תישמר
+          עד תום התקופה ששולמה.
+        </li>
+        <li>
+          <strong>שדרוג / שינוי מסלול</strong> — מעבר למסלול גבוה יותר נכנס לתוקף מיידית ותחויבו רק
+          בהפרש היחסי עבור הימים שנותרו במחזור החיוב הנוכחי. מעבר למסלול נמוך יותר נכנס לתוקף גם הוא
+          מיידית, עם זיכוי יחסי בהתאם.
         </li>
         <li>
           <strong>ביטול תוך 30 יום</strong> — צרכנים מסוימים (אזרחים ותיקים, אנשים עם מוגבלות, עולים
@@ -216,7 +222,14 @@ function TermsEn() {
         <li>
           <strong>Ongoing subscription cancellation</strong> — you may cancel a recurring
           subscription at any time from the billing page. Cancellation takes effect at the end of
-          the current billing cycle; no further charges.
+          the current billing cycle; no further charges, and you keep access to your current plan
+          until the paid period ends.
+        </li>
+        <li>
+          <strong>Upgrading / changing plans</strong> — moving to a higher tier takes effect
+          immediately and you're charged only the prorated difference for the remaining days in the
+          current billing cycle. Moving to a lower tier also takes effect immediately, with a
+          prorated credit applied accordingly.
         </li>
         <li>
           <strong>Extended 30-day cancellation</strong> — certain consumers (senior citizens, people
