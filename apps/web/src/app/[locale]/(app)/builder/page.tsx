@@ -20,6 +20,7 @@ import { AdvancedEditor } from '@/components/builder/advanced-editor';
 import { ImportModal } from '@/components/builder/import-modal';
 import { FitScorePanel } from '@/components/builder/fit-score-panel';
 import { applyImportedProfile } from '@/lib/builder/apply-import';
+import { apiFetch, ApiTierError } from '@/lib/api-client';
 import type { Tier } from '@/lib/billing/limits';
 import { Sparkles, Save as SaveIcon, Check as CheckIcon, Loader2, Upload } from 'lucide-react';
 import { LiquidSpinner } from '@/components/ui-effects/liquid-spinner';
@@ -152,7 +153,7 @@ export default function BuilderPage() {
       const title = name
         ? t('actions.titleFormat', { name, industry })
         : t('actions.titleFallback', { date: new Date().toLocaleDateString() });
-      const res = await fetch(isEditing ? `/api/resumes/${editingId}` : '/api/resumes', {
+      const res = await apiFetch(isEditing ? `/api/resumes/${editingId}` : '/api/resumes', {
         method: isEditing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
@@ -169,6 +170,9 @@ export default function BuilderPage() {
         setError(data.error ?? t('actions.saveFailed'));
       }
     } catch (err) {
+      // ApiTierError = 402; the global ApiUpgradeListener already opened
+      // the upgrade modal — swallow it here so we don't double-prompt.
+      if (err instanceof ApiTierError) return;
       setError((err as Error).message);
     } finally {
       setSaving(false);
@@ -288,7 +292,7 @@ export default function BuilderPage() {
       if (jd) body.jobDescription = jd;
       if (url) body.jobUrl = url;
 
-      const res = await fetch('/api/resumes/generate', {
+      const res = await apiFetch('/api/resumes/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -312,6 +316,9 @@ export default function BuilderPage() {
         }
       }
     } catch (err) {
+      // ApiTierError = 402; the global ApiUpgradeListener already opened
+      // the upgrade modal — swallow it here so we don't double-prompt.
+      if (err instanceof ApiTierError) return;
       setError((err as Error).message);
     } finally {
       setLoading(false);
@@ -320,7 +327,7 @@ export default function BuilderPage() {
 
   async function fetchAtsScore(resume: ResumeResult['resume'], jobDescription: string) {
     try {
-      const res = await fetch('/api/resumes/score', {
+      const res = await apiFetch('/api/resumes/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resume, jobDescription }),
@@ -330,7 +337,10 @@ export default function BuilderPage() {
         setAtsScore(data);
       }
     } catch {
-      /* non-blocking; score is best-effort */
+      // Best-effort, non-blocking auto-score after generation — a 402
+      // here still opens the upgrade modal via apiFetch's global event,
+      // same as any other tier-gated call, but we don't need to do
+      // anything else with it (no inline error UI for this one).
     }
   }
 
@@ -381,7 +391,7 @@ export default function BuilderPage() {
       const title = name
         ? t('actions.titleFormat', { name, industry })
         : t('actions.titleFallback', { date: new Date().toLocaleDateString() });
-      const res = await fetch(isEditing ? `/api/resumes/${editingId}` : '/api/resumes', {
+      const res = await apiFetch(isEditing ? `/api/resumes/${editingId}` : '/api/resumes', {
         method: isEditing ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
