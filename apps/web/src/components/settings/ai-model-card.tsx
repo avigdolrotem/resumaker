@@ -100,7 +100,16 @@ export function AIModelCard() {
                       </span>
                     )}
                     {!allowed && <Lock className="text-muted-foreground h-3.5 w-3.5" />}
-                    {selected && <Check className="text-brand-500 h-4 w-4" />}
+                    {/* isRecommendedDefault also gets the checkmark, not
+                        just the highlighted border it already had —
+                        without an explicit choice this card silently IS
+                        the model in use (resolveModelForUser falls back
+                        to getTierDefault), but a highlighted border with
+                        no checkmark read as "nothing is really selected"
+                        rather than "this is what's active by default". */}
+                    {(selected || isRecommendedDefault) && (
+                      <Check className="text-brand-500 h-4 w-4" />
+                    )}
                   </div>
                 </div>
                 <p className="text-muted-foreground mt-1 text-sm">{m.blurbEn}</p>
