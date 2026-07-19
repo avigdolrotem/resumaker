@@ -106,8 +106,13 @@ export const auth = betterAuth({
     enabled: true,
     // Always require verification — accounts can't sign in until the
     // user clicks the verification link in their email. In dev (no
-    // RESEND_API_KEY) the email is logged to console, so a developer
-    // can still copy the URL and finish the flow.
+    // RESEND_API_KEY) sendEmail() deliberately does NOT log the URL —
+    // only a redacted "would have sent X to a***@b.com" line (see
+    // lib/email/client.ts; verification/reset tokens in shell/log
+    // history are a real exfil vector). There is currently no local
+    // way to complete this flow through the UI alone — flip
+    // `users.email_verified` to true directly in the DB for the
+    // account under test instead.
     requireEmailVerification: true,
     minPasswordLength: 12,
     maxPasswordLength: 256,

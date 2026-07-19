@@ -445,7 +445,13 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
       type="button"
       onClick={open}
       aria-label={t('ariaLabel')}
-      className={`border-input bg-background/60 text-muted-foreground hover:border-brand-400/40 hover:bg-background hover:text-foreground ease-smooth inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 ${
+      // `glass hover:glass-strong` — same recipe as GlowButton's ghost
+      // variant and Button's `outline` variant, and `rounded-full` to
+      // match every other header control. This used to be a bespoke
+      // bg-background/60 + rounded-xl + shadow-sm recipe, the one
+      // non-pill, non-glass element sitting in an otherwise fully
+      // "liquid glass" header.
+      className={`glass hover:glass-strong text-muted-foreground hover:text-foreground ease-smooth inline-flex h-9 items-center gap-2 rounded-full px-3 text-sm transition-all duration-300 ${
         className ?? ''
       }`}
     >
