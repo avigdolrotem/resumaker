@@ -10,6 +10,7 @@ import { ThemeToggle } from './theme-toggle';
 import { CommandPaletteTrigger } from './command-palette';
 import { MobileDrawer } from './mobile-drawer';
 import { ScrollHideHeader } from './scroll-hide-header';
+import { UserAvatarMenu } from './app-header-menus';
 import { auth } from '@/lib/auth';
 import { LayoutDashboard } from 'lucide-react';
 
@@ -75,14 +76,22 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
           <ThemeToggle />
 
           {isAuthed ? (
-            // Signed in: show "Dashboard" CTA so the user knows they
-            // can jump back into the app from any marketing page. No
-            // duplicate "Sign in" / "Sign up" links (those are for
-            // anonymous visitors only).
-            <GlowButton href="/dashboard" size="md">
-              <LayoutDashboard className="h-4 w-4" />
-              {t('dashboard')}
-            </GlowButton>
+            // Signed in: "Dashboard" CTA to jump back into the app, plus
+            // the account avatar — previously the CTA swapping from
+            // "Sign in/up" to "Dashboard" was the *only* signal of being
+            // signed in, easy to miss since it reads as "a different
+            // button" rather than unambiguously "you're logged in".
+            // Same UserAvatarMenu the app header already uses (reads its
+            // own session client-side, renders nothing when signed out)
+            // — one consistent "this is you" affordance across both
+            // shells instead of a marketing-only bespoke one.
+            <>
+              <GlowButton href="/dashboard" size="md">
+                <LayoutDashboard className="h-4 w-4" />
+                {t('dashboard')}
+              </GlowButton>
+              <UserAvatarMenu />
+            </>
           ) : (
             // Sign-in is now the primary (glowing) CTA, sign-up the
             // secondary text link. Per user request — they're an
