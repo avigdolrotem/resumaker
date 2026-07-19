@@ -286,10 +286,15 @@ function TierCard({
           // Waitlist is a distinct semantic state (you can't buy this
           // yet) — kept visually separate (amber tint) rather than
           // folded into the standard button so it doesn't read as a
-          // normal, currently-working purchase action.
+          // normal, currently-working purchase action. Box model
+          // (h-10 + px-5, flex-centered) still matches Button's `size:
+          // default` exactly, though — this sits in the same card-footer
+          // row as the other tiers' <Button>s, and a few px of padding-
+          // driven height difference was visibly throwing the row out
+          // of alignment.
           <a
             href="mailto:hello@resumaker.co.il?subject=Waitlist%20-%20Pricing"
-            className="glass-subtle ease-snappy block w-full rounded-full px-4 py-2.5 text-center text-sm font-medium text-amber-900 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.96] dark:text-amber-100"
+            className="glass-subtle ease-snappy inline-flex h-10 w-full items-center justify-center rounded-full px-5 text-sm font-medium text-amber-900 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.96] dark:text-amber-100"
           >
             {t('joinWaitlist')}
           </a>
