@@ -80,12 +80,24 @@
    * below; components should reach for `bg-glass`/`border-glass`
    * rather than hand-rolled rgba so the whole site reflects a theme
    * change in one place.
+   *
+   * Brand-hue-tinted rather than plain white — plain white glass over
+   * the light theme's near-white page/card backgrounds has nothing to
+   * contrast against, so translucency read as "there's just a plain
+   * white button/pill here" rather than "glass": e.g. the outline
+   * Button variant and the marketing nav's active-link pill, both
+   * effectively invisible in light mode despite rendering correctly
+   * (confirmed via computed styles — this was never a rendering bug,
+   * white-on-white just isn't perceptible regardless of blur/opacity).
+   * Dark theme already does this — the surfaces below were the one
+   * neutral holdout. Bumped opacity a few points at the same time,
+   * since a pure hue shift alone doesn't fix "too faint to read".
    */
-  --color-glass-subtle: rgb(255 255 255 / 32%);
-  --color-glass: rgb(255 255 255 / 55%);
-  --color-glass-strong: rgb(255 255 255 / 74%);
-  --color-glass-border: rgb(255 255 255 / 65%);
-  --color-glass-border-strong: rgb(255 255 255 / 90%);
+  --color-glass-subtle: hsl(252 70% 95% / 45%);
+  --color-glass: hsl(252 65% 94% / 65%);
+  --color-glass-strong: hsl(252 60% 92% / 82%);
+  --color-glass-border: hsl(252 70% 80% / 55%);
+  --color-glass-border-strong: hsl(252 72% 70% / 65%);
 
   /* Backdrop blur scale used for glass surfaces (shares the
      blur and backdrop-blur utility namespace). */
