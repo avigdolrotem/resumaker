@@ -9,6 +9,7 @@ import { routing, getDirection, type Locale } from '@/i18n/routing';
 import { CookieConsent } from '@/components/cookie-consent';
 import { SWRegister } from '@/components/sw-register';
 import { CommandPalette } from '@/components/command-palette';
+import { AuthModalProvider } from '@/components/auth/auth-modal';
 import { DEFAULT_THEME, THEME_COOKIE, htmlAttrsForTheme, isTheme } from '@/lib/theme';
 import '../globals.css';
 
@@ -178,7 +179,10 @@ export default async function LocaleLayout({
           that don't directly use intl — costs nothing.
         */}
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {children}
+          {/* Owns the sign-in/sign-up overlay + its open/closed state —
+              wraps children (not a sibling) so anything rendered inside
+              can call useAuthModal() without prop-drilling. */}
+          <AuthModalProvider>{children}</AuthModalProvider>
 
           {/* Global cmd+K palette — always mounted, listens for the
               keystroke anywhere on the page */}

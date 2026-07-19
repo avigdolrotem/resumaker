@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
+import { useAuthModal } from './auth/auth-modal';
 import { useRouter } from '@/i18n/navigation';
 import { Logo } from './logo';
 
@@ -65,7 +66,12 @@ type LinkHref =
 type Item =
   | { kind: 'link'; href: LinkHref; label: string; Icon: typeof Menu }
   | { kind: 'divider'; label: string }
-  | { kind: 'action'; action: 'sign-out'; label: string; Icon: typeof Menu };
+  | {
+      kind: 'action';
+      action: 'sign-out' | 'open-sign-in' | 'open-sign-up';
+      label: string;
+      Icon: typeof Menu;
+    };
 
 /**
  * Legal links visible to BOTH signed-in and signed-out users. Required
@@ -105,8 +111,10 @@ function publicItems(): Item[] {
     { kind: 'link', href: '/', label: 'Home', Icon: Home },
     { kind: 'link', href: '/examples', label: 'Examples', Icon: Palette },
     { kind: 'link', href: '/pricing', label: 'Pricing', Icon: CreditCard },
-    { kind: 'link', href: '/sign-in', label: 'Sign in', Icon: LogIn },
-    { kind: 'link', href: '/sign-up', label: 'Sign up', Icon: UserPlus },
+    // Open the auth overlay instead of navigating — same as the
+    // desktop header's MarketingAuthCta, see auth-modal.tsx.
+    { kind: 'action', action: 'open-sign-in', label: 'Sign in', Icon: LogIn },
+    { kind: 'action', action: 'open-sign-up', label: 'Sign up', Icon: UserPlus },
     ...legalItems,
   ];
 }
@@ -163,12 +171,25 @@ export function MobileDrawer() {
   }, [open]);
 
   const items = session ? authedItems() : publicItems();
+  const { openAuthModal } = useAuthModal();
 
   async function handleSignOut() {
     setOpen(false);
     await signOut();
     router.push('/');
     router.refresh();
+  }
+
+  function handleAction(action: 'sign-out' | 'open-sign-in' | 'open-sign-up') {
+    if (action === 'sign-out') {
+      void handleSignOut();
+      return;
+    }
+    // Close the drawer before opening the modal — having both overlays
+    // stacked at once looks broken, and the modal is the one the user
+    // actually asked for by tapping Sign in/up.
+    setOpen(false);
+    openAuthModal(action === 'open-sign-in' ? 'sign-in' : 'sign-up');
   }
 
   return (
@@ -244,7 +265,7 @@ export function MobileDrawer() {
                       <button
                         key={it.label}
                         type="button"
-                        onClick={() => void handleSignOut()}
+                        onClick={() => handleAction(it.action)}
                         className="text-foreground hover:bg-accent/60 ease-snappy mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-xl px-3 py-3 text-start text-sm font-medium transition-all duration-200"
                       >
                         <it.Icon className="text-muted-foreground h-4 w-4" />

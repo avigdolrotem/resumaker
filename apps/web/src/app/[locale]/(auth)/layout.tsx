@@ -6,7 +6,6 @@ import { GridPattern } from '@/components/ui-effects/grid-pattern';
 import { Logo } from '@/components/logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { LocaleSwitcher } from '@/components/locale-switcher';
-import { AuthCloseButton } from '@/components/auth-close-button';
 import { auth } from '@/lib/auth';
 
 /**
@@ -53,7 +52,6 @@ export default async function AuthLayout({ children }: { children: ReactNode }) 
           <div className="flex items-center gap-1">
             <LocaleSwitcher />
             <ThemeToggle />
-            <AuthCloseButton />
           </div>
         </div>
       </header>

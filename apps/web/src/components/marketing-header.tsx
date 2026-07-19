@@ -1,9 +1,9 @@
 import { getTranslations } from 'next-intl/server';
 import { headers } from 'next/headers';
-import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { LocaleSwitcher } from './locale-switcher';
 import { MarketingNavLinks } from './marketing-nav-links';
+import { MarketingAuthCta } from './marketing-auth-cta';
 import { GlowButton } from './ui-effects/glow-button';
 import { Logo } from './logo';
 import { ThemeToggle } from './theme-toggle';
@@ -96,18 +96,9 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
             // Sign-in is now the primary (glowing) CTA, sign-up the
             // secondary text link. Per user request — they're an
             // existing user testing repeatedly and sign-in is the
-            // common-path action.
-            <>
-              <Link
-                href="/sign-up"
-                className="text-foreground/80 hover:text-brand-700 hover:bg-accent/60 dark:hover:text-brand-200 ease-snappy hidden rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 md:inline"
-              >
-                {t('signUp')}
-              </Link>
-              <GlowButton href="/sign-in" size="md">
-                {t('signIn')}
-              </GlowButton>
-            </>
+            // common-path action. Opens as an overlay (MarketingAuthCta)
+            // rather than navigating — see auth-modal.tsx.
+            <MarketingAuthCta signUpLabel={t('signUp')} signInLabel={t('signIn')} />
           )}
           <MobileDrawer />
         </nav>

@@ -79,7 +79,7 @@ export function CookieConsent({ locale }: { locale: string }) {
           type="button"
           onClick={dismiss}
           className="bg-brand-600 hover:bg-brand-700 rounded-md px-3 py-1.5 text-sm font-medium text-white transition"
-          aria-label={isHe ? 'סגור' : 'Dismiss'}
+          aria-label={isHe ? 'סגור הודעת עוגיות' : 'Dismiss cookie notice'}
         >
           <span className="hidden sm:inline">{isHe ? 'הבנתי' : 'Got it'}</span>
           <X className="h-4 w-4 sm:hidden" />
