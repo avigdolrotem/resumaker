@@ -96,7 +96,8 @@
   },
   "auth": {
     "common": {
-      "loading": "Loading…"
+      "loading": "Loading…",
+      "close": "Close"
     },
     "fields": {
       "name": "Full name",

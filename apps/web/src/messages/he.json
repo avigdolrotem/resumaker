@@ -96,7 +96,8 @@
   },
   "auth": {
     "common": {
-      "loading": "טוען…"
+      "loading": "טוען…",
+      "close": "סגור"
     },
     "fields": {
       "name": "שם מלא",
