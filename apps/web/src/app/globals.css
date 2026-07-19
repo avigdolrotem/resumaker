@@ -125,8 +125,6 @@
   --animate-liquid-pop: liquidPop 0.5s var(--ease-snappy);
   /* Toast slide-in from the trailing edge. */
   --animate-liquid-slide-in: liquidSlideIn 0.5s var(--ease-snappy);
-  /* Specular sheen sweep across primary buttons/CTAs on hover. */
-  --animate-shine: shine 0.9s var(--ease-snappy);
   /* Conic-gradient liquid loading spinner. */
   --animate-liquid-spin: liquidSpin 1s linear infinite;
 }
@@ -242,14 +240,6 @@
   100% {
     opacity: 1;
     transform: translateX(0);
-  }
-}
-@keyframes shine {
-  0% {
-    transform: translateX(-120%);
-  }
-  100% {
-    transform: translateX(120%);
   }
 }
 @keyframes liquidSpin {

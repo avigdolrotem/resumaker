@@ -8,6 +8,7 @@ import { Link } from '@/i18n/navigation';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { GlowButton } from '@/components/ui-effects/glow-button';
 import { authClient } from '@/lib/auth-client';
 
 export default function ResetPasswordPage() {
@@ -148,34 +149,16 @@ export default function ResetPasswordPage() {
                     </div>
                   )}
 
-                  {/* Matches sign-in/sign-up's CTA style — gradient + glow + shine. */}
-                  <button
+                  {/* Same GlowButton used for the header/hero CTAs. */}
+                  <GlowButton
                     type="submit"
+                    size="md"
                     disabled={loading}
-                    className="ease-snappy group relative inline-flex h-11 w-full items-center justify-center gap-2 overflow-hidden rounded-full text-sm font-semibold text-white transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                    loading={loading}
+                    className="w-full"
                   >
-                    <span
-                      aria-hidden
-                      className="from-brand-500 to-brand-500 absolute -inset-0.5 rounded-full bg-gradient-to-r via-purple-500 opacity-75 blur-md transition group-hover:opacity-100 group-disabled:opacity-30"
-                    />
-                    <span
-                      aria-hidden
-                      className="from-brand-600 to-brand-800 absolute inset-0 rounded-full bg-gradient-to-br"
-                    />
-                    <span
-                      aria-hidden
-                      className="ease-snappy absolute inset-0 -translate-x-full rounded-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full"
-                    />
-                    <span className="relative z-10 inline-flex items-center gap-2">
-                      {loading && (
-                        <span
-                          aria-hidden
-                          className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
-                        />
-                      )}
-                      {loading ? t('common.loading') : t('reset.cta')}
-                    </span>
-                  </button>
+                    {loading ? t('common.loading') : t('reset.cta')}
+                  </GlowButton>
                 </form>
               )}
             </CardContent>
