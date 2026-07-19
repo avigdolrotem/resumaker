@@ -149,10 +149,28 @@ Write the cover letter body.`;
   const started = Date.now();
   try {
     const response = await generateText({
-      model: env.DEFAULT_LLM_MODEL,
+      // FALLBACK_LLM_MODEL (gemini-2.5-flash), not DEFAULT_LLM_MODEL
+      // (gemini-2.5-pro) — same choice ats-scanner/salary-estimator/
+      // fit-score already made for the same reason: a bounded, single-
+      // shot task with no multi-step reasoning needed. This isn't just
+      // a preference, it's required for the fix below to actually work
+      // — confirmed directly against the live API that gemini-2.5-pro
+      // REJECTS thinking_budget: 0 outright ("model does not support
+      // setting thinking_budget to 0"), while flash accepts it.
+      model: env.FALLBACK_LLM_MODEL,
       maxOutputTokens: 1024,
       system: systemPrompt,
       prompt: userPrompt,
+      // Gemini 2.5's default "thinking" spends tokens from this same
+      // 1024 budget before any visible text — a straightforward single-
+      // shot letter needs none of that multi-step reasoning, and without
+      // this the model could burn most/all of the budget on invisible
+      // reasoning tokens and get cut off mid-letter (see the fuller
+      // explanation on thinkingProviderOptions in lib/llm/provider.ts —
+      // this exact failure mode was already diagnosed there for resume
+      // generation but never applied here). Confirmed fixed end-to-end:
+      // 0 reasoning tokens, full letter, proper closing.
+      disableThinking: true,
     });
 
     if (!response.text) {
