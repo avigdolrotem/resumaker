@@ -13,6 +13,7 @@ import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
 import { GridPattern } from '@/components/ui-effects/grid-pattern';
 import { AnimatedGradientText } from '@/components/ui-effects/animated-gradient-text';
 import { GlowButton } from '@/components/ui-effects/glow-button';
+import { Button } from '@/components/ui/button';
 import { MagicCard } from '@/components/ui-effects/magic-card';
 import { CountUp } from '@/components/ui-effects/count-up';
 import { getProviderInfo } from '@/lib/billing/provider';
@@ -543,22 +544,22 @@ function PricingCard({
             </li>
           ))}
         </ul>
-        <Link
-          href={ctaHref}
-          className={`ease-snappy mt-8 inline-flex h-11 w-full items-center justify-center rounded-full text-sm font-medium transition-all duration-200 active:scale-[0.96] ${
-            featured
-              ? 'from-brand-500 to-accent-500 hover:shadow-brand-500/30 bg-gradient-to-br text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl'
-              : 'glass hover:glass-strong text-foreground hover:-translate-y-0.5'
-          }`}
+        <Button
+          asChild
+          variant={featured ? 'default' : 'outline'}
+          size="lg"
+          className="mt-8 w-full"
         >
-          {cta}
-          {featured &&
-            (isHebrew ? (
-              <ArrowLeft className="ms-2 h-4 w-4" />
-            ) : (
-              <ArrowRight className="ms-2 h-4 w-4" />
-            ))}
-        </Link>
+          <Link href={ctaHref}>
+            {cta}
+            {featured &&
+              (isHebrew ? (
+                <ArrowLeft className="ms-2 h-4 w-4" />
+              ) : (
+                <ArrowRight className="ms-2 h-4 w-4" />
+              ))}
+          </Link>
+        </Button>
       </div>
     </div>
   );

@@ -16,6 +16,7 @@ import { useTranslations } from 'next-intl';
 import { Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from '@/i18n/navigation';
+import { Button } from '@/components/ui/button';
 import { TIER_ORDER, type Tier, type BillingInterval } from '@/lib/billing/limits';
 
 interface TierData {
@@ -260,41 +261,32 @@ function TierCard({
 
       <div className="mt-6">
         {isCurrent ? (
-          <button
-            type="button"
-            disabled
-            className="text-muted-foreground bg-muted w-full cursor-not-allowed rounded-full px-4 py-2.5 text-sm font-medium"
-          >
+          <Button type="button" disabled variant="secondary" className="w-full">
             {t('currentTier')}
-          </button>
+          </Button>
         ) : isFree ? (
           isPaidUser ? (
             // A paying user looking at the Free card is really asking
             // "how do I downgrade" — that's a cancellation, which needs
             // the fuller context (renewal date, usage) the billing page
             // already shows, not a bare click here.
-            <Link
-              href="/account/billing"
-              className="glass-subtle ease-snappy block w-full rounded-full px-4 py-2.5 text-center text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.96]"
-            >
-              {t('cancelSubscription')}
-            </Link>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/account/billing">{t('cancelSubscription')}</Link>
+            </Button>
           ) : (
-            <Link
-              href="/sign-up"
-              className="from-brand-500 to-accent-500 hover:shadow-brand-500/30 ease-snappy block w-full rounded-full bg-gradient-to-br px-4 py-2.5 text-center text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.96]"
-            >
-              {t('getStarted')}
-            </Link>
+            <Button asChild className="w-full">
+              <Link href="/sign-up">{t('getStarted')}</Link>
+            </Button>
           )
         ) : !isAuthed ? (
-          <Link
-            href="/sign-in"
-            className="from-brand-500 to-accent-500 hover:shadow-brand-500/30 ease-snappy block w-full rounded-full bg-gradient-to-br px-4 py-2.5 text-center text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.96]"
-          >
-            {t('subscribe', { tier: tier.displayName })}
-          </Link>
+          <Button asChild className="w-full">
+            <Link href="/sign-in">{t('subscribe', { tier: tier.displayName })}</Link>
+          </Button>
         ) : !checkoutReady ? (
+          // Waitlist is a distinct semantic state (you can't buy this
+          // yet) — kept visually separate (amber tint) rather than
+          // folded into the standard button so it doesn't read as a
+          // normal, currently-working purchase action.
           <a
             href="mailto:hello@resumaker.co.il?subject=Waitlist%20-%20Pricing"
             className="glass-subtle ease-snappy block w-full rounded-full px-4 py-2.5 text-center text-sm font-medium text-amber-900 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.96] dark:text-amber-100"
@@ -302,26 +294,22 @@ function TierCard({
             {t('joinWaitlist')}
           </a>
         ) : price <= 0 ? (
-          <button
-            type="button"
-            disabled
-            className="bg-muted text-muted-foreground/80 w-full cursor-not-allowed rounded-full px-4 py-2.5 text-sm font-medium"
-          >
+          <Button type="button" disabled variant="secondary" className="w-full">
             {locale === 'he' ? 'לא זמין' : 'Not available'}
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
             type="button"
             onClick={() => void startCheckout()}
             disabled={loading}
             aria-busy={loading}
-            className="from-brand-500 to-accent-500 hover:shadow-brand-500/30 ease-snappy inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-br px-4 py-2.5 text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.96] disabled:pointer-events-none disabled:opacity-60 disabled:active:scale-100"
+            className="w-full"
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {isDowngrade
               ? t('downgradeTo', { tier: tier.displayName })
               : t('subscribe', { tier: tier.displayName })}
-          </button>
+          </Button>
         )}
       </div>
     </div>

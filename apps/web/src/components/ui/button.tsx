@@ -11,17 +11,30 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Liquid gradient primary — colored glow deepens on hover/lift.
-        // Used to also sweep a shine stripe across on hover (the
-        // `::before` this variant no longer sets) — WebKit renders that
-        // sweep's clip incorrectly whenever a backdrop-filter element
-        // (e.g. the app header) is present anywhere on the page,
-        // producing a flat rectangular smear past the pill. Confirmed
-        // via A/B testing on glow-button.tsx's identical pattern before
-        // removing it here too — see that file's comment for the full
-        // investigation.
+        // Translucent glass + a purple tint — the "everyday primary"
+        // button, used for the dozens of ordinary primary actions
+        // (Save, Create, Subscribe, etc.) across the app. Deliberately
+        // calmer than GlowButton's solid-gradient + blurred-halo look,
+        // which is reserved for the single flagship CTA per screen
+        // (sign in/up, the header CTA, "Start creating") — using the
+        // strong glow treatment for every primary button everywhere
+        // would dilute it and fight the app's own "liquid glass"
+        // design language (see the LIQUID GLASS block in globals.css)
+        // more than a plain gradient button already did.
+        //
+        // Backdrop-filter + box-shadow on a rounded-full element is
+        // confirmed safe as long as there's no separate absolutely-
+        // positioned/transformed child span involved — this variant has
+        // none (no shine-sweep, no blurred glow-ring). Verified via the
+        // same WebKit reproduction that caught the shine-sweep bug
+        // (long scroll + hover, dark theme): a plain rounded-full glass
+        // button with an ~32px box-shadow (--shadow-glass) showed no
+        // artifact. This used to have an animated shine-sweep (the
+        // `::before` this variant no longer sets) — see glow-button.tsx
+        // for the full investigation into why that specifically was
+        // the unsafe part, not backdrop-filter/box-shadow in general.
         default:
-          'from-brand-500 to-accent-500 shadow-brand-500/30 hover:shadow-brand-500/45 bg-gradient-to-br text-white shadow-lg hover:-translate-y-0.5 hover:shadow-xl',
+          'bg-brand-500/10 hover:bg-brand-500/20 dark:bg-brand-400/15 dark:hover:bg-brand-400/25 border-brand-500/30 dark:border-brand-400/35 text-brand-700 dark:text-brand-100 shadow-glass border backdrop-blur-[var(--blur-glass-lg)] hover:-translate-y-0.5',
         destructive:
           'to-destructive text-destructive-foreground shadow-destructive/30 hover:shadow-destructive/45 focus-visible:ring-destructive bg-gradient-to-br from-red-500 shadow-lg hover:-translate-y-0.5 hover:shadow-xl',
         // Frosted glass — the `glass` surface utility (globals.css),
