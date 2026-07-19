@@ -17,16 +17,24 @@
  *                        scrubbed because they're credentials, not user data)
  *   - sessions         — login footprint (id + hashed IP + UA + dates)
  *   - auditEvents      — every audit-logged action (last 1000)
+ *   - applications     — job-tracker pipeline rows (status, notes, contacts)
+ *   - userJobs         — favorited/scored jobs (fit score + rationale)
+ *   - savedSearches    — job-alert search queries
+ *   - notifications    — in-app notification history
+ *   - supportTickets   — the user's own contact-form submissions
+ *   - referrals        — referral activity in both directions (referrer + referred)
  *
  * What's deliberately excluded:
  *   - accounts.password / accessToken / refreshToken / idToken
  *   - sessions.token  (raw bearer for the session)
  *   - generations.inputJdHash / error stack traces
+ *   - pushSubscriptions (p256dh/auth are push-encryption credentials, not
+ *     data the subject would want exported — same reasoning as OAuth tokens)
  */
 
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { eq, desc, inArray } from 'drizzle-orm';
+import { eq, or, desc, inArray } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireFreshSession } from '@/lib/auth-guards';
 
@@ -45,96 +53,140 @@ export async function GET(): Promise<Response> {
   const userId = guard.user.id;
 
   // First wave — everything keyed directly on userId.
-  const [user, subscription, resumes, coverLetters, generations, accounts, sessions, auditEvents] =
-    await Promise.all([
-      db.query.users.findFirst({
-        where: eq(schema.users.id, userId),
-        columns: {
-          id: true,
-          email: true,
-          name: true,
-          emailVerified: true,
-          image: true,
-          locale: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-          deletedAt: true,
-        },
-      }),
-      db.query.subscriptions.findFirst({
-        where: eq(schema.subscriptions.userId, userId),
-        columns: {
-          tier: true,
-          status: true,
-          provider: true,
-          currentPeriodEnd: true,
-          cancelAtPeriodEnd: true,
-          grantedBy: true,
-          notes: true,
-          createdAt: true,
-          updatedAt: true,
-          // Provider customer/subscription IDs intentionally OMITTED — they're
-          // identifiers for credentialed account access (e.g. opening the
-          // billing portal), not user data the subject would want exported.
-        },
-      }),
-      db.query.resumes.findMany({
-        where: eq(schema.resumes.userId, userId),
-        orderBy: [desc(schema.resumes.createdAt)],
-      }),
-      db.query.coverLetters.findMany({
-        where: eq(schema.coverLetters.userId, userId),
-        orderBy: [desc(schema.coverLetters.createdAt)],
-      }),
-      db.query.generations.findMany({
-        where: eq(schema.generations.userId, userId),
-        orderBy: [desc(schema.generations.createdAt)],
-        columns: {
-          id: true,
-          resumeId: true,
-          status: true,
-          model: true,
-          promptTokens: true,
-          completionTokens: true,
-          durationMs: true,
-          detectedLocale: true,
-          industry: true,
-          inputLength: true,
-          createdAt: true,
-          // Deliberately excluded: inputJdHash (sha256), error stack traces
-        },
-      }),
-      db.query.accounts.findMany({
-        where: eq(schema.accounts.userId, userId),
-        columns: {
-          id: true,
-          accountId: true,
-          providerId: true,
-          scope: true,
-          createdAt: true,
-          updatedAt: true,
-          // Excluded: password hash, accessToken, refreshToken, idToken
-        },
-      }),
-      db.query.sessions.findMany({
-        where: eq(schema.sessions.userId, userId),
-        columns: {
-          id: true,
-          expiresAt: true,
-          ipAddress: true, // already HMAC-hashed by the session.create.before hook
-          userAgent: true,
-          createdAt: true,
-          updatedAt: true,
-          // Excluded: token (bearer credential, not user data)
-        },
-      }),
-      db.query.auditLog.findMany({
-        where: eq(schema.auditLog.userId, userId),
-        orderBy: [desc(schema.auditLog.createdAt)],
-        limit: 1000,
-      }),
-    ]);
+  const [
+    user,
+    subscription,
+    resumes,
+    coverLetters,
+    generations,
+    accounts,
+    sessions,
+    auditEvents,
+    applications,
+    userJobs,
+    savedSearches,
+    notifications,
+    supportTickets,
+    referralCode,
+    referrals,
+  ] = await Promise.all([
+    db.query.users.findFirst({
+      where: eq(schema.users.id, userId),
+      columns: {
+        id: true,
+        email: true,
+        name: true,
+        emailVerified: true,
+        image: true,
+        locale: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+        deletedAt: true,
+      },
+    }),
+    db.query.subscriptions.findFirst({
+      where: eq(schema.subscriptions.userId, userId),
+      columns: {
+        tier: true,
+        status: true,
+        provider: true,
+        currentPeriodEnd: true,
+        cancelAtPeriodEnd: true,
+        grantedBy: true,
+        notes: true,
+        createdAt: true,
+        updatedAt: true,
+        // Provider customer/subscription IDs intentionally OMITTED — they're
+        // identifiers for credentialed account access (e.g. opening the
+        // billing portal), not user data the subject would want exported.
+      },
+    }),
+    db.query.resumes.findMany({
+      where: eq(schema.resumes.userId, userId),
+      orderBy: [desc(schema.resumes.createdAt)],
+    }),
+    db.query.coverLetters.findMany({
+      where: eq(schema.coverLetters.userId, userId),
+      orderBy: [desc(schema.coverLetters.createdAt)],
+    }),
+    db.query.generations.findMany({
+      where: eq(schema.generations.userId, userId),
+      orderBy: [desc(schema.generations.createdAt)],
+      columns: {
+        id: true,
+        resumeId: true,
+        status: true,
+        model: true,
+        promptTokens: true,
+        completionTokens: true,
+        durationMs: true,
+        detectedLocale: true,
+        industry: true,
+        inputLength: true,
+        createdAt: true,
+        // Deliberately excluded: inputJdHash (sha256), error stack traces
+      },
+    }),
+    db.query.accounts.findMany({
+      where: eq(schema.accounts.userId, userId),
+      columns: {
+        id: true,
+        accountId: true,
+        providerId: true,
+        scope: true,
+        createdAt: true,
+        updatedAt: true,
+        // Excluded: password hash, accessToken, refreshToken, idToken
+      },
+    }),
+    db.query.sessions.findMany({
+      where: eq(schema.sessions.userId, userId),
+      columns: {
+        id: true,
+        expiresAt: true,
+        ipAddress: true, // already HMAC-hashed by the session.create.before hook
+        userAgent: true,
+        createdAt: true,
+        updatedAt: true,
+        // Excluded: token (bearer credential, not user data)
+      },
+    }),
+    db.query.auditLog.findMany({
+      where: eq(schema.auditLog.userId, userId),
+      orderBy: [desc(schema.auditLog.createdAt)],
+      limit: 1000,
+    }),
+    db.query.applications.findMany({
+      where: eq(schema.applications.userId, userId),
+      orderBy: [desc(schema.applications.updatedAt)],
+    }),
+    db.query.userJobs.findMany({
+      where: eq(schema.userJobs.userId, userId),
+      orderBy: [desc(schema.userJobs.updatedAt)],
+    }),
+    db.query.savedSearches.findMany({
+      where: eq(schema.savedSearches.userId, userId),
+      orderBy: [desc(schema.savedSearches.createdAt)],
+    }),
+    db.query.notifications.findMany({
+      where: eq(schema.notifications.userId, userId),
+      orderBy: [desc(schema.notifications.createdAt)],
+    }),
+    db.query.supportTickets.findMany({
+      where: eq(schema.supportTickets.userId, userId),
+      orderBy: [desc(schema.supportTickets.createdAt)],
+    }),
+    db.query.referralCodes.findFirst({
+      where: eq(schema.referralCodes.ownerId, userId),
+    }),
+    // Both directions — this user's own referrals of others, and the
+    // one referral record if this user was themselves referred in.
+    db.query.referrals.findMany({
+      where: or(eq(schema.referrals.referrerId, userId), eq(schema.referrals.referredId, userId)),
+      orderBy: [desc(schema.referrals.createdAt)],
+    }),
+  ]);
 
   // Second wave — joined data that depends on the resume IDs we just loaded.
   const resumeIds = resumes.map((r) => r.id);
@@ -165,6 +217,13 @@ export async function GET(): Promise<Response> {
     accounts,
     sessions,
     auditEvents,
+    applications,
+    userJobs,
+    savedSearches,
+    notifications,
+    supportTickets,
+    referralCode,
+    referrals,
     notes: {
       privacy:
         'This export contains all personal data Resumaker stores about your account, per GDPR Art. 15 and Israeli Privacy Law §13.',
