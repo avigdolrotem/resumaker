@@ -60,7 +60,13 @@ test.describe('Marketing pages', () => {
     const headers = response?.headers() ?? {};
     expect(headers['x-frame-options']).toBe('DENY');
     expect(headers['x-content-type-options']).toBe('nosniff');
-    expect(headers['strict-transport-security']).toBeTruthy();
+    // HSTS is deliberately prod-only (next.config.ts) — sending it over
+    // a local http:// dev server is meaningless (browsers ignore HSTS
+    // outside https) and would be actively wrong if this suite ever ran
+    // against a self-signed local https setup.
+    if (process.env.NODE_ENV === 'production') {
+      expect(headers['strict-transport-security']).toBeTruthy();
+    }
     expect(headers['content-security-policy']).toBeTruthy();
   });
 });
