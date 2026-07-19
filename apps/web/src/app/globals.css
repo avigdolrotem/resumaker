@@ -96,6 +96,18 @@
   --shadow-glass: 0 8px 32px rgb(76 29 149 / 14%), inset 0 1.5px 0 rgb(255 255 255 / 55%);
   --shadow-glass-lg: 0 16px 48px rgb(76 29 149 / 18%), inset 0 1.5px 0 rgb(255 255 255 / 55%);
 
+  /* Fixed vivid violet gradient (deliberately NOT theme-swapped, unlike
+     --color-glass-*) for `glass-rim`'s border below — a same-hue tinted
+     border would fade into the glass fill it's meant to outline in
+     dark-purple; this fixed gradient was verified to read clearly
+     against both the light and dark-purple glass fills. */
+  --gradient-glass-rim: linear-gradient(
+    135deg,
+    rgb(167 139 250 / 95%),
+    rgb(124 58 237 / 70%) 45%,
+    rgb(221 214 254 / 95%)
+  );
+
   /* ── Motion — the two curves used for every interactive element
    * site-wide.
    *   snappy = elastic overshoot — buttons, toggles, chips, anything
@@ -294,6 +306,41 @@
   -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-saturate,);
   backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-saturate,);
   border: 1px solid var(--color-glass-border-strong);
+  box-shadow: var(--shadow-glass-lg);
+}
+
+/* `glass-strong` plus a gradient-lit rim instead of a flat border — the
+ * glass catches light at its edge rather than just sitting there, which
+ * reads as "the one flagship action" without falling back to a solid
+ * fill + floating halo (GlowButton's old recipe — see glow-button.tsx
+ * for why that read as "glowy" rather than "glassy" and got dropped).
+ * A plain background/border/backdrop-filter recipe on a single element,
+ * no extra child span, so it's safe under the same WebKit constraint as
+ * `glass`/`glass-strong` above (see the `default` Button variant's
+ * comment for the full investigation this traces back to).
+ *
+ * The fill and the rim are two background layers clipped to different
+ * boxes — each layer's single box keyword (`padding-box/border-box`)
+ * sets BOTH origin and clip for that layer per the `background`
+ * shorthand spec, so the fill paints only inside the border and the
+ * gradient shows only in the border itself, no extra property needed.
+ * Do NOT add a separate `background-clip` declaration here even though
+ * it looks equivalent/more explicit — Lightning CSS cannot statically
+ * expand this shorthand (one layer's image is an opaque `var()` it
+ * can't peek inside), and a standalone `background-clip` alongside it
+ * makes that expansion collapse into empty longhands, silently dropping
+ * the whole rule. Confirmed by inspecting the compiled stylesheet: with
+ * the extra line, `.glass-rim` disappeared from the build entirely.
+ */
+@utility glass-rim {
+  background:
+    linear-gradient(var(--color-glass-strong), var(--color-glass-strong)) padding-box,
+    var(--gradient-glass-rim) border-box;
+  border: 1.5px solid transparent;
+  --tw-backdrop-blur: blur(var(--blur-glass-lg));
+  --tw-backdrop-saturate: saturate(180%);
+  -webkit-backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-saturate,);
+  backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-saturate,);
   box-shadow: var(--shadow-glass-lg);
 }
 
