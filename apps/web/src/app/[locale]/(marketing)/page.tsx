@@ -511,7 +511,7 @@ function PricingCard({
 }) {
   return (
     <div
-      className={`ease-smooth group relative rounded-2xl p-8 transition-all duration-500 hover:-translate-y-1 ${
+      className={`ease-smooth group relative flex flex-col rounded-2xl p-8 transition-all duration-500 hover:-translate-y-1 ${
         featured
           ? 'glass border-brand-300/50 dark:border-brand-700/50 shadow-brand-500/10 hover:shadow-glass-lg shadow-xl'
           : 'glass-subtle hover:glass border-border hover:border-brand-200 dark:hover:border-brand-700'
@@ -530,13 +530,13 @@ function PricingCard({
           {badge}
         </div>
       )}
-      <div className="relative">
+      <div className="relative flex flex-1 flex-col">
         <h3 className="text-foreground text-lg font-semibold">{tier}</h3>
         <div className="mt-4 flex items-baseline gap-2">
           <span className="text-4xl font-bold tracking-tight">{price}</span>
           <span className="text-muted-foreground text-sm">{period}</span>
         </div>
-        <ul className="mt-6 space-y-3">
+        <ul className="mt-6 flex-1 space-y-3">
           {features.map((f, i) => (
             <li key={i} className="flex items-start gap-2 text-sm">
               <CheckCircle2 className="text-brand-600 mt-0.5 h-4 w-4 flex-shrink-0" />
