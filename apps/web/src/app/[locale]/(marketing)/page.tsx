@@ -3,12 +3,7 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import {
   ACCESSIBILITY_EMAIL,
-  COMPANY_ADDRESS_EN,
-  COMPANY_ADDRESS_HE,
-  COMPANY_LEGAL_NAME,
   COMPANY_TRADING_NAME,
-  COMPANY_TYPE_EN,
-  COMPANY_TYPE_HE,
   PRIVACY_EMAIL,
   SUPPORT_EMAIL,
 } from '@/lib/constants/contact';
@@ -431,17 +426,15 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               </ul>
             </div>
           </div>
-          {/* Sender identification — required by Israeli Spam Law (תיקון 40)
-              for any commercial communication. Showing it in the footer
-              satisfies the equivalent disclosure for the website itself. */}
+          {/* Legal sender identification (name/status/address — required by
+              Israeli Spam Law, Privacy Law, and Consumer Protection Law)
+              lives in Terms of Service and Privacy Policy, both linked
+              above and reachable before checkout, rather than printed on
+              the public homepage footer. */}
           <div className="mt-12 border-t border-neutral-800 pt-6 text-center text-xs">
             <p>
               © 2026 {COMPANY_TRADING_NAME}™ ·{' '}
               {isHebrew ? 'כל הזכויות שמורות' : 'All rights reserved'} · BUSL-1.1
-            </p>
-            <p className="mt-2 text-neutral-500">
-              {COMPANY_LEGAL_NAME} · {isHebrew ? COMPANY_TYPE_HE : COMPANY_TYPE_EN} ·{' '}
-              {isHebrew ? COMPANY_ADDRESS_HE : COMPANY_ADDRESS_EN}
             </p>
           </div>
         </div>
