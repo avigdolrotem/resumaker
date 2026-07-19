@@ -95,8 +95,9 @@ function PrivacyHe() {
         תיאור המשרה ופרופיל המשתמש נשלחים לשירות Google Cloud Vertex AI (מודלים של Anthropic
         ו-Google, באזור europe-west1) לצורך יצירת קורות החיים. הספקים הללו אינם משתמשים בנתונים אלה
         לאימון מודלים. שירותים תפעוליים נוספים: Resend (אימייל), Sentry (ניטור שגיאות, ללא PII),
-        Cloudflare (CDN ו-WAF), Google Cloud (תשתית). לא משתפים מידע עם גורמים נוספים אלא אם נדרש על
-        פי חוק.
+        Cloudflare (CDN ו-WAF), Google Cloud (תשתית). עבור מנויים בתשלום, ספק הסליקה שלנו — Stripe
+        או LemonSqueezy, בהתאם לתצורה — מקבל את כתובת האימייל, השם ופרטי החיוב שלכם לצורך עיבוד
+        התשלום. לא משתפים מידע עם גורמים נוספים אלא אם נדרש על פי חוק.
       </p>
 
       <h2>7. עוגיות (Cookies)</h2>
@@ -224,8 +225,10 @@ function PrivacyEn() {
         Job description and user profile are sent to Google Cloud Vertex AI (Anthropic and Google
         models, region europe-west1) for resume generation. These providers do not use this data for
         model training. Other operational services: Resend (email), Sentry (error monitoring, no
-        PII), Cloudflare (CDN + WAF), Google Cloud (infrastructure). We do not share with others
-        unless legally required.
+        PII), Cloudflare (CDN + WAF), Google Cloud (infrastructure). For paid subscriptions, our
+        payment processor — Stripe or LemonSqueezy, depending on configuration — receives your
+        email, name, and billing details to process payment. We do not share with others unless
+        legally required.
       </p>
 
       <h2>7. Cookies</h2>
