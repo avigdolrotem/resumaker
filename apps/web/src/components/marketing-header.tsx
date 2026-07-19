@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { LocaleSwitcher } from './locale-switcher';
+import { MarketingNavLinks } from './marketing-nav-links';
 import { GlowButton } from './ui-effects/glow-button';
 import { Logo } from './logo';
 import { ThemeToggle } from './theme-toggle';
@@ -64,18 +65,7 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
         <CommandPaletteTrigger className="mx-4 hidden max-w-xs flex-1 md:inline-flex" />
 
         <nav className="flex items-center gap-2 sm:gap-3">
-          <Link
-            href="/examples"
-            className="text-foreground/80 hover:text-brand-700 hover:bg-accent/60 dark:hover:text-brand-200 ease-snappy hidden rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 md:inline"
-          >
-            {t('home')}
-          </Link>
-          <Link
-            href="/pricing"
-            className="text-foreground/80 hover:text-brand-700 hover:bg-accent/60 dark:hover:text-brand-200 ease-snappy hidden rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 md:inline"
-          >
-            {t('pricing')}
-          </Link>
+          <MarketingNavLinks homeLabel={t('home')} pricingLabel={t('pricing')} />
           <LocaleSwitcher />
           <ThemeToggle />
 
