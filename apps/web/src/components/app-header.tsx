@@ -10,6 +10,7 @@ import { Logo } from './logo';
 import { ThemeToggle } from './theme-toggle';
 import { CommandPaletteTrigger } from './command-palette';
 import { MobileDrawer } from './mobile-drawer';
+import { ScrollHideHeader } from './scroll-hide-header';
 import { Button } from './ui/button';
 import { NewMenu, UserAvatarMenu } from './app-header-menus';
 
@@ -22,12 +23,12 @@ export function AppHeader() {
   const { data: session, isPending } = useSession();
 
   return (
-    // Outer sticky wrapper owns the viewport offset — the header itself
-    // floats as a detached glass island (per design-system/components/
-    // navigation.html) rather than docking edge-to-edge like a
-    // conventional bar. `px-3` keeps it off the screen edges on mobile
-    // too, not just desktop.
-    <div className="sticky top-3 z-40 mt-3 px-3 sm:top-4 sm:mt-4 sm:px-4">
+    // ScrollHideHeader owns the sticky positioning + viewport offset —
+    // the header itself floats as a detached glass island (per design-
+    // system/components/navigation.html) rather than docking edge-to-
+    // edge like a conventional bar, and slides out of the way on
+    // scroll-down so it doesn't sit on top of content on long pages.
+    <ScrollHideHeader>
       <header
         className="glass-strong relative mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 rounded-full px-4"
         style={{
@@ -131,7 +132,7 @@ export function AppHeader() {
           <MobileDrawer />
         </nav>
       </header>
-    </div>
+    </ScrollHideHeader>
   );
 }
 

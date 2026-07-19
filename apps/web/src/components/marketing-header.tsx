@@ -9,6 +9,7 @@ import { Logo } from './logo';
 import { ThemeToggle } from './theme-toggle';
 import { CommandPaletteTrigger } from './command-palette';
 import { MobileDrawer } from './mobile-drawer';
+import { ScrollHideHeader } from './scroll-hide-header';
 import { auth } from '@/lib/auth';
 import { LayoutDashboard } from 'lucide-react';
 
@@ -39,7 +40,7 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
     // and the (app) header — same shell on both signed-in and signed-out
     // shells so the transition between them (e.g. marketing → dashboard)
     // doesn't feel like two different products.
-    <div className="sticky top-3 z-40 mt-3 px-3 sm:top-4 sm:mt-4 sm:px-4">
+    <ScrollHideHeader>
       <header
         className="glass-strong relative mx-auto flex h-16 max-w-7xl items-center justify-between rounded-full px-4"
         style={{
@@ -65,7 +66,11 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
         <CommandPaletteTrigger className="mx-4 hidden max-w-xs flex-1 md:inline-flex" />
 
         <nav className="flex items-center gap-2 sm:gap-3">
-          <MarketingNavLinks homeLabel={t('home')} pricingLabel={t('pricing')} />
+          <MarketingNavLinks
+            homeLabel={t('home')}
+            examplesLabel={t('examples')}
+            pricingLabel={t('pricing')}
+          />
           <LocaleSwitcher />
           <ThemeToggle />
 
@@ -98,6 +103,6 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
           <MobileDrawer />
         </nav>
       </header>
-    </div>
+    </ScrollHideHeader>
   );
 }
