@@ -14,6 +14,7 @@ import { headers } from 'next/headers';
 import { and, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireJobHuntBetaApi } from '@/lib/beta-gate';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/observability';
 import { generateText } from '@/lib/llm/provider';
 
@@ -23,6 +24,20 @@ export async function POST(
 ): Promise<Response> {
   const guard = await requireJobHuntBetaApi(await headers());
   if (guard instanceof NextResponse) return guard;
+
+  // Every other LLM-backed route in the app is rate-limited per user;
+  // this one and its beta-surface siblings (follow-up, jobs/[id]/fit,
+  // jobs/import) were missed — unmetered while the beta flag gates
+  // access, but the flag defaults to true and gets deleted at GA
+  // (see beta-gate.ts), at which point this would be reachable by
+  // every user with no cap on LLM spend.
+  const rl = await checkRateLimit(`app-prep:${guard.user.id}`, 20, 3600);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', resetSeconds: rl.resetSeconds },
+      { status: 429 },
+    );
+  }
 
   const { id } = await params;
 

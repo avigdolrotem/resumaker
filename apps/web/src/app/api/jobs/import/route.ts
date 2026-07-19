@@ -22,6 +22,7 @@ import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireJobHuntBetaApi } from '@/lib/beta-gate';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { auditEvent } from '@/lib/audit';
 import { logger } from '@/lib/observability';
 
@@ -45,6 +46,19 @@ function normalizeUrl(url: string): string {
 export async function POST(req: NextRequest): Promise<Response> {
   const guard = await requireJobHuntBetaApi(await headers());
   if (guard instanceof NextResponse) return guard;
+
+  // See the matching comment in applications/[id]/prep/route.ts — this
+  // beta-surface LLM route had no rate limit, unlike every other one.
+  // Tighter than its siblings since a url-mode import is also an
+  // unbounded server-side outbound fetch against a third-party site,
+  // not just an LLM call.
+  const rl = await checkRateLimit(`job-import:${guard.user.id}`, 20, 3600);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', resetSeconds: rl.resetSeconds },
+      { status: 429 },
+    );
+  }
 
   let body: z.infer<typeof BodySchema>;
   try {

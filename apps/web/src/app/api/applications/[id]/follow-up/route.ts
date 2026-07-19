@@ -17,6 +17,7 @@ import { headers } from 'next/headers';
 import { and, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireJobHuntBetaApi } from '@/lib/beta-gate';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/observability';
 import { generateText } from '@/lib/llm/provider';
 
@@ -28,6 +29,17 @@ export async function POST(
 ): Promise<Response> {
   const guard = await requireJobHuntBetaApi(await headers());
   if (guard instanceof NextResponse) return guard;
+
+  // See the matching comment in applications/[id]/prep/route.ts — this
+  // beta-surface LLM route had no rate limit, unlike every other one.
+  const rl = await checkRateLimit(`app-followup:${guard.user.id}`, 20, 3600);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', resetSeconds: rl.resetSeconds },
+      { status: 429 },
+    );
+  }
+
   const { id } = await params;
 
   let body: z.infer<typeof Body>;
