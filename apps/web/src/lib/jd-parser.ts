@@ -3,13 +3,22 @@
  *
  * Two paths:
  *  1. Direct text paste (always works)
- *  2. URL fetch (via Playwright for v1; Firecrawl can be added later)
+ *  2. URL fetch — plain `fetch()` + regex HTML stripping (see fetchUrl
+ *     below), NOT headless-rendered. Fine for static/SSR job pages;
+ *     JS-rendered ones can come back thin or empty since nothing here
+ *     executes client-side JS. Playwright/Firecrawl would fix that but
+ *     aren't wired in — this comment used to claim Playwright was
+ *     already in use for v1, which was never true.
  *
  * Detects language to inform downstream LLM call.
  */
 
 import { sanitizeInput } from '@resumaker/ai-safety';
 import type { Locale } from '@resumaker/shared';
+
+// Comfortably under sanitizeInput's 20k hard limit — see the comment at
+// its one call site below (fetchUrl) for why this exists at all.
+const URL_FETCH_CHAR_LIMIT = 15_000;
 
 export interface ParseJDInput {
   /** Text pasted by user. Either this OR url required. */
@@ -91,6 +100,54 @@ export async function parseJD(input: ParseJDInput): Promise<ParseJDResult> {
  * V3: Firecrawl for sites with anti-bot.
  */
 async function fetchUrl(url: string): Promise<string> {
+  // Job-board redirects are common (bare host -> www, http -> https, a
+  // shortlink, an ATS canonicalizing its own URLs) — treating every 30x
+  // as a hard failure ("JD parse failed") was too strict. But blindly
+  // following them (fetch's `redirect: 'follow'`) would undo the SSRF
+  // protection below: it only validates the URL fetchOnce() is CALLED
+  // with, so a redirect target never gets the private-hostname/DNS-pin
+  // checks. Each hop is fetched manually and re-validated from scratch
+  // through the same fetchOnce() before being followed.
+  let currentUrl = url;
+  const maxRedirects = 5;
+
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    const res = await fetchOnce(currentUrl);
+
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get('location');
+      if (!location) {
+        throw new Error(`URL returned HTTP ${res.status} with no redirect location`);
+      }
+      // Resolve relative Location headers against the current URL.
+      currentUrl = new URL(location, currentUrl).toString();
+      continue;
+    }
+
+    if (!res.ok) {
+      throw new Error(`URL returned HTTP ${res.status}`);
+    }
+
+    const html = await res.text();
+    // sanitizeInput() (shared @resumaker/ai-safety, used well beyond just
+    // this call site) hard-rejects anything over 20k chars rather than
+    // truncating — a deliberately strict default we shouldn't loosen
+    // globally just for this one caller. Large ATS/job-board pages
+    // regularly blow past 20k once stripped (nav, footer, "related jobs",
+    // cookie banners), which was surfacing as a flat "JD rejected" even
+    // though the actual posting is normally a few thousand chars near the
+    // top of the page. Truncate here instead, ahead of the shared
+    // sanitizer, scoped to this one call site.
+    return stripHtml(html).slice(0, URL_FETCH_CHAR_LIMIT);
+  }
+
+  throw new Error('Too many redirects');
+}
+
+/** One SSRF-validated fetch attempt. Does not itself follow redirects —
+ * returns the raw Response so fetchUrl() can inspect 30x responses and
+ * re-validate the next hop before following it. */
+async function fetchOnce(url: string): Promise<Response> {
   // Validate URL
   let parsed: URL;
   try {
@@ -136,25 +193,18 @@ async function fetchUrl(url: string): Promise<string> {
   const isIpv6 = pinnedIp.includes(':');
   ipUrl.hostname = isIpv6 ? `[${pinnedIp}]` : pinnedIp;
 
-  const res = await fetch(ipUrl.toString(), {
+  return fetch(ipUrl.toString(), {
     headers: {
       'User-Agent': 'ResumakerBot/1.0 (+https://resumaker.co.il)',
       Accept: 'text/html,application/xhtml+xml',
       Host: parsed.host, // preserve original Host for virtual-hosted servers
     },
     signal: AbortSignal.timeout(15_000),
-    // Disable redirects — each redirect target would need its own DNS
-    // resolve + validation, and a 30x response is rare for legit JD pages.
-    // Caller can re-submit a final URL if needed.
+    // Each hop is validated individually by fetchUrl()'s loop — see
+    // comment there. Must stay 'manual' or the SSRF checks above only
+    // ever apply to the first hop.
     redirect: 'manual',
   });
-
-  if (!res.ok) {
-    throw new Error(`URL returned HTTP ${res.status}`);
-  }
-
-  const html = await res.text();
-  return stripHtml(html);
 }
 
 function isPrivateHostname(host: string): boolean {
