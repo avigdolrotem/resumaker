@@ -23,22 +23,3 @@ export function isUniqueViolation(err: unknown): boolean {
   const msg = (err as PgError).message ?? '';
   return /duplicate key value violates unique constraint/i.test(msg);
 }
-
-/** SQLSTATE 23503 — foreign key violation. */
-export function isForeignKeyViolation(err: unknown): boolean {
-  if (!err) return false;
-  return (err as PgError).code === '23503';
-}
-
-/** SQLSTATE 23502 — not-null violation. */
-export function isNotNullViolation(err: unknown): boolean {
-  if (!err) return false;
-  return (err as PgError).code === '23502';
-}
-
-/** SQLSTATE 40001/40P01 — serialization / deadlock — caller should retry. */
-export function isRetryableTransactionError(err: unknown): boolean {
-  if (!err) return false;
-  const code = (err as PgError).code;
-  return code === '40001' || code === '40P01';
-}

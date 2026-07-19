@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MODEL_CATALOG, getModelsForTier, getModelById, getTierDefault } from '../models';
+import { MODEL_CATALOG, getModelById, getTierDefault } from '../models';
 
 // Catalog is Gemini-only right now — Anthropic is commented out in
 // models.ts pending a Vertex AI Model Garden entitlement fix (see the
@@ -27,20 +27,10 @@ describe('LLM model catalog', () => {
     expect(recommended).toHaveLength(1);
   });
 
-  it('free tier gets multiple models including Gemini Flash', () => {
-    const free = getModelsForTier('free');
-    expect(free.length).toBeGreaterThanOrEqual(1);
-    expect(free.some((m) => m.id === 'google/gemini-2.5-flash')).toBe(true);
-  });
-
-  it('plus tier gets at least 2 models', () => {
-    expect(getModelsForTier('plus').length).toBeGreaterThanOrEqual(2);
-  });
-
-  it('pro tier is a superset of plus tier', () => {
-    const plus = getModelsForTier('plus').map((m) => m.id);
-    const pro = getModelsForTier('pro').map((m) => m.id);
-    expect(plus.every((id) => pro.includes(id))).toBe(true);
+  it('Gemini Flash is catalogued and free-tier accessible', () => {
+    const flash = MODEL_CATALOG.find((m) => m.id === 'google/gemini-2.5-flash');
+    expect(flash).toBeDefined();
+    expect(flash?.minTier).toBe('free');
   });
 
   it('getModelById returns undefined for unknown id', () => {

@@ -139,10 +139,3 @@ export const JOB_HUNT_PACK_DURATION_DAYS = 90;
 
 /** Default interval shown selected on the pricing page. */
 export const DEFAULT_BILLING_INTERVAL: BillingInterval = 'monthly';
-
-/** Display label for billing intervals (in i18n: billing.interval.<key>). */
-export const INTERVAL_DISPLAY: Record<BillingInterval, { he: string; en: string }> = {
-  monthly: { he: 'לחודש', en: 'per month' },
-  yearly: { he: 'לשנה', en: 'per year' },
-  quarterly: { he: 'חבילת חיפוש (3 חודשים)', en: 'Job Hunt Pack (3 months)' },
-};

@@ -93,13 +93,6 @@ export const MODEL_CATALOG: readonly CatalogEntry[] = [
   },
 ] as const;
 
-const TIER_ORDER: Record<Tier, number> = { free: 0, plus: 1, pro: 2 };
-
-/** Models the given tier can pick. */
-export function getModelsForTier(tier: Tier): CatalogEntry[] {
-  return MODEL_CATALOG.filter((m) => TIER_ORDER[tier] >= TIER_ORDER[m.minTier]);
-}
-
 /** Look up an entry by id. */
 export function getModelById(id: string): CatalogEntry | undefined {
   return MODEL_CATALOG.find((m) => m.id === id);
