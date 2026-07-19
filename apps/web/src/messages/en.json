@@ -429,6 +429,7 @@
       "backToDashboard": "Back to dashboard",
       "saveFailed": "Save failed",
       "generateFailed": "Generation failed",
+      "invalidUrl": "That doesn't look like a valid URL — check it and try again.",
       "loadFailed": "Couldn't load this resume",
       "loadingExisting": "Loading your resume…",
       "titleFormat": "{name} — {industry}",

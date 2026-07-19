@@ -264,6 +264,28 @@ export default function BuilderPage() {
     e.preventDefault();
     setError(null);
     setResult(null);
+
+    // The URL field is `type="url"` for the mobile-keyboard hint, and the
+    // form has `noValidate` so a bare domain (no scheme) doesn't silently
+    // block submission via the browser's own constraint validation before
+    // any of this code runs — that used to mean the whole form (including
+    // a validly-filled-in `jd` textarea) just did nothing on submit, no
+    // error shown. Normalize instead: a bare domain/path with no scheme
+    // is overwhelmingly meant as https, so add it rather than reject it.
+    let normalizedUrl = url.trim();
+    if (normalizedUrl && !/^https?:\/\//i.test(normalizedUrl)) {
+      normalizedUrl = `https://${normalizedUrl}`;
+    }
+    if (normalizedUrl) {
+      try {
+        new URL(normalizedUrl);
+      } catch {
+        setError(t('actions.invalidUrl'));
+        return;
+      }
+    }
+    setUrl(normalizedUrl);
+
     setLoading(true);
 
     try {
@@ -290,7 +312,7 @@ export default function BuilderPage() {
         industry,
       };
       if (jd) body.jobDescription = jd;
-      if (url) body.jobUrl = url;
+      if (normalizedUrl) body.jobUrl = normalizedUrl;
 
       const res = await apiFetch('/api/resumes/generate', {
         method: 'POST',
@@ -310,7 +332,7 @@ export default function BuilderPage() {
         // generator returns a sanitized `metadata.detectedLocale` and the
         // sanitized text isn't exposed, so we fall back to the URL string
         // as the "JD" the scorer compares against. Better than nothing.
-        const jdForScoring = jd || url;
+        const jdForScoring = jd || normalizedUrl;
         if (jdForScoring) {
           void fetchAtsScore(data.resume, jdForScoring);
         }
@@ -483,7 +505,7 @@ export default function BuilderPage() {
 
       <div className={`grid gap-8 lg:grid-cols-2 ${mode === 'advanced' ? 'hidden' : ''}`}>
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>{t('jdLabel')}</CardTitle>

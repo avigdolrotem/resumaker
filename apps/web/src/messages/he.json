@@ -429,6 +429,7 @@
       "backToDashboard": "חזרה לאזור האישי",
       "saveFailed": "השמירה נכשלה",
       "generateFailed": "היצירה נכשלה",
+      "invalidUrl": "זו לא נראית כתובת URL תקינה — בדוק ונסה שוב.",
       "loadFailed": "טעינת קורות החיים נכשלה",
       "loadingExisting": "טוען את קורות החיים שלך…",
       "titleFormat": "{name} — {industry}",
