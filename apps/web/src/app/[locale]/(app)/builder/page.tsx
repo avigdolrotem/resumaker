@@ -347,12 +347,20 @@ export default function BuilderPage() {
     }
   }
 
-  async function fetchAtsScore(resume: ResumeResult['resume'], jobDescription: string) {
+  async function fetchAtsScore(
+    resume: ResumeResult['resume'],
+    jobDescription: string,
+    resumeId?: string | null,
+  ) {
     try {
       const res = await apiFetch('/api/resumes/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume, jobDescription }),
+        body: JSON.stringify({
+          resume,
+          jobDescription,
+          ...(resumeId ? { resumeId } : {}),
+        }),
       });
       if (res.ok) {
         const data: ATSScore = await res.json();
@@ -427,8 +435,20 @@ export default function BuilderPage() {
         // POST returns { id }; PATCH returns { success: true }. Keep
         // savedId = editingId in the PATCH case so subsequent saves
         // continue to update the same row.
-        if (data.id) setSavedId(data.id);
-        else if (isEditing && editingId) setSavedId(editingId);
+        const newId: string | null = data.id ?? (isEditing && editingId ? editingId : null);
+        if (newId) setSavedId(newId);
+
+        // ATS scores can only be persisted against a real resume row
+        // (ats_scores.resume_id is a required FK) — the auto-score right
+        // after generation runs before a save has ever happened, so it
+        // could only ever show a transient score, never one that
+        // survives a reload or counts toward the dashboard average or
+        // the "see your ATS score" onboarding task. Re-score now that a
+        // real id exists so this save is the point it actually persists.
+        const jdForScoring = jd || url;
+        if (newId && jdForScoring) {
+          void fetchAtsScore(result.resume, jdForScoring, newId);
+        }
       } else {
         setError(data.error ?? t('actions.saveFailed'));
       }
