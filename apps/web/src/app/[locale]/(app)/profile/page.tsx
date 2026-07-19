@@ -23,11 +23,25 @@ import { useSession } from '@/lib/auth-client';
  */
 export default function ProfilePage() {
   const t = useTranslations('profile');
-  const { data: session, refetch } = useSession();
+  const { data: sessionData, refetch } = useSession();
   const router = useRouter();
-  const [name, setName] = useState(session?.user.name ?? '');
+  const [name, setName] = useState('');
   const [locale, setLocale] = useState<'he' | 'en'>('he');
   const [saving, setSaving] = useState(false);
+
+  // The (app) layout already guarantees a valid session server-side
+  // before this page ever renders, so `sessionData` will be populated
+  // almost immediately — but Better Auth's client can resolve it
+  // before or after React's hydration pass depending on timing, and
+  // branching render output on that race caused an intermittent
+  // hydration mismatch (server always renders the pre-session state;
+  // the client's first paint sometimes already has it). Gating on
+  // `mounted` instead of `sessionData` directly forces the first
+  // client render to match the server's every time, regardless of
+  // how fast the session fetch resolves.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const session = mounted ? sessionData : null;
 
   // Fetch the persisted profile once so the form reflects the source of
   // truth (DB), not just the cached session. useSession doesn't include
@@ -49,8 +63,6 @@ export default function ProfilePage() {
       }
     })();
   }, []);
-
-  if (!session) return null;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -106,7 +118,7 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">{t('emailLabel')}</Label>
-              <Input id="email" value={session.user.email} disabled dir="ltr" />
+              <Input id="email" value={session?.user.email ?? ''} disabled dir="ltr" />
               <p className="text-muted-foreground text-xs">{t('emailHint')}</p>
             </div>
             <div className="space-y-2">
@@ -139,7 +151,7 @@ export default function ProfilePage() {
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t('emailVerified')}</span>
             <span>
-              {session.user.emailVerified ? (
+              {session?.user.emailVerified ? (
                 <span className="text-emerald-600">✓ {t('emailVerifiedYes')}</span>
               ) : (
                 <span className="text-amber-600">{t('emailVerifiedNo')}</span>
@@ -149,9 +161,10 @@ export default function ProfilePage() {
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t('memberSince')}</span>
             <span dir="ltr">
-              {new Date(session.user.createdAt).toLocaleDateString(
-                locale === 'he' ? 'he-IL' : 'en-US',
-              )}
+              {session &&
+                new Date(session.user.createdAt).toLocaleDateString(
+                  locale === 'he' ? 'he-IL' : 'en-US',
+                )}
             </span>
           </div>
         </CardContent>
