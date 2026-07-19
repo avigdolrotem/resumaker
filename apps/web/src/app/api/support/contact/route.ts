@@ -16,6 +16,7 @@ import { escapeHtml } from '@/lib/email/templates';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { extractClientIp } from '@/lib/ip';
 import { logger } from '@/lib/observability';
+import { hashIp } from '@/lib/audit';
 
 const BodySchema = z.object({
   email: z.string().email().max(320),
@@ -29,7 +30,8 @@ export async function POST(req: NextRequest): Promise<Response> {
   // extractClientIp uses the rightmost public IP from x-forwarded-for
   // so a spoofed leftmost entry can't bypass the limit.
   const ip = extractClientIp(req);
-  const rl = await checkRateLimit(`contact:${ip}`, 5, 3600);
+  // Hashed, not raw — see the matching comment in tools/ats-scanner/route.ts.
+  const rl = await checkRateLimit(`contact:${hashIp(ip) ?? ip}`, 5, 3600);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Too many contact requests — try again in an hour' },

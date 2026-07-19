@@ -26,7 +26,8 @@ const Body = z.object({
 
 export async function POST(req: NextRequest): Promise<Response> {
   const ip = extractClientIp(req);
-  const rl = await checkRateLimit(`tools:salary:${ip}`, 10, 3600);
+  // Hashed, not raw — see the matching comment in tools/ats-scanner/route.ts.
+  const rl = await checkRateLimit(`tools:salary:${hashIp(ip) ?? ip}`, 10, 3600);
   if (!rl.allowed) {
     return NextResponse.json({ error: 'Rate limit exceeded. Try again later.' }, { status: 429 });
   }

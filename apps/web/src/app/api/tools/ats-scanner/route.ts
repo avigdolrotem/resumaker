@@ -27,7 +27,12 @@ export async function POST(req: NextRequest): Promise<Response> {
   // is attacker-controlled and would let anyone rotate IPs to bypass
   // the rate limit by spoofing the header.
   const ip = extractClientIp(req);
-  const rl = await checkRateLimit(`tools:ats:${ip}`, 10, 3600);
+  // Hashed, not raw — matches the privacy policy's "IP stored in hashed
+  // form only" claim and the same treatment session IPs already get
+  // (lib/auth.ts). Falls back to the raw IP only if IP_HASH_SALT and
+  // BETTER_AUTH_SECRET are both unset, which would already be a broken
+  // deployment (auth itself requires BETTER_AUTH_SECRET).
+  const rl = await checkRateLimit(`tools:ats:${hashIp(ip) ?? ip}`, 10, 3600);
   if (!rl.allowed) {
     return NextResponse.json({ error: 'Rate limit exceeded. Try again later.' }, { status: 429 });
   }
