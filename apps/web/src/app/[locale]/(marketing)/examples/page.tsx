@@ -423,147 +423,156 @@ function SampleResumeCard({ sample, isHebrew }: { sample: SampleResume; isHebrew
   const L = labels(sample.locale);
 
   return (
-    <Card dir={dir}>
-      {/* Brand gradient strip */}
-      <div
-        aria-hidden
-        className="from-brand-500 to-brand-500 h-1 bg-gradient-to-r via-purple-500"
-      />
+    <Card>
+      {/* dir is scoped to the resume content only — a Hebrew sample
+          should render RTL to look like a real Hebrew resume, but that
+          shouldn't flip the CTA footer below, which is page chrome and
+          needs to stay consistent with the page's own locale regardless
+          of which sample happens to be showing. Previously `dir` was on
+          the whole `<Card>`, so "Build similar" jumped sides depending
+          on the sample's language rather than the page's. */}
+      <div dir={dir}>
+        {/* Brand gradient strip */}
+        <div
+          aria-hidden
+          className="from-brand-500 to-brand-500 h-1 bg-gradient-to-r via-purple-500"
+        />
 
-      {/* Header band */}
-      <div className="border-border from-brand-50/40 dark:from-brand-900/20 flex items-start justify-between gap-6 border-b bg-gradient-to-br to-transparent p-6">
-        <div className="min-w-0 flex-1">
-          <h2 className="text-foreground text-2xl font-bold tracking-tight">{sample.name}</h2>
-          <p className="text-brand-700 dark:text-brand-300 mt-1 text-base font-medium">
-            {sample.title}
-          </p>
-          <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-            <span className="inline-flex items-center gap-1" dir="ltr">
-              <Mail className="h-3 w-3" />
-              {sample.email}
-            </span>
-            <span className="inline-flex items-center gap-1" dir="ltr">
-              <Phone className="h-3 w-3" />
-              {sample.phone}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              {sample.location}
-            </span>
-            {sample.linkedin && (
+        {/* Header band */}
+        <div className="border-border from-brand-50/40 dark:from-brand-900/20 flex items-start justify-between gap-6 border-b bg-gradient-to-br to-transparent p-6">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-foreground text-2xl font-bold tracking-tight">{sample.name}</h2>
+            <p className="text-brand-700 dark:text-brand-300 mt-1 text-base font-medium">
+              {sample.title}
+            </p>
+            <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
               <span className="inline-flex items-center gap-1" dir="ltr">
-                <ExternalLink className="h-3 w-3" />
-                {sample.linkedin}
+                <Mail className="h-3 w-3" />
+                {sample.email}
               </span>
-            )}
+              <span className="inline-flex items-center gap-1" dir="ltr">
+                <Phone className="h-3 w-3" />
+                {sample.phone}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {sample.location}
+              </span>
+              {sample.linkedin && (
+                <span className="inline-flex items-center gap-1" dir="ltr">
+                  <ExternalLink className="h-3 w-3" />
+                  {sample.linkedin}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="shrink-0 text-end">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+              <Award className="h-3 w-3" />
+              ATS {sample.score}
+            </div>
+            <div className="text-muted-foreground mt-2 text-[10px] font-medium uppercase tracking-wider">
+              {sample.industry}
+            </div>
           </div>
         </div>
-        <div className="shrink-0 text-end">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-            <Award className="h-3 w-3" />
-            ATS {sample.score}
-          </div>
-          <div className="text-muted-foreground mt-2 text-[10px] font-medium uppercase tracking-wider">
-            {sample.industry}
-          </div>
-        </div>
-      </div>
 
-      {/* Body */}
-      <div className="space-y-6 p-6">
-        {/* Summary */}
-        <Section title={L.summary}>
-          <p className="text-foreground text-sm leading-relaxed">{sample.summary}</p>
-        </Section>
+        {/* Body */}
+        <div className="space-y-6 p-6">
+          {/* Summary */}
+          <Section title={L.summary}>
+            <p className="text-foreground text-sm leading-relaxed">{sample.summary}</p>
+          </Section>
 
-        {/* Experience */}
-        <Section title={L.experience} Icon={Briefcase}>
-          <div className="space-y-5">
-            {sample.experience.map((e, i) => (
-              <div key={i}>
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <div>
-                    <div className="text-foreground text-sm font-semibold">
-                      {e.title} · {e.company}
+          {/* Experience */}
+          <Section title={L.experience} Icon={Briefcase}>
+            <div className="space-y-5">
+              {sample.experience.map((e, i) => (
+                <div key={i}>
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <div>
+                      <div className="text-foreground text-sm font-semibold">
+                        {e.title} · {e.company}
+                      </div>
+                      <div className="text-muted-foreground text-xs">{e.location}</div>
                     </div>
-                    <div className="text-muted-foreground text-xs">{e.location}</div>
+                    <div className="text-muted-foreground text-xs font-medium" dir="ltr">
+                      {e.start} — {e.end}
+                    </div>
+                  </div>
+                  <ul className="text-foreground mt-2 space-y-1 ps-4 text-sm leading-relaxed">
+                    {e.bullets.map((b, j) => (
+                      <li key={j} className="relative ps-3">
+                        <span
+                          aria-hidden
+                          className="bg-brand-500 absolute inset-y-0 start-0 my-auto h-1 w-1 rounded-full"
+                        />
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </Section>
+
+          {/* Education */}
+          <Section title={L.education} Icon={GraduationCap}>
+            <div className="space-y-3">
+              {sample.education.map((ed, i) => (
+                <div key={i} className="flex flex-wrap items-baseline justify-between gap-2">
+                  <div>
+                    <div className="text-foreground text-sm font-semibold">{ed.degree}</div>
+                    <div className="text-muted-foreground text-xs">{ed.institution}</div>
+                    {ed.honors && (
+                      <div className="text-brand-700 dark:text-brand-300 text-xs italic">
+                        {ed.honors}
+                      </div>
+                    )}
                   </div>
                   <div className="text-muted-foreground text-xs font-medium" dir="ltr">
-                    {e.start} — {e.end}
+                    {ed.start} — {ed.end}
                   </div>
                 </div>
-                <ul className="text-foreground mt-2 space-y-1 ps-4 text-sm leading-relaxed">
-                  {e.bullets.map((b, j) => (
-                    <li key={j} className="relative ps-3">
+              ))}
+            </div>
+          </Section>
+
+          {/* Skills */}
+          <Section title={L.skills}>
+            <div className="space-y-2">
+              {sample.skills.map((g, i) => (
+                <div key={i}>
+                  <div className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                    {g.category}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {g.items.map((it) => (
                       <span
-                        aria-hidden
-                        className="bg-brand-500 absolute inset-y-0 start-0 my-auto h-1 w-1 rounded-full"
-                      />
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </Section>
+                        key={it}
+                        className="bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-200 rounded-full px-2 py-0.5 text-xs font-medium"
+                      >
+                        {it}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Section>
 
-        {/* Education */}
-        <Section title={L.education} Icon={GraduationCap}>
-          <div className="space-y-3">
-            {sample.education.map((ed, i) => (
-              <div key={i} className="flex flex-wrap items-baseline justify-between gap-2">
-                <div>
-                  <div className="text-foreground text-sm font-semibold">{ed.degree}</div>
-                  <div className="text-muted-foreground text-xs">{ed.institution}</div>
-                  {ed.honors && (
-                    <div className="text-brand-700 dark:text-brand-300 text-xs italic">
-                      {ed.honors}
-                    </div>
-                  )}
-                </div>
-                <div className="text-muted-foreground text-xs font-medium" dir="ltr">
-                  {ed.start} — {ed.end}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        {/* Skills */}
-        <Section title={L.skills}>
-          <div className="space-y-2">
-            {sample.skills.map((g, i) => (
-              <div key={i}>
-                <div className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                  {g.category}
-                </div>
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {g.items.map((it) => (
-                    <span
-                      key={it}
-                      className="bg-brand-50 text-brand-700 dark:bg-brand-900/30 dark:text-brand-200 rounded-full px-2 py-0.5 text-xs font-medium"
-                    >
-                      {it}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        {/* Languages */}
-        <Section title={L.languages}>
-          <div className="text-foreground flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            {sample.languages.map((lng, i) => (
-              <span key={i}>
-                <strong>{lng.name}</strong>{' '}
-                <span className="text-muted-foreground">— {lng.level}</span>
-              </span>
-            ))}
-          </div>
-        </Section>
+          {/* Languages */}
+          <Section title={L.languages}>
+            <div className="text-foreground flex flex-wrap gap-x-4 gap-y-1 text-sm">
+              {sample.languages.map((lng, i) => (
+                <span key={i}>
+                  <strong>{lng.name}</strong>{' '}
+                  <span className="text-muted-foreground">— {lng.level}</span>
+                </span>
+              ))}
+            </div>
+          </Section>
+        </div>
       </div>
 
       {/* CTA footer */}
