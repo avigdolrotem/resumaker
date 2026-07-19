@@ -10,6 +10,7 @@ import { ResumeGrid } from '@/components/resume-grid';
 import { OnboardingChecklist } from '@/components/onboarding-checklist';
 import { MagicCard } from '@/components/ui-effects/magic-card';
 import { CountUp } from '@/components/ui-effects/count-up';
+import { getLatestScoresByResumeId } from '@/lib/ats-score-lookup';
 import {
   FileText,
   Sparkles,
@@ -46,6 +47,7 @@ export default async function DashboardPage() {
     [atsScoreCount],
     recentResumes,
     recentActivity,
+    recentCoverLetters,
   ] = await Promise.all([
     db
       .select({ value: count() })
@@ -86,7 +88,19 @@ export default async function DashboardPage() {
       limit: 8,
       columns: { id: true, model: true, status: true, durationMs: true, createdAt: true },
     }),
+    db.query.coverLetters.findMany({
+      where: and(eq(schema.coverLetters.userId, userId), isNull(schema.coverLetters.deletedAt)),
+      orderBy: [desc(schema.coverLetters.updatedAt)],
+      limit: 3,
+      columns: { id: true, title: true, companyName: true, updatedAt: true },
+    }),
   ]);
+
+  const atsScoreByResumeId = await getLatestScoresByResumeId(recentResumes.map((r) => r.id));
+  const recentResumesWithScores = recentResumes.map((r) => ({
+    ...r,
+    atsScore: atsScoreByResumeId.get(r.id) ?? null,
+  }));
 
   const stats = {
     resumes: resumesCount?.value ?? 0,
@@ -236,15 +250,67 @@ export default async function DashboardPage() {
           <h2 className="text-xl font-semibold">{t('recent')}</h2>
           {recentResumes.length > 0 && (
             <Link
-              href="/builder"
+              href="/resumes"
               className="text-brand-600 hover:text-brand-700 text-sm font-medium"
             >
               {isHebrew ? 'כל קורות החיים' : 'All resumes'} →
             </Link>
           )}
         </div>
-        <ResumeGrid resumes={recentResumes} isHebrew={isHebrew} />
+        <ResumeGrid resumes={recentResumesWithScores} isHebrew={isHebrew} />
       </section>
+
+      {/* Recent cover letters — mirrors "Recent resumes" above. Previously
+          the only dashboard links to cover letters went to /cover-letters/new
+          (create another one); there was no path from here to the ones
+          already saved, even though /cover-letters (a full list) already
+          existed and worked — it just wasn't linked from the one page most
+          users land on first. */}
+      {recentCoverLetters.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold">
+              {isHebrew ? 'מכתבי הצעה אחרונים' : 'Recent cover letters'}
+            </h2>
+            <Link
+              href="/cover-letters"
+              className="text-brand-600 hover:text-brand-700 text-sm font-medium"
+            >
+              {isHebrew ? 'כל המכתבים' : 'All cover letters'} →
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {recentCoverLetters.map((l) => (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              <Link key={l.id} href={`/cover-letters/${l.id}` as any} className="group block">
+                <Card className="hover:border-brand-300 h-full">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="line-clamp-1 pe-8 text-base">{l.title}</CardTitle>
+                      <ArrowRight className="text-brand-400 group-hover:text-brand-600 h-4 w-4 flex-shrink-0 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      {l.companyName && (
+                        <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-medium">
+                          {l.companyName}
+                        </span>
+                      )}
+                      <span className="text-muted-foreground ms-auto">
+                        {new Date(l.updatedAt).toLocaleDateString(isHebrew ? 'he-IL' : 'en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Recent activity */}
       {recentActivity.length > 0 && (

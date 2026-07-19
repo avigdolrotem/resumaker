@@ -6,6 +6,7 @@ import {
   Menu,
   X,
   LayoutDashboard,
+  FileText,
   FilePlus2,
   Settings,
   UserCircle,
@@ -42,6 +43,7 @@ import { Logo } from './logo';
 type LinkHref =
   | '/dashboard'
   | '/builder'
+  | '/resumes'
   | '/cover-letters'
   | '/cover-letters/new'
   | '/applications'
@@ -85,6 +87,7 @@ function authedItems(): Item[] {
   return [
     { kind: 'link', href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
     { kind: 'link', href: '/builder', label: 'New resume', Icon: FilePlus2 },
+    { kind: 'link', href: '/resumes', label: 'My resumes', Icon: FileText },
     { kind: 'link', href: '/cover-letters', label: 'Cover letters', Icon: Mail },
     { kind: 'link', href: '/applications', label: 'Applications', Icon: TrendingUp },
     { kind: 'link', href: '/jobs', label: 'Job hunt', Icon: Briefcase },

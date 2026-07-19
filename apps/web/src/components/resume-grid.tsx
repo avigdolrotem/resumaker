@@ -31,6 +31,16 @@ interface ResumeRow {
   locale: string;
   industry: string | null;
   updatedAt: Date | string;
+  /** Latest ATS score for this resume, if it's ever been scored. */
+  atsScore?: number | null;
+}
+
+/** Same 4-tier thresholds as AtsScoreCard, condensed to a badge's worth of styling. */
+function atsScoreBadgeClass(score: number): string {
+  if (score >= 80) return 'bg-emerald-50 text-emerald-700';
+  if (score >= 60) return 'bg-indigo-50 text-indigo-700';
+  if (score >= 40) return 'bg-amber-50 text-amber-700';
+  return 'bg-red-50 text-red-700';
 }
 
 /**
@@ -203,13 +213,20 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex flex-wrap gap-2 text-xs">
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
                       <span className="bg-brand-50 text-brand-700 rounded-full px-2 py-0.5 font-medium">
                         {r.locale.toUpperCase()}
                       </span>
                       {r.industry && (
                         <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-medium">
                           {r.industry}
+                        </span>
+                      )}
+                      {typeof r.atsScore === 'number' && (
+                        <span
+                          className={`rounded-full px-2 py-0.5 font-medium ${atsScoreBadgeClass(r.atsScore)}`}
+                        >
+                          ATS {r.atsScore}
                         </span>
                       )}
                       <span className="text-muted-foreground ms-auto">

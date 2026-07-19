@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { Link, usePathname } from '@/i18n/navigation';
 import { useSession } from '@/lib/auth-client';
-import { LayoutDashboard, Settings, Mail, Briefcase, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Settings, Mail, Briefcase, TrendingUp, FileText } from 'lucide-react';
 import { LocaleSwitcher } from './locale-switcher';
 import { Logo } from './logo';
 import { ThemeToggle } from './theme-toggle';
@@ -84,7 +84,13 @@ export function AppHeader() {
             icon={<LayoutDashboard className="h-4 w-4" />}
             label={t('dashboard')}
           />
-          {/* Cover Letters — sits between Dashboard and Jobs in the
+          {/* Resumes — previously had no nav entry anywhere at all (not
+              missing from just this header — the route itself didn't
+              exist). The only way to reach a saved resume was scrolling
+              the dashboard's 6-most-recent widget and clicking one
+              directly; nothing surfaced resumes past that. */}
+          <NavLink href="/resumes" icon={<FileText className="h-4 w-4" />} label={t('myResumes')} />
+          {/* Cover Letters — sits between Resumes and Jobs in the
               canonical top-bar order. Renders only when signed in
               (this is the (app) header). */}
           <NavLink
@@ -141,7 +147,14 @@ function NavLink({
   icon,
   label,
 }: {
-  href: '/dashboard' | '/builder' | '/cover-letters' | '/jobs' | '/applications' | '/settings';
+  href:
+    | '/dashboard'
+    | '/builder'
+    | '/resumes'
+    | '/cover-letters'
+    | '/jobs'
+    | '/applications'
+    | '/settings';
   icon: React.ReactNode;
   label: string;
 }) {
