@@ -144,10 +144,27 @@ async function fetchUrl(url: string): Promise<string> {
   throw new Error('Too many redirects');
 }
 
+/** Minimal response shape fetchUrl() actually reads — status, one
+ * header lookup, and the body as text. Lets fetchOnce() return
+ * something call-compatible with a real fetch() Response without
+ * pulling in more of that interface than this file needs. */
+interface FetchOnceResult {
+  status: number;
+  ok: boolean;
+  headers: { get(name: string): string | null };
+  text(): Promise<string>;
+}
+
+// Hard cap on response body size while streaming, independent of the
+// post-download URL_FETCH_CHAR_LIMIT truncation below (that slices
+// *after* the full body is already in memory — this bounds memory use
+// for a malicious or just enormous response before we ever get there).
+const MAX_RESPONSE_BYTES = 5 * 1024 * 1024; // 5MB
+
 /** One SSRF-validated fetch attempt. Does not itself follow redirects —
- * returns the raw Response so fetchUrl() can inspect 30x responses and
- * re-validate the next hop before following it. */
-async function fetchOnce(url: string): Promise<Response> {
+ * returns a minimal Response-like object so fetchUrl() can inspect 30x
+ * responses and re-validate the next hop before following it. */
+async function fetchOnce(url: string): Promise<FetchOnceResult> {
   // Validate URL
   let parsed: URL;
   try {
@@ -163,7 +180,7 @@ async function fetchOnce(url: string): Promise<Response> {
   // Quick hostname-string check (catches plaintext private IPs in the URL).
   // This also covers bare-IP inputs (e.g. http://192.168.1.1/) — the
   // isPrivateHostname check runs on the raw hostname before any DNS
-  // resolution, so a bare private IP never reaches fetch().
+  // resolution, so a bare private IP never reaches the request below.
   if (isPrivateHostname(parsed.hostname)) {
     throw new Error('Private hosts not allowed');
   }
@@ -179,31 +196,104 @@ async function fetchOnce(url: string): Promise<Response> {
     throw new Error('Private hosts not allowed');
   }
 
-  // SSRF: resolve DNS first AND fetch against the resolved IP to
-  // defeat DNS rebinding. The previous version called `assertPublicHost`
-  // (resolve + validate) but then `fetch(url, ...)` re-resolved — a
-  // short-TTL rebinding attack could flip the IP between the check and
-  // the fetch. Pinning to the validated IP closes that gap.
+  // SSRF: resolve DNS first AND pin the actual connection to that
+  // resolved IP to defeat DNS rebinding — re-resolving at connect time
+  // (what a plain fetch(url) does) would let a short-TTL rebinding
+  // attack flip the IP between our check and the request.
+  //
+  // Pinning used to mean rewriting the request URL's hostname to the
+  // IP and passing the original hostname as a `Host` header — that
+  // closes the rebinding gap but breaks HTTPS against anything behind
+  // a CDN/shared-IP front door (Greenhouse et al.): the TLS ClientHello's
+  // SNI is derived from the URL you connect *to*, which was now a bare
+  // IP, not the real hostname, so the edge either rejected the
+  // handshake or routed to the wrong backend — indistinguishable from
+  // "JD extraction just doesn't work" for those sites.
+  //
+  // Fix: keep the original hostname in the request (so SNI + the Host
+  // header stay correct and certificate validation matches normally),
+  // and instead override *DNS resolution itself* via a custom `lookup`
+  // passed to node:http(s) — that only affects which IP the TCP socket
+  // connects to, not what hostname TLS/HTTP think they're talking to.
+  // fetch() has no hook for this (browsers don't expose one), which is
+  // why this one call site uses node:http(s) directly instead.
   const pinnedIp = await resolveAndAssertPublic(parsed.hostname);
-  // Rewrite URL to the IP, preserve original hostname via Host header
-  // so SNI + virtual hosting still work for shared-IP services.
-  // For HTTPS we accept that some servers will reject due to SNI
-  // mismatch — those are typically not the target of SSRF anyway.
-  const ipUrl = new URL(url);
-  const isIpv6 = pinnedIp.includes(':');
-  ipUrl.hostname = isIpv6 ? `[${pinnedIp}]` : pinnedIp;
+  const pinnedFamily = pinnedIp.includes(':') ? 6 : 4;
+  const pinnedLookup = (
+    _hostname: string,
+    options: unknown,
+    callback: (
+      err: NodeJS.ErrnoException | null,
+      address: string | { address: string; family: number }[],
+      family?: number,
+    ) => void,
+  ): void => {
+    // dns.lookup's contract: when called with `{ all: true }`, the
+    // callback takes an array of {address, family} and no 3rd arg;
+    // otherwise a single (address, family) pair. node:http(s) invokes
+    // whatever `lookup` function you pass following this same
+    // contract, so a callback that always used the single-address
+    // shape regardless of `options.all` broke as soon as it was
+    // called the other way — surfaced as an opaque "Invalid IP
+    // address: undefined" from deep in Node's own connection code.
+    const wantsAll =
+      typeof options === 'object' && options !== null && (options as { all?: boolean }).all;
+    if (wantsAll) {
+      callback(null, [{ address: pinnedIp, family: pinnedFamily }]);
+    } else {
+      callback(null, pinnedIp, pinnedFamily);
+    }
+  };
 
-  return fetch(ipUrl.toString(), {
-    headers: {
-      'User-Agent': 'ResumakerBot/1.0 (+https://resumaker.co.il)',
-      Accept: 'text/html,application/xhtml+xml',
-      Host: parsed.host, // preserve original Host for virtual-hosted servers
-    },
-    signal: AbortSignal.timeout(15_000),
-    // Each hop is validated individually by fetchUrl()'s loop — see
-    // comment there. Must stay 'manual' or the SSRF checks above only
-    // ever apply to the first hop.
-    redirect: 'manual',
+  const { request: httpsRequest } = await import('node:https');
+  const { request: httpRequest } = await import('node:http');
+  const requestFn = parsed.protocol === 'https:' ? httpsRequest : httpRequest;
+
+  return new Promise<FetchOnceResult>((resolve, reject) => {
+    const req = requestFn(
+      {
+        hostname: parsed.hostname, // original — drives Host header + TLS SNI
+        port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+        path: `${parsed.pathname}${parsed.search}`,
+        method: 'GET',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- node:http/https' own `lookup` option type is narrower than dns.lookup's; this matches it at the call site instead of fighting the type here.
+        lookup: pinnedLookup as any,
+        headers: {
+          'User-Agent': 'ResumakerBot/1.0 (+https://resumaker.co.il)',
+          Accept: 'text/html,application/xhtml+xml',
+        },
+        timeout: 15_000,
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        let totalBytes = 0;
+        res.on('data', (chunk: Buffer) => {
+          totalBytes += chunk.length;
+          if (totalBytes > MAX_RESPONSE_BYTES) {
+            req.destroy(new Error('Response too large'));
+            return;
+          }
+          chunks.push(chunk);
+        });
+        res.on('end', () => {
+          resolve({
+            status: res.statusCode ?? 0,
+            ok: (res.statusCode ?? 0) >= 200 && (res.statusCode ?? 0) < 300,
+            headers: {
+              get: (name: string) => {
+                const value = res.headers[name.toLowerCase()];
+                return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
+              },
+            },
+            text: async () => Buffer.concat(chunks).toString('utf-8'),
+          });
+        });
+        res.on('error', reject);
+      },
+    );
+    req.on('timeout', () => req.destroy(new Error('Request timed out')));
+    req.on('error', reject);
+    req.end();
   });
 }
 
