@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
+import { getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { AppHeader } from '@/components/app-header';
 import { Link } from '@/i18n/navigation';
@@ -57,30 +58,31 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   );
 }
 
-function AppLegalFooter() {
+async function AppLegalFooter() {
+  const t = await getTranslations('legalNav');
   return (
     <footer className="border-border/50 text-muted-foreground relative z-10 border-t py-4 text-xs">
       <div className="container mx-auto flex flex-wrap items-center justify-center gap-x-5 gap-y-2 px-4">
         <Link href="/privacy" className="hover:text-foreground ease-snappy transition-colors">
-          Privacy
+          {t('privacy')}
         </Link>
         <Link href="/terms" className="hover:text-foreground ease-snappy transition-colors">
-          Terms
+          {t('terms')}
         </Link>
         <Link
           href="/legal/accessibility"
           className="hover:text-foreground ease-snappy transition-colors"
         >
-          Accessibility
+          {t('accessibility')}
         </Link>
         <Link
           href="/legal/data-retention"
           className="hover:text-foreground ease-snappy transition-colors"
         >
-          Data retention
+          {t('dataRetention')}
         </Link>
         <Link href="/contact" className="hover:text-foreground ease-snappy transition-colors">
-          Contact
+          {t('contact')}
         </Link>
         <span className="text-muted-foreground/60">·</span>
         <span>© 2026 Resumaker</span>
