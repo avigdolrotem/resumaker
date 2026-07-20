@@ -69,10 +69,6 @@ export function AppHeader() {
           <NewMenu />
         </div>
 
-        {/* Center: command-palette trigger. Desktop only — mobile gets
-            the cmd+K via the drawer's first item. */}
-        <CommandPaletteTrigger className="mx-4 hidden max-w-xs flex-1 md:inline-flex" />
-
         <nav className="flex items-center gap-1">
           {/* Desktop nav links — md+. Icon-only on md, icon+label on lg+.
               `pathname` drives the shared-layout sliding pill (see
@@ -120,21 +116,27 @@ export function AppHeader() {
           {/* Account — desktop only. Drawer has the same actions on mobile.
               Avatar dropdown consolidates Profile / Billing / Settings /
               Sign out under one affordance — less header chrome than the
-              old name-link + standalone sign-out button pair. */}
+              old name-link + standalone sign-out button pair. Search
+              sits right next to it rather than floating in the header's
+              middle — grouped with the other "about you / the app"
+              controls instead of competing with nav links for space. */}
           <div className="hidden md:flex md:items-center md:gap-2">
+            <CommandPaletteTrigger />
             {isPending ? (
-              <div className="bg-muted ms-2 h-9 w-9 animate-pulse rounded-full" />
+              <div className="bg-muted h-9 w-9 animate-pulse rounded-full" />
             ) : session ? (
               <UserAvatarMenu />
             ) : (
-              <Button asChild size="sm" variant="outline" className="ms-2">
+              <Button asChild size="sm" variant="outline">
                 <Link href="/sign-in">{t('signIn')}</Link>
               </Button>
             )}
           </div>
 
           {/* Mobile burger — always visible on < md. The drawer has
-              every nav item + theme + locale + profile + sign-out. */}
+              every nav item + theme + locale + profile + sign-out (but
+              not search — the drawer's own full nav list already is
+              the mobile equivalent of "jump to anything"). */}
           <MobileDrawer />
         </nav>
       </header>
@@ -165,7 +167,7 @@ function NavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 group relative hidden items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors md:inline-flex"
+      className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 group relative hidden items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-colors md:inline-flex"
     >
       {/* Sliding active pill — same `layoutId` shared across every
           NavLink instance means framer-motion animates it from the

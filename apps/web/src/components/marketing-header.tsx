@@ -7,7 +7,6 @@ import { MarketingAuthCta } from './marketing-auth-cta';
 import { GlowButton } from './ui-effects/glow-button';
 import { Logo } from './logo';
 import { ThemeToggle } from './theme-toggle';
-import { CommandPaletteTrigger } from './command-palette';
 import { MobileDrawer } from './mobile-drawer';
 import { ScrollHideHeader } from './scroll-hide-header';
 import { UserAvatarMenu } from './app-header-menus';
@@ -61,10 +60,6 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
           className="from-brand-500/0 via-brand-500/50 to-brand-500/0 pointer-events-none absolute inset-x-16 top-0 h-px bg-gradient-to-r"
         />
         <Logo size="md" href={isAuthed ? '/dashboard' : '/'} />
-
-        {/* Desktop cmd+K trigger — center column, hidden on mobile
-            where the hamburger drawer is the equivalent. */}
-        <CommandPaletteTrigger className="mx-4 hidden max-w-xs flex-1 md:inline-flex" />
 
         <nav className="flex items-center gap-2 sm:gap-3">
           <MarketingNavLinks

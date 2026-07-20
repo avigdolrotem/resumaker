@@ -423,9 +423,14 @@ export function CommandPalette() {
 }
 
 /**
- * Small trigger button that opens the palette — drop into any header
- * for a discoverable affordance. Shows a faux search input with a
- * keyboard hint on the right.
+ * Compact icon-only trigger that opens the palette — sits in the
+ * account cluster next to the avatar menu, matching every other
+ * circular header control (theme toggle, locale switcher). Used to be
+ * a wide faux search bar with placeholder text + a visible ⌘K hint;
+ * that stretched via `flex-1` to fill the header's middle and, once
+ * the header had more competing for space, overflowed its own pill
+ * background instead of wrapping or truncating. An icon has no text
+ * to overflow.
  */
 export function CommandPaletteTrigger({ className }: { className?: string }) {
   const t = useTranslations('commandPalette.trigger');
@@ -445,19 +450,11 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
       type="button"
       onClick={open}
       aria-label={t('ariaLabel')}
-      // `glass hover:glass-strong` — same recipe as GlowButton's ghost
-      // variant and Button's `outline` variant, and `rounded-full` to
-      // match every other header control. This used to be a bespoke
-      // bg-background/60 + rounded-xl + shadow-sm recipe, the one
-      // non-pill, non-glass element sitting in an otherwise fully
-      // "liquid glass" header.
-      className={`glass hover:glass-strong text-muted-foreground hover:text-foreground ease-smooth inline-flex h-9 items-center gap-2 rounded-full px-3 text-sm transition-all duration-300 ${
+      className={`glass hover:glass-strong text-foreground ease-snappy inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.96] ${
         className ?? ''
       }`}
     >
       <Search className="h-4 w-4" />
-      <span className="hidden sm:inline">{t('placeholder')}</span>
-      <Shortcut keys={['mod', 'K']} className="ms-auto hidden sm:inline-flex" />
     </button>
   );
 }
