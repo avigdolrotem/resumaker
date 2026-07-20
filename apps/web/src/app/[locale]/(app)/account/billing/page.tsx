@@ -117,35 +117,17 @@ export default async function AccountBillingPage({
               )}
             </div>
             <div className="flex flex-col items-end gap-2">
-              {isPaid && hasProviderCustomer ? (
-                <>
-                  <BillingPortalButton label={t('openPortal')} />
-                  <CancelSubscriptionButton
-                    cancelAtPeriodEnd={cancelAtPeriodEnd}
-                    periodEndLabel={periodEndLabel}
-                  />
-                </>
-              ) : !providerInfo.checkoutReady ? (
-                // Checkout isn't live — linking to /pricing here used to
-                // send free users on a pointless round trip: pricing's own
-                // CTAs (pricing-client.tsx) route a signed-in user back to
-                // /account/billing when checkout isn't ready, so "Upgrade
-                // now" → /pricing → back to billing never let anyone
-                // actually do anything. Complete the one real action
-                // (register interest) right here instead of bouncing them
-                // through a page that can't fulfill it either.
-                <Button asChild>
-                  <a href="mailto:hello@resumaker.co.il?subject=Waitlist%20-%20Billing">
-                    {t('joinWaitlist')}
-                  </a>
-                </Button>
-              ) : (
-                <Button asChild>
-                  <Link href="/pricing">
-                    {tier === 'free' ? t('gate.upgradeCta') : t('manage')}
-                  </Link>
-                </Button>
-              )}
+              <BillingAction
+                isPaid={isPaid}
+                hasProviderCustomer={hasProviderCustomer}
+                checkoutReady={providerInfo.checkoutReady}
+                cancelAtPeriodEnd={cancelAtPeriodEnd}
+                periodEndLabel={periodEndLabel}
+                openPortalLabel={t('openPortal')}
+                upgradeLabel={t('gate.upgradeCta')}
+                manageLabel={t('manage')}
+                waitlistLabel={t('joinWaitlist')}
+              />
             </div>
           </div>
         </CardHeader>
@@ -187,6 +169,85 @@ export default async function AccountBillingPage({
         <p className="text-muted-foreground text-center text-xs">{t('comingSoonBanner')}</p>
       )}
     </div>
+  );
+}
+
+/**
+ * The plan-card action slot — pulled out of the page body because the
+ * five (isPaid × hasProviderCustomer × checkoutReady) states don't
+ * collapse cleanly into a single ternary chain without one of them
+ * silently falling through to the wrong branch (a real bug caught
+ * here: an admin-granted paid user with checkoutReady=false briefly
+ * saw "Join the waitlist", which makes no sense for someone who
+ * already has access). Every case is listed explicitly instead.
+ */
+function BillingAction({
+  isPaid,
+  hasProviderCustomer,
+  checkoutReady,
+  cancelAtPeriodEnd,
+  periodEndLabel,
+  openPortalLabel,
+  upgradeLabel,
+  manageLabel,
+  waitlistLabel,
+}: {
+  isPaid: boolean;
+  hasProviderCustomer: boolean;
+  checkoutReady: boolean;
+  cancelAtPeriodEnd: boolean;
+  periodEndLabel: string | null;
+  openPortalLabel: string;
+  upgradeLabel: string;
+  manageLabel: string;
+  waitlistLabel: string;
+}) {
+  // Real paying customer (Stripe/LS on file) — always manageable,
+  // regardless of whether *new* checkout is enabled.
+  if (hasProviderCustomer) {
+    return (
+      <>
+        <BillingPortalButton label={openPortalLabel} />
+        <CancelSubscriptionButton
+          cancelAtPeriodEnd={cancelAtPeriodEnd}
+          periodEndLabel={periodEndLabel}
+        />
+      </>
+    );
+  }
+
+  // Admin-granted paid, no real provider customer: the grantedByAdmin
+  // badge above already explains their access. If checkout is live
+  // they can still browse plans/set up real billing; if not, there's
+  // nothing self-service to offer — not even a "Manage" link, since
+  // that would just be another /pricing round trip for someone who
+  // doesn't need to buy anything.
+  if (isPaid) {
+    if (!checkoutReady) return null;
+    return (
+      <Button asChild>
+        <Link href="/pricing">{manageLabel}</Link>
+      </Button>
+    );
+  }
+
+  // Free tier, checkout not live: /pricing can't complete a purchase
+  // either (its own CTAs route signed-in users back here — see
+  // pricing-client.tsx), so this would just bounce them straight back.
+  // Complete the one real action (register interest) directly instead.
+  if (!checkoutReady) {
+    return (
+      <Button asChild>
+        <a href="mailto:hello@resumaker.co.il?subject=Waitlist%20-%20Billing">{waitlistLabel}</a>
+      </Button>
+    );
+  }
+
+  // Free tier, checkout live: the normal, real upgrade flow.
+  return (
+    <Button asChild>
+      <Link href="/pricing">{upgradeLabel}</Link>
+    </Button>
   );
 }
 
