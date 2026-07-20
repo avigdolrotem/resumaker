@@ -29,6 +29,7 @@ import { logger } from '@/lib/observability';
 import { isUniqueViolation } from '@/lib/db-errors';
 import { verifyWebhookSignature, resolveVariantId, mapLsStatus } from '@/lib/billing/lemonsqueezy';
 import { JOB_HUNT_PACK_DURATION_DAYS } from '@/lib/billing/limits';
+import { markReferralQualifiedIfPending } from '@/lib/referrals';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -198,6 +199,13 @@ async function handleOrderCreated(payload: LsWebhookPayload): Promise<void> {
     logger.warn({ orderId: payload.data.id }, 'lemonsqueezy.order.missing_user_id_in_custom_data');
     return;
   }
+
+  // Every completed order is this user's first payment or a plan
+  // change — if they were referred, this is the "friend subscribed"
+  // moment. Covers both branches below (recurring order that defers to
+  // subscription_created, and the one-time Job Hunt Pack) since it's
+  // idempotent — see markReferralQualifiedIfPending.
+  await markReferralQualifiedIfPending(userId);
 
   // If the order created a subscription, the `subscription_created` event
   // will handle the tier grant — don't double-process.

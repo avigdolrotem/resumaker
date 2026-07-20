@@ -61,7 +61,8 @@ export type AuditEventName =
   | 'billing_subscription_cancel_scheduled'
   | 'billing_subscription_cancel_undone'
   | 'billing_payment_failed'
-  | 'billing_portal_opened';
+  | 'billing_portal_opened'
+  | 'referral_qualified';
 
 interface AuditInput {
   userId?: string | null | undefined;

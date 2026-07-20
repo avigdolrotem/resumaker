@@ -31,6 +31,7 @@ import { syncSubscriptionFromStripe } from '@/lib/billing/provider';
 import { logger } from '@/lib/observability';
 import { auditEvent } from '@/lib/audit';
 import { isUniqueViolation } from '@/lib/db-errors';
+import { markReferralQualifiedIfPending } from '@/lib/referrals';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -146,6 +147,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session): Promis
     logger.warn({ sessionId: session.id }, 'stripe.checkout.missing_user_id');
     return;
   }
+
+  // Every successful checkout is this user's first payment or a plan
+  // change — either way, if they were referred, this is the "friend
+  // subscribed" moment the referral page promises a reward for. No-ops
+  // for the vast majority who weren't referred.
+  await markReferralQualifiedIfPending(userId);
 
   // Subscription mode → tier comes from the subscription
   const subscriptionId =
