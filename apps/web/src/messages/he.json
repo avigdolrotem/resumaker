@@ -197,9 +197,18 @@
     }
   },
   "templates": {
-    "modern": { "name": "מודרני", "subtitle": "ידידותי להייטק" },
-    "classic": { "name": "קלאסי", "subtitle": "סטנדרט HR ישראלי" },
-    "minimal": { "name": "מינימלי", "subtitle": "נקי ומרווח" }
+    "modern": {
+      "name": "מודרני",
+      "subtitle": "ידידותי להייטק"
+    },
+    "classic": {
+      "name": "קלאסי",
+      "subtitle": "סטנדרט HR ישראלי"
+    },
+    "minimal": {
+      "name": "מינימלי",
+      "subtitle": "נקי ומרווח"
+    }
   },
   "jobs": {
     "title": "משרות",
@@ -744,9 +753,16 @@
       "memberSince": "חבר מתאריך"
     },
     "sessions": {
-      "title": "חיבורים",
-      "description": "התנתק מכל המכשירים",
-      "signOutAll": "התנתק מכולם"
+      "title": "חיבורים פעילים",
+      "description": "התחברויות ממכשירים שונים. בטל חיבורים שאינך מזהה.",
+      "empty": "אין חיבורים.",
+      "thisDevice": "המכשיר הזה",
+      "startedExpires": "התחבר {started} · פג תוקף {expires}",
+      "ipHash": "גיבוב IP: {hash}",
+      "revoke": "בטל חיבור",
+      "revokeFailed": "לא ניתן היה לבטל",
+      "revoked": "החיבור בוטל",
+      "unknownDevice": "מכשיר לא ידוע"
     },
     "billing": {
       "title": "חיוב",
@@ -778,7 +794,9 @@
       "deleting": "מוחק…",
       "cancel": "ביטול",
       "deleted": "החשבון נמחק",
-      "deleteFailed": "לא ניתן למחוק את החשבון. אנא צור קשר עם התמיכה."
+      "deleteFailed": "לא ניתן למחוק את החשבון. אנא צור קשר עם התמיכה.",
+      "signOutTitle": "התנתק מכל המכשירים",
+      "signOutAll": "התנתק מכולם"
     },
     "tabs": {
       "profile": "פרופיל",
@@ -789,6 +807,105 @@
       "ai": "מנוע AI",
       "data": "הנתונים שלך",
       "danger": "אזור מסוכן"
+    },
+    "notifications": {
+      "title": "התראות דוא״ל",
+      "description": "מיילים קריטיים לאבטחה נשלחים תמיד.",
+      "resumeGenerated": "שלחו לי מייל כשקורות חיים מסיימים להיווצר",
+      "jobDigest": "סיכום יומי של משרות חדשות מתאימות (בטא)",
+      "applicationReminders": "תזכורות הגשה (\"הגש עד X\")",
+      "productUpdates": "עדכוני מוצר (פיצ׳רים חדשים, תבניות)",
+      "marketingLabel": "מיילים שיווקיים",
+      "marketingDescription": "ניוזלטר, מבצעים מיוחדים, הזמנות לבטא. (כבוי כברירת מחדל, הצטרפות מרצון בלבד לפי GDPR.)",
+      "save": "שמור העדפות",
+      "saveFailed": "השמירה נכשלה",
+      "saved": "ההעדפות נשמרו"
+    },
+    "regional": {
+      "title": "תאריך ושעה",
+      "description": "הגדר את אזור הזמן ואת אופן הצגת התאריכים באפליקציה.",
+      "timezone": "אזור זמן",
+      "dateFormat": "פורמט תאריך",
+      "tip": "טיפ: ערכת נושא (בהיר / כהה) ושפה נמצאים בפינה הימנית העליונה של כל עמוד.",
+      "save": "שמור",
+      "saveFailed": "השמירה נכשלה",
+      "saved": "נשמר"
+    },
+    "security": {
+      "changePassword": {
+        "title": "שינוי סיסמה",
+        "description": "תנותק מכל שאר החיבורים לאחר שינוי מוצלח.",
+        "current": "סיסמה נוכחית",
+        "new": "סיסמה חדשה",
+        "confirm": "אישור סיסמה חדשה",
+        "submit": "שנה סיסמה",
+        "submitting": "משנה…",
+        "mismatch": "הסיסמאות אינן תואמות",
+        "tooShort": "הסיסמה חייבת להכיל לפחות 12 תווים",
+        "success": "הסיסמה שונתה. שאר החיבורים נותקו.",
+        "failed": "הפעולה נכשלה"
+      },
+      "changeEmail": {
+        "title": "שינוי כתובת מייל",
+        "description": "נשלח קישור אימות לכתובת החדשה. השינוי יתבצע לאחר הלחיצה עליו.",
+        "newEmail": "כתובת מייל חדשה",
+        "currentPassword": "סיסמה נוכחית",
+        "submit": "שלח קישור אימות",
+        "submitting": "שולח…",
+        "success": "בדוק את {email} לקישור האימות.",
+        "failed": "הפעולה נכשלה",
+        "confirmSuccess": "כתובת המייל שלך עודכנה.",
+        "confirmExpired": "קישור האימות פג תוקף. אנא בקש קישור חדש.",
+        "confirmInvalid": "קישור האימות אינו תקין.",
+        "confirmConflict": "כתובת המייל הזו כבר משויכת לחשבון אחר.",
+        "confirmMissingToken": "חסר טוקן אימות."
+      }
+    },
+    "twoFactor": {
+      "title": "אימות דו-שלבי",
+      "badgeOn": "פעיל",
+      "description": "הוסף שכבת הגנה נוספת לחשבון שלך באמצעות אפליקציית אימות TOTP.",
+      "currentPassword": "סיסמה נוכחית",
+      "passwordPlaceholder": "הסיסמה של חשבונך",
+      "enable": "הפעל אימות דו-שלבי",
+      "starting": "מתחיל…",
+      "enablePasswordRequired": "הזן את הסיסמה הנוכחית כדי להפעיל אימות דו-שלבי.",
+      "enableFailed": "ההרשמה לאימות דו-שלבי נכשלה.",
+      "scanInstructions": "סרוק את קוד ה-QR הזה באפליקציית האימות שלך (Google Authenticator, Authy וכו׳), ולאחר מכן הזן את הקוד בן 6 הספרות כדי לאשר.",
+      "cantScan": "לא ניתן לסרוק? הצג מפתח הגדרה",
+      "backupCodesTitle": "קודי גיבוי — שמור אותם עכשיו",
+      "backupCodesDescription": "ניתן להשתמש בכל קוד פעם אחת אם תאבד גישה לאפליקציית האימות.",
+      "authenticatorCode": "קוד מאפליקציית האימות",
+      "confirmEnable": "אשר והפעל",
+      "verifying": "מאמת…",
+      "cancel": "ביטול",
+      "codeRequired": "הזן את הקוד בן 6 הספרות מאפליקציית האימות.",
+      "invalidCode": "קוד שגוי. נסה שוב.",
+      "verifySuccess": "אימות דו-שלבי הופעל בהצלחה.",
+      "protectedText": "החשבון שלך מוגן באמצעות אימות דו-שלבי.",
+      "showBackupCodes": "הצג קודי גיבוי",
+      "hideBackupCodes": "הסתר קודי גיבוי",
+      "disablePasswordLabel": "סיסמה נוכחית לביטול",
+      "disable": "בטל אימות דו-שלבי",
+      "disabling": "מבטל…",
+      "disablePasswordRequired": "הזן את הסיסמה הנוכחית כדי לבטל אימות דו-שלבי.",
+      "disableFailed": "ביטול האימות הדו-שלבי נכשל.",
+      "disableSuccess": "האימות הדו-שלבי בוטל."
+    },
+    "linkedAccounts": {
+      "title": "חשבונות מקושרים",
+      "description": "התחבר בלחיצה אחת באמצעות Google או GitHub. ניתן לקשר כמה חשבונות — שימושי כשהמייל בעבודה שונה מהמייל האישי.",
+      "linked": "מקושר",
+      "notLinked": "לא מקושר",
+      "link": "קשר",
+      "unlink": "בטל קישור",
+      "unlinking": "מבטל קישור…",
+      "unlinked": "הקישור ל-{provider} בוטל",
+      "unlinkStaleSession": "אנא התחבר מחדש כדי לבטל את הקישור לחשבון זה.",
+      "unlinkLastMethod": "עליך להגדיר סיסמה לפני ביטול הקישור.",
+      "unlinkFailed": "לא ניתן לבטל את הקישור",
+      "linkFailed": "לא ניתן היה להתחיל התחברות עם {provider}",
+      "noPasswordWarning": "לא הגדרת סיסמה לחשבון. הוסף אחת בחלק האבטחה למעלה לפני שתבטל את הקישור לספק ה-OAuth היחיד שלך — אחרת תינעל מחוץ לחשבון."
     }
   },
   "import": {

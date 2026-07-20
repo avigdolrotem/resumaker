@@ -21,6 +21,7 @@ import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { sendEmail } from '@/lib/email/client';
+import { emailChangeConfirmation } from '@/lib/email/templates';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/observability';
 
@@ -92,17 +93,11 @@ export async function POST(req: NextRequest): Promise<Response> {
   // Email the verification link to the NEW address (not the current one —
   // current owner doesn't need to re-confirm; new owner must prove control).
   const url = `${env.APP_URL}/${guard.user.locale ?? 'he'}/account/email-change/confirm?token=${token}`;
-  await sendEmail({
-    to: body.newEmail,
-    subject:
-      guard.user.locale === 'en'
-        ? 'Confirm your new Resumaker email'
-        : 'אשר את כתובת המייל החדשה שלך ב-Resumaker',
-    html:
-      guard.user.locale === 'en'
-        ? `<p>Click below to confirm this is your new email. Link expires in 1 hour.</p><p><a href="${url}">${url}</a></p>`
-        : `<p>לחץ כדי לאשר שזו כתובת המייל החדשה שלך. הקישור תקף לשעה.</p><p><a href="${url}">${url}</a></p>`,
+  const { subject, html } = emailChangeConfirmation({
+    locale: guard.user.locale === 'en' ? 'en' : 'he',
+    confirmUrl: url,
   });
+  await sendEmail({ to: body.newEmail, subject, html });
 
   auditEvent({
     userId: guard.user.id,

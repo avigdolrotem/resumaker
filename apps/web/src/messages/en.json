@@ -197,9 +197,18 @@
     }
   },
   "templates": {
-    "modern": { "name": "Modern", "subtitle": "Tech-friendly" },
-    "classic": { "name": "Classic", "subtitle": "Traditional Israeli HR" },
-    "minimal": { "name": "Minimal", "subtitle": "Clean & spacious" }
+    "modern": {
+      "name": "Modern",
+      "subtitle": "Tech-friendly"
+    },
+    "classic": {
+      "name": "Classic",
+      "subtitle": "Traditional Israeli HR"
+    },
+    "minimal": {
+      "name": "Minimal",
+      "subtitle": "Clean & spacious"
+    }
   },
   "jobs": {
     "title": "Jobs",
@@ -744,9 +753,16 @@
       "memberSince": "Member since"
     },
     "sessions": {
-      "title": "Sessions",
-      "description": "Sign out from all devices",
-      "signOutAll": "Sign out everywhere"
+      "title": "Active sessions",
+      "description": "Sign-ins across devices. Revoke any you don't recognize.",
+      "empty": "No sessions.",
+      "thisDevice": "This device",
+      "startedExpires": "Started {started} · expires {expires}",
+      "ipHash": "ip-hash: {hash}",
+      "revoke": "Revoke",
+      "revokeFailed": "Couldn't revoke",
+      "revoked": "Session revoked",
+      "unknownDevice": "Unknown device"
     },
     "billing": {
       "title": "Billing",
@@ -778,7 +794,9 @@
       "deleting": "Deleting…",
       "cancel": "Cancel",
       "deleted": "Account deleted",
-      "deleteFailed": "Could not delete account. Please contact support."
+      "deleteFailed": "Could not delete account. Please contact support.",
+      "signOutTitle": "Sign out of all devices",
+      "signOutAll": "Sign out everywhere"
     },
     "tabs": {
       "profile": "Profile",
@@ -789,6 +807,105 @@
       "ai": "AI engine",
       "data": "Your data",
       "danger": "Danger zone"
+    },
+    "notifications": {
+      "title": "Email notifications",
+      "description": "Critical security emails are always sent.",
+      "resumeGenerated": "Email me when a resume finishes generating",
+      "jobDigest": "Daily digest of new matching jobs (beta)",
+      "applicationReminders": "Application reminders (\"apply by X\")",
+      "productUpdates": "Product updates (new features, templates)",
+      "marketingLabel": "Marketing emails",
+      "marketingDescription": "newsletter, special offers, beta invites. (Default off, opt-in only per GDPR.)",
+      "save": "Save preferences",
+      "saveFailed": "Save failed",
+      "saved": "Preferences saved"
+    },
+    "regional": {
+      "title": "Date & time",
+      "description": "Set your timezone and how dates are formatted across the app.",
+      "timezone": "Timezone",
+      "dateFormat": "Date format",
+      "tip": "Tip: theme (light / dark) and language are in the top-right of every page header.",
+      "save": "Save",
+      "saveFailed": "Save failed",
+      "saved": "Saved"
+    },
+    "security": {
+      "changePassword": {
+        "title": "Change password",
+        "description": "You'll be signed out of all other sessions after a successful change.",
+        "current": "Current password",
+        "new": "New password",
+        "confirm": "Confirm new password",
+        "submit": "Change password",
+        "submitting": "Changing…",
+        "mismatch": "Passwords don't match",
+        "tooShort": "Password must be at least 12 characters",
+        "success": "Password changed. Other sessions were signed out.",
+        "failed": "Failed"
+      },
+      "changeEmail": {
+        "title": "Change email",
+        "description": "We'll send a verification link to the new address. The change happens after you click it.",
+        "newEmail": "New email",
+        "currentPassword": "Current password",
+        "submit": "Send verification link",
+        "submitting": "Sending…",
+        "success": "Check {email} for the verification link.",
+        "failed": "Failed",
+        "confirmSuccess": "Your email address has been updated.",
+        "confirmExpired": "That verification link expired. Please request a new one.",
+        "confirmInvalid": "That verification link is invalid.",
+        "confirmConflict": "That email is already linked to another account.",
+        "confirmMissingToken": "Missing verification token."
+      }
+    },
+    "twoFactor": {
+      "title": "Two-Factor Authentication",
+      "badgeOn": "On",
+      "description": "Add a second layer of security to your account using a TOTP authenticator app.",
+      "currentPassword": "Current password",
+      "passwordPlaceholder": "Your account password",
+      "enable": "Enable 2FA",
+      "starting": "Starting…",
+      "enablePasswordRequired": "Enter your current password to enable 2FA.",
+      "enableFailed": "Failed to start 2FA enrollment.",
+      "scanInstructions": "Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.), then enter the 6-digit code below to confirm.",
+      "cantScan": "Can't scan? Show setup key",
+      "backupCodesTitle": "Backup codes — save these now",
+      "backupCodesDescription": "Each code can be used once if you lose access to your authenticator.",
+      "authenticatorCode": "Authenticator code",
+      "confirmEnable": "Confirm & enable",
+      "verifying": "Verifying…",
+      "cancel": "Cancel",
+      "codeRequired": "Enter the 6-digit code from your authenticator app.",
+      "invalidCode": "Invalid code. Try again.",
+      "verifySuccess": "Two-factor authentication is now enabled.",
+      "protectedText": "Your account is protected with two-factor authentication.",
+      "showBackupCodes": "Show backup codes",
+      "hideBackupCodes": "Hide backup codes",
+      "disablePasswordLabel": "Current password to disable",
+      "disable": "Disable 2FA",
+      "disabling": "Disabling…",
+      "disablePasswordRequired": "Enter your current password to disable 2FA.",
+      "disableFailed": "Failed to disable 2FA.",
+      "disableSuccess": "Two-factor authentication has been disabled."
+    },
+    "linkedAccounts": {
+      "title": "Linked accounts",
+      "description": "Sign in with one click using Google or GitHub. You can link multiple — useful when your work email differs from your personal one.",
+      "linked": "Linked",
+      "notLinked": "Not linked",
+      "link": "Link",
+      "unlink": "Unlink",
+      "unlinking": "Unlinking…",
+      "unlinked": "{provider} unlinked",
+      "unlinkStaleSession": "Please sign in again to unlink this account.",
+      "unlinkLastMethod": "You need to set a password before unlinking.",
+      "unlinkFailed": "Could not unlink",
+      "linkFailed": "Could not start {provider} sign-in",
+      "noPasswordWarning": "You don't have a password set. Add one in the security section above before unlinking your only OAuth provider — otherwise you'll be locked out."
     }
   },
   "import": {

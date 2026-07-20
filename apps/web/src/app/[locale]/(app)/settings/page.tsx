@@ -287,6 +287,7 @@ function ProfileTab() {
 // ─── Tab: Security ──────────────────────────────────────────────────
 
 function SecurityTab() {
+  const t = useTranslations('settings.security');
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -295,11 +296,11 @@ function SecurityTab() {
   async function changePassword(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (next !== confirm) {
-      toast.error("Passwords don't match");
+      toast.error(t('changePassword.mismatch'));
       return;
     }
     if (next.length < 12) {
-      toast.error('Password must be at least 12 characters');
+      toast.error(t('changePassword.tooShort'));
       return;
     }
     setSaving(true);
@@ -311,10 +312,10 @@ function SecurityTab() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? 'Failed');
+        toast.error(data.error ?? t('changePassword.failed'));
         return;
       }
-      toast.success('Password changed. Other sessions were signed out.');
+      toast.success(t('changePassword.success'));
       setCurrent('');
       setNext('');
       setConfirm('');
@@ -329,15 +330,13 @@ function SecurityTab() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Change password</CardTitle>
-          <CardDescription>
-            You'll be signed out of all other sessions after a successful change.
-          </CardDescription>
+          <CardTitle>{t('changePassword.title')}</CardTitle>
+          <CardDescription>{t('changePassword.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={changePassword} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="current">Current password</Label>
+              <Label htmlFor="current">{t('changePassword.current')}</Label>
               <Input
                 id="current"
                 type="password"
@@ -348,7 +347,7 @@ function SecurityTab() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="next">New password</Label>
+              <Label htmlFor="next">{t('changePassword.new')}</Label>
               <Input
                 id="next"
                 type="password"
@@ -360,7 +359,7 @@ function SecurityTab() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm">Confirm new password</Label>
+              <Label htmlFor="confirm">{t('changePassword.confirm')}</Label>
               <Input
                 id="confirm"
                 type="password"
@@ -372,7 +371,7 @@ function SecurityTab() {
               />
             </div>
             <Button type="submit" disabled={saving}>
-              {saving ? 'Changing…' : 'Change password'}
+              {saving ? t('changePassword.submitting') : t('changePassword.submit')}
             </Button>
           </form>
         </CardContent>
@@ -384,11 +383,8 @@ function SecurityTab() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Change email</CardTitle>
-          <CardDescription>
-            We'll send a verification link to the new address. The change happens after you click
-            it.
-          </CardDescription>
+          <CardTitle>{t('changeEmail.title')}</CardTitle>
+          <CardDescription>{t('changeEmail.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <EmailChangeForm />
@@ -399,6 +395,7 @@ function SecurityTab() {
 }
 
 function EmailChangeForm() {
+  const t = useTranslations('settings.security');
   const [newEmail, setNewEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -414,10 +411,10 @@ function EmailChangeForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? 'Failed');
+        toast.error(data.error ?? t('changeEmail.failed'));
         return;
       }
-      toast.success(`Check ${newEmail} for the verification link.`);
+      toast.success(t('changeEmail.success', { email: newEmail }));
       setNewEmail('');
       setPassword('');
     } catch (err) {
@@ -430,7 +427,7 @@ function EmailChangeForm() {
   return (
     <form onSubmit={submit} className="space-y-3">
       <div className="space-y-2">
-        <Label htmlFor="newEmail">New email</Label>
+        <Label htmlFor="newEmail">{t('changeEmail.newEmail')}</Label>
         <Input
           id="newEmail"
           type="email"
@@ -441,7 +438,7 @@ function EmailChangeForm() {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="emailPwd">Current password</Label>
+        <Label htmlFor="emailPwd">{t('changeEmail.currentPassword')}</Label>
         <Input
           id="emailPwd"
           type="password"
@@ -452,7 +449,7 @@ function EmailChangeForm() {
         />
       </div>
       <Button type="submit" variant="outline" disabled={submitting || !newEmail || !password}>
-        {submitting ? 'Sending…' : 'Send verification link'}
+        {submitting ? t('changeEmail.submitting') : t('changeEmail.submit')}
       </Button>
     </form>
   );
@@ -469,6 +466,8 @@ function SessionsTab() {
     ipAddress: string | null;
     isCurrent: boolean;
   }
+  const t = useTranslations('settings.sessions');
+  const tCommon = useTranslations('common');
   const [sessions, setSessions] = useState<Sess[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -489,11 +488,11 @@ function SessionsTab() {
     try {
       const res = await fetch(`/api/account/sessions/${id}`, { method: 'DELETE' });
       if (!res.ok) {
-        toast.error("Couldn't revoke");
+        toast.error(t('revokeFailed'));
         return;
       }
       setSessions((prev) => prev.filter((s) => s.id !== id));
-      toast.success('Session revoked');
+      toast.success(t('revoked'));
     } catch (err) {
       toast.error((err as Error).message);
     }
@@ -502,40 +501,42 @@ function SessionsTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Active sessions</CardTitle>
-        <CardDescription>Sign-ins across devices. Revoke any you don't recognize.</CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <p className="text-muted-foreground text-sm">Loading…</p>
+          <p className="text-muted-foreground text-sm">{tCommon('loading')}</p>
         ) : sessions.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No sessions.</p>
+          <p className="text-muted-foreground text-sm">{t('empty')}</p>
         ) : (
           <ul className="divide-border divide-y">
             {sessions.map((s) => (
               <li key={s.id} className="flex items-start justify-between gap-3 py-3 text-sm">
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">
-                    {parseUA(s.userAgent)}
+                    {parseUA(s.userAgent, t)}
                     {s.isCurrent && (
                       <span className="ms-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                        This device
+                        {t('thisDevice')}
                       </span>
                     )}
                   </p>
                   <p className="text-muted-foreground text-xs">
-                    Started {new Date(s.createdAt).toLocaleString()} · expires{' '}
-                    {new Date(s.expiresAt).toLocaleDateString()}
+                    {t('startedExpires', {
+                      started: new Date(s.createdAt).toLocaleString(),
+                      expires: new Date(s.expiresAt).toLocaleDateString(),
+                    })}
                   </p>
                   {s.ipAddress && (
                     <p className="text-muted-foreground font-mono text-[10px]" dir="ltr">
-                      ip-hash: {s.ipAddress.slice(0, 12)}…
+                      {t('ipHash', { hash: `${s.ipAddress.slice(0, 12)}…` })}
                     </p>
                   )}
                 </div>
                 {!s.isCurrent && (
                   <Button variant="outline" size="sm" onClick={() => revoke(s.id)}>
-                    Revoke
+                    {t('revoke')}
                   </Button>
                 )}
               </li>
@@ -547,20 +548,25 @@ function SessionsTab() {
   );
 }
 
-function parseUA(ua: string | null): string {
-  if (!ua) return 'Unknown device';
+// Device brand names (iPhone, Android, Mac...) are proper nouns and
+// deliberately left untranslated in both locales — only the "unknown"
+// fallback needs a localized string.
+function parseUA(ua: string | null, t: ReturnType<typeof useTranslations>): string {
+  if (!ua) return t('unknownDevice');
   if (/iphone/i.test(ua)) return 'iPhone';
   if (/android/i.test(ua)) return 'Android';
   if (/ipad/i.test(ua)) return 'iPad';
   if (/macintosh/i.test(ua)) return 'Mac';
   if (/windows/i.test(ua)) return 'Windows';
   if (/linux/i.test(ua)) return 'Linux';
-  return ua.split(' ')[0] ?? 'Unknown';
+  return ua.split(' ')[0] ?? t('unknownDevice');
 }
 
 // ─── Tab: Notifications ─────────────────────────────────────────────
 
 function NotificationsTab() {
+  const t = useTranslations('settings.notifications');
+  const tCommon = useTranslations('common');
   const [prefs, setPrefs] = useState<Record<string, boolean>>({});
   const [marketing, setMarketing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -592,28 +598,28 @@ function NotificationsTab() {
         }),
       });
       if (!res.ok) {
-        toast.error('Save failed');
+        toast.error(t('saveFailed'));
         return;
       }
-      toast.success('Preferences saved');
+      toast.success(t('saved'));
     } finally {
       setSaving(false);
     }
   }
 
   const items: Array<[keyof typeof prefs, string]> = [
-    ['emailResumeGenerated', 'Email me when a resume finishes generating'],
-    ['emailJobDigest', 'Daily digest of new matching jobs (beta)'],
-    ['emailApplicationReminders', 'Application reminders ("apply by X")'],
-    ['emailProductUpdates', 'Product updates (new features, templates)'],
+    ['emailResumeGenerated', t('resumeGenerated')],
+    ['emailJobDigest', t('jobDigest')],
+    ['emailApplicationReminders', t('applicationReminders')],
+    ['emailProductUpdates', t('productUpdates')],
   ];
 
-  if (loading) return <p className="text-muted-foreground text-sm">Loading…</p>;
+  if (loading) return <p className="text-muted-foreground text-sm">{tCommon('loading')}</p>;
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Email notifications</CardTitle>
-        <CardDescription>Critical security emails are always sent.</CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {items.map(([key, label]) => (
@@ -636,12 +642,11 @@ function NotificationsTab() {
             className="mt-1"
           />
           <span className="text-sm">
-            <strong>Marketing emails</strong> — newsletter, special offers, beta invites. (Default
-            off, opt-in only per GDPR.)
+            <strong>{t('marketingLabel')}</strong> — {t('marketingDescription')}
           </span>
         </label>
         <Button onClick={save} disabled={saving}>
-          {saving ? 'Saving…' : 'Save preferences'}
+          {saving ? tCommon('saving') : t('save')}
         </Button>
       </CardContent>
     </Card>
@@ -658,6 +663,8 @@ function NotificationsTab() {
 // header.
 
 function RegionalTab() {
+  const t = useTranslations('settings.regional');
+  const tCommon = useTranslations('common');
   const [timezone, setTimezone] = useState('Asia/Jerusalem');
   const [dateFormat, setDateFormat] = useState<'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD'>(
     'DD/MM/YYYY',
@@ -688,27 +695,25 @@ function RegionalTab() {
         body: JSON.stringify({ timezone, dateFormat }),
       });
       if (!res.ok) {
-        toast.error('Save failed');
+        toast.error(t('saveFailed'));
         return;
       }
-      toast.success('Saved');
+      toast.success(t('saved'));
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) return <p className="text-muted-foreground text-sm">Loading…</p>;
+  if (loading) return <p className="text-muted-foreground text-sm">{tCommon('loading')}</p>;
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Date &amp; time</CardTitle>
-        <CardDescription>
-          Set your timezone and how dates are formatted across the app.
-        </CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="tz">Timezone</Label>
+          <Label htmlFor="tz">{t('timezone')}</Label>
           <select
             id="tz"
             value={timezone}
@@ -724,7 +729,7 @@ function RegionalTab() {
           </select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="df">Date format</Label>
+          <Label htmlFor="df">{t('dateFormat')}</Label>
           <select
             id="df"
             value={dateFormat}
@@ -736,11 +741,9 @@ function RegionalTab() {
             <option value="YYYY-MM-DD">YYYY-MM-DD (2026-12-31)</option>
           </select>
         </div>
-        <p className="text-muted-foreground text-xs">
-          Tip: theme (light / dark) and language are in the top-right of every page header.
-        </p>
+        <p className="text-muted-foreground text-xs">{t('tip')}</p>
         <Button onClick={save} disabled={saving}>
-          {saving ? 'Saving…' : 'Save'}
+          {saving ? tCommon('saving') : t('save')}
         </Button>
       </CardContent>
     </Card>
@@ -833,11 +836,11 @@ function DangerTab() {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Sign out of all devices</CardTitle>
+          <CardTitle>{t('signOutTitle')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Button variant="outline" onClick={handleSignOutAll}>
-            Sign out everywhere
+            {t('signOutAll')}
           </Button>
         </CardContent>
       </Card>

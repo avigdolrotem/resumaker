@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Link2, Unlink, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { authClient } from '@/lib/auth-client';
@@ -74,6 +75,7 @@ const PROVIDER_META: Record<
 };
 
 export function LinkedAccountsCard() {
+  const t = useTranslations('settings.linkedAccounts');
   const [data, setData] = useState<LinkedAccountsData | null>(null);
   const [providers, setProviders] = useState<{ google: boolean; github: boolean }>({
     google: false,
@@ -125,7 +127,7 @@ export function LinkedAccountsCard() {
       });
     } catch (err) {
       toast.error(
-        (err as Error).message || `Could not start ${PROVIDER_META[provider].label} sign-in`,
+        (err as Error).message || t('linkFailed', { provider: PROVIDER_META[provider].label }),
       );
     }
   }
@@ -141,15 +143,15 @@ export function LinkedAccountsCard() {
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         if (json.code === 'STALE_SESSION') {
-          toast.error('Please sign in again to unlink this account.');
+          toast.error(t('unlinkStaleSession'));
         } else if (json.code === 'LAST_LOGIN_METHOD') {
-          toast.error(json.error ?? 'You need to set a password before unlinking.');
+          toast.error(json.error ?? t('unlinkLastMethod'));
         } else {
-          toast.error(json.error ?? 'Could not unlink');
+          toast.error(json.error ?? t('unlinkFailed'));
         }
         return;
       }
-      toast.success(`${PROVIDER_META[providerId].label} unlinked`);
+      toast.success(t('unlinked', { provider: PROVIDER_META[providerId].label }));
       await refresh();
     } finally {
       setUnlinkingProvider(null);
@@ -178,12 +180,9 @@ export function LinkedAccountsCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Link2 className="h-4 w-4" />
-          Linked accounts
+          {t('title')}
         </CardTitle>
-        <CardDescription>
-          Sign in with one click using Google or GitHub. You can link multiple — useful when your
-          work email differs from your personal one.
-        </CardDescription>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {loading || providersLoading ? (
@@ -214,12 +213,12 @@ export function LinkedAccountsCard() {
                       {isLinked && linkedAcc ? (
                         <span className="inline-flex items-center gap-1">
                           <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                          Linked
+                          {t('linked')}
                           {linkedAcc.linkedAt &&
                             ` · ${new Date(linkedAcc.linkedAt).toLocaleDateString()}`}
                         </span>
                       ) : (
-                        'Not linked'
+                        t('notLinked')
                       )}
                     </div>
                   </div>
@@ -232,12 +231,12 @@ export function LinkedAccountsCard() {
                     disabled={unlinkingProvider === provider}
                   >
                     <Unlink className="me-1.5 h-3.5 w-3.5" />
-                    {unlinkingProvider === provider ? 'Unlinking…' : 'Unlink'}
+                    {unlinkingProvider === provider ? t('unlinking') : t('unlink')}
                   </Button>
                 ) : (
                   <Button size="sm" onClick={() => void handleLink(provider)}>
                     <Link2 className="me-1.5 h-3.5 w-3.5" />
-                    Link
+                    {t('link')}
                   </Button>
                 )}
               </div>
@@ -252,10 +251,7 @@ export function LinkedAccountsCard() {
           // proactively set a password.
           <div className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-200">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>
-              You don&apos;t have a password set. Add one in the security section above before
-              unlinking your only OAuth provider — otherwise you&apos;ll be locked out.
-            </span>
+            <span>{t('noPasswordWarning')}</span>
           </div>
         )}
       </CardContent>

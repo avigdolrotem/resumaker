@@ -10,6 +10,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
 import { authClient } from '@/lib/auth-client';
@@ -31,6 +32,7 @@ interface Security2FACardProps {
 }
 
 export function Security2FACard({ initialEnabled = false }: Security2FACardProps) {
+  const t = useTranslations('settings.twoFactor');
   const [step, setStep] = useState<Step>(initialEnabled ? 'enrolled' : 'idle');
   const [enrollData, setEnrollData] = useState<EnrollData | null>(null);
   const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
@@ -42,14 +44,14 @@ export function Security2FACard({ initialEnabled = false }: Security2FACardProps
 
   async function handleEnable() {
     if (!password) {
-      toast.error('Enter your current password to enable 2FA.');
+      toast.error(t('enablePasswordRequired'));
       return;
     }
     setLoading(true);
     try {
       const result = await authClient.twoFactor.enable({ password });
       if (result.error) {
-        toast.error(result.error.message ?? 'Failed to start 2FA enrollment.');
+        toast.error(result.error.message ?? t('enableFailed'));
         return;
       }
       setEnrollData({ totpURI: result.data.totpURI, backupCodes: result.data.backupCodes });
@@ -63,17 +65,17 @@ export function Security2FACard({ initialEnabled = false }: Security2FACardProps
 
   async function handleVerify() {
     if (totpCode.length !== 6) {
-      toast.error('Enter the 6-digit code from your authenticator app.');
+      toast.error(t('codeRequired'));
       return;
     }
     setLoading(true);
     try {
       const result = await authClient.twoFactor.verifyTotp({ code: totpCode });
       if (result.error) {
-        toast.error(result.error.message ?? 'Invalid code. Try again.');
+        toast.error(result.error.message ?? t('invalidCode'));
         return;
       }
-      toast.success('Two-factor authentication is now enabled.');
+      toast.success(t('verifySuccess'));
       setTotpCode('');
       setEnrollData(null);
       setStep('enrolled');
@@ -84,17 +86,17 @@ export function Security2FACard({ initialEnabled = false }: Security2FACardProps
 
   async function handleDisable() {
     if (!password) {
-      toast.error('Enter your current password to disable 2FA.');
+      toast.error(t('disablePasswordRequired'));
       return;
     }
     setLoading(true);
     try {
       const result = await authClient.twoFactor.disable({ password });
       if (result.error) {
-        toast.error(result.error.message ?? 'Failed to disable 2FA.');
+        toast.error(result.error.message ?? t('disableFailed'));
         return;
       }
-      toast.success('Two-factor authentication has been disabled.');
+      toast.success(t('disableSuccess'));
       setPassword('');
       setBackupCodes(null);
       setShowBackupCodes(false);
@@ -108,16 +110,14 @@ export function Security2FACard({ initialEnabled = false }: Security2FACardProps
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <CardTitle>Two-Factor Authentication</CardTitle>
+          <CardTitle>{t('title')}</CardTitle>
           {step === 'enrolled' && (
             <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-              On
+              {t('badgeOn')}
             </span>
           )}
         </div>
-        <CardDescription>
-          Add a second layer of security to your account using a TOTP authenticator app.
-        </CardDescription>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -125,18 +125,18 @@ export function Security2FACard({ initialEnabled = false }: Security2FACardProps
         {step === 'idle' && (
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label htmlFor="2fa-password-enable">Current password</Label>
+              <Label htmlFor="2fa-password-enable">{t('currentPassword')}</Label>
               <Input
                 id="2fa-password-enable"
                 type="password"
                 autoComplete="current-password"
-                placeholder="Your account password"
+                placeholder={t('passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
             <Button onClick={handleEnable} disabled={loading}>
-              {loading ? 'Starting…' : 'Enable 2FA'}
+              {loading ? t('starting') : t('enable')}
             </Button>
           </div>
         )}
@@ -144,26 +144,21 @@ export function Security2FACard({ initialEnabled = false }: Security2FACardProps
         {/* ── ENROLLING: show QR + backup codes + verify form ── */}
         {step === 'enrolling' && enrollData && (
           <div className="space-y-5">
-            <p className="text-muted-foreground text-sm">
-              Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.),
-              then enter the 6-digit code below to confirm.
-            </p>
+            <p className="text-muted-foreground text-sm">{t('scanInstructions')}</p>
 
             <div className="flex justify-center rounded-lg border p-4">
               <QRCodeSVG value={enrollData.totpURI} size={180} />
             </div>
 
             <details className="text-muted-foreground text-xs">
-              <summary className="cursor-pointer">Can't scan? Show setup key</summary>
+              <summary className="cursor-pointer">{t('cantScan')}</summary>
               <p className="mt-1 break-all font-mono">{enrollData.totpURI}</p>
             </details>
 
             {backupCodes && (
               <div className="bg-muted space-y-1 rounded-md p-3">
-                <p className="text-sm font-medium">Backup codes — save these now</p>
-                <p className="text-muted-foreground text-xs">
-                  Each code can be used once if you lose access to your authenticator.
-                </p>
+                <p className="text-sm font-medium">{t('backupCodesTitle')}</p>
+                <p className="text-muted-foreground text-xs">{t('backupCodesDescription')}</p>
                 <ul className="mt-2 grid grid-cols-2 gap-1">
                   {backupCodes.map((code) => (
                     <li key={code} className="font-mono text-xs">
@@ -175,7 +170,7 @@ export function Security2FACard({ initialEnabled = false }: Security2FACardProps
             )}
 
             <div className="space-y-1">
-              <Label htmlFor="2fa-totp-code">Authenticator code</Label>
+              <Label htmlFor="2fa-totp-code">{t('authenticatorCode')}</Label>
               <Input
                 id="2fa-totp-code"
                 type="text"
@@ -189,7 +184,7 @@ export function Security2FACard({ initialEnabled = false }: Security2FACardProps
 
             <div className="flex gap-2">
               <Button onClick={handleVerify} disabled={loading}>
-                {loading ? 'Verifying…' : 'Confirm & enable'}
+                {loading ? t('verifying') : t('confirmEnable')}
               </Button>
               <Button
                 variant="outline"
@@ -200,7 +195,7 @@ export function Security2FACard({ initialEnabled = false }: Security2FACardProps
                 }}
                 disabled={loading}
               >
-                Cancel
+                {t('cancel')}
               </Button>
             </div>
           </div>
@@ -209,12 +204,10 @@ export function Security2FACard({ initialEnabled = false }: Security2FACardProps
         {/* ── ENROLLED: management view ── */}
         {step === 'enrolled' && (
           <div className="space-y-4">
-            <p className="text-muted-foreground text-sm">
-              Your account is protected with two-factor authentication.
-            </p>
+            <p className="text-muted-foreground text-sm">{t('protectedText')}</p>
 
             <Button variant="outline" size="sm" onClick={() => setShowBackupCodes((v) => !v)}>
-              {showBackupCodes ? 'Hide backup codes' : 'Show backup codes'}
+              {showBackupCodes ? t('hideBackupCodes') : t('showBackupCodes')}
             </Button>
 
             {showBackupCodes && backupCodes && (
@@ -230,18 +223,18 @@ export function Security2FACard({ initialEnabled = false }: Security2FACardProps
             )}
 
             <div className="space-y-1">
-              <Label htmlFor="2fa-password-disable">Current password to disable</Label>
+              <Label htmlFor="2fa-password-disable">{t('disablePasswordLabel')}</Label>
               <Input
                 id="2fa-password-disable"
                 type="password"
                 autoComplete="current-password"
-                placeholder="Your account password"
+                placeholder={t('passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
             <Button variant="destructive" onClick={handleDisable} disabled={loading}>
-              {loading ? 'Disabling…' : 'Disable 2FA'}
+              {loading ? t('disabling') : t('disable')}
             </Button>
           </div>
         )}

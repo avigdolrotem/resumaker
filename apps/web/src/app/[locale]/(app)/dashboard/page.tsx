@@ -11,6 +11,7 @@ import { OnboardingChecklist } from '@/components/onboarding-checklist';
 import { MagicCard } from '@/components/ui-effects/magic-card';
 import { CountUp } from '@/components/ui-effects/count-up';
 import { getLatestScoresByResumeId } from '@/lib/ats-score-lookup';
+import { EmailChangeStatusToast } from '@/components/email-change-status-toast';
 import {
   FileText,
   Sparkles,
@@ -152,6 +153,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <EmailChangeStatusToast />
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>

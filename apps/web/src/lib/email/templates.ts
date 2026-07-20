@@ -54,7 +54,7 @@ function layout({
               <a href="${env.APP_URL}" style="color:${BRAND};text-decoration:none;">resumaker.co.il</a>
               · <a href="mailto:hello@resumaker.co.il" style="color:${BRAND};text-decoration:none;">hello@resumaker.co.il</a>
             </p>
-            <p style="margin:0;">© 2026 Resumaker™</p>
+            <p style="margin:0;">© ${new Date().getFullYear()} Resumaker™</p>
           </td>
         </tr>
       </table>
@@ -220,6 +220,51 @@ export function paidWelcome({
         ${button('Open billing dashboard', `${env.APP_URL}/en/account/billing`)}
         <p style="margin:24px 0 0 0;font-size:12px;color:#94a3b8;">
           Questions? Just reply to this email — we answer within 24h.
+        </p>`,
+    }),
+  };
+}
+
+export function emailChangeConfirmation({
+  locale,
+  confirmUrl,
+}: {
+  locale: Locale;
+  confirmUrl: string;
+}) {
+  if (locale === 'he') {
+    return {
+      subject: 'אשר את כתובת המייל החדשה שלך · Resumaker',
+      html: layout({
+        title: 'אשר את כתובת המייל החדשה',
+        preview: 'לחץ כדי לאשר את כתובת המייל החדשה שלך',
+        dir: 'rtl',
+        body: `
+          <h1 style="margin:0 0 16px 0;font-size:22px;">אישור כתובת מייל חדשה</h1>
+          <p style="margin:0 0 16px 0;line-height:1.6;color:#475569;">
+            ביקשת לשנות את כתובת המייל בחשבון Resumaker שלך לכתובת הזו. לחץ כדי לאשר:
+          </p>
+          ${button('אשר כתובת מייל', confirmUrl)}
+          <p style="margin:0;font-size:12px;color:#94a3b8;">
+            הקישור תקף לשעה אחת. לא ביקשת את זה? אפשר להתעלם מהמייל הזה — כתובת המייל בחשבון לא תשתנה.
+          </p>`,
+      }),
+    };
+  }
+  return {
+    subject: 'Confirm your new Resumaker email',
+    html: layout({
+      title: 'Confirm your new email',
+      preview: 'Click to confirm your new email address',
+      dir: 'ltr',
+      body: `
+        <h1 style="margin:0 0 16px 0;font-size:22px;">Confirm your new email</h1>
+        <p style="margin:0 0 16px 0;line-height:1.6;color:#475569;">
+          You requested to change your Resumaker account's email to this address. Click to confirm:
+        </p>
+        ${button('Confirm email', confirmUrl)}
+        <p style="margin:0;font-size:12px;color:#94a3b8;">
+          Link valid for one hour. Didn't request this? You can safely ignore this — your account email won't change.
         </p>`,
     }),
   };
