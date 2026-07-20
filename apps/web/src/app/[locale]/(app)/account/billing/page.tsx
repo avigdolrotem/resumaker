@@ -125,6 +125,20 @@ export default async function AccountBillingPage({
                     periodEndLabel={periodEndLabel}
                   />
                 </>
+              ) : !providerInfo.checkoutReady ? (
+                // Checkout isn't live — linking to /pricing here used to
+                // send free users on a pointless round trip: pricing's own
+                // CTAs (pricing-client.tsx) route a signed-in user back to
+                // /account/billing when checkout isn't ready, so "Upgrade
+                // now" → /pricing → back to billing never let anyone
+                // actually do anything. Complete the one real action
+                // (register interest) right here instead of bouncing them
+                // through a page that can't fulfill it either.
+                <Button asChild>
+                  <a href="mailto:hello@resumaker.co.il?subject=Waitlist%20-%20Billing">
+                    {t('joinWaitlist')}
+                  </a>
+                </Button>
               ) : (
                 <Button asChild>
                   <Link href="/pricing">
