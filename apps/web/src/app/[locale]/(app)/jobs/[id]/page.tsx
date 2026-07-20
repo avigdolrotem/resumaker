@@ -24,6 +24,7 @@ export default async function JobDetailPage({
       location: schema.jobs.location,
       description: schema.jobs.description,
       url: schema.jobs.url,
+      source: schema.jobs.source,
       remote: schema.jobs.remote,
       seniority: schema.jobs.seniority,
       isFavorite: schema.userJobs.isFavorite,
@@ -74,6 +75,9 @@ export default async function JobDetailPage({
 
       <JobActions
         jobId={job.id}
+        jobTitle={job.title}
+        jobCompany={job.company}
+        jobUrl={job.source === 'manual' ? null : job.url}
         isFavorite={Boolean(job.isFavorite)}
         fitScore={job.fitScore}
         fitRationale={job.fitRationale}
@@ -87,14 +91,20 @@ export default async function JobDetailPage({
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-base">
             <span>{locale === 'he' ? 'תיאור המשרה' : 'Job description'}</span>
-            <a
-              href={job.url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
-            >
-              {t('viewOriginal')} <ExternalLink className="h-3.5 w-3.5" />
-            </a>
+            {/* Manually-pasted jobs have no real source URL — job.url
+                is a 'manual-paste' sentinel (see api/jobs/import/route.ts),
+                not a link, so this would otherwise navigate to a
+                nonsensical relative path built from that string. */}
+            {job.source !== 'manual' && (
+              <a
+                href={job.url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
+              >
+                {t('viewOriginal')} <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>

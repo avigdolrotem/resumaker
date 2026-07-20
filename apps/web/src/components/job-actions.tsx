@@ -4,12 +4,16 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { toast } from 'sonner';
-import { Star, Sparkles, ClipboardCheck, CheckCircle2 } from 'lucide-react';
+import { Star, Sparkles, ClipboardCheck, CheckCircle2, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface Props {
   jobId: string;
+  jobTitle: string;
+  jobCompany: string;
+  /** null for manually-pasted jobs — there's no real link to share. */
+  jobUrl: string | null;
   isFavorite: boolean;
   fitScore: number | null;
   fitRationale: string | null;
@@ -28,6 +32,9 @@ interface Props {
  */
 export function JobActions({
   jobId,
+  jobTitle,
+  jobCompany,
+  jobUrl,
   isFavorite: initialFav,
   fitScore,
   fitRationale,
@@ -95,6 +102,36 @@ export function JobActions({
     }
   }
 
+  // Shares the original posting URL (job.url — always present, it's how
+  // the listing got imported in the first place), via the native share
+  // sheet where supported, falling back to copy-link + toast on
+  // desktop. Deliberately not a Resumaker-hosted link: that would need
+  // its own public-but-gated route and a real decision on what "gated"
+  // means here (sign-in to view? just email-verified? open to anyone
+  // with the link?) — punting on that until there's a concrete reason
+  // to build it, rather than guessing.
+  async function shareJob() {
+    if (!jobUrl) return;
+    const shareData = {
+      title: `${jobTitle} · ${jobCompany}`,
+      url: jobUrl,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // User canceled the native share sheet — not an error.
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(jobUrl);
+      toast.success(locale === 'he' ? 'הקישור הועתק' : 'Link copied');
+    } catch {
+      toast.error(locale === 'he' ? 'ההעתקה נכשלה' : 'Copy failed');
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
@@ -119,6 +156,12 @@ export function JobActions({
             </>
           )}
         </Button>
+        {jobUrl && (
+          <Button variant="outline" onClick={() => void shareJob()}>
+            <Share2 className="me-2 h-4 w-4" />
+            {locale === 'he' ? 'שתף' : 'Share'}
+          </Button>
+        )}
       </div>
 
       {fitScore !== null && (
