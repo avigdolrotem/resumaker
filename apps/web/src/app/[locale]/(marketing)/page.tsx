@@ -1,6 +1,9 @@
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
+import { auth } from '@/lib/auth';
 import {
   ACCESSIBILITY_EMAIL,
   COMPANY_TRADING_NAME,
@@ -36,6 +39,16 @@ import {
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = (await params) as { locale: Locale };
   setRequestLocale(locale);
+
+  // Signed-in users land straight on their dashboard instead of the
+  // marketing pitch — there's no reason to re-sell the product to
+  // someone already using it. Other marketing pages (pricing, examples)
+  // stay open to signed-in visitors; only the bare "/" homepage redirects.
+  const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
+  if (session) {
+    redirect(`/${locale}/dashboard`);
+  }
+
   const t = await getTranslations('home');
   const isHebrew = locale === 'he';
   const ArrowIcon = isHebrew ? ArrowLeft : ArrowRight;
