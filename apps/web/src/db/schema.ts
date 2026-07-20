@@ -172,6 +172,14 @@ export const sessions = pgTable(
  * enabled; deleted on disable. `secret` is the TOTP shared secret;
  * `backupCodes` is a comma-joined hashed list (Better Auth hashes each
  * code with the auth secret before storing).
+ *
+ * `verified`/`failedVerificationCount`/`lockedUntil` were missing from
+ * the original hand-written table (added in a later better-auth
+ * release than what this was first written against) — every call to
+ * enableTwoFactor 500'd with "The field verified does not exist in
+ * the twoFactor Drizzle schema" until these were added. Field
+ * names/types/defaults match better-auth's own
+ * plugins/two-factor/schema.ts exactly, not guessed.
  */
 export const twoFactors = pgTable(
   'two_factors',
@@ -183,6 +191,9 @@ export const twoFactors = pgTable(
       .unique(),
     secret: text('secret').notNull(),
     backupCodes: text('backup_codes').notNull(),
+    verified: boolean('verified').notNull().default(true),
+    failedVerificationCount: integer('failed_verification_count').notNull().default(0),
+    lockedUntil: timestamp('locked_until', { withTimezone: true }),
   },
   (t) => ({
     userIdx: index('two_factors_user_idx').on(t.userId),
