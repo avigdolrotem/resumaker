@@ -113,12 +113,14 @@ function AuthModal({
             here the card IS the whole interaction, so the close
             affordance belongs on it. Plain onClose — no router.back(),
             the page underneath was never left, closing is just hiding
-            this overlay. */}
+            this overlay. Positive inset (not a negative corner-straddle
+            offset) so the button sits fully within the card's own
+            bounds instead of floating half outside it. */}
         <button
           type="button"
           onClick={onClose}
           aria-label={t('close')}
-          className="glass hover:glass-strong text-foreground ease-snappy absolute -end-3 -top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.96]"
+          className="glass hover:glass-strong text-foreground ease-snappy absolute end-4 top-4 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.96]"
         >
           <X className="h-4 w-4" />
         </button>
