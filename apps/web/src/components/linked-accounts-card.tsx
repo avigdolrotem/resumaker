@@ -75,11 +75,32 @@ const PROVIDER_META: Record<
 
 export function LinkedAccountsCard() {
   const [data, setData] = useState<LinkedAccountsData | null>(null);
+  const [providers, setProviders] = useState<{ google: boolean; github: boolean }>({
+    google: false,
+    github: false,
+  });
   const [loading, setLoading] = useState(true);
+  const [providersLoading, setProvidersLoading] = useState(true);
   const [unlinkingProvider, setUnlinkingProvider] = useState<string | null>(null);
 
   useEffect(() => {
     void refresh();
+    // Which providers actually have credentials configured server-side
+    // — same check the sign-in/sign-up OAuth buttons already use to
+    // hide themselves. This card was missing it: it always rendered a
+    // "Link" button for both providers regardless, so clicking one
+    // when unconfigured 404'd with zero feedback (no toast, no error,
+    // the button just silently did nothing). Tracked as its own loading
+    // flag (not reused from `loading`, which is /api/account/linked's)
+    // so the empty-state decision below waits for both fetches rather
+    // than judging providers as unconfigured before this one lands.
+    fetch('/api/auth/providers')
+      .then((r) => r.json())
+      .then(setProviders)
+      .catch(() => {
+        /* stay false — the row just won't offer linking */
+      })
+      .finally(() => setProvidersLoading(false));
   }, []);
 
   async function refresh() {
@@ -95,12 +116,18 @@ export function LinkedAccountsCard() {
   }
 
   async function handleLink(provider: 'google' | 'github') {
-    // Better Auth's linkSocial redirects to the provider; the callback
-    // brings the user back to `callbackURL` with the link complete.
-    await authClient.linkSocial({
-      provider,
-      callbackURL: '/settings?tab=security',
-    });
+    try {
+      // Better Auth's linkSocial redirects to the provider; the callback
+      // brings the user back to `callbackURL` with the link complete.
+      await authClient.linkSocial({
+        provider,
+        callbackURL: '/settings?tab=security',
+      });
+    } catch (err) {
+      toast.error(
+        (err as Error).message || `Could not start ${PROVIDER_META[provider].label} sign-in`,
+      );
+    }
   }
 
   async function handleUnlink(providerId: 'google' | 'github') {
@@ -131,6 +158,21 @@ export function LinkedAccountsCard() {
 
   const linkedProviders = new Set(data?.oauth.map((a) => a.providerId) ?? []);
 
+  // A provider row only makes sense if it's actually configured
+  // server-side, OR the user already has a link to it (keep an
+  // existing link manageable/unlinkable even if the provider was
+  // later disabled — never hide state the user needs to act on).
+  const visibleProviders = (['google', 'github'] as const).filter(
+    (p) => providers[p] || linkedProviders.has(p),
+  );
+
+  // Nothing to show at all — matches OAuthButtons' own convention for
+  // "no providers configured" (sign-in/up pages already hide their
+  // OAuth section the same way). Waits for both fetches so this isn't
+  // decided on providers' not-yet-loaded default of {google: false,
+  // github: false}.
+  if (!loading && !providersLoading && visibleProviders.length === 0) return null;
+
   return (
     <Card>
       <CardHeader>
@@ -144,14 +186,14 @@ export function LinkedAccountsCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        {loading ? (
+        {loading || providersLoading ? (
           <div className="space-y-2">
             {[1, 2].map((i) => (
               <div key={i} className="bg-muted h-14 animate-pulse rounded-xl" />
             ))}
           </div>
         ) : (
-          (['google', 'github'] as const).map((provider) => {
+          visibleProviders.map((provider) => {
             const meta = PROVIDER_META[provider];
             const linkedAcc = data?.oauth.find((a) => a.providerId === provider);
             const isLinked = linkedProviders.has(provider);
