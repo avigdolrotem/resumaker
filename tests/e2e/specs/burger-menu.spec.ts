@@ -32,13 +32,17 @@ for (const vp of VIEWPORTS) {
       await page.goto(`/${locale}`);
       await page.waitForLoadState('domcontentloaded');
 
-      // Open the burger.
-      const burger = page.getByRole('button', { name: /open menu/i });
+      // Open the burger. Aria-labels are locale-aware (mobile-drawer.tsx
+      // uses the `mobileDrawer` translation namespace), so the expected
+      // accessible name differs by locale rather than always being English.
+      const openMenuName = locale === 'he' ? 'פתח תפריט' : /open menu/i;
+      const burger = page.getByRole('button', { name: openMenuName });
       await expect(burger).toBeVisible();
       await burger.click();
 
       // Dialog opens.
-      const dialog = page.getByRole('dialog', { name: /navigation menu/i });
+      const navMenuName = locale === 'he' ? 'תפריט ניווט' : /navigation menu/i;
+      const dialog = page.getByRole('dialog', { name: navMenuName });
       await expect(dialog).toBeVisible();
 
       // Find the inner panel.

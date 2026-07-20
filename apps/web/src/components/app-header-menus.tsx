@@ -10,6 +10,7 @@ import {
   ChevronDown,
   CreditCard,
   FilePlus2,
+  Gift,
   LogOut,
   Mail,
   Plus,
@@ -222,6 +223,17 @@ export function UserAvatarMenu() {
               >
                 <Settings className="h-4 w-4" />
                 {t('settings')}
+              </Link>
+            </li>
+            <li role="none">
+              <Link
+                role="menuitem"
+                href="/referral"
+                onClick={() => setOpen(false)}
+                className={menuItemClass}
+              >
+                <Gift className="h-4 w-4" />
+                {t('referral')}
               </Link>
             </li>
             <li role="none" className="border-border/60 mt-1 border-t pt-1">

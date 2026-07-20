@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslations } from 'next-intl';
 import {
   Menu,
   X,
@@ -24,12 +25,16 @@ import {
   Accessibility,
   Archive,
   MessageSquare,
+  Gift,
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
 import { useAuthModal } from './auth/auth-modal';
 import { useRouter } from '@/i18n/navigation';
 import { Logo } from './logo';
+
+type NavT = ReturnType<typeof useTranslations<'nav'>>;
+type LegalT = ReturnType<typeof useTranslations<'legalNav'>>;
 
 /**
  * Mobile-only sliding drawer with primary nav. On viewports < md we hide
@@ -52,6 +57,7 @@ type LinkHref =
   | '/settings'
   | '/profile'
   | '/account/billing'
+  | '/referral'
   | '/examples'
   | '/pricing'
   | '/'
@@ -80,42 +86,55 @@ type Item =
  * in particular must have a clear link, including from inside the
  * authed app shell.
  */
-const legalItems: Item[] = [
-  { kind: 'divider', label: 'Legal' },
-  { kind: 'link', href: '/contact', label: 'Contact', Icon: MessageSquare },
-  { kind: 'link', href: '/privacy', label: 'Privacy', Icon: Shield },
-  { kind: 'link', href: '/terms', label: 'Terms', Icon: ScrollText },
-  { kind: 'link', href: '/legal/accessibility', label: 'Accessibility', Icon: Accessibility },
-  { kind: 'link', href: '/legal/data-retention', label: 'Data retention', Icon: Archive },
-];
-
-function authedItems(): Item[] {
+function legalItems(tLegal: LegalT): Item[] {
   return [
-    { kind: 'link', href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-    { kind: 'link', href: '/builder', label: 'New resume', Icon: FilePlus2 },
-    { kind: 'link', href: '/resumes', label: 'My resumes', Icon: FileText },
-    { kind: 'link', href: '/cover-letters', label: 'Cover letters', Icon: Mail },
-    { kind: 'link', href: '/applications', label: 'Applications', Icon: TrendingUp },
-    { kind: 'link', href: '/jobs', label: 'Job hunt', Icon: Briefcase },
-    { kind: 'link', href: '/examples', label: 'Examples', Icon: Palette },
-    { kind: 'link', href: '/profile', label: 'Profile', Icon: UserCircle },
-    { kind: 'link', href: '/settings', label: 'Settings', Icon: Settings },
-    { kind: 'link', href: '/account/billing', label: 'Billing', Icon: CreditCard },
-    ...legalItems,
-    { kind: 'action', action: 'sign-out', label: 'Sign out', Icon: LogOut },
+    { kind: 'divider', label: tLegal('sectionTitle') },
+    { kind: 'link', href: '/contact', label: tLegal('contact'), Icon: MessageSquare },
+    { kind: 'link', href: '/privacy', label: tLegal('privacy'), Icon: Shield },
+    { kind: 'link', href: '/terms', label: tLegal('terms'), Icon: ScrollText },
+    {
+      kind: 'link',
+      href: '/legal/accessibility',
+      label: tLegal('accessibility'),
+      Icon: Accessibility,
+    },
+    {
+      kind: 'link',
+      href: '/legal/data-retention',
+      label: tLegal('dataRetention'),
+      Icon: Archive,
+    },
   ];
 }
 
-function publicItems(): Item[] {
+function authedItems(t: NavT, tLegal: LegalT): Item[] {
   return [
-    { kind: 'link', href: '/', label: 'Home', Icon: Home },
-    { kind: 'link', href: '/examples', label: 'Examples', Icon: Palette },
-    { kind: 'link', href: '/pricing', label: 'Pricing', Icon: CreditCard },
+    { kind: 'link', href: '/dashboard', label: t('dashboard'), Icon: LayoutDashboard },
+    { kind: 'link', href: '/builder', label: t('newResume'), Icon: FilePlus2 },
+    { kind: 'link', href: '/resumes', label: t('myResumes'), Icon: FileText },
+    { kind: 'link', href: '/cover-letters', label: t('coverLetters'), Icon: Mail },
+    { kind: 'link', href: '/applications', label: t('applications'), Icon: TrendingUp },
+    { kind: 'link', href: '/jobs', label: t('jobs'), Icon: Briefcase },
+    { kind: 'link', href: '/examples', label: t('examples'), Icon: Palette },
+    { kind: 'link', href: '/profile', label: t('profile'), Icon: UserCircle },
+    { kind: 'link', href: '/settings', label: t('settings'), Icon: Settings },
+    { kind: 'link', href: '/account/billing', label: t('billing'), Icon: CreditCard },
+    { kind: 'link', href: '/referral', label: t('referral'), Icon: Gift },
+    ...legalItems(tLegal),
+    { kind: 'action', action: 'sign-out', label: t('signOut'), Icon: LogOut },
+  ];
+}
+
+function publicItems(t: NavT, tLegal: LegalT): Item[] {
+  return [
+    { kind: 'link', href: '/', label: t('home'), Icon: Home },
+    { kind: 'link', href: '/examples', label: t('examples'), Icon: Palette },
+    { kind: 'link', href: '/pricing', label: t('pricing'), Icon: CreditCard },
     // Open the auth overlay instead of navigating — same as the
     // desktop header's MarketingAuthCta, see auth-modal.tsx.
-    { kind: 'action', action: 'open-sign-in', label: 'Sign in', Icon: LogIn },
-    { kind: 'action', action: 'open-sign-up', label: 'Sign up', Icon: UserPlus },
-    ...legalItems,
+    { kind: 'action', action: 'open-sign-in', label: t('signIn'), Icon: LogIn },
+    { kind: 'action', action: 'open-sign-up', label: t('signUp'), Icon: UserPlus },
+    ...legalItems(tLegal),
   ];
 }
 
@@ -123,6 +142,9 @@ export function MobileDrawer() {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
   const router = useRouter();
+  const t = useTranslations('nav');
+  const tLegal = useTranslations('legalNav');
+  const tDrawer = useTranslations('mobileDrawer');
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
@@ -170,7 +192,7 @@ export function MobileDrawer() {
     return undefined;
   }, [open]);
 
-  const items = session ? authedItems() : publicItems();
+  const items = session ? authedItems(t, tLegal) : publicItems(t, tLegal);
   const { openAuthModal } = useAuthModal();
 
   async function handleSignOut() {
@@ -198,7 +220,7 @@ export function MobileDrawer() {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Open menu"
+        aria-label={tDrawer('openMenu')}
         aria-expanded={open}
         className="text-foreground hover:bg-accent/70 ease-snappy inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 active:scale-90 md:hidden"
       >
@@ -219,7 +241,7 @@ export function MobileDrawer() {
             className="fixed inset-0 z-[90] md:hidden"
             aria-modal="true"
             role="dialog"
-            aria-label="Navigation menu"
+            aria-label={tDrawer('navigationMenu')}
           >
             {/* Click-outside backdrop */}
             <div
@@ -241,7 +263,7 @@ export function MobileDrawer() {
                   ref={closeRef}
                   type="button"
                   onClick={() => setOpen(false)}
-                  aria-label="Close menu"
+                  aria-label={tDrawer('closeMenu')}
                   className="text-foreground hover:bg-accent/70 ease-snappy inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 active:scale-90"
                 >
                   <X className="h-5 w-5" />

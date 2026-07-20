@@ -21,8 +21,22 @@
     "newCoverLetter": "New cover letter",
     "profile": "Profile",
     "billing": "Billing",
+    "referral": "Refer a friend",
     "account": "Account",
     "signOut": "Sign out"
+  },
+  "legalNav": {
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "accessibility": "Accessibility",
+    "dataRetention": "Data retention",
+    "contact": "Contact",
+    "sectionTitle": "Legal"
+  },
+  "mobileDrawer": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "navigationMenu": "Navigation menu"
   },
   "commandPalette": {
     "ariaLabel": "Command palette",

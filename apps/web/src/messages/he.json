@@ -21,8 +21,22 @@
     "newCoverLetter": "מכתב מקדים חדש",
     "profile": "פרופיל",
     "billing": "חיוב",
+    "referral": "הזמן חבר",
     "account": "חשבון",
     "signOut": "התנתקות"
+  },
+  "legalNav": {
+    "privacy": "פרטיות",
+    "terms": "תנאי שימוש",
+    "accessibility": "נגישות",
+    "dataRetention": "שמירת נתונים",
+    "contact": "צור קשר",
+    "sectionTitle": "משפטי"
+  },
+  "mobileDrawer": {
+    "openMenu": "פתח תפריט",
+    "closeMenu": "סגור תפריט",
+    "navigationMenu": "תפריט ניווט"
   },
   "commandPalette": {
     "ariaLabel": "פלטת פקודות",
