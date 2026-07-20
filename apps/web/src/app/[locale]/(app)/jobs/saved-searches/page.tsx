@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Plus, Search, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Plus, Search, Trash2 } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ interface SavedSearch {
 export default function SavedSearchesPage() {
   const t = useTranslations('jobs.savedSearches');
   const locale = useLocale();
+  const BackIcon = locale === 'he' ? ArrowRight : ArrowLeft;
   const [searches, setSearches] = useState<SavedSearch[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -117,6 +119,13 @@ export default function SavedSearchesPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
+        <Link
+          href="/jobs"
+          aria-label={locale === 'he' ? 'חזרה למשרות' : 'Back to jobs'}
+          className="text-brand-600 dark:text-brand-300 hover:text-brand-700 dark:hover:text-brand-200 -ms-1 mb-2 inline-flex items-center transition-colors"
+        >
+          <BackIcon className="h-5 w-5" />
+        </Link>
         <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground mt-1">{t('subtitle')}</p>
       </div>
