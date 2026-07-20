@@ -137,7 +137,7 @@ export default async function DashboardPage() {
         ? 'הניקוד מראה כמה התאמה יש לקורות החיים מול המודעה'
         : 'See how well your resume matches the job posting',
       done: (atsScoreCount?.value ?? 0) > 0,
-      href: '/builder' as const,
+      href: '/resumes' as const,
     },
     {
       id: 'cover_letter',
