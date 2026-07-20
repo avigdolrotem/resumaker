@@ -283,8 +283,16 @@ function TierCard({
             <Link href="/sign-in">{t('subscribe', { tier: tier.displayName })}</Link>
           </Button>
         ) : !checkoutReady ? (
-          // Waitlist is a distinct semantic state (you can't buy this
-          // yet) — kept visually separate (amber tint) rather than
+          // Reachable only when isAuthed is true (the !isAuthed branch
+          // above already caught anonymous visitors) — a signed-in user
+          // looking to upgrade while checkout isn't live yet. Used to
+          // be a bare mailto: link, which dead-ended outside the app
+          // with no account context. /account/billing already shows
+          // the same "coming soon" messaging (comingSoonBanner) in the
+          // context of their actual plan, so that's the one place this
+          // should point rather than duplicating the waitlist pitch
+          // here. Waitlist is a distinct semantic state (you can't buy
+          // this yet) — kept visually separate (amber tint) rather than
           // folded into the standard button so it doesn't read as a
           // normal, currently-working purchase action. Box model
           // (h-10 + px-5, flex-centered) still matches Button's `size:
@@ -292,12 +300,12 @@ function TierCard({
           // row as the other tiers' <Button>s, and a few px of padding-
           // driven height difference was visibly throwing the row out
           // of alignment.
-          <a
-            href="mailto:hello@resumaker.co.il?subject=Waitlist%20-%20Pricing"
+          <Link
+            href="/account/billing"
             className="glass-subtle ease-snappy inline-flex h-10 w-full items-center justify-center rounded-full px-5 text-sm font-medium text-amber-900 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.96] dark:text-amber-100"
           >
-            {t('joinWaitlist')}
-          </a>
+            {t('seeInBilling')}
+          </Link>
         ) : price <= 0 ? (
           <Button type="button" disabled variant="secondary" className="w-full">
             {locale === 'he' ? 'לא זמין' : 'Not available'}

@@ -798,6 +798,7 @@
     "subscribe": "Upgrade to {tier}",
     "comingSoon": "Coming soon",
     "joinWaitlist": "Join the waitlist",
+    "seeInBilling": "See in billing",
     "manage": "Manage subscription",
     "openPortal": "Open billing portal",
     "grantedByAdmin": "Your plan was granted manually by an admin",
