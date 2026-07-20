@@ -2,7 +2,7 @@ import { headers as nextHeaders } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { desc, eq, and } from 'drizzle-orm';
-import { Plus, ExternalLink, Star } from 'lucide-react';
+import { Plus, ExternalLink, Star, Search } from 'lucide-react';
 import { db, schema } from '@/db';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -68,12 +68,20 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
           </div>
           <p className="text-muted-foreground mt-1">{t('subtitle')}</p>
         </div>
-        <Button asChild>
-          <Link href="/jobs/paste">
-            <Plus className="me-2 h-4 w-4" />
-            {t('addJob')}
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href="/jobs/saved-searches">
+              <Search className="me-2 h-4 w-4" />
+              {t('savedSearches.navLabel')}
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/jobs/paste">
+              <Plus className="me-2 h-4 w-4" />
+              {t('addJob')}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {jobs.length === 0 ? (
