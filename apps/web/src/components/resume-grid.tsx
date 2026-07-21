@@ -4,17 +4,7 @@ import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { toast } from 'sonner';
-import {
-  Search,
-  X,
-  ArrowRight,
-  FileText,
-  Plus,
-  MoreVertical,
-  Eye,
-  Trash2,
-  Download,
-} from 'lucide-react';
+import { Search, X, FileText, Plus, MoreVertical, Eye, Trash2, Download } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -61,6 +51,7 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   // Local optimistic copy so a delete removes the tile immediately even if
   // the user's network is slow. Reconciles with server on router.refresh().
@@ -170,7 +161,7 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
             return (
               <Card
                 key={r.id}
-                className="hover:border-brand-300 group relative h-full"
+                className={`hover:border-brand-300 group relative h-full overflow-visible ${openMenuId === r.id ? 'z-20' : ''}`}
                 style={{ viewTransitionName: `resume-card-${r.id}` }}
               >
                 <Link
@@ -191,18 +182,15 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
                   }}
                 >
                   <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="min-w-0 pe-8">
-                        <CardTitle className="line-clamp-1 text-base">
-                          {r.jobTitle ?? r.title}
-                        </CardTitle>
-                        {r.companyName && (
-                          <p className="text-muted-foreground line-clamp-1 text-sm">
-                            {r.companyName}
-                          </p>
-                        )}
-                      </div>
-                      <ArrowRight className="text-brand-400 group-hover:text-brand-600 h-4 w-4 flex-shrink-0 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
+                    <div className="min-w-0 pe-8">
+                      <CardTitle className="line-clamp-1 text-base">
+                        {r.jobTitle ?? r.title}
+                      </CardTitle>
+                      {r.companyName && (
+                        <p className="text-muted-foreground line-clamp-1 text-sm">
+                          {r.companyName}
+                        </p>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -235,6 +223,8 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
                   isHebrew={isHebrew}
                   isConfirming={isConfirming}
                   isBusy={isBusy}
+                  isOpen={openMenuId === r.id}
+                  onOpenChange={(v) => setOpenMenuId(v ? r.id : null)}
                   onAskDelete={() => setConfirmingDelete(r.id)}
                   onCancelDelete={() => setConfirmingDelete(null)}
                   onConfirmDelete={() => handleDelete(r.id)}
@@ -258,6 +248,8 @@ interface MenuProps {
   isHebrew: boolean;
   isConfirming: boolean;
   isBusy: boolean;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
   onAskDelete: () => void;
   onCancelDelete: () => void;
   onConfirmDelete: () => void;
@@ -273,6 +265,8 @@ function CardActionsMenu({
   isHebrew,
   isConfirming,
   isBusy,
+  isOpen: open,
+  onOpenChange: setOpen,
   onAskDelete,
   onCancelDelete,
   onConfirmDelete,
@@ -282,8 +276,6 @@ function CardActionsMenu({
   labelConfirmDelete,
   labelCancel,
 }: MenuProps) {
-  const [open, setOpen] = useState(false);
-
   // Two-stage delete confirmation: clicking Delete swaps the menu to a
   // [Yes, delete] / [Cancel] pair. Escape closes the whole menu.
   if (isConfirming) {
@@ -340,7 +332,7 @@ function CardActionsMenu({
     >
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen(!open)}
         className="text-muted-foreground hover:bg-accent hover:text-foreground ease-snappy rounded-full p-1 opacity-0 transition-all duration-200 focus:opacity-100 active:scale-90 group-hover:opacity-100"
         aria-haspopup="menu"
         aria-expanded={open}

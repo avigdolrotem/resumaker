@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { ResumeSchema, ExperienceSchema, EducationSchema, ProjectSchema } from '../index';
+import {
+  ResumeSchema,
+  ExperienceSchema,
+  EducationSchema,
+  ProjectSchema,
+  ContactSchema,
+} from '../index';
 
 /**
  * Schema additions for the 2026-05-25 builder rework.
@@ -92,6 +98,36 @@ describe('builder-rework schema additions', () => {
     it('accepts certifications without credential_url (still optional)', () => {
       const [first] = certs.parse([{ name: 'AWS SAA', issuer: 'Amazon' }]);
       expect(first?.credential_url).toBeUndefined();
+    });
+  });
+
+  describe('optionalUrl bare-domain normalization (contact.linkedin/github/website)', () => {
+    // Resumes overwhelmingly write these as "linkedin.com/in/user", not
+    // "https://linkedin.com/in/user" — a real import bug where this
+    // failed validation and silently killed the entire profile save.
+    it('normalizes a bare domain to https://', () => {
+      const parsed = ContactSchema.parse({
+        name: 'Jane Doe',
+        linkedin: 'linkedin.com/in/janedoe',
+      });
+      expect(parsed.linkedin).toBe('https://linkedin.com/in/janedoe');
+    });
+
+    it('leaves an already-schemed URL unchanged', () => {
+      const parsed = ContactSchema.parse({
+        name: 'Jane Doe',
+        github: 'https://github.com/janedoe',
+      });
+      expect(parsed.github).toBe('https://github.com/janedoe');
+    });
+
+    it('still rejects text with no scheme and no dotted host', () => {
+      expect(() => ContactSchema.parse({ name: 'Jane Doe', website: 'not-a-url' })).toThrow();
+    });
+
+    it('still treats empty/placeholder strings as not provided', () => {
+      const parsed = ContactSchema.parse({ name: 'Jane Doe', linkedin: 'n/a' });
+      expect(parsed.linkedin).toBeUndefined();
     });
   });
 

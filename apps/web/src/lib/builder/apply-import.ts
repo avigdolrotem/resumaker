@@ -126,42 +126,55 @@ export function applyImportedProfile<T extends ProfileContent>(
     next.summary = imported.summary;
   }
 
-  if (opts.experience && imported.experience && imported.experience.length > 0) {
-    next.experience = imported.experience.map((e) => ({
-      company: e.company ?? '',
-      title: e.title ?? '',
-      start_date: e.start_date ?? '',
-      end_date: e.end_date ?? null,
-      is_current: e.is_current ?? false,
-      ...(e.location && { location: e.location }),
-      ...(e.description && { description: e.description }),
-      highlights: e.highlights ?? [],
-    }));
+  // Required-field entries (company/title, institution, project/cert name,
+  // award title) are dropped rather than defaulted to '' — the destination
+  // schema requires these non-empty, and one blanked-out entry must not
+  // fail validation for the ENTIRE save (contact/summary/skills included).
+  if (opts.experience && imported.experience) {
+    const valid = imported.experience.filter((e) => e.company?.trim() && e.title?.trim());
+    if (valid.length > 0) {
+      next.experience = valid.map((e) => ({
+        company: e.company!.trim(),
+        title: e.title!.trim(),
+        start_date: e.start_date ?? '',
+        end_date: e.end_date ?? null,
+        is_current: e.is_current ?? false,
+        ...(e.location && { location: e.location }),
+        ...(e.description && { description: e.description }),
+        highlights: e.highlights ?? [],
+      }));
+    }
   }
 
-  if (opts.education && imported.education && imported.education.length > 0) {
-    next.education = imported.education.map((e) => ({
-      institution: e.institution ?? '',
-      degree: e.degree ?? '',
-      start_date: e.start_date ?? '',
-      end_date: e.end_date ?? null,
-      is_current: e.is_current ?? false,
-      ...(e.field && { field: e.field }),
-      ...(e.gpa && { gpa: e.gpa }),
-      ...(e.description && { description: e.description }),
-    }));
+  if (opts.education && imported.education) {
+    const valid = imported.education.filter((e) => e.institution?.trim());
+    if (valid.length > 0) {
+      next.education = valid.map((e) => ({
+        institution: e.institution!.trim(),
+        degree: e.degree ?? '',
+        start_date: e.start_date ?? '',
+        end_date: e.end_date ?? null,
+        is_current: e.is_current ?? false,
+        ...(e.field && { field: e.field }),
+        ...(e.gpa && { gpa: e.gpa }),
+        ...(e.description && { description: e.description }),
+      }));
+    }
   }
 
-  if (opts.projects && imported.projects && imported.projects.length > 0) {
-    next.projects = imported.projects.map((p) => ({
-      name: p.name ?? '',
-      description: p.description ?? '',
-      is_ongoing: p.is_ongoing ?? false,
-      ...(p.technologies && { technologies: p.technologies }),
-      ...(p.url && { url: p.url }),
-      ...(p.start_date && { start_date: p.start_date }),
-      ...(p.end_date !== undefined && { end_date: p.end_date }),
-    }));
+  if (opts.projects && imported.projects) {
+    const valid = imported.projects.filter((p) => p.name?.trim());
+    if (valid.length > 0) {
+      next.projects = valid.map((p) => ({
+        name: p.name!.trim(),
+        description: p.description ?? '',
+        is_ongoing: p.is_ongoing ?? false,
+        ...(p.technologies && { technologies: p.technologies }),
+        ...(p.url && { url: p.url }),
+        ...(p.start_date && { start_date: p.start_date }),
+        ...(p.end_date !== undefined && { end_date: p.end_date }),
+      }));
+    }
   }
 
   if (opts.skills && imported.skills && imported.skills.length > 0) {
@@ -170,22 +183,28 @@ export function applyImportedProfile<T extends ProfileContent>(
     next.skills = [...current.skills, ...adds];
   }
 
-  if (opts.certifications && imported.certifications && imported.certifications.length > 0) {
-    next.certifications = imported.certifications.map((c) => ({
-      name: c.name ?? '',
-      ...(c.issuer && { issuer: c.issuer }),
-      ...(c.date && { date: c.date }),
-      ...(c.credential_url && { credential_url: c.credential_url }),
-    }));
+  if (opts.certifications && imported.certifications) {
+    const valid = imported.certifications.filter((c) => c.name?.trim());
+    if (valid.length > 0) {
+      next.certifications = valid.map((c) => ({
+        name: c.name!.trim(),
+        ...(c.issuer && { issuer: c.issuer }),
+        ...(c.date && { date: c.date }),
+        ...(c.credential_url && { credential_url: c.credential_url }),
+      }));
+    }
   }
 
-  if (opts.awards && imported.awards && imported.awards.length > 0) {
-    next.awards = imported.awards.map((a) => ({
-      title: a.title ?? '',
-      ...(a.issuer && { issuer: a.issuer }),
-      ...(a.date && { date: a.date }),
-      ...(a.description && { description: a.description }),
-    }));
+  if (opts.awards && imported.awards) {
+    const valid = imported.awards.filter((a) => a.title?.trim());
+    if (valid.length > 0) {
+      next.awards = valid.map((a) => ({
+        title: a.title!.trim(),
+        ...(a.issuer && { issuer: a.issuer }),
+        ...(a.date && { date: a.date }),
+        ...(a.description && { description: a.description }),
+      }));
+    }
   }
 
   if (opts.languages && imported.languages && imported.languages.length > 0) {

@@ -21,6 +21,9 @@ import { type ParsedImport, type ImportOpts, DEFAULT_OPTS } from '@/lib/builder/
 
 type Step = 'upload' | 'parsing' | 'preview' | 'error';
 
+type ImportError =
+  { kind: 'rate_limit'; retryAfterSeconds: number } | { kind: 'generic'; message: string };
+
 export interface ImportModalProps {
   open: boolean;
   onClose: () => void;
@@ -31,7 +34,7 @@ export function ImportModal({ open, onClose, onApply }: ImportModalProps) {
   const t = useTranslations('builder.import');
   const [step, setStep] = useState<Step>('upload');
   const [parsed, setParsed] = useState<ParsedImport | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ImportError | null>(null);
   const [opts, setOpts] = useState<ImportOpts>({ ...DEFAULT_OPTS });
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -45,11 +48,22 @@ export function ImportModal({ open, onClose, onApply }: ImportModalProps) {
       fd.append('file', file);
       const res = await fetch('/api/profile/import', { method: 'POST', body: fd });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? `Server returned ${res.status}`);
+      if (!res.ok) {
+        // Rate-limit gets its own copy — "Couldn't parse the file" is
+        // actively misleading here since the file was never even read;
+        // the request was rejected before parsing was attempted.
+        if (res.status === 429 && typeof data.retryAfterSeconds === 'number') {
+          setError({ kind: 'rate_limit', retryAfterSeconds: data.retryAfterSeconds });
+        } else {
+          setError({ kind: 'generic', message: data.error ?? `Server returned ${res.status}` });
+        }
+        setStep('error');
+        return;
+      }
       setParsed(data.profile);
       setStep('preview');
     } catch (e) {
-      setError((e as Error).message);
+      setError({ kind: 'generic', message: (e as Error).message });
       setStep('error');
     }
   }
@@ -133,10 +147,16 @@ export function ImportModal({ open, onClose, onApply }: ImportModalProps) {
           </div>
         )}
 
-        {step === 'error' && (
+        {step === 'error' && error && (
           <div className="text-destructive border-destructive/30 bg-destructive/10 rounded-xl border p-3 text-sm">
-            <p className="font-medium">{t('errorTitle')}</p>
-            <p className="text-xs">{error}</p>
+            <p className="font-medium">
+              {error.kind === 'rate_limit' ? t('rateLimitTitle') : t('errorTitle')}
+            </p>
+            <p className="text-xs">
+              {error.kind === 'rate_limit'
+                ? t('rateLimitBody', { minutes: Math.ceil(error.retryAfterSeconds / 60) })
+                : error.message}
+            </p>
             <Button type="button" size="sm" variant="outline" className="mt-3" onClick={reset}>
               {t('tryAgain')}
             </Button>

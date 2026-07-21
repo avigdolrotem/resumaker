@@ -718,6 +718,8 @@
       "parsing": "Claude is reading your resume…",
       "parsingHint": "Usually 5–15 seconds",
       "errorTitle": "Couldn't parse the file",
+      "rateLimitTitle": "Import limit reached",
+      "rateLimitBody": "You can import up to 5 resumes per hour. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
       "tryAgain": "Try again",
       "foundTitle": "What we found:",
       "strategyNote": "Replace strategy: experience / education / projects / certifications / awards REPLACE existing entries. Skills + languages MERGE (dedup by name). Contact fields overwrite only when non-empty.",
@@ -1335,7 +1337,8 @@
       "skip": "Skip for now",
       "finish": "Finish",
       "finishing": "Finishing…",
-      "finishFailed": "Could not finish setup — please try again"
+      "finishFailed": "Could not finish setup — please try again",
+      "saveFailed": "Save failed — check your connection and try this step again"
     }
   },
   "resumeDetail": {

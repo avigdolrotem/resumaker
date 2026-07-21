@@ -13,14 +13,33 @@ import { z } from 'zod';
  * profile has nothing there. Treat both the same as "not provided"
  * instead of failing `.url()` validation and 502ing the whole
  * generation over one empty field.
+ *
+ * Also: resumes overwhelmingly write these as a bare domain (e.g.
+ * "linkedin.com/in/username", no scheme) rather than a full URL — the
+ * parser faithfully extracts exactly what's on the page (by design, it's
+ * told not to guess), so this is the common case, not an edge case.
+ * Treat a schemeless string as shorthand for https:// instead of
+ * rejecting it; a value that's still not a valid URL after that (e.g.
+ * genuinely malformed text) still fails validation as before.
  */
 function optionalUrl(maxLength?: number) {
   const base = maxLength ? z.string().max(maxLength).url() : z.string().url();
   return z.preprocess((val) => {
-    if (typeof val === 'string' && ['', 'null', 'n/a', 'none'].includes(val.trim().toLowerCase())) {
+    if (typeof val !== 'string') return val;
+    const trimmed = val.trim();
+    if (['', 'null', 'n/a', 'none'].includes(trimmed.toLowerCase())) {
       return undefined;
     }
-    return val;
+    // Single-label hosts (e.g. "https://not-a-url") are valid URL syntax,
+    // so only treat it as a bare domain worth a https:// prepend when the
+    // part before the first /?# actually looks like host.tld — otherwise
+    // leave it for base.url() to reject exactly as before.
+    const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmed);
+    const host = trimmed.split(/[/?#]/, 1)[0] ?? '';
+    if (!hasScheme && host.includes('.')) {
+      return `https://${trimmed}`;
+    }
+    return trimmed;
   }, base.optional());
 }
 

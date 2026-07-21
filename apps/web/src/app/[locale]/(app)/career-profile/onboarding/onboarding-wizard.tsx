@@ -88,6 +88,7 @@ export function OnboardingWizard({
   }));
   const [stepIndex, setStepIndex] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -96,20 +97,29 @@ export function OnboardingWizard({
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEPS.length - 1;
 
-  async function persist(next: ProfileContent) {
+  async function persist(next: ProfileContent): Promise<boolean> {
     setContent(next);
     setSaving(true);
     try {
-      await fetch('/api/profile', {
+      const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(next),
       });
+      if (!res.ok) {
+        setSaveError(true);
+        toast.error(t('saveFailed'));
+        return false;
+      }
+      setSaveError(false);
+      return true;
     } catch {
-      // Non-fatal — the in-memory `content` state (which drives the UI
-      // and every later step) is already updated regardless, so a
-      // transient network blip here doesn't lose anything the user
-      // typed; the next successful save call will include it.
+      // Network failure — the in-memory `content` state (which drives
+      // the UI and every later step) is already updated regardless, but
+      // the server never got it, so flag it the same as an HTTP error.
+      setSaveError(true);
+      toast.error(t('saveFailed'));
+      return false;
     } finally {
       setSaving(false);
     }
@@ -123,6 +133,16 @@ export function OnboardingWizard({
     if (!isLast) {
       setStepIndex((i) => i + 1);
       return;
+    }
+    // A previous step's save may have failed (e.g. a validation error
+    // silently swallowed in the past — see persist()). Retry it before
+    // marking onboarding complete, since /complete-onboarding only flips
+    // a timestamp and never touches `content` itself: finishing on top
+    // of an unsaved `content` would look done while the profile stays
+    // empty server-side.
+    if (saveError) {
+      const ok = await persist(content);
+      if (!ok) return;
     }
     setFinishing(true);
     try {
@@ -153,6 +173,9 @@ export function OnboardingWizard({
             {t('stepCounter', { current: stepIndex + 1, total: STEPS.length })}
           </p>
           {saving && <p className="text-muted-foreground text-xs">{t('saving')}</p>}
+          {!saving && saveError && (
+            <p className="text-destructive text-xs font-medium">{t('saveFailed')}</p>
+          )}
         </div>
         <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
           <div
