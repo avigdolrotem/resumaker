@@ -8,6 +8,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { z } from 'zod';
 import { sanitizeInput, buildPrompt, validateOutput } from '@resumaker/ai-safety';
 import {
   PromptInjectionError,
@@ -16,7 +17,6 @@ import {
   ResumeSchema,
   type Resume,
   type Locale,
-  type Industry,
 } from '@resumaker/shared';
 import { db, schema } from '@/db';
 import { env } from '@/lib/env';
@@ -24,12 +24,25 @@ import { generateObject } from '@/lib/llm/provider';
 
 const MAX_TOKENS = env.LLM_MAX_TOKENS;
 
+/**
+ * What the LLM actually generates: the resume content plus the job
+ * identity extracted from the JD, in one call rather than a second
+ * round-trip. job_title/company_name aren't part of `Resume` itself
+ * (they describe the target job, not the person) — pulled back out
+ * right after generation and stored as resumes.jobTitle/companyName,
+ * which is what "My Resumes" displays instead of a free-text title.
+ */
+const GenerationOutputSchema = ResumeSchema.extend({
+  job_title: z.string().min(1).max(200),
+  company_name: z.string().min(1).max(200),
+});
+
 export interface GenerateResumeInput {
   userId: string;
   locale: Locale;
   jobDescription: string;
+  /** The user's canonical career profile content (ProfileContent shape). */
   userProfile: Record<string, unknown>;
-  industry?: Industry;
   /**
    * Gateway-format model string. Caller is responsible for resolving
    * the user preference + tier gate before passing this in. Falls back
@@ -40,6 +53,9 @@ export interface GenerateResumeInput {
 
 export interface GenerateResumeResult {
   resume: Resume;
+  /** Extracted from the JD by the same generation call — null if the LLM's output didn't parse. */
+  jobTitle: string | null;
+  companyName: string | null;
   generationId: string;
   durationMs: number;
   tokensUsed: { input: number; output: number };
@@ -68,7 +84,6 @@ export async function generateResume(input: GenerateResumeInput): Promise<Genera
     locale: input.locale,
     jobDescription: sanitized.cleaned,
     userProfile: input.userProfile,
-    ...(input.industry ? { industry: input.industry } : {}),
   });
 
   // ─── 3. Call the model with Zod-shaped structured output ───
@@ -76,12 +91,13 @@ export async function generateResume(input: GenerateResumeInput): Promise<Genera
   try {
     result = await generateObject({
       model,
-      schema: ResumeSchema,
+      schema: GenerationOutputSchema,
       system,
       prompt: user,
       maxOutputTokens: MAX_TOKENS,
       schemaName: 'resume',
-      schemaDescription: 'A tailored resume in the canonical Resume schema.',
+      schemaDescription:
+        'A tailored resume in the canonical Resume schema, plus the job_title and company_name extracted from the job description.',
     });
   } catch (err) {
     void recordGeneration({
@@ -116,6 +132,17 @@ export async function generateResume(input: GenerateResumeInput): Promise<Genera
     throw new ValidationError(`Output validation failed: ${validation.errors.join('; ')}`);
   }
 
+  // job_title/company_name aren't part of ResumeSchema, so
+  // validateOutput's ResumeSchema.safeParse() above silently dropped
+  // them from `validation.resume` (Zod objects ignore unknown keys by
+  // default) — pull them from the raw `result.object` instead, with
+  // their own narrow schema so a malformed pair degrades to null
+  // (falls back to the legacy `title` column) rather than failing the
+  // whole generation over 2 non-essential fields.
+  const jobIdentity = z
+    .object({ job_title: z.string().min(1).max(200), company_name: z.string().min(1).max(200) })
+    .safeParse(result.object);
+
   const durationMs = Date.now() - startedAt;
 
   const generationId = await recordGeneration({
@@ -135,6 +162,8 @@ export async function generateResume(input: GenerateResumeInput): Promise<Genera
 
   return {
     resume: validation.resume,
+    jobTitle: jobIdentity.success ? jobIdentity.data.job_title : null,
+    companyName: jobIdentity.success ? jobIdentity.data.company_name : null,
     generationId,
     durationMs,
     tokensUsed: {

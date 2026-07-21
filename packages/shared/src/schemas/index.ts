@@ -31,9 +31,6 @@ function optionalUrl(maxLength?: number) {
 export const LocaleSchema = z.enum(['he', 'en', 'ar', 'ru']);
 export type Locale = z.infer<typeof LocaleSchema>;
 
-export const IndustrySchema = z.enum(['tech', 'healthcare', 'finance', 'general']);
-export type Industry = z.infer<typeof IndustrySchema>;
-
 export const ContactSchema = z.object({
   name: z.string().min(1).max(200),
   email: z.string().email().optional(),
@@ -112,7 +109,6 @@ export const ResumeSchema = z.object({
   metadata: z.object({
     language: LocaleSchema,
     generated_at: z.string().datetime(),
-    industry: IndustrySchema.optional(),
     template: z.string().max(50),
   }),
   contact: ContactSchema,
@@ -154,6 +150,16 @@ export const ResumeSchema = z.object({
 });
 
 export type Resume = z.infer<typeof ResumeSchema>;
+
+/**
+ * A user's canonical career profile — the same content shape as a
+ * resume, minus generation metadata (language/template/timestamp,
+ * which are per-resume, not per-person). One per user; every generated
+ * resume tailors this shared source data to a specific job description
+ * rather than each resume owning its own independent copy.
+ */
+export const ProfileContentSchema = ResumeSchema.omit({ metadata: true });
+export type ProfileContent = z.infer<typeof ProfileContentSchema>;
 
 export const ATSScoreSchema = z.object({
   overall: z.number().min(0).max(100),

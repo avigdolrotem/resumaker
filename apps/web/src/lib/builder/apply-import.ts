@@ -16,7 +16,7 @@
  * lets users untick sections they don't want to import.
  */
 
-import type { Resume } from '@resumaker/shared';
+import type { ProfileContent } from '@resumaker/shared';
 import { normalizeLanguageLevel } from '@resumaker/shared';
 
 /**
@@ -102,12 +102,12 @@ export const DEFAULT_OPTS: ImportOpts = {
   languages: true,
 };
 
-export function applyImportedProfile(
-  current: Resume,
+export function applyImportedProfile<T extends ProfileContent>(
+  current: T,
   imported: ParsedImport,
   opts: ImportOpts = DEFAULT_OPTS,
-): Resume {
-  const next: Resume = { ...current };
+): T {
+  const next: T = { ...current };
 
   if (opts.contact) {
     next.contact = {

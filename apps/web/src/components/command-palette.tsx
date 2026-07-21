@@ -11,6 +11,8 @@ import {
   ArrowRight,
   LayoutDashboard,
   FilePlus2,
+  FileText,
+  IdCard,
   Mail,
   Settings,
   UserCircle,
@@ -53,6 +55,8 @@ type CommandItem = {
   href?:
     | '/dashboard'
     | '/builder'
+    | '/resumes'
+    | '/career-profile'
     | '/cover-letters'
     | '/cover-letters/new'
     | '/applications'
@@ -90,6 +94,21 @@ function buildItems(isAuthed: boolean, t: TFn): CommandItem[] {
       group: 'Actions',
       Icon: FilePlus2,
       href: '/builder',
+    },
+    {
+      id: 'resumes',
+      label: t('items.resumes'),
+      group: 'Navigate',
+      Icon: FileText,
+      href: '/resumes',
+    },
+    {
+      id: 'career-profile',
+      label: t('items.careerProfile'),
+      keywords: t('items.careerProfileKeywords'),
+      group: 'Navigate',
+      Icon: IdCard,
+      href: '/career-profile',
     },
     {
       id: 'cover-letter',

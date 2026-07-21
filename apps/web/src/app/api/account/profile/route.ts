@@ -8,7 +8,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
-import { and, eq, isNull } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
@@ -39,18 +39,19 @@ export async function GET(): Promise<Response> {
   });
   if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // Pull the user's most recent resume — its `content` is the closest
-  // approximation we have of a "profile" right now (until a dedicated
-  // user_profile table lands with the L5 job-hunt port). Letter
-  // generation uses name + skills + summary from this.
-  const recent = await db.query.resumes.findFirst({
-    where: and(eq(schema.resumes.userId, session.user.id), isNull(schema.resumes.deletedAt)),
-    orderBy: (r, { desc }) => [desc(r.updatedAt)],
+  // Read the real career profile (@/api/profile is the canonical CRUD
+  // for it — this just re-shapes the fields callers here already
+  // expect, e.g. cover-letter generation using name + skills + summary
+  // to personalize letters). Previously this faked a "profile" by
+  // reading whatever resume the user last touched, which broke the
+  // moment resumes stopped each owning an independent content copy.
+  const profileRow = await db.query.profiles.findFirst({
+    where: eq(schema.profiles.userId, session.user.id),
     columns: { content: true },
   });
-  const profileFromResume: Record<string, unknown> =
-    recent?.content && typeof recent.content === 'object'
-      ? extractProfileFields(recent.content as Record<string, unknown>)
+  const profileContent =
+    profileRow?.content && typeof profileRow.content === 'object'
+      ? extractProfileFields(profileRow.content as Record<string, unknown>)
       : {};
 
   return NextResponse.json({
@@ -58,12 +59,12 @@ export async function GET(): Promise<Response> {
     profile: {
       name: user.name ?? '',
       email: user.email,
-      ...profileFromResume,
+      ...profileContent,
     },
   });
 }
 
-/** Pull the contact + skills fields out of a resume.content JSON blob. */
+/** Pull the contact + skills fields out of the career profile's content JSON. */
 function extractProfileFields(content: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   const contact =

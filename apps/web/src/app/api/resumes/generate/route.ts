@@ -1,7 +1,10 @@
 /**
  * POST /api/resumes/generate
  *
- * Generate a tailored resume from a job description.
+ * Generate a tailored resume from a job description, using the
+ * caller's own canonical career profile as source data (read
+ * server-side — the client no longer submits userProfile, since
+ * there's exactly one profile per user, not one per generation).
  *
  * Auth: required (Better Auth session)
  * Rate limit: per RATE_LIMIT_PER_USER_PER_HOUR
@@ -10,15 +13,15 @@
  *   {
  *     "jobDescription"?: string,
  *     "jobUrl"?: string,
- *     "userProfile": { name, email, ... },
- *     "locale"?: "he" | "en" | "auto",
- *     "industry"?: "tech" | "healthcare" | "finance" | "general"
+ *     "locale"?: "he" | "en" | "auto"
  *   }
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
+import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
+import { db, schema } from '@/db';
 import { parseJD } from '@/lib/jd-parser';
 import { generateResume } from '@/lib/llm';
 import { resolveModelForUser } from '@/lib/llm/resolve-model';
@@ -33,9 +36,7 @@ const BodySchema = z
   .object({
     jobDescription: z.string().max(20_000).optional(),
     jobUrl: z.string().url().optional(),
-    userProfile: z.record(z.unknown()),
     locale: z.enum(['he', 'en', 'auto']).default('auto'),
-    industry: z.enum(['tech', 'healthcare', 'finance', 'general']).optional(),
   })
   .refine((d) => d.jobDescription || d.jobUrl, {
     message: 'Either jobDescription or jobUrl required',
@@ -100,8 +101,26 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
-  // ─── 3b. Bound userProfile size to cap LLM cost / prompt injection surface ───
-  const profileBytes = JSON.stringify(body.userProfile).length;
+  // ─── 3b. Load the caller's career profile — the source data for
+  // every generation now, not a per-request payload. A user who hasn't
+  // finished onboarding (or skipped it entirely) has no profile row;
+  // the builder UI should route them to /career-profile first, but
+  // this is the actual enforcement point.
+  const profileRow = await db.query.profiles.findFirst({
+    where: eq(schema.profiles.userId, session.user.id),
+  });
+  if (!profileRow || !profileRow.onboardingCompletedAt) {
+    return NextResponse.json(
+      { error: 'Complete your career profile before generating a resume', code: 'NO_PROFILE' },
+      { status: 409 },
+    );
+  }
+  const userProfile = profileRow.content as Record<string, unknown>;
+
+  // Bound profile size to cap LLM cost / prompt injection surface — a
+  // defensive check, not expected to trip in practice since PATCH
+  // /api/profile enforces per-field limits via ProfileContentSchema.
+  const profileBytes = JSON.stringify(userProfile).length;
   if (profileBytes > 50_000) {
     return NextResponse.json(
       { error: 'Profile too large (max 50KB)', code: 'PAYLOAD_TOO_LARGE' },
@@ -124,25 +143,40 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
-  // ─── 5. Sanitize userProfile string fields (audit H-1 fix) ───
-  const sanitizedProfile: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(body.userProfile)) {
+  // ─── 5. Sanitize userProfile string fields, recursively (audit H-1
+  // fix). The profile is now the full nested ProfileContent shape
+  // (contact object, experience/education/projects arrays of objects,
+  // etc.) rather than the old flat basic-mode form — a shallow
+  // one-level walk would silently skip almost all of it (nested
+  // objects and arrays-of-objects both fell into the pass-through
+  // branch), so this recurses into every level instead.
+  let rejectedField: string | null = null;
+  function sanitizeDeep(value: unknown, path: string): unknown {
+    if (rejectedField) return value;
     if (typeof value === 'string') {
       const result = sanitizeInput(value);
       if (result.rejected) {
-        return NextResponse.json(
-          { error: 'Profile field contains suspicious content', field: key },
-          { status: 400 },
-        );
+        rejectedField = path;
+        return value;
       }
-      sanitizedProfile[key] = result.cleaned;
-    } else if (Array.isArray(value)) {
-      sanitizedProfile[key] = value.map((v) =>
-        typeof v === 'string' ? sanitizeInput(v).cleaned : v,
-      );
-    } else {
-      sanitizedProfile[key] = value;
+      return result.cleaned;
     }
+    if (Array.isArray(value)) {
+      return value.map((v, i) => sanitizeDeep(v, `${path}[${i}]`));
+    }
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(
+        Object.entries(value).map(([k, v]) => [k, sanitizeDeep(v, path ? `${path}.${k}` : k)]),
+      );
+    }
+    return value;
+  }
+  const sanitizedProfile = sanitizeDeep(userProfile, '') as Record<string, unknown>;
+  if (rejectedField) {
+    return NextResponse.json(
+      { error: 'Profile field contains suspicious content', field: rejectedField },
+      { status: 400 },
+    );
   }
 
   // ─── 6. Generate ───
@@ -154,11 +188,12 @@ export async function POST(req: NextRequest): Promise<Response> {
       jobDescription: jdResult.cleaned,
       userProfile: sanitizedProfile,
       modelString,
-      ...(body.industry ? { industry: body.industry } : {}),
     });
 
     return NextResponse.json({
       resume: result.resume,
+      jobTitle: result.jobTitle,
+      companyName: result.companyName,
       generationId: result.generationId,
       metadata: {
         durationMs: result.durationMs,

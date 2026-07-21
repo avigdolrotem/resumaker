@@ -51,7 +51,7 @@ export function ResumePreview({
   const presentLabel = isHebrew ? 'היום' : 'Present';
 
   return (
-    <Card style={viewTransitionName ? { viewTransitionName } : undefined}>
+    <Card interactive={false} style={viewTransitionName ? { viewTransitionName } : undefined}>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>{resume.contact.name}</span>

@@ -1,8 +1,20 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  /**
+   * Whether this card should lift + grow its shadow on hover — the
+   * "liquid settle" affordance for clickable cards (dashboard tiles,
+   * template picker). Defaults to true to preserve existing behavior
+   * everywhere; set false for cards that are just a static, read-only
+   * surface (e.g. ResumePreview) — otherwise resting the mouse over
+   * them while reading reads as a false "this is clickable" signal.
+   */
+  interactive?: boolean;
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, interactive = true, ...props }, ref) => (
     <div
       ref={ref}
       className={cn(
@@ -12,7 +24,8 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
         // still look correct if `backdrop-filter` isn't supported.
         // `duration-slow`/`ease-smooth` = the "liquid settle" curve for
         // hover lift, per design-system/components/cards.html.
-        'glass bg-card/70 text-card-foreground ease-smooth hover:shadow-glass-lg relative overflow-hidden rounded-2xl transition-all duration-500 hover:-translate-y-1',
+        'glass bg-card/70 text-card-foreground ease-smooth relative overflow-hidden rounded-2xl transition-all duration-500',
+        interactive && 'hover:shadow-glass-lg hover:-translate-y-1',
         className,
       )}
       {...props}

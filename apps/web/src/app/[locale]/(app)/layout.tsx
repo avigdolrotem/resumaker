@@ -18,7 +18,20 @@ import { AnimatedMeshBg } from '@/components/ui-effects/animated-mesh-bg';
  * must be reachable from every page, including the authenticated app
  * shell. Also satisfies the Privacy Law disclosure requirement that
  * data subjects can always find the contact for data-subject requests.
+ *
+ * `force-dynamic` here (not just on individual pages) because every
+ * page under this layout renders session- and DB-state-dependent
+ * content. Without it, pages that don't separately opt out (most of
+ * them — admin/layout.tsx and a couple of billing pages already did
+ * this locally, but the root layout never did) can get served a
+ * cached response that doesn't reflect a just-written DB change —
+ * caught via /career-profile/onboarding: completing the wizard
+ * updates profiles.onboardingCompletedAt, but revisiting the page
+ * kept showing the wizard instead of redirecting, because the
+ * server component's own DB read wasn't re-executing per request.
  */
+export const dynamic = 'force-dynamic';
+
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {

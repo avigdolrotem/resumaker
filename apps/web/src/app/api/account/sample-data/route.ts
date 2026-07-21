@@ -90,8 +90,9 @@ export async function POST(): Promise<Response> {
     .values({
       userId: guard.user.id,
       title: 'דוגמה — דנה כהן',
+      jobTitle: 'מהנדסת תוכנה בכירה',
+      companyName: 'חברת הייטק לדוגמה',
       locale: 'he',
-      industry: 'tech',
       templateId: 'modern',
       content: SAMPLE_RESUME,
     })

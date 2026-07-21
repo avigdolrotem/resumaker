@@ -1,28 +1,32 @@
 'use client';
 
-import type { Resume } from '@resumaker/shared';
+import type { ProfileContent } from '@resumaker/shared';
 import { useTranslations } from 'next-intl';
 import { User, Mail, Phone, MapPin, Linkedin, Github, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SectionCard } from '../section-card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 type T = ReturnType<typeof useTranslations>;
 
-/** Contact card — single SectionCard with all contact fields. */
+/**
+ * Contact card — always shows the editable form directly, unlike every
+ * other section here (which default to a compact read view behind a
+ * SectionCard's click-to-expand). Contact is the first thing anyone
+ * fills in — on the onboarding wizard's own dedicated step, and again
+ * at the top of the always-visible profile page — so hiding it behind
+ * an extra click just adds friction to the one section that's never
+ * actually optional.
+ */
 
-type Contact = Resume['contact'];
+type Contact = ProfileContent['contact'];
 
 export interface ContactCardProps {
   contact: Contact;
   onChange: (next: Contact) => void;
-  editingId: string | null;
-  onSetEditingId: (id: string | null) => void;
 }
 
-const CARD_ID = 'contact';
-
-export function ContactCard({ contact, onChange, editingId, onSetEditingId }: ContactCardProps) {
+export function ContactCard({ contact, onChange }: ContactCardProps) {
   const t = useTranslations('builder.sections.contact');
   return (
     <section className="space-y-3">
@@ -32,60 +36,11 @@ export function ContactCard({ contact, onChange, editingId, onSetEditingId }: Co
           {t('heading')}
         </h2>
       </header>
-      <SectionCard
-        data={contact}
-        isEditing={editingId === CARD_ID}
-        onEnterEdit={() => onSetEditingId(CARD_ID)}
-        onSave={(next) => {
-          onChange(next);
-          onSetEditingId(null);
-        }}
-        onCancel={() => onSetEditingId(null)}
-        onDelete={() => {
-          // Contact can't be deleted — reset to a minimal valid value instead.
-          onChange({ name: contact.name });
-          onSetEditingId(null);
-        }}
-        renderRead={(c) => readContact(c, t)}
-        renderEdit={(c, onChangeDraft) => editContact(c, onChangeDraft, t)}
-        deleteConfirmText={t('resetConfirm')}
-      />
+      <Card interactive={false}>
+        <CardHeader className="sr-only">{t('heading')}</CardHeader>
+        <CardContent className="pt-6">{editContact(contact, onChange, t)}</CardContent>
+      </Card>
     </section>
-  );
-}
-
-function readContact(c: Contact, t: T) {
-  return (
-    <div>
-      <p className="text-foreground text-lg font-semibold">{c.name || t('namePlaceholder')}</p>
-      {(c.email || c.phone || c.location) && (
-        <p className="text-muted-foreground mt-0.5 text-sm">
-          {[c.email, c.phone, c.location].filter(Boolean).join(' · ')}
-        </p>
-      )}
-      {(c.linkedin || c.github || c.website) && (
-        <div className="text-muted-foreground mt-1 flex flex-wrap gap-3 text-xs">
-          {c.linkedin && (
-            <span className="inline-flex items-center gap-1">
-              <Linkedin className="h-3 w-3" />
-              {t('links.linkedin')}
-            </span>
-          )}
-          {c.github && (
-            <span className="inline-flex items-center gap-1">
-              <Github className="h-3 w-3" />
-              {t('links.github')}
-            </span>
-          )}
-          {c.website && (
-            <span className="inline-flex items-center gap-1">
-              <Globe className="h-3 w-3" />
-              {t('links.website')}
-            </span>
-          )}
-        </div>
-      )}
-    </div>
   );
 }
 

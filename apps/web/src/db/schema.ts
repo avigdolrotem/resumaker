@@ -224,9 +224,23 @@ export const resumes = pgTable(
     userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    // Auto-derived from jobTitle/companyName going forward (see
+    // lib/resumes/title.ts) — kept as a real column rather than always
+    // computed on read because it's what search/PDF-filename/version
+    // history already key off, and older rows predating jobTitle/
+    // companyName only have this to fall back on.
     title: varchar('title', { length: 255 }).notNull(),
+    /**
+     * The job this resume was tailored for — nullable because resumes
+     * created before this column existed have neither; the UI falls
+     * back to `title` for those rather than showing "null — null".
+     * Replaces the old free-text `title` as a resume's primary identity
+     * (a person has ONE profile now — see `profiles` below — so distinct
+     * resumes are distinguished by which job they target, not by name).
+     */
+    jobTitle: varchar('job_title', { length: 200 }),
+    companyName: varchar('company_name', { length: 200 }),
     locale: varchar('locale', { length: 8 }).notNull(),
-    industry: varchar('industry', { length: 32 }),
     templateId: varchar('template_id', { length: 50 }).notNull(),
     content: jsonb('content').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -263,7 +277,6 @@ export const generations = pgTable(
     status: varchar('status', { length: 32 }).notNull(),
     error: text('error'),
     detectedLocale: varchar('detected_locale', { length: 8 }),
-    industry: varchar('industry', { length: 32 }),
     inputLength: integer('input_length'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -276,6 +289,35 @@ export const generations = pgTable(
     resumeIdIdx: index('generations_resume_id_idx').on(t.resumeId),
   }),
 );
+
+// ─── CAREER PROFILE ─────────────────────────────────────────────────
+
+/**
+ * One canonical career profile per user — contact/summary/experience/
+ * education/projects/skills/certifications/awards/languages. Replaces
+ * the old per-resume "basic mode" profile form: instead of re-entering
+ * (or drifting copies of) the same personal data on every resume, users
+ * fill this in once — via the onboarding wizard or an import — and every
+ * generated resume tailors this same source data to a specific job
+ * description. `content` shape is `ProfileContentSchema` from
+ * @resumaker/shared (== ResumeSchema minus `metadata`).
+ *
+ * This directly replaces the stopgap in
+ * app/api/account/profile/route.ts that used to fake a "profile" by
+ * reading the user's most-recently-updated resume's content.
+ */
+export const profiles = pgTable('profiles', {
+  userId: text('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  content: jsonb('content').notNull(),
+  /** Preferred language for generated resumes; independent of users.locale (UI language). */
+  resumeLocale: varchar('resume_locale', { length: 8 }).notNull().default('auto'),
+  /** Null until the first-run wizard is finished (or explicitly skipped). */
+  onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const atsScores = pgTable(
   'ats_scores',
@@ -942,6 +984,7 @@ export const schema = {
   resumes,
   resumeVersions,
   generations,
+  profiles,
   atsScores,
   auditLog,
   coverLetters,

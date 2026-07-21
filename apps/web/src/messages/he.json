@@ -26,7 +26,8 @@
     "signOut": "התנתקות",
     "switchToLanguage": "עבור ל{name}",
     "switchToDarkMode": "עבור למצב כהה",
-    "switchToLightMode": "עבור למצב בהיר"
+    "switchToLightMode": "עבור למצב בהיר",
+    "careerProfile": "פרופיל קריירה"
   },
   "legalNav": {
     "privacy": "פרטיות",
@@ -72,7 +73,10 @@
       "pricing": "מחירים",
       "pricingKeywords": "תוכניות עלות מנוי",
       "signIn": "התחברות",
-      "signUp": "הרשמה"
+      "signUp": "הרשמה",
+      "resumes": "קורות החיים שלי",
+      "careerProfile": "פרופיל קריירה",
+      "careerProfileKeywords": "קשר ניסיון השכלה כישורים"
     },
     "footer": {
       "quickNav": "ניווט מהיר",
@@ -200,7 +204,8 @@
       "delete": "מחיקה",
       "downloadPdf": "הורד PDF",
       "confirmDelete": "למחוק?",
-      "cancel": "ביטול"
+      "cancel": "ביטול",
+      "view": "צפייה"
     }
   },
   "templates": {
@@ -758,7 +763,10 @@
       "title": "עריכה מתקדמת",
       "saved": "נשמר",
       "import": "ייבוא"
-    }
+    },
+    "needsProfile": "השלם קודם את פרופיל הקריירה שלך — כל קורות חיים מותאמים ממנו.",
+    "completeProfile": "השלם פרופיל קריירה",
+    "viewResume": "צפה בקורות החיים"
   },
   "ats": {
     "score": "ניקוד ATS",
@@ -1305,5 +1313,30 @@
         "body": "עקבו אחרי כל המועמדויות, קבלו ציון התאמה, שמרו מועדפים ותנו לנו לייבא משרות אוטומטית. הצטרפו לרשימת ההמתנה ונשלח לכם אימייל כשהגישה תיפתח."
       }
     }
+  },
+  "careerProfile": {
+    "title": "פרופיל קריירה",
+    "subtitle": "פרטי הקשר, הניסיון והכישורים שלך — כל קורות חיים שתיצור מתאימים את אלה למשרה.",
+    "saving": "שומר…",
+    "saveFailed": "השמירה נכשלה",
+    "import": "ייבוא מקובץ",
+    "onboarding": {
+      "stepCounter": "שלב {current} מתוך {total}",
+      "saving": "שומר…",
+      "importPrompt": "כבר יש לך קורות חיים?",
+      "importHint": "ייבא אותם כדי למלא את כל הסעיפים בבת אחת — עדיין תוכל לערוך הכול אחר כך.",
+      "import": "ייבוא מקובץ",
+      "nameRequired": "הזן את שמך כדי להמשיך",
+      "back": "הקודם",
+      "continue": "המשך",
+      "skip": "דלג בינתיים",
+      "finish": "סיום",
+      "finishing": "מסיים…",
+      "finishFailed": "לא ניתן היה לסיים את ההגדרה — אנא נסה שוב"
+    }
+  },
+  "resumeDetail": {
+    "backToList": "כל קורות החיים",
+    "downloadPdf": "הורד PDF"
   }
 }

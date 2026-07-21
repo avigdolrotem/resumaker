@@ -28,7 +28,14 @@ export default async function ResumesPage() {
   const resumes = await db.query.resumes.findMany({
     where: and(eq(schema.resumes.userId, userId), isNull(schema.resumes.deletedAt)),
     orderBy: [desc(schema.resumes.updatedAt)],
-    columns: { id: true, title: true, locale: true, industry: true, updatedAt: true },
+    columns: {
+      id: true,
+      title: true,
+      jobTitle: true,
+      companyName: true,
+      locale: true,
+      updatedAt: true,
+    },
   });
 
   const scoresByResumeId = await getLatestScoresByResumeId(resumes.map((r) => r.id));

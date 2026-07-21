@@ -7,6 +7,7 @@
  *
  * What's included:
  *   - user             — profile (no password hash, no session token)
+ *   - careerProfile    — the canonical contact/summary/experience/etc. profile
  *   - subscription     — tier, provider, lifecycle dates (no card data)
  *   - resumes          — full content (incl. soft-deleted)
  *   - resumeVersions   — append-only edit history
@@ -55,6 +56,7 @@ export async function GET(): Promise<Response> {
   // First wave — everything keyed directly on userId.
   const [
     user,
+    careerProfile,
     subscription,
     resumes,
     coverLetters,
@@ -84,6 +86,9 @@ export async function GET(): Promise<Response> {
         updatedAt: true,
         deletedAt: true,
       },
+    }),
+    db.query.profiles.findFirst({
+      where: eq(schema.profiles.userId, userId),
     }),
     db.query.subscriptions.findFirst({
       where: eq(schema.subscriptions.userId, userId),
@@ -122,7 +127,6 @@ export async function GET(): Promise<Response> {
         completionTokens: true,
         durationMs: true,
         detectedLocale: true,
-        industry: true,
         inputLength: true,
         createdAt: true,
         // Deliberately excluded: inputJdHash (sha256), error stack traces
@@ -208,6 +212,7 @@ export async function GET(): Promise<Response> {
   const exportData = {
     exportGeneratedAt: new Date().toISOString(),
     user,
+    careerProfile,
     subscription,
     resumes,
     resumeVersions,

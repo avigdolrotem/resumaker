@@ -11,6 +11,7 @@ import {
   CreditCard,
   FilePlus2,
   Gift,
+  IdCard,
   LogOut,
   Mail,
   Plus,
@@ -201,6 +202,17 @@ export function UserAvatarMenu() {
               >
                 <UserCircle className="h-4 w-4" />
                 {t('profile')}
+              </Link>
+            </li>
+            <li role="none">
+              <Link
+                role="menuitem"
+                href="/career-profile"
+                onClick={() => setOpen(false)}
+                className={menuItemClass}
+              >
+                <IdCard className="h-4 w-4" />
+                {t('careerProfile')}
               </Link>
             </li>
             <li role="none">

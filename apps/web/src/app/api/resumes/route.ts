@@ -10,7 +10,9 @@ import { and, eq, desc, isNull } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { ResumeSchema } from '@resumaker/shared';
+import { DEFAULT_TEMPLATE_ID } from '@resumaker/resume-engine';
 import { canCreateResume, getActiveResumeCount, getUserTier } from '@/lib/billing/tier';
+import { deriveResumeTitle } from '@/lib/resumes/title';
 
 export async function GET(): Promise<Response> {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -24,8 +26,9 @@ export async function GET(): Promise<Response> {
     columns: {
       id: true,
       title: true,
+      jobTitle: true,
+      companyName: true,
       locale: true,
-      industry: true,
       templateId: true,
       createdAt: true,
       updatedAt: true,
@@ -43,12 +46,13 @@ export async function GET(): Promise<Response> {
 const MAX_RESUME_BYTES = 64 * 1024;
 
 const PostBodySchema = z.object({
-  title: z.string().min(1).max(255),
+  jobTitle: z.string().max(200).nullable().optional(),
+  companyName: z.string().max(200).nullable().optional(),
   content: ResumeSchema.refine(
     (c) => JSON.stringify(c).length <= MAX_RESUME_BYTES,
     `Resume content exceeds ${MAX_RESUME_BYTES / 1024} KB limit`,
   ),
-  templateId: z.string().max(50).default('modern'),
+  templateId: z.string().max(50).default(DEFAULT_TEMPLATE_ID),
 });
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -91,9 +95,10 @@ export async function POST(req: NextRequest): Promise<Response> {
     .insert(schema.resumes)
     .values({
       userId: session.user.id,
-      title: body.title,
+      title: deriveResumeTitle(body.jobTitle, body.companyName, body.content.metadata.language),
+      jobTitle: body.jobTitle ?? null,
+      companyName: body.companyName ?? null,
       locale: body.content.metadata.language,
-      industry: body.content.metadata.industry ?? null,
       templateId: body.templateId,
       content: body.content,
     })

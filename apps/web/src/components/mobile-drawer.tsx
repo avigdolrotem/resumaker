@@ -26,6 +26,7 @@ import {
   Archive,
   MessageSquare,
   Gift,
+  IdCard,
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
@@ -50,6 +51,7 @@ type LinkHref =
   | '/dashboard'
   | '/builder'
   | '/resumes'
+  | '/career-profile'
   | '/cover-letters'
   | '/cover-letters/new'
   | '/applications'
@@ -112,6 +114,7 @@ function authedItems(t: NavT, tLegal: LegalT): Item[] {
     { kind: 'link', href: '/dashboard', label: t('dashboard'), Icon: LayoutDashboard },
     { kind: 'link', href: '/builder', label: t('newResume'), Icon: FilePlus2 },
     { kind: 'link', href: '/resumes', label: t('myResumes'), Icon: FileText },
+    { kind: 'link', href: '/career-profile', label: t('careerProfile'), Icon: IdCard },
     { kind: 'link', href: '/cover-letters', label: t('coverLetters'), Icon: Mail },
     { kind: 'link', href: '/applications', label: t('applications'), Icon: TrendingUp },
     { kind: 'link', href: '/jobs', label: t('jobs'), Icon: Briefcase },

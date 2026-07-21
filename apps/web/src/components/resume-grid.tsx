@@ -11,8 +11,7 @@ import {
   FileText,
   Plus,
   MoreVertical,
-  Pencil,
-  Copy,
+  Eye,
   Trash2,
   Download,
 } from 'lucide-react';
@@ -28,8 +27,10 @@ import {
 interface ResumeRow {
   id: string;
   title: string;
+  /** Null for resumes created before job_title/company_name existed — falls back to `title`. */
+  jobTitle: string | null;
+  companyName: string | null;
   locale: string;
-  industry: string | null;
   updatedAt: Date | string;
   /** Latest ATS score for this resume, if it's ever been scored. */
   atsScore?: number | null;
@@ -78,7 +79,8 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
     return localList.filter(
       (r) =>
         r.title.toLowerCase().includes(q) ||
-        (r.industry ?? '').toLowerCase().includes(q) ||
+        (r.jobTitle ?? '').toLowerCase().includes(q) ||
+        (r.companyName ?? '').toLowerCase().includes(q) ||
         r.locale.toLowerCase().includes(q),
     );
   }, [localList, query]);
@@ -101,24 +103,6 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
     } finally {
       setBusyId(null);
       setConfirmingDelete(null);
-    }
-  }
-
-  async function handleDuplicate(id: string) {
-    setBusyId(id);
-    try {
-      const res = await fetch(`/api/resumes/${id}/duplicate`, { method: 'POST' });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        toast.error(data?.error ?? (isHebrew ? 'שכפול נכשל' : 'Duplicate failed'));
-        return;
-      }
-      toast.success(isHebrew ? 'שוכפל' : 'Duplicated');
-      router.refresh();
-    } catch (err) {
-      toast.error((err as Error).message);
-    } finally {
-      setBusyId(null);
     }
   }
 
@@ -190,9 +174,11 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
                 style={{ viewTransitionName: `resume-card-${r.id}` }}
               >
                 <Link
-                  href={{ pathname: '/builder', query: { id: r.id } }}
+                  href={`/resumes/${r.id}`}
                   className="block"
-                  aria-label={isHebrew ? `ערוך ${r.title}` : `Edit ${r.title}`}
+                  aria-label={
+                    isHebrew ? `צפה ב${r.jobTitle ?? r.title}` : `View ${r.jobTitle ?? r.title}`
+                  }
                   onClick={(e) => {
                     // Let modified clicks (open in new tab/window) and
                     // non-primary buttons behave natively — the morph
@@ -201,14 +187,21 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
                       return;
                     }
                     e.preventDefault();
-                    navigateWithViewTransition(() =>
-                      router.push({ pathname: '/builder', query: { id: r.id } }),
-                    );
+                    navigateWithViewTransition(() => router.push(`/resumes/${r.id}`));
                   }}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
-                      <CardTitle className="line-clamp-1 pe-8 text-base">{r.title}</CardTitle>
+                      <div className="min-w-0 pe-8">
+                        <CardTitle className="line-clamp-1 text-base">
+                          {r.jobTitle ?? r.title}
+                        </CardTitle>
+                        {r.companyName && (
+                          <p className="text-muted-foreground line-clamp-1 text-sm">
+                            {r.companyName}
+                          </p>
+                        )}
+                      </div>
                       <ArrowRight className="text-brand-400 group-hover:text-brand-600 h-4 w-4 flex-shrink-0 transition group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
                     </div>
                   </CardHeader>
@@ -217,11 +210,6 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
                       <span className="bg-brand-50 text-brand-700 rounded-full px-2 py-0.5 font-medium">
                         {r.locale.toUpperCase()}
                       </span>
-                      {r.industry && (
-                        <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-medium">
-                          {r.industry}
-                        </span>
-                      )}
                       {typeof r.atsScore === 'number' && (
                         <span
                           className={`rounded-full px-2 py-0.5 font-medium ${atsScoreBadgeClass(r.atsScore)}`}
@@ -250,9 +238,7 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
                   onAskDelete={() => setConfirmingDelete(r.id)}
                   onCancelDelete={() => setConfirmingDelete(null)}
                   onConfirmDelete={() => handleDelete(r.id)}
-                  onDuplicate={() => handleDuplicate(r.id)}
-                  labelEdit={t('edit')}
-                  labelDuplicate={t('duplicate')}
+                  labelView={t('view')}
                   labelDelete={t('delete')}
                   labelDownload={t('downloadPdf')}
                   labelConfirmDelete={t('confirmDelete')}
@@ -275,9 +261,7 @@ interface MenuProps {
   onAskDelete: () => void;
   onCancelDelete: () => void;
   onConfirmDelete: () => void;
-  onDuplicate: () => void;
-  labelEdit: string;
-  labelDuplicate: string;
+  labelView: string;
   labelDelete: string;
   labelDownload: string;
   labelConfirmDelete: string;
@@ -292,9 +276,7 @@ function CardActionsMenu({
   onAskDelete,
   onCancelDelete,
   onConfirmDelete,
-  onDuplicate,
-  labelEdit,
-  labelDuplicate,
+  labelView,
   labelDelete,
   labelDownload,
   labelConfirmDelete,
@@ -373,25 +355,13 @@ function CardActionsMenu({
         >
           <Link
             role="menuitem"
-            href={{ pathname: '/builder', query: { id: resumeId } }}
+            href={`/resumes/${resumeId}`}
             className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5"
             onClick={() => setOpen(false)}
           >
-            <Pencil className="h-3.5 w-3.5" />
-            {labelEdit}
+            <Eye className="h-3.5 w-3.5" />
+            {labelView}
           </Link>
-          <button
-            type="button"
-            role="menuitem"
-            className="hover:bg-accent flex w-full items-center gap-2 px-3 py-1.5 text-start"
-            onClick={() => {
-              setOpen(false);
-              onDuplicate();
-            }}
-          >
-            <Copy className="h-3.5 w-3.5" />
-            {labelDuplicate}
-          </button>
           <a
             role="menuitem"
             href={`/api/resumes/${resumeId}/pdf`}

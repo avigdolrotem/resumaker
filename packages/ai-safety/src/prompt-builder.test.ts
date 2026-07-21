@@ -42,25 +42,6 @@ describe('buildPrompt - structure', () => {
     });
     expect(r.system).toMatch(/in English/);
   });
-
-  it('includes industry hint when provided', () => {
-    const r = buildPrompt({
-      locale: 'en',
-      jobDescription: 'Role',
-      userProfile: {},
-      industry: 'tech',
-    });
-    expect(r.user).toContain('<industry>tech</industry>');
-  });
-
-  it('does not include industry tag when not provided', () => {
-    const r = buildPrompt({
-      locale: 'en',
-      jobDescription: 'Role',
-      userProfile: {},
-    });
-    expect(r.user).not.toContain('<industry>');
-  });
 });
 
 describe('buildPrompt - injection resistance', () => {

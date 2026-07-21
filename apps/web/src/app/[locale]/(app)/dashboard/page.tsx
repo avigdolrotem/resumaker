@@ -46,6 +46,7 @@ export default async function DashboardPage() {
     [avgScoreRow],
     [coverLetterCount],
     [atsScoreCount],
+    careerProfile,
     recentResumes,
     recentActivity,
     recentCoverLetters,
@@ -78,6 +79,10 @@ export default async function DashboardPage() {
       .from(schema.atsScores)
       .innerJoin(schema.resumes, eq(schema.atsScores.resumeId, schema.resumes.id))
       .where(and(eq(schema.resumes.userId, userId), isNull(schema.resumes.deletedAt))),
+    db.query.profiles.findFirst({
+      where: eq(schema.profiles.userId, userId),
+      columns: { onboardingCompletedAt: true },
+    }),
     db.query.resumes.findMany({
       where: and(eq(schema.resumes.userId, userId), isNull(schema.resumes.deletedAt)),
       orderBy: [desc(schema.resumes.updatedAt)],
@@ -114,7 +119,7 @@ export default async function DashboardPage() {
   // Narrow next-intl's broader locale type to the union our components accept.
   const uiLocale: 'he' | 'en' = locale === 'he' ? 'he' : 'en';
 
-  // Onboarding checklist — shown until all 4 steps are complete.
+  // Onboarding checklist — shown until all 5 steps are complete.
   const onboardingSteps = [
     {
       id: 'signup',
@@ -123,11 +128,20 @@ export default async function DashboardPage() {
       done: true,
     },
     {
+      id: 'career_profile',
+      title: isHebrew ? 'מלא את פרופיל הקריירה שלך' : 'Fill in your career profile',
+      description: isHebrew
+        ? 'פרטי קשר, ניסיון וכישורים — פעם אחת, משמש לכל קורות החיים שתיצור'
+        : 'Contact info, experience, and skills — fill it once, every resume tailors from it',
+      done: Boolean(careerProfile?.onboardingCompletedAt),
+      href: '/career-profile/onboarding' as const,
+    },
+    {
       id: 'first_resume',
       title: isHebrew ? 'בנה את קורות החיים הראשונים' : 'Build your first resume',
       description: isHebrew
-        ? 'הדבק תיאור משרה, ה-AI יבנה לך גרסה מותאמת'
-        : 'Paste a job description, AI tailors a resume to it',
+        ? 'הדבק תיאור משרה, ה-AI יתאים לך קורות חיים מהפרופיל שלך'
+        : 'Paste a job description, AI tailors a resume to it from your profile',
       done: stats.resumes > 0,
       href: '/builder' as const,
     },

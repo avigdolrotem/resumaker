@@ -12,7 +12,13 @@ interface ChecklistItem {
   /** Whether the user has completed this step. */
   done: boolean;
   /** Link target — undefined for already-done items. */
-  href?: '/builder' | '/cover-letters/new' | '/account/billing' | '/profile' | '/resumes';
+  href?:
+    | '/builder'
+    | '/cover-letters/new'
+    | '/account/billing'
+    | '/profile'
+    | '/resumes'
+    | '/career-profile/onboarding';
 }
 
 /**

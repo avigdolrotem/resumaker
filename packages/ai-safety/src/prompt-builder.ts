@@ -9,7 +9,6 @@ export interface PromptInput {
   locale: Locale;
   jobDescription: string;
   userProfile: Record<string, unknown>;
-  industry?: 'tech' | 'healthcare' | 'finance' | 'general';
 }
 
 export interface BuiltPrompt {
@@ -59,7 +58,12 @@ const RESUME_SCHEMA_DESCRIPTION = `Required JSON schema:
     ... (up to 10 entries)
   ],
   "skills": [string, ...] (up to 50)
-}`;
+}
+
+Also return, as sibling top-level fields (not inside the object above):
+  "job_title": string — the job title from the job description
+  "company_name": string — the hiring company's name from the job description
+If either is genuinely not stated in the job description, make your best reasonable inference from context rather than leaving it blank.`;
 
 const SYSTEM_PROMPT_HE = `אתה עוזר מקצועי לכתיבת קורות חיים. תפקידך היחיד הוא ליצור קורות חיים מובנים ב-JSON.
 
@@ -96,7 +100,7 @@ ${input.jobDescription}
 ${JSON.stringify(input.userProfile, null, 2)}
 </user_profile>
 
-${input.industry ? `<industry>${input.industry}</industry>\n\n` : ''}Generate a resume in JSON matching the schema.`;
+Generate a resume in JSON matching the schema.`;
 
   return { system, user };
 }

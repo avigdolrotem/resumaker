@@ -229,9 +229,10 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
                     className="hover:bg-accent/40 -mx-2 flex items-center justify-between rounded-lg px-2 py-2 text-sm transition-colors"
                   >
                     <div>
-                      <p className="font-medium">{r.title}</p>
+                      <p className="font-medium">{r.jobTitle ?? r.title}</p>
                       <p className="text-muted-foreground text-xs">
-                        {r.locale.toUpperCase()} · {r.industry ?? 'general'}
+                        {r.locale.toUpperCase()}
+                        {r.companyName && ` · ${r.companyName}`}
                       </p>
                     </div>
                     <span className="text-muted-foreground text-xs" dir="ltr">

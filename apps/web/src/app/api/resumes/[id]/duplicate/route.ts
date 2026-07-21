@@ -3,6 +3,12 @@
  *
  * Useful for "use as starting point" workflow. New resume starts fresh
  * (no version history).
+ *
+ * Currently has no UI caller — "Duplicate" was removed from the resume
+ * grid's actions menu when per-resume hand-editing went away (content
+ * now comes from the shared career profile, not independent per-resume
+ * copies). Left working rather than deleted in case a future "start a
+ * new resume from this one" flow wants it back.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -63,8 +69,9 @@ export async function POST(
     .values({
       userId: session.user.id,
       title: newTitle,
+      jobTitle: original.jobTitle,
+      companyName: original.companyName,
       locale: original.locale,
-      industry: original.industry,
       templateId: original.templateId,
       content: original.content,
     })

@@ -26,7 +26,8 @@
     "signOut": "Sign out",
     "switchToLanguage": "Switch to {name}",
     "switchToDarkMode": "Switch to dark mode",
-    "switchToLightMode": "Switch to light mode"
+    "switchToLightMode": "Switch to light mode",
+    "careerProfile": "Career profile"
   },
   "legalNav": {
     "privacy": "Privacy",
@@ -72,7 +73,10 @@
       "pricing": "Pricing",
       "pricingKeywords": "plans cost subscription",
       "signIn": "Sign in",
-      "signUp": "Sign up"
+      "signUp": "Sign up",
+      "resumes": "My resumes",
+      "careerProfile": "Career profile",
+      "careerProfileKeywords": "contact experience education skills"
     },
     "footer": {
       "quickNav": "Quick nav",
@@ -200,7 +204,8 @@
       "delete": "Delete",
       "downloadPdf": "Download PDF",
       "confirmDelete": "Delete?",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "view": "View"
     }
   },
   "templates": {
@@ -758,7 +763,10 @@
       "title": "Advanced editor",
       "saved": "Saved",
       "import": "Import"
-    }
+    },
+    "needsProfile": "Complete your career profile first — every resume is tailored from it.",
+    "completeProfile": "Complete career profile",
+    "viewResume": "View resume"
   },
   "ats": {
     "score": "ATS Score",
@@ -1305,5 +1313,30 @@
         "body": "Track every job you've applied to, score your fit, save favourites, and let us auto-import postings. Join the waitlist and we'll email you when access opens."
       }
     }
+  },
+  "careerProfile": {
+    "title": "Career profile",
+    "subtitle": "Your contact info, experience, and skills — every resume you generate tailors this to the job.",
+    "saving": "Saving…",
+    "saveFailed": "Save failed",
+    "import": "Import from file",
+    "onboarding": {
+      "stepCounter": "Step {current} of {total}",
+      "saving": "Saving…",
+      "importPrompt": "Already have a resume?",
+      "importHint": "Import it to fill in every section at once — you can still edit anything after.",
+      "import": "Import from file",
+      "nameRequired": "Enter your name to continue",
+      "back": "Back",
+      "continue": "Continue",
+      "skip": "Skip for now",
+      "finish": "Finish",
+      "finishing": "Finishing…",
+      "finishFailed": "Could not finish setup — please try again"
+    }
+  },
+  "resumeDetail": {
+    "backToList": "All resumes",
+    "downloadPdf": "Download PDF"
   }
 }
