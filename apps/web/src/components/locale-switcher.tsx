@@ -1,10 +1,11 @@
 'use client';
 
 import { usePathname, useRouter } from '@/i18n/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import type { Locale } from '@/i18n/routing';
 
 export function LocaleSwitcher() {
+  const t = useTranslations('nav');
   const router = useRouter();
   const pathname = usePathname();
   const currentLocale = useLocale() as Locale;
@@ -26,7 +27,7 @@ export function LocaleSwitcher() {
           { locale: otherLocale },
         )
       }
-      aria-label={`Switch to ${fullName}`}
+      aria-label={t('switchToLanguage', { name: fullName })}
       // Same shape/hover treatment as ThemeToggle — the two sit
       // side by side everywhere (marketing header, app header, auth
       // layout) and read as one matched "preferences" pair now instead

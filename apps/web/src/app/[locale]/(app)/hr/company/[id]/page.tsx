@@ -23,7 +23,8 @@ interface Company {
 }
 
 export default function CompanyDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { id, locale } = useParams<{ id: string; locale: string }>();
+  const isHe = locale === 'he';
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -59,12 +60,12 @@ export default function CompanyDetailPage() {
         body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
       });
       if (res.ok) {
-        setStatus('Invite sent');
+        setStatus(isHe ? 'ההזמנה נשלחה' : 'Invite sent');
         setInviteEmail('');
         void load();
       } else {
         const data = (await res.json()) as { error: string };
-        setStatus(data.error ?? 'Error');
+        setStatus(data.error ?? (isHe ? 'שגיאה' : 'Error'));
       }
     } finally {
       setInviteSending(false);
@@ -77,11 +78,13 @@ export default function CompanyDetailPage() {
   }
 
   if (loading && !company) {
-    return <p className="text-muted-foreground p-6">Loading…</p>;
+    return <p className="text-muted-foreground p-6">{isHe ? 'טוען…' : 'Loading…'}</p>;
   }
 
   if (!company) {
-    return <p className="text-muted-foreground p-6">Company not found.</p>;
+    return (
+      <p className="text-muted-foreground p-6">{isHe ? 'החברה לא נמצאה.' : 'Company not found.'}</p>
+    );
   }
 
   return (
@@ -102,7 +105,7 @@ export default function CompanyDetailPage() {
       {/* Member list — glass-subtle, flat rows (scannable list, not chrome) */}
       <div className="glass-subtle overflow-hidden rounded-2xl">
         <CardHeader>
-          <CardTitle>Team members</CardTitle>
+          <CardTitle>{isHe ? 'חברי הצוות' : 'Team members'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
           {company.companyMembers.map((m) => (
@@ -116,7 +119,7 @@ export default function CompanyDetailPage() {
               </div>
               {m.role !== 'owner' && (
                 <Button size="sm" variant="destructive" onClick={() => handleKick(m.id)}>
-                  Remove
+                  {isHe ? 'הסר' : 'Remove'}
                 </Button>
               )}
             </div>
@@ -126,12 +129,12 @@ export default function CompanyDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Invite a team member</CardTitle>
+          <CardTitle>{isHe ? 'הזמן חבר צוות' : 'Invite a team member'}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={(e) => void handleInvite(e)} className="space-y-3">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{isHe ? 'דוא״ל' : 'Email'}</Label>
               <Input
                 id="email"
                 type="email"
@@ -141,19 +144,19 @@ export default function CompanyDetailPage() {
               />
             </div>
             <div>
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="role">{isHe ? 'תפקיד' : 'Role'}</Label>
               <select
                 id="role"
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as 'recruiter' | 'viewer')}
                 className="border-input bg-background/60 focus-visible:border-brand-400/60 focus-visible:ring-brand-500/18 ease-smooth block w-full rounded-xl border px-3.5 py-2 text-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
               >
-                <option value="recruiter">Recruiter</option>
-                <option value="viewer">Viewer</option>
+                <option value="recruiter">{isHe ? 'מגייס' : 'Recruiter'}</option>
+                <option value="viewer">{isHe ? 'צופה' : 'Viewer'}</option>
               </select>
             </div>
             <Button type="submit" disabled={inviteSending}>
-              {inviteSending ? 'Sending…' : 'Send invite'}
+              {inviteSending ? (isHe ? 'שולח…' : 'Sending…') : isHe ? 'שלח הזמנה' : 'Send invite'}
             </Button>
             {status && <p className="text-muted-foreground text-sm">{status}</p>}
           </form>

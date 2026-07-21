@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Sun, Moon } from 'lucide-react';
 import { THEME_COOKIE, type Theme, isTheme } from '@/lib/theme';
 
@@ -19,6 +20,7 @@ import { THEME_COOKIE, type Theme, isTheme } from '@/lib/theme';
  * so SSR stays correct.
  */
 export function ThemeToggle() {
+  const t = useTranslations('nav');
   const [theme, setTheme] = useState<Theme>('light');
 
   // Hydrate from the cookie on mount. We DON'T re-apply the DOM here —
@@ -56,7 +58,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+      aria-label={theme === 'light' ? t('switchToDarkMode') : t('switchToLightMode')}
       className="hover:bg-accent/60 hover:text-brand-700 dark:hover:text-brand-100 text-foreground dark:text-muted-foreground/50 ease-snappy relative inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full text-sm transition-all duration-200 active:scale-90"
     >
       {/* Crossfade + rotate between the two icons rather than an

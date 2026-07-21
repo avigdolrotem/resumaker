@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { authClient } from '@/lib/auth-client';
 import { Button } from './ui/button';
 
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function OAuthButtons({ showGoogle, showGitHub, callbackURL = '/dashboard' }: Props) {
+  const t = useTranslations('auth.oauth');
   if (!showGoogle && !showGitHub) return null;
 
   return (
@@ -22,7 +24,7 @@ export function OAuthButtons({ showGoogle, showGitHub, callbackURL = '/dashboard
           <span className="border-border w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background text-muted-foreground px-2">or</span>
+          <span className="bg-background text-muted-foreground px-2">{t('or')}</span>
         </div>
       </div>
 
@@ -34,7 +36,7 @@ export function OAuthButtons({ showGoogle, showGitHub, callbackURL = '/dashboard
             className="w-full"
             onClick={() => authClient.signIn.social({ provider: 'google', callbackURL })}
           >
-            <GoogleIcon /> Continue with Google
+            <GoogleIcon /> {t('continueWith', { provider: 'Google' })}
           </Button>
         )}
         {showGitHub && (
@@ -44,7 +46,7 @@ export function OAuthButtons({ showGoogle, showGitHub, callbackURL = '/dashboard
             className="w-full"
             onClick={() => authClient.signIn.social({ provider: 'github', callbackURL })}
           >
-            <GitHubIcon /> Continue with GitHub
+            <GitHubIcon /> {t('continueWith', { provider: 'GitHub' })}
           </Button>
         )}
       </div>

@@ -480,17 +480,17 @@ export default function BuilderPage() {
           <div className="glass-subtle flex flex-wrap items-center justify-between gap-3 rounded-2xl p-3">
             <div className="flex items-center gap-2">
               <Sparkles className="text-brand-500 h-4 w-4" />
-              <span className="text-foreground text-sm font-medium">Advanced editor</span>
+              <span className="text-foreground text-sm font-medium">{t('toolbar.title')}</span>
               {savedId && (
                 <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
-                  <CheckIcon className="h-3 w-3 text-green-500" /> Saved
+                  <CheckIcon className="h-3 w-3 text-green-500" /> {t('toolbar.saved')}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-2">
               <Button type="button" size="sm" variant="outline" onClick={() => setImportOpen(true)}>
                 <Upload className="me-1 h-3.5 w-3.5" />
-                Import
+                {t('toolbar.import')}
               </Button>
               <Button type="button" size="sm" onClick={handleAdvancedSave} disabled={saving}>
                 {saving ? (
@@ -498,7 +498,7 @@ export default function BuilderPage() {
                 ) : (
                   <SaveIcon className="me-1 h-3.5 w-3.5" />
                 )}
-                {saving ? 'Saving…' : 'Save resume'}
+                {saving ? t('actions.saving') : t('actions.save')}
               </Button>
             </div>
           </div>

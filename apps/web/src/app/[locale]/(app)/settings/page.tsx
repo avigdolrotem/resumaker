@@ -110,7 +110,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-[200px_1fr]">
-        <nav className="space-y-1" aria-label="Settings sections">
+        <nav className="space-y-1" aria-label={t('sectionsNav')}>
           {visibleTabs.map((it) => {
             const Icon = it.icon;
             const active = tab === it.id;

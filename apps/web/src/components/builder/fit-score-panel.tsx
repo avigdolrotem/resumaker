@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Resume } from '@resumaker/shared';
 import { CheckCircle, AlertCircle, Zap, Loader2 } from 'lucide-react';
 
@@ -27,6 +28,7 @@ export interface FitScorePanelProps {
 }
 
 export function FitScorePanel({ resume, jobDescription }: FitScorePanelProps) {
+  const t = useTranslations('builder.fitScore');
   const [score, setScore] = useState<FitScore | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +82,7 @@ export function FitScorePanel({ resume, jobDescription }: FitScorePanelProps) {
   return (
     <div className="glass-subtle mb-3 rounded-2xl p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-foreground text-sm font-semibold">Job fit</h3>
+        <h3 className="text-foreground text-sm font-semibold">{t('title')}</h3>
         {loading && <Loader2 className="text-muted-foreground h-3 w-3 animate-spin" />}
       </div>
       {score ? (
@@ -94,7 +96,7 @@ export function FitScorePanel({ resume, jobDescription }: FitScorePanelProps) {
           )}
           {score.strengths.length > 0 && (
             <div className="mt-2">
-              <p className="text-muted-foreground text-xs font-medium">Strengths</p>
+              <p className="text-muted-foreground text-xs font-medium">{t('strengths')}</p>
               <div className="mt-1 flex flex-wrap gap-1">
                 {score.strengths.map((s) => (
                   <span
@@ -109,7 +111,7 @@ export function FitScorePanel({ resume, jobDescription }: FitScorePanelProps) {
           )}
           {score.missing_keywords.length > 0 && (
             <div className="mt-2">
-              <p className="text-muted-foreground text-xs font-medium">Missing</p>
+              <p className="text-muted-foreground text-xs font-medium">{t('missing')}</p>
               <div className="mt-1 flex flex-wrap gap-1">
                 {score.missing_keywords.map((k) => (
                   <span
@@ -126,9 +128,7 @@ export function FitScorePanel({ resume, jobDescription }: FitScorePanelProps) {
       ) : error ? (
         <p className="text-destructive mt-1 text-xs">{error}</p>
       ) : (
-        <p className="text-muted-foreground mt-1 text-xs">
-          Scoring after you stop editing for 5 seconds…
-        </p>
+        <p className="text-muted-foreground mt-1 text-xs">{t('scoringHint')}</p>
       )}
     </div>
   );

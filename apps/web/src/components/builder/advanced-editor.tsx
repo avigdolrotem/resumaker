@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Resume } from '@resumaker/shared';
 import { ContactCard } from './sections/contact-card';
 import { SummaryCard } from './sections/summary-card';
@@ -31,12 +32,13 @@ export interface AdvancedEditorProps {
 }
 
 export function AdvancedEditor({ resume, onChange, jobDescription }: AdvancedEditorProps) {
+  const t = useTranslations('builder.advancedEditor');
   const [editingId, setEditingId] = useState<string | null>(null);
 
   function trySetEditingId(next: string | null) {
     if (editingId && next && editingId !== next) {
       // Same browser confirm dialog as job-app — quick and predictable.
-      const ok = window.confirm('Save or discard the current edits first?');
+      const ok = window.confirm(t('confirmDiscard'));
       if (!ok) return;
     }
     setEditingId(next);

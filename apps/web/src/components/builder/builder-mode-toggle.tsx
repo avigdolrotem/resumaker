@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Sparkles, ListChecks } from 'lucide-react';
 
 /**
@@ -28,21 +29,24 @@ export function BuilderModeToggle({
   mode: BuilderMode;
   onChange: (m: BuilderMode) => void;
 }) {
+  const t = useTranslations('builder.mode');
   return (
     <div className="glass-subtle inline-flex items-center gap-1 rounded-2xl p-1">
       <ModeButton
         active={mode === 'basic'}
         onClick={() => onChange('basic')}
         Icon={Sparkles}
-        label="Basic"
-        hint="AI-assisted"
+        label={t('basic')}
+        hint={t('basicHint')}
+        ariaLabel={t('ariaLabel', { label: t('basic'), hint: t('basicHint') })}
       />
       <ModeButton
         active={mode === 'advanced'}
         onClick={() => onChange('advanced')}
         Icon={ListChecks}
-        label="Advanced"
-        hint="Full control"
+        label={t('advanced')}
+        hint={t('advancedHint')}
+        ariaLabel={t('ariaLabel', { label: t('advanced'), hint: t('advancedHint') })}
       />
     </div>
   );
@@ -54,19 +58,21 @@ function ModeButton({
   Icon,
   label,
   hint,
+  ariaLabel,
 }: {
   active: boolean;
   onClick: () => void;
   Icon: typeof Sparkles;
   label: string;
   hint: string;
+  ariaLabel: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      aria-label={`${label} — ${hint}`}
+      aria-label={ariaLabel}
       className={`ease-snappy group relative flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-200 active:scale-[0.96] ${
         active ? 'text-white' : 'text-muted-foreground hover:text-foreground'
       }`}

@@ -23,7 +23,10 @@
     "billing": "חיוב",
     "referral": "הזמן חבר",
     "account": "חשבון",
-    "signOut": "התנתקות"
+    "signOut": "התנתקות",
+    "switchToLanguage": "עבור ל{name}",
+    "switchToDarkMode": "עבור למצב כהה",
+    "switchToLightMode": "עבור למצב בהיר"
   },
   "legalNav": {
     "privacy": "פרטיות",
@@ -174,6 +177,10 @@
       "accountPendingDeletion": "כבר קיים חשבון עם כתובת אימייל זו שמתוזמן למחיקה. התחברו כדי לשחזר אותו.",
       "accountSuspended": "החשבון הזה הושעה. אנא פנו לתמיכה.",
       "accountDeleted": "החשבון הזה נמחק ולא ניתן עוד לגשת אליו."
+    },
+    "oauth": {
+      "continueWith": "המשך עם {provider}",
+      "or": "או"
     }
   },
   "dashboard": {
@@ -672,6 +679,21 @@
         "placeholder": "הוספת כישור (לדוגמה: TypeScript)",
         "max": "מקסימום 50 כישורים — הסר חלק כדי להוסיף עוד.",
         "remove": "הסרת {skill}"
+      },
+      "languages": {
+        "heading": "שפות",
+        "nameLabel": "שם השפה",
+        "levelLabel": "רמה",
+        "namePlaceholder": "לדוגמה: עברית, אנגלית",
+        "add": "הוספה",
+        "remove": "הסרת {name}",
+        "levels": {
+          "native": "שפת אם",
+          "fluent": "שוטף",
+          "professional": "מקצועי",
+          "conversational": "שיחתי",
+          "basic": "בסיסי"
+        }
       }
     },
     "import": {
@@ -709,6 +731,33 @@
         "skills": "{count} כישורים",
         "empty": "—"
       }
+    },
+    "aiRewrite": {
+      "rewriteWithAi": "שכתב עם AI",
+      "rewriting": "משכתב…",
+      "tryAgain": "נסה שוב",
+      "undoRewrite": "בטל שכתוב"
+    },
+    "mode": {
+      "basic": "בסיסי",
+      "basicHint": "בעזרת AI",
+      "advanced": "מתקדם",
+      "advancedHint": "שליטה מלאה",
+      "ariaLabel": "{label} — {hint}"
+    },
+    "fitScore": {
+      "title": "התאמה למשרה",
+      "strengths": "חוזקות",
+      "missing": "חסר",
+      "scoringHint": "הציון מחושב 5 שניות לאחר הפסקת העריכה…"
+    },
+    "advancedEditor": {
+      "confirmDiscard": "שמור או בטל את השינויים הנוכחיים לפני שתמשיך."
+    },
+    "toolbar": {
+      "title": "עריכה מתקדמת",
+      "saved": "נשמר",
+      "import": "ייבוא"
     }
   },
   "ats": {
@@ -906,7 +955,8 @@
       "unlinkFailed": "לא ניתן לבטל את הקישור",
       "linkFailed": "לא ניתן היה להתחיל התחברות עם {provider}",
       "noPasswordWarning": "לא הגדרת סיסמה לחשבון. הוסף אחת בחלק האבטחה למעלה לפני שתבטל את הקישור לספק ה-OAuth היחיד שלך — אחרת תינעל מחוץ לחשבון."
-    }
+    },
+    "sectionsNav": "קטעי הגדרות"
   },
   "import": {
     "button": "ייבא PDF / TXT",
@@ -989,7 +1039,8 @@
       "subtitle": "התוכנית שלך פעילה. אפשר להתחיל ליצור.",
       "cta": "חזרה לאזור האישי"
     },
-    "canceled": "התשלום בוטל. אפשר לנסות שוב מתי שתרצה."
+    "canceled": "התשלום בוטל. אפשר לנסות שוב מתי שתרצה.",
+    "portalFailed": "פתיחת פורטל החיוב נכשלה"
   },
   "hr": {
     "teams": {
@@ -1135,7 +1186,9 @@
     "copy": "העתק ללוח",
     "copied": "הועתק",
     "regenerate": "נסה גרסה אחרת",
-    "empty": "הדבק תיאור משרה כדי לקבל מכתב מותאם אישית."
+    "empty": "הדבק תיאור משרה כדי לקבל מכתב מותאם אישית.",
+    "saved": "נשמר",
+    "saveFailed": "השמירה נכשלה"
   },
   "admin": {
     "audit": {

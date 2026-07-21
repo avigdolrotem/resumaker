@@ -107,10 +107,10 @@ export default function NewCoverLetterPage() {
       });
       const data = await res.json();
       if (res.ok && data.id) {
-        toast.success('Saved');
+        toast.success(t('saved'));
         setSavedId(data.id);
       } else {
-        toast.error(data.error ?? 'Save failed');
+        toast.error(data.error ?? t('saveFailed'));
       }
     } catch (err) {
       toast.error((err as Error).message);

@@ -23,7 +23,10 @@
     "billing": "Billing",
     "referral": "Refer a friend",
     "account": "Account",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "switchToLanguage": "Switch to {name}",
+    "switchToDarkMode": "Switch to dark mode",
+    "switchToLightMode": "Switch to light mode"
   },
   "legalNav": {
     "privacy": "Privacy",
@@ -174,6 +177,10 @@
       "accountPendingDeletion": "You already have an account with this email that's scheduled for deletion. Sign in to restore it.",
       "accountSuspended": "This account has been suspended. Please contact support.",
       "accountDeleted": "This account has been deleted and can no longer be accessed."
+    },
+    "oauth": {
+      "continueWith": "Continue with {provider}",
+      "or": "or"
     }
   },
   "dashboard": {
@@ -672,6 +679,21 @@
         "placeholder": "Add a skill (e.g. TypeScript)",
         "max": "Maximum 50 skills — remove some to add more.",
         "remove": "Remove {skill}"
+      },
+      "languages": {
+        "heading": "Languages",
+        "nameLabel": "Language name",
+        "levelLabel": "Level",
+        "namePlaceholder": "e.g. Hebrew, English",
+        "add": "Add",
+        "remove": "Remove {name}",
+        "levels": {
+          "native": "Native",
+          "fluent": "Fluent",
+          "professional": "Professional",
+          "conversational": "Conversational",
+          "basic": "Basic"
+        }
       }
     },
     "import": {
@@ -709,6 +731,33 @@
         "skills": "{count} skills",
         "empty": "—"
       }
+    },
+    "aiRewrite": {
+      "rewriteWithAi": "Rewrite with AI",
+      "rewriting": "Rewriting…",
+      "tryAgain": "Try again",
+      "undoRewrite": "Undo rewrite"
+    },
+    "mode": {
+      "basic": "Basic",
+      "basicHint": "AI-assisted",
+      "advanced": "Advanced",
+      "advancedHint": "Full control",
+      "ariaLabel": "{label} — {hint}"
+    },
+    "fitScore": {
+      "title": "Job fit",
+      "strengths": "Strengths",
+      "missing": "Missing",
+      "scoringHint": "Scoring after you stop editing for 5 seconds…"
+    },
+    "advancedEditor": {
+      "confirmDiscard": "Save or discard the current edits first?"
+    },
+    "toolbar": {
+      "title": "Advanced editor",
+      "saved": "Saved",
+      "import": "Import"
     }
   },
   "ats": {
@@ -906,7 +955,8 @@
       "unlinkFailed": "Could not unlink",
       "linkFailed": "Could not start {provider} sign-in",
       "noPasswordWarning": "You don't have a password set. Add one in the security section above before unlinking your only OAuth provider — otherwise you'll be locked out."
-    }
+    },
+    "sectionsNav": "Settings sections"
   },
   "import": {
     "button": "Import PDF / TXT",
@@ -989,7 +1039,8 @@
       "subtitle": "Your plan is active. You can start building now.",
       "cta": "Back to dashboard"
     },
-    "canceled": "Checkout canceled. Try again whenever you're ready."
+    "canceled": "Checkout canceled. Try again whenever you're ready.",
+    "portalFailed": "Failed to open billing portal"
   },
   "hr": {
     "teams": {
@@ -1135,7 +1186,9 @@
     "copy": "Copy to clipboard",
     "copied": "Copied",
     "regenerate": "Try another version",
-    "empty": "Paste a job description to generate a tailored cover letter."
+    "empty": "Paste a job description to generate a tailored cover letter.",
+    "saved": "Saved",
+    "saveFailed": "Save failed"
   },
   "admin": {
     "audit": {

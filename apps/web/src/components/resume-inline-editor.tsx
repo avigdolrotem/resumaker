@@ -211,6 +211,7 @@ export function ResumeInlineEditor({ resumeId, initialContent, isHebrew, onSaved
               values={item.highlights ?? []}
               onChange={(arr) => onItemChange({ ...item, highlights: arr })}
               placeholder={isHebrew ? 'הוסף הישג' : 'Add a highlight'}
+              isHebrew={isHebrew}
             />
           </div>
         )}
@@ -263,6 +264,7 @@ export function ResumeInlineEditor({ resumeId, initialContent, isHebrew, onSaved
             values={content.skills}
             onChange={(arr) => update('skills', arr)}
             placeholder={isHebrew ? 'הוסף כישור' : 'Add a skill'}
+            isHebrew={isHebrew}
           />
         </CardContent>
       </Card>
@@ -460,11 +462,13 @@ function StringArrayEditor({
   values,
   onChange,
   placeholder,
+  isHebrew,
 }: {
   label: string;
   values: string[];
   onChange: (arr: string[]) => void;
   placeholder: string;
+  isHebrew: boolean;
 }) {
   return (
     <div className="space-y-2">
@@ -485,7 +489,7 @@ function StringArrayEditor({
               variant="ghost"
               size="sm"
               onClick={() => onChange(values.filter((_, j) => j !== i))}
-              aria-label="Remove"
+              aria-label={isHebrew ? 'הסר' : 'Remove'}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -542,7 +546,7 @@ function ListSection<T>({
                   className="h-7 w-7 p-0"
                   disabled={i === 0}
                   onClick={() => onChange(moveItem(items, i, -1))}
-                  aria-label="Move up"
+                  aria-label={isHebrew ? 'הזז למעלה' : 'Move up'}
                 >
                   <ArrowUp className="h-3.5 w-3.5" />
                 </Button>
@@ -553,7 +557,7 @@ function ListSection<T>({
                   className="h-7 w-7 p-0"
                   disabled={i === items.length - 1}
                   onClick={() => onChange(moveItem(items, i, 1))}
-                  aria-label="Move down"
+                  aria-label={isHebrew ? 'הזז למטה' : 'Move down'}
                 >
                   <ArrowDown className="h-3.5 w-3.5" />
                 </Button>

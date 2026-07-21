@@ -166,7 +166,7 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
               type="button"
               onClick={() => setQuery('')}
               className="text-muted-foreground hover:text-foreground absolute end-3 top-1/2 -translate-y-1/2"
-              aria-label="Clear"
+              aria-label={isHebrew ? 'נקה' : 'Clear'}
             >
               <X className="h-4 w-4" />
             </button>

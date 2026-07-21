@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Resume } from '@resumaker/shared';
 import { type LanguageLevel } from '@resumaker/shared';
 import { Languages, Plus, X } from 'lucide-react';
@@ -18,20 +19,20 @@ import { Label } from '@/components/ui/label';
 
 type Language = NonNullable<Resume['languages']>[number];
 
-const LEVELS: Array<{ value: LanguageLevel; label: string }> = [
-  { value: 'native', label: 'Native' },
-  { value: 'fluent', label: 'Fluent' },
-  { value: 'professional', label: 'Professional' },
-  { value: 'conversational', label: 'Conversational' },
-  { value: 'basic', label: 'Basic' },
-];
-
 export interface LanguagesSectionProps {
   languages: Language[];
   onChange: (languages: Language[]) => void;
 }
 
 export function LanguagesSection({ languages, onChange }: LanguagesSectionProps) {
+  const t = useTranslations('builder.sections.languages');
+  const LEVELS: Array<{ value: LanguageLevel; label: string }> = [
+    { value: 'native', label: t('levels.native') },
+    { value: 'fluent', label: t('levels.fluent') },
+    { value: 'professional', label: t('levels.professional') },
+    { value: 'conversational', label: t('levels.conversational') },
+    { value: 'basic', label: t('levels.basic') },
+  ];
   const [name, setName] = useState('');
   const [level, setLevel] = useState<LanguageLevel>('professional');
 
@@ -52,7 +53,7 @@ export function LanguagesSection({ languages, onChange }: LanguagesSectionProps)
       <header className="flex items-center justify-between">
         <h2 className="text-foreground flex items-center gap-2 text-lg font-bold">
           <Languages className="text-brand-500 h-4 w-4" />
-          Languages
+          {t('heading')}
           {languages.length > 0 && (
             <span className="text-muted-foreground text-sm font-normal">({languages.length})</span>
           )}
@@ -74,7 +75,7 @@ export function LanguagesSection({ languages, onChange }: LanguagesSectionProps)
                 <button
                   type="button"
                   onClick={() => onChange(languages.filter((x) => x.name !== l.name))}
-                  aria-label={`Remove ${l.name}`}
+                  aria-label={t('remove', { name: l.name })}
                   className="hover:text-brand-900 dark:hover:text-brand-50 ease-snappy transition-colors duration-200"
                 >
                   <X className="h-3 w-3" />
@@ -86,7 +87,7 @@ export function LanguagesSection({ languages, onChange }: LanguagesSectionProps)
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-[140px] flex-1">
             <Label htmlFor="lang-name" className="sr-only">
-              Language name
+              {t('nameLabel')}
             </Label>
             <Input
               id="lang-name"
@@ -98,13 +99,13 @@ export function LanguagesSection({ languages, onChange }: LanguagesSectionProps)
                   add();
                 }
               }}
-              placeholder="e.g. Hebrew, English"
+              placeholder={t('namePlaceholder')}
               disabled={languages.length >= 10}
             />
           </div>
           <div>
             <Label htmlFor="lang-level" className="sr-only">
-              Level
+              {t('levelLabel')}
             </Label>
             <select
               id="lang-level"
@@ -122,7 +123,7 @@ export function LanguagesSection({ languages, onChange }: LanguagesSectionProps)
           </div>
           <Button type="button" size="sm" onClick={add} disabled={languages.length >= 10}>
             <Plus className="me-1 h-3.5 w-3.5" />
-            Add
+            {t('add')}
           </Button>
         </div>
       </div>

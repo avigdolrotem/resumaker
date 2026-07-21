@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Sparkles, Undo2, Loader2 } from 'lucide-react';
 
 /**
@@ -24,6 +25,7 @@ export function AiRewriteButton({
   tone = 'impact',
   onReplace,
 }: AiRewriteButtonProps) {
+  const t = useTranslations('builder.aiRewrite');
   const [loading, setLoading] = useState(false);
   const [undoValue, setUndoValue] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export function AiRewriteButton({
         className="text-muted-foreground hover:text-foreground ease-snappy inline-flex items-center gap-1 text-xs transition-colors duration-200"
       >
         <Undo2 className="h-3 w-3" />
-        Undo rewrite
+        {t('undoRewrite')}
       </button>
     );
   }
@@ -85,11 +87,11 @@ export function AiRewriteButton({
         void handleClick();
       }}
       disabled={loading || !value.trim()}
-      title={error ?? 'Rewrite with AI'}
+      title={error ?? t('rewriteWithAi')}
       className="text-brand-500 hover:text-brand-700 ease-snappy inline-flex items-center gap-1 text-xs transition-colors duration-200 disabled:opacity-40"
     >
       {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-      {loading ? 'Rewriting…' : error ? 'Try again' : 'Rewrite with AI'}
+      {loading ? t('rewriting') : error ? t('tryAgain') : t('rewriteWithAi')}
     </button>
   );
 }

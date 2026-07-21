@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 export default function AcceptInvitePage() {
-  const { id } = useParams<{ id: string }>();
+  const { id, locale } = useParams<{ id: string; locale: string }>();
+  const isHe = locale === 'he';
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token') ?? '';
@@ -18,9 +19,9 @@ export default function AcceptInvitePage() {
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setMessage('Missing invite token.');
+      setMessage(isHe ? 'חסר טוקן הזמנה.' : 'Missing invite token.');
     }
-  }, [token]);
+  }, [token, isHe]);
 
   async function handleAccept() {
     if (!token) return;
@@ -33,16 +34,18 @@ export default function AcceptInvitePage() {
       });
       if (res.ok) {
         setStatus('success');
-        setMessage('You have joined the company!');
+        setMessage(isHe ? 'הצטרפת לחברה!' : 'You have joined the company!');
         setTimeout(() => router.push(`/hr/company/${id}`), 2000);
       } else {
         const data = (await res.json()) as { error: string };
         setStatus('error');
-        setMessage(data.error ?? 'Could not accept invite.');
+        setMessage(
+          data.error ?? (isHe ? 'לא ניתן היה לקבל את ההזמנה.' : 'Could not accept invite.'),
+        );
       }
     } catch {
       setStatus('error');
-      setMessage('Network error. Please try again.');
+      setMessage(isHe ? 'שגיאת רשת. אנא נסה שוב.' : 'Network error. Please try again.');
     }
   }
 
@@ -52,22 +55,26 @@ export default function AcceptInvitePage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="text-brand-600 h-5 w-5" />
-            Company Invitation
+            {isHe ? 'הזמנה לחברה' : 'Company Invitation'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {status === 'idle' && token && (
             <div className="animate-fade-in space-y-4">
               <p className="text-muted-foreground">
-                You have been invited to join a company on Resumaker.
+                {isHe
+                  ? 'הוזמנת להצטרף לחברה ב-Resumaker.'
+                  : 'You have been invited to join a company on Resumaker.'}
               </p>
-              <Button onClick={() => void handleAccept()}>Accept invitation</Button>
+              <Button onClick={() => void handleAccept()}>
+                {isHe ? 'אשר הזמנה' : 'Accept invitation'}
+              </Button>
             </div>
           )}
           {status === 'loading' && (
             <p className="text-muted-foreground animate-fade-in flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Accepting…
+              {isHe ? 'מאשר…' : 'Accepting…'}
             </p>
           )}
           {status === 'success' && (
@@ -79,7 +86,7 @@ export default function AcceptInvitePage() {
           {status === 'error' && (
             <p className="animate-fade-in flex items-center gap-2 text-red-600">
               <XCircle className="h-4 w-4 shrink-0" />
-              {message || 'Invalid or expired invite.'}
+              {message || (isHe ? 'הזמנה לא תקינה או שפג תוקפה.' : 'Invalid or expired invite.')}
             </p>
           )}
         </CardContent>
