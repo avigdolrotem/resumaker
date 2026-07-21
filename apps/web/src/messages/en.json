@@ -420,6 +420,7 @@
   "applications": {
     "title": "Applications",
     "subtitle": "Your tracked job applications",
+    "betaBadge": "Beta",
     "empty": "No applications yet. Track a job to see it here.",
     "statuses": {
       "interested": "Interested",
@@ -437,7 +438,13 @@
     "nextActionAt": "Next action",
     "appliedAt": "Applied",
     "delete": "Delete",
-    "deleted": "Deleted"
+    "deleted": "Deleted",
+    "betaGate": {
+      "title": "Application tracking is in beta",
+      "subtitle": "Track every job you've applied to, move them through each stage, and keep notes and next actions in one place.",
+      "ctaButton": "Request beta access",
+      "note": "Currently invite-only — we'll email you when your access opens."
+    }
   },
   "profile": {
     "title": "Profile",
