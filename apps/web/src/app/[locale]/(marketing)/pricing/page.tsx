@@ -55,16 +55,6 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
       features.push(t('features.atsScoring'));
     }
     if (limits.modelChoice) features.push(t('features.modelChoice'));
-    features.push(
-      limits.versionHistoryDays === -1
-        ? t('features.versionHistoryUnlimited')
-        : t('features.versionHistoryDays', { days: limits.versionHistoryDays }),
-    );
-    features.push(
-      limits.totalTemplates >= 5
-        ? t('features.templatesAll')
-        : t('features.templates', { count: limits.totalTemplates }),
-    );
     if (limits.removeBranding) features.push(t('features.removeBranding'));
     if (limits.prioritySupport) features.push(t('features.prioritySupport'));
 

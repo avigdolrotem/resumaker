@@ -101,10 +101,6 @@
         "title": "ניקוד ATS",
         "description": "ראה כמה התאמה יש לקורות החיים שלך מול תיאור המשרה"
       },
-      "templates": {
-        "title": "5 תבניות מעוצבות",
-        "description": "תבניות מותאמות לתחומים: הייטק, בריאות, פיננסים ועוד"
-      },
       "rtl": {
         "title": "תמיכה מלאה בעברית",
         "description": "RTL מובנה, פונטים אופטימליים, ופורמט מתאים לשוק הישראלי"
@@ -112,6 +108,10 @@
       "secure": {
         "title": "פרטיות ואבטחה",
         "description": "הנתונים שלך מוצפנים, לא נמכרים, ולא משמשים לאימון מודלים"
+      },
+      "tailoring": {
+        "title": "מותאם לכל משרה",
+        "description": "מלא את הפרופיל שלך פעם אחת — כל קורות חיים מותאמים מחדש על ידי AI למשרה הספציפית, לא רק בעיצוב שונה."
       }
     }
   },
@@ -1026,10 +1026,6 @@
       "coverLettersUnlimited": "מכתבי הצעה ללא הגבלה",
       "atsScoring": "ניקוד ATS",
       "modelChoice": "בחירת מודל AI (Sonnet / Opus)",
-      "versionHistoryDays": "היסטוריית גרסאות — {days} ימים",
-      "versionHistoryUnlimited": "היסטוריית גרסאות ללא הגבלה",
-      "templates": "{count} תבניות עיצוב",
-      "templatesAll": "כל התבניות (5)",
       "prioritySupport": "תמיכה בעדיפות",
       "removeBranding": "ללא לוגו של Resumaker בקורות החיים"
     },

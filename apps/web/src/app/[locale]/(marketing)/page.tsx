@@ -68,7 +68,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   const features = [
     { key: 'ats' as const, Icon: Target, glow: 'rgba(217, 70, 239, 0.25)' },
-    { key: 'templates' as const, Icon: Palette, glow: 'rgba(249, 115, 22, 0.25)' },
+    { key: 'tailoring' as const, Icon: Sparkles, glow: 'rgba(249, 115, 22, 0.25)' },
     { key: 'rtl' as const, Icon: Languages, glow: 'rgba(99, 102, 241, 0.25)' },
     { key: 'secure' as const, Icon: ShieldCheck, glow: 'rgba(16, 185, 129, 0.25)' },
   ];
@@ -177,7 +177,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="container mx-auto grid grid-cols-2 gap-6 px-4 md:grid-cols-4">
           <Stat value="48" suffix={isHebrew ? 'בדיקות אבטחה' : 'Safety tests'} />
           <Stat value="<3s" suffix={isHebrew ? 'יצירה ממוצעת' : 'Avg generation'} />
-          <Stat value="5" suffix={isHebrew ? 'תבניות מעוצבות' : 'Custom templates'} />
+          <Stat value="0" suffix={isHebrew ? 'החלטות עיצוב' : 'Design decisions'} />
           <Stat value="100%" suffix={isHebrew ? 'תמיכה בעברית' : 'Hebrew support'} />
         </div>
       </section>
@@ -285,8 +285,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               period={isHebrew ? 'לתמיד' : 'forever'}
               features={
                 isHebrew
-                  ? ['2 קורות חיים בחודש', 'תבנית אחת', 'ניקוד ATS בסיסי', 'תמיכה בעברית']
-                  : ['2 resumes/month', '1 template', 'Basic ATS scoring', 'Hebrew support']
+                  ? ['2 קורות חיים בחודש', 'ניקוד ATS בסיסי', 'תמיכה בעברית']
+                  : ['2 resumes/month', 'Basic ATS scoring', 'Hebrew support']
               }
               cta={isHebrew ? 'התחל עכשיו' : 'Get started'}
               ctaHref="/sign-up"
@@ -298,14 +298,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               period={isHebrew ? 'לחודש' : 'per month'}
               features={
                 isHebrew
-                  ? ['עד 10 קורות חיים', '3 תבניות', 'ATS מלא + המלצות', 'ייבוא PDF', 'מכתבי הצעה']
-                  : [
-                      'Up to 10 resumes',
-                      '3 templates',
-                      'Full ATS + tips',
-                      'PDF import',
-                      'Cover letters',
-                    ]
+                  ? ['עד 10 קורות חיים', 'ATS מלא + המלצות', 'ייבוא PDF', 'מכתבי הצעה']
+                  : ['Up to 10 resumes', 'Full ATS + tips', 'PDF import', 'Cover letters']
               }
               cta={paidCta}
               ctaHref="/pricing"
@@ -319,17 +313,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               period={isHebrew ? 'לחודש' : 'per month'}
               features={
                 isHebrew
-                  ? [
-                      'כל מה שיש בפלוס +',
-                      'יצירות בלתי מוגבלות',
-                      'היסטוריית גרסאות לתמיד',
-                      'בחירת מודל AI',
-                      'תמיכת VIP',
-                    ]
+                  ? ['כל מה שיש בפלוס +', 'יצירות בלתי מוגבלות', 'בחירת מודל AI', 'תמיכת VIP']
                   : [
                       'Everything in Plus +',
                       'Unlimited generations',
-                      'Unlimited version history',
                       'Choose your AI model',
                       'Priority support',
                     ]

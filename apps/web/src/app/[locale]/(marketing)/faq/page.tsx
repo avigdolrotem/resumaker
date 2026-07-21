@@ -14,7 +14,7 @@ import { GlassPanel } from '@/components/ui-effects/glass-panel';
 const QUESTIONS_EN = [
   {
     q: 'Is Resumaker free?',
-    a: 'Yes — the Free tier lets you create up to 2 resumes with our Modern template and includes basic ATS scoring. Plus and Pro unlock more templates, unlimited resumes, cover letters, and the job-hunt beta.',
+    a: 'Yes — the Free tier lets you create up to 2 resumes and includes basic ATS scoring. Plus and Pro unlock unlimited resumes, cover letters, and the job-hunt beta.',
   },
   {
     q: 'Where is my data stored?',
@@ -22,7 +22,7 @@ const QUESTIONS_EN = [
   },
   {
     q: 'Which AI model do you use?',
-    a: 'Anthropic Claude (Sonnet for resume generation, Haiku for cheaper extraction tasks). Pro users will be able to pick the model.',
+    a: 'Anthropic Claude (Sonnet for resume generation, Haiku for cheaper extraction tasks). Plus and Pro users can pick the model themselves.',
   },
   {
     q: 'How does ATS scoring work?',
@@ -30,7 +30,7 @@ const QUESTIONS_EN = [
   },
   {
     q: 'Can I edit my resume after AI generates it?',
-    a: 'Yes — open it from your dashboard and edit any field. Every save creates a new version so you can roll back.',
+    a: "Not field-by-field — instead, you edit your career profile (contact info, experience, skills, and so on) once, and it's the source for every resume you generate. Applying somewhere else? Paste the new job description and generate again — it's tailored fresh from your latest profile every time.",
   },
   {
     q: 'Do you support Hebrew?',
@@ -49,7 +49,7 @@ const QUESTIONS_EN = [
 const QUESTIONS_HE = [
   {
     q: 'האם Resumaker חינמי?',
-    a: 'כן — המסלול החינמי מאפשר עד 2 קורות חיים עם תבנית Modern וניקוד ATS בסיסי. Plus ו-Pro פותחים תבניות נוספות, ללא הגבלה, מכתבי הצעה, וביתא חיפוש משרות.',
+    a: 'כן — המסלול החינמי מאפשר עד 2 קורות חיים וניקוד ATS בסיסי. Plus ו-Pro פותחים קורות חיים ללא הגבלה, מכתבי הצעה, וביתא חיפוש משרות.',
   },
   {
     q: 'איפה הנתונים שלי נשמרים?',
@@ -57,7 +57,7 @@ const QUESTIONS_HE = [
   },
   {
     q: 'באיזה מודל AI אתם משתמשים?',
-    a: 'Anthropic Claude (Sonnet ליצירת קורות חיים, Haiku למשימות חילוץ זולות יותר). משתמשי Pro יוכלו לבחור את המודל.',
+    a: 'Anthropic Claude (Sonnet ליצירת קורות חיים, Haiku למשימות חילוץ זולות יותר). משתמשי Plus ו-Pro יכולים לבחור את המודל בעצמם.',
   },
   {
     q: 'איך עובד ניקוד ה-ATS?',
@@ -65,7 +65,7 @@ const QUESTIONS_HE = [
   },
   {
     q: 'האם אפשר לערוך את קורות החיים אחרי שה-AI יצר אותם?',
-    a: 'כן — פתח אותם מהדשבורד וערוך כל שדה. כל שמירה יוצרת גרסה חדשה, כך שאפשר לחזור אחורה.',
+    a: 'לא שדה-בשדה — במקום זאת, אתה עורך את פרופיל הקריירה שלך (פרטי קשר, ניסיון, כישורים וכו׳) פעם אחת, וממנו נוצר כל קורות חיים שתייצר. מגיש למשרה אחרת? הדבק את תיאור המשרה החדש וייצר שוב — זה מותאם מחדש מהפרופיל העדכני שלך בכל פעם.',
   },
   {
     q: 'יש תמיכה בעברית?',

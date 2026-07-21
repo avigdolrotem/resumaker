@@ -142,7 +142,7 @@ export function ResumeGrid({ resumes, isHebrew }: { resumes: ResumeRow[]; isHebr
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={isHebrew ? 'חיפוש לפי כותרת, תחום…' : 'Search by title, industry…'}
+            placeholder={isHebrew ? 'חיפוש לפי תפקיד, חברה…' : 'Search by job title, company…'}
             className="pe-9 ps-9"
           />
           {query && (

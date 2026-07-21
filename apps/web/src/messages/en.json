@@ -101,10 +101,6 @@
         "title": "ATS Scoring",
         "description": "See exactly how well your resume matches the job description"
       },
-      "templates": {
-        "title": "5 Custom Templates",
-        "description": "Templates tailored for industries: Tech, Healthcare, Finance, and more"
-      },
       "rtl": {
         "title": "Hebrew-First Design",
         "description": "Native RTL support, optimal typography, formatted for the Israeli market"
@@ -112,6 +108,10 @@
       "secure": {
         "title": "Privacy & Security",
         "description": "Your data is encrypted, not sold, and never used to train models"
+      },
+      "tailoring": {
+        "title": "Tailored to Every Job",
+        "description": "Fill in your profile once — every resume is freshly tailored by AI to the specific job description, not just restyled."
       }
     }
   },
@@ -1026,10 +1026,6 @@
       "coverLettersUnlimited": "Unlimited cover letters",
       "atsScoring": "ATS scoring",
       "modelChoice": "Choose AI model (Sonnet / Opus)",
-      "versionHistoryDays": "Version history — {days} days",
-      "versionHistoryUnlimited": "Unlimited version history",
-      "templates": "{count} designer templates",
-      "templatesAll": "All templates (5)",
       "prioritySupport": "Priority support",
       "removeBranding": "Remove Resumaker branding"
     },
