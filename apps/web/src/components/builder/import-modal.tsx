@@ -22,7 +22,8 @@ import { type ParsedImport, type ImportOpts, DEFAULT_OPTS } from '@/lib/builder/
 type Step = 'upload' | 'parsing' | 'preview' | 'error';
 
 type ImportError =
-  { kind: 'rate_limit'; retryAfterSeconds: number } | { kind: 'generic'; message: string };
+  | { kind: 'rate_limit'; retryAfterSeconds: number }
+  | { kind: 'generic'; message: string };
 
 export interface ImportModalProps {
   open: boolean;
