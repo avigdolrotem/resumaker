@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Upload, ArrowLeft, ArrowRight, Check } from 'lucide-react';
@@ -97,9 +97,22 @@ export function OnboardingWizard({
   const isFirst = stepIndex === 0;
   const isLast = stepIndex === STEPS.length - 1;
 
+  // Every field fires persist() on every keystroke (no debounce), so
+  // typing quickly can have several PATCHes in flight at once with no
+  // guarantee they resolve in the order they were sent. Without this,
+  // an older request resolving after a newer one — even a successful
+  // newer one — could flash a false "save failed" for a save that
+  // already succeeded. Only the most-recently-*issued* request is
+  // allowed to touch saveError/saving; a stale one's outcome is
+  // dropped rather than shown, since a newer request already
+  // supersedes whatever it would report.
+  const saveSeq = useRef(0);
+
   async function persist(next: ProfileContent): Promise<boolean> {
     setContent(next);
     setSaving(true);
+    const mySeq = ++saveSeq.current;
+    const isLatest = () => mySeq === saveSeq.current;
     try {
       const res = await fetch('/api/profile', {
         method: 'PATCH',
@@ -107,21 +120,25 @@ export function OnboardingWizard({
         body: JSON.stringify(next),
       });
       if (!res.ok) {
-        setSaveError(true);
-        toast.error(t('saveFailed'));
+        if (isLatest()) {
+          setSaveError(true);
+          toast.error(t('saveFailed'));
+        }
         return false;
       }
-      setSaveError(false);
+      if (isLatest()) setSaveError(false);
       return true;
     } catch {
       // Network failure — the in-memory `content` state (which drives
       // the UI and every later step) is already updated regardless, but
       // the server never got it, so flag it the same as an HTTP error.
-      setSaveError(true);
-      toast.error(t('saveFailed'));
+      if (isLatest()) {
+        setSaveError(true);
+        toast.error(t('saveFailed'));
+      }
       return false;
     } finally {
-      setSaving(false);
+      if (isLatest()) setSaving(false);
     }
   }
 

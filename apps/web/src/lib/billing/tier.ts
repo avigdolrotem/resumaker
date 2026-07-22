@@ -202,14 +202,29 @@ function startOfMonthInTimezone(timezone: string): Date {
 /** Anchor counters to Israel time so users don't get reset at 2-3am local. */
 const COUNTER_TIMEZONE = 'Asia/Jerusalem';
 
-/** AI generations created by this user since midnight Israel time. */
+/**
+ * Successful AI generations created by this user since midnight Israel
+ * time. Only `status = 'success'` counts — `recordGeneration()` (in
+ * lib/llm.ts) inserts a row for every outcome including `llm_error` and
+ * `output_invalid`, which are provider/validation failures the user got
+ * nothing for and isn't at fault for. Counting those against the daily
+ * cap meant a couple of transient LLM hiccups could exhaust someone's
+ * quota without ever having produced a resume. `rejected_input` is
+ * excluded too — the hourly rate limit (a separate, tighter check) is
+ * this app's actual abuse defense, so the daily cap doesn't need to
+ * double as one and can stay purely a "value delivered" meter.
+ */
 export async function getGenerationsToday(userId: string): Promise<number> {
   const startOfDay = startOfDayInTimezone(COUNTER_TIMEZONE);
   const [row] = await db
     .select({ count: sql<number>`cast(count(*) as int)` })
     .from(schema.generations)
     .where(
-      and(eq(schema.generations.userId, userId), gte(schema.generations.createdAt, startOfDay)),
+      and(
+        eq(schema.generations.userId, userId),
+        eq(schema.generations.status, 'success'),
+        gte(schema.generations.createdAt, startOfDay),
+      ),
     );
   return row?.count ?? 0;
 }

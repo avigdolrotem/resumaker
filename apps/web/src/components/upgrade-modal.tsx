@@ -18,7 +18,8 @@ export type FeatureGateName =
   | 'resume_limit'
   | 'generation_limit'
   | 'template_locked'
-  | 'job_hunt_beta';
+  | 'job_hunt_beta'
+  | 'application_tracking_beta';
 
 interface UpgradeModalProps {
   open: boolean;

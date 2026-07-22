@@ -1316,6 +1316,10 @@
       "job_hunt_beta": {
         "title": "Job Hunt is in beta",
         "body": "Track every job you've applied to, score your fit, save favourites, and let us auto-import postings. Join the waitlist and we'll email you when access opens."
+      },
+      "application_tracking_beta": {
+        "title": "Application tracking is in beta",
+        "body": "Move every application through each stage, keep notes and next actions in one place, and see it all alongside your saved jobs. Join the waitlist and we'll email you when access opens."
       }
     }
   },

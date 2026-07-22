@@ -15,7 +15,11 @@ import { UpgradeModal } from '@/components/upgrade-modal';
  *
  * Background = blurred sample tracked-application cards (fixed fake
  * data, no DB call). Foreground = an upsell card that opens the
- * existing `UpgradeModal` with `feature='job_hunt_beta'`.
+ * existing `UpgradeModal` with `feature='application_tracking_beta'`
+ * — a distinct entry from /jobs' `job_hunt_beta` even though both
+ * gate on the same underlying flag, so the modal's own copy doesn't
+ * suddenly start talking about "Job Hunt" after a click that started
+ * on the Applications page.
  */
 export function ApplicationsPreview() {
   const t = useTranslations('applications.betaGate');
@@ -81,7 +85,7 @@ export function ApplicationsPreview() {
       <UpgradeModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        feature="job_hunt_beta"
+        feature="application_tracking_beta"
         requiredTier="plus"
       />
     </div>

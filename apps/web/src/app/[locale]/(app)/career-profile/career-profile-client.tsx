@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { Upload } from 'lucide-react';
@@ -38,23 +38,31 @@ export function CareerProfileClient() {
     })();
   }, []);
 
+  // Every field fires save() on every keystroke (no debounce), so an
+  // older request can resolve after a newer one. Without this guard, a
+  // stale failure could flash an error toast for a save a newer,
+  // already-successful request has since superseded.
+  const saveSeq = useRef(0);
+
   async function save(next: ProfileContent) {
     setContent(next);
     setSaving(true);
+    const mySeq = ++saveSeq.current;
+    const isLatest = () => mySeq === saveSeq.current;
     try {
       const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(next),
       });
-      if (!res.ok) {
+      if (!res.ok && isLatest()) {
         const data = await res.json().catch(() => ({}));
         toast.error(data.error ?? t('saveFailed'));
       }
     } catch (err) {
-      toast.error((err as Error).message);
+      if (isLatest()) toast.error((err as Error).message);
     } finally {
-      setSaving(false);
+      if (isLatest()) setSaving(false);
     }
   }
 
