@@ -207,9 +207,20 @@ export async function POST(req: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'Suspicious input detected' }, { status: 400 });
     }
     if (err instanceof ValidationError) {
+      logger.error(
+        { err: err.message, cause: err.cause instanceof Error ? err.cause.message : err.cause },
+        'resume.generate.output_invalid',
+      );
       return NextResponse.json({ error: 'LLM produced invalid output' }, { status: 502 });
     }
     if (err instanceof LLMError) {
+      // The user-facing message stays generic (no provider internals
+      // leaked), but the real cause was previously discarded entirely —
+      // undiagnosable from outside a debugger. Log it server-side.
+      logger.error(
+        { err: err.message, cause: err.cause instanceof Error ? err.cause.message : err.cause },
+        'resume.generate.llm_error',
+      );
       return NextResponse.json({ error: 'LLM service error' }, { status: 502 });
     }
     logger.error({ err: (err as Error).message }, 'resume.generate.failed');
