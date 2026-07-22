@@ -27,11 +27,14 @@ const styles = StyleSheet.create({
   },
   pageHe: { fontFamily: 'Heebo' },
   header: { marginBottom: 28 },
+  // lineHeight explicit, not inherited from `page`'s 1.6 — see modern.tsx
+  // for why: fine for paragraphs, too tall for an isolated big heading.
   name: {
     fontSize: 28,
     fontWeight: 500,
     letterSpacing: -0.5,
     marginBottom: 8,
+    lineHeight: 1.2,
   },
   contactRow: {
     flexDirection: 'row',

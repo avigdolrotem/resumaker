@@ -31,7 +31,10 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1d4ed8',
     paddingBottom: 10,
   },
-  name: { fontSize: 24, fontWeight: 700, marginBottom: 4 },
+  // lineHeight explicit, not inherited from `page`'s 1.5 — that's tuned
+  // for multi-line body copy and at 24pt was tall enough to visually
+  // collide the name's descenders into the contact row below it.
+  name: { fontSize: 24, fontWeight: 700, marginBottom: 4, lineHeight: 1.2 },
   contactRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

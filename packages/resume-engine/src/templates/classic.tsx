@@ -37,11 +37,14 @@ const styles = StyleSheet.create({
     borderBottom: '1 solid',
     borderBottomColor: '#000000',
   },
+  // lineHeight explicit, not inherited from `page`'s 1.55 — see
+  // modern.tsx for why: fine for paragraphs, too tall for a big heading.
   name: {
     fontSize: 22,
     fontWeight: 700,
     marginBottom: 6,
     letterSpacing: 0.5,
+    lineHeight: 1.2,
   },
   contactBlock: {
     flexDirection: 'row',

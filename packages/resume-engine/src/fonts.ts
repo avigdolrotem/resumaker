@@ -5,52 +5,56 @@
  * than once for the same family. With multiple templates we'd hit that
  * easily if each template registered its own copy.
  *
- * Every PDF export was failing with a generic "PDF render failed" —
- * found by testing these exact URLs directly: all three families'
- * `static/<Family>-<Weight>.ttf` per-weight files 404 now. Google Fonts
- * migrated its whole catalog (including these three) to single-file
- * variable fonts at some point and removed the old `static/` per-weight
- * directories; this registration was never updated and had been
- * pointing at a dead URL structure ever since — this wasn't
- * network-flaky, it failed on every single export, deterministically.
+ * Fonts are local files under apps/web/public/fonts/, not a remote URL.
+ * This used to fetch from jsdelivr's mirror of google/fonts at render
+ * time, and broke twice for two different reasons: first the URL
+ * structure went stale (Google Fonts moved everything to single-file
+ * variable fonts and 404'd the old per-weight paths), then later a
+ * transient network hiccup on one cold-start font fetch got cached as a
+ * permanent failure for the rest of that server process's life — @react-
+ * pdf/fontkit doesn't retry a failed font load, so every export failed
+ * instantly after that until the process restarted. A resume export
+ * shouldn't depend on a live fetch to an external CDN at all; reading
+ * the bytes off local disk removes the whole failure class instead of
+ * just fixing whichever symptom broke most recently.
  *
- * Fixed by pointing at the variable-font file each family now actually
- * ships (`<Family>[axis...].ttf`, no `static/` prefix) and registering
- * it once per weight — @react-pdf embeds fonts via fontkit, which
- * instances the requested weight out of the variable font's `wght` axis
- * per `fontWeight` entry, same external registration shape as before.
- *
- * Source: jsdelivr's mirror of google/fonts (OFL-licensed). If you want
- * air-gapped builds, mirror these into apps/web/public/fonts/ and
- * rewrite the URLs — but prefer pinning a released fontsource/google-
- * fonts npm package's CDN URL over the live GitHub repo if this breaks
- * again, since @main can and does get reorganized without warning.
+ * `Font.register`'s `src` accepts a local filesystem path directly in
+ * Node (no fetch involved) — resolved from apps/web's cwd since these
+ * templates only ever render from within the apps/web server process.
  */
 
+import { join } from 'node:path';
 import { Font } from '@react-pdf/renderer';
 
 let registered = false;
 
-const HEEBO_URL = 'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/heebo/Heebo%5Bwght%5D.ttf';
-
-const INTER_URL =
-  'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf';
-
-const NOTO_ARABIC_URL =
-  'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notosansarabic/NotoSansArabic%5Bwdth%2Cwght%5D.ttf';
+// @react-pdf/font's FontSource dispatches on the *shape* of `src`: known
+// standard-font name, data: URL string, http(s) URL string, else it
+// treats it as a local path and hands it straight to `fontkit.open(src)`
+// — which does its own file read. It must stay a plain string; handing
+// it an already-read Buffer instead breaks the isDataUrl() string-typed
+// sniff that string paths happen to pass through harmlessly (a Buffer
+// doesn't have .substring(), which isDataUrl calls internally).
+function fontPath(filename: string): string {
+  return join(process.cwd(), 'public', 'fonts', filename);
+}
 
 export function ensureFontsRegistered(): void {
   if (registered) return;
   registered = true;
 
+  const heebo = fontPath('Heebo-Variable.ttf');
+  const inter = fontPath('Inter-Variable.ttf');
+  const notoArabic = fontPath('NotoSansArabic-Variable.ttf');
+
   // Heebo — primary Hebrew face. Covers Hebrew + Latin per Google Fonts.
   Font.register({
     family: 'Heebo',
     fonts: [
-      { src: HEEBO_URL, fontWeight: 400 },
-      { src: HEEBO_URL, fontWeight: 500 },
-      { src: HEEBO_URL, fontWeight: 600 },
-      { src: HEEBO_URL, fontWeight: 700 },
+      { src: heebo, fontWeight: 400 },
+      { src: heebo, fontWeight: 500 },
+      { src: heebo, fontWeight: 600 },
+      { src: heebo, fontWeight: 700 },
     ],
   });
 
@@ -60,10 +64,10 @@ export function ensureFontsRegistered(): void {
   Font.register({
     family: 'Inter',
     fonts: [
-      { src: INTER_URL, fontWeight: 400 },
-      { src: INTER_URL, fontWeight: 500 },
-      { src: INTER_URL, fontWeight: 600 },
-      { src: INTER_URL, fontWeight: 700 },
+      { src: inter, fontWeight: 400 },
+      { src: inter, fontWeight: 500 },
+      { src: inter, fontWeight: 600 },
+      { src: inter, fontWeight: 700 },
     ],
   });
 
@@ -71,10 +75,10 @@ export function ensureFontsRegistered(): void {
   Font.register({
     family: 'NotoSansArabic',
     fonts: [
-      { src: NOTO_ARABIC_URL, fontWeight: 400 },
-      { src: NOTO_ARABIC_URL, fontWeight: 500 },
-      { src: NOTO_ARABIC_URL, fontWeight: 600 },
-      { src: NOTO_ARABIC_URL, fontWeight: 700 },
+      { src: notoArabic, fontWeight: 400 },
+      { src: notoArabic, fontWeight: 500 },
+      { src: notoArabic, fontWeight: 600 },
+      { src: notoArabic, fontWeight: 700 },
     ],
   });
 }
