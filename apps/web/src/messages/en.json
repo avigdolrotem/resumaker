@@ -816,7 +816,8 @@
       "description": "Your account information",
       "name": "Name",
       "email": "Email",
-      "memberSince": "Member since"
+      "memberSince": "Member since",
+      "editLink": "Edit name + language → Profile page"
     },
     "sessions": {
       "title": "Active sessions",

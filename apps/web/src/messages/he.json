@@ -816,7 +816,8 @@
       "description": "פרטי החשבון שלך",
       "name": "שם",
       "email": "דוא״ל",
-      "memberSince": "חבר מתאריך"
+      "memberSince": "חבר מתאריך",
+      "editLink": "עריכת שם ושפה ← דף הפרופיל"
     },
     "sessions": {
       "title": "חיבורים פעילים",

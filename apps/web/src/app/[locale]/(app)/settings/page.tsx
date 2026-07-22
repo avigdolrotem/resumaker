@@ -276,7 +276,7 @@ function ProfileTab() {
         </div>
         <p className="text-sm">
           <Link href="/profile" className="text-violet-700 hover:underline">
-            Edit name + language → Profile page
+            {t('editLink')}
           </Link>
         </p>
       </CardContent>
