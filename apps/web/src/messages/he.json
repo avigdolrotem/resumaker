@@ -513,7 +513,8 @@
       "loadFailed": "טעינת קורות החיים נכשלה",
       "loadingExisting": "טוען את קורות החיים שלך…",
       "titleFormat": "{name} — {industry}",
-      "titleFallback": "קורות חיים — {date}"
+      "titleFallback": "קורות חיים — {date}",
+      "createCoverLetter": "צור מכתב מקדים"
     },
     "empty": {
       "title": "הדבק תיאור משרה כדי להתחיל",
@@ -1202,7 +1203,8 @@
     "regenerate": "נסה גרסה אחרת",
     "empty": "הדבק תיאור משרה כדי לקבל מכתב מותאם אישית.",
     "saved": "נשמר",
-    "saveFailed": "השמירה נכשלה"
+    "saveFailed": "השמירה נכשלה",
+    "prefilledFromResume": "מולא מראש מקורות החיים שיצרת הרגע — אפשר לערוך הכול לפני היצירה."
   },
   "admin": {
     "audit": {

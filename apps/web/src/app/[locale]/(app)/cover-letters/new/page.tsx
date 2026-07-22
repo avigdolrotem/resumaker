@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ModelPicker } from '@/components/builder/model-picker';
 import { LiquidSpinner } from '@/components/ui-effects/liquid-spinner';
 import { apiFetch, ApiTierError } from '@/lib/api-client';
+import { readAndClearCoverLetterPrefill } from '@/lib/cover-letter-prefill';
 
 type Tone = 'formal' | 'friendly' | 'enthusiastic';
 
@@ -35,6 +36,19 @@ export default function NewCoverLetterPage() {
    * point of useless. We now hydrate it from /api/account/profile.
    */
   const [userProfile, setUserProfile] = useState<Record<string, unknown>>({});
+
+  // One-shot: consumed and cleared on mount, so navigating here again
+  // later (without coming from "Create cover letter" on a fresh resume)
+  // starts blank as normal. Deliberately empty deps — `t` is stable for
+  // the page's lifetime and this must run exactly once on mount, not
+  // re-fire on every render.
+  useEffect(() => {
+    const prefill = readAndClearCoverLetterPrefill();
+    if (!prefill) return;
+    setJd(prefill.jobDescription);
+    if (prefill.companyName) setCompany(prefill.companyName);
+    toast.success(t('prefilledFromResume'));
+  }, []);
 
   useEffect(() => {
     void (async () => {

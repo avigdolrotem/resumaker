@@ -13,7 +13,8 @@ import { ResumePreview } from '@/components/resume-preview';
 import { ModelPicker } from '@/components/builder/model-picker';
 import { apiFetch, ApiTierError } from '@/lib/api-client';
 import { LiquidSpinner } from '@/components/ui-effects/liquid-spinner';
-import { Save as SaveIcon, Eye, ArrowLeft } from 'lucide-react';
+import { Save as SaveIcon, Eye, ArrowLeft, Mail } from 'lucide-react';
+import { COVER_LETTER_PREFILL_KEY } from '@/lib/cover-letter-prefill';
 import type { Resume, ATSScore } from '@resumaker/shared';
 
 type LocaleChoice = 'auto' | 'he' | 'en';
@@ -174,6 +175,16 @@ export default function BuilderPage() {
     }
   }
 
+  function handleCreateCoverLetter() {
+    const jobDescription = jd || url;
+    if (!jobDescription) return;
+    sessionStorage.setItem(
+      COVER_LETTER_PREFILL_KEY,
+      JSON.stringify({ jobDescription, companyName: result?.companyName ?? '' }),
+    );
+    router.push('/cover-letters/new');
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -290,6 +301,13 @@ export default function BuilderPage() {
                       {saving ? t('actions.saving') : t('actions.save')}
                     </Button>
                   )}
+                  {/* Doesn't depend on `savedId` — the JD text and company
+                      name this needs are already in memory the moment
+                      generation succeeds, before the user even saves. */}
+                  <Button size="sm" variant="outline" onClick={handleCreateCoverLetter}>
+                    <Mail className="me-1.5 h-3.5 w-3.5" />
+                    {t('actions.createCoverLetter')}
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => router.push('/dashboard')}>
                     <ArrowLeft className="me-1.5 h-3.5 w-3.5 rtl:hidden" />
                     {t('actions.backToDashboard')}

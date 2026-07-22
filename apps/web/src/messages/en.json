@@ -513,7 +513,8 @@
       "loadFailed": "Couldn't load this resume",
       "loadingExisting": "Loading your resume…",
       "titleFormat": "{name} — {industry}",
-      "titleFallback": "Resume — {date}"
+      "titleFallback": "Resume — {date}",
+      "createCoverLetter": "Create cover letter"
     },
     "empty": {
       "title": "Paste a job description to start",
@@ -1202,7 +1203,8 @@
     "regenerate": "Try another version",
     "empty": "Paste a job description to generate a tailored cover letter.",
     "saved": "Saved",
-    "saveFailed": "Save failed"
+    "saveFailed": "Save failed",
+    "prefilledFromResume": "Pre-filled from the resume you just made — edit anything before generating."
   },
   "admin": {
     "audit": {
