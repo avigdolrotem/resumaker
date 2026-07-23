@@ -33,9 +33,18 @@ spec:
             job-type: onboarding-emails
         spec:
           restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
           containers:
             - name: onboarding-emails
               image: curlimages/curl:8.10.1
+              securityContext:
+                runAsNonRoot: true
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
               command:
                 - sh
                 - -c

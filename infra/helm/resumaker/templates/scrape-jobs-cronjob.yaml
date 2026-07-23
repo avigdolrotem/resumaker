@@ -35,9 +35,18 @@ spec:
             job-type: scrape-jobs
         spec:
           restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
           containers:
             - name: scrape-jobs
               image: curlimages/curl:8.10.1
+              securityContext:
+                runAsNonRoot: true
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
               command:
                 - sh
                 - -c
