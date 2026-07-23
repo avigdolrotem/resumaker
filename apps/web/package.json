@@ -41,7 +41,7 @@
     "framer-motion": "^12.40.0",
     "gray-matter": "^4.0.3",
     "lucide-react": "^0.469.0",
-    "next": "^16.0.0",
+    "next": "^16.2.11",
     "next-intl": "^4.0.0",
     "postgres": "^3.4.9",
     "qrcode.react": "^4.2.0",
