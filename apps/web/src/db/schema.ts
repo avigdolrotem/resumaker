@@ -16,12 +16,15 @@ import {
   timestamp,
   boolean,
   integer,
+  real,
   jsonb,
   uuid,
   varchar,
   index,
+  uniqueIndex,
   unique,
   check,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 
 // ─── BETTER AUTH TABLES ─────────────────────────────────────────────
@@ -631,6 +634,32 @@ export const jobs = pgTable(
     postedAt: timestamp('posted_at', { withTimezone: true }),
     scrapedAt: timestamp('scraped_at', { withTimezone: true }).notNull().defaultNow(),
     rawData: jsonb('raw_data'),
+    /**
+     * open: currently live at the source. closed: confirmed gone (explicit
+     * signal, or missCount crossed the source's threshold — see the
+     * scrape-jobs cron). unknown: a source that gives no closure signal at
+     * all (aggregators) hasn't been seen in a while. Never delete a job row
+     * on closure — applications.jobId and userJobs.jobId both cascade, so a
+     * delete here would silently erase a user's application history.
+     */
+    status: varchar('status', { length: 16 }).notNull().default('open'),
+    /** Bumped every time a scrape confirms this job is still listed at its source. */
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
+    /** Consecutive scrapes where a full-board source didn't return this job. Reset to 0 on any sighting. */
+    missCount: integer('miss_count').notNull().default(0),
+    closedAt: timestamp('closed_at', { withTimezone: true }),
+    /**
+     * Cross-source dedup: when the same real-world job is found at more than
+     * one source (e.g. a company's own Greenhouse board AND a Comeet
+     * listing), the non-canonical row(s) point here instead of being
+     * deleted — list queries filter `canonicalJobId IS NULL`, but
+     * favorites/applications on a duplicate row keep working untouched.
+     */
+    canonicalJobId: uuid('canonical_job_id').references((): AnyPgColumn => jobs.id, {
+      onDelete: 'set null',
+    }),
+    /** Taasuka occupation-category tag (or equivalent from other sources) — lets the default feed filter by occupation without re-crawling. */
+    occupationCode: varchar('occupation_code', { length: 64 }),
   },
   (t) => ({
     // UNIQUE so the cron's onConflictDoNothing({target: urlNormalized})
@@ -638,9 +667,26 @@ export const jobs = pgTable(
     // meant every duplicate threw, fell into the inner catch, and was
     // miscounted as "deduped" — masking real failures from new scrapers.
     urlNormUnique: unique('jobs_url_norm_unique').on(t.urlNormalized),
+    // Partial: externalId is null for some manual imports, and two nulls
+    // aren't equal in a Postgres unique index anyway, but WHERE makes the
+    // intent explicit. This is the constraint the table's own top comment
+    // already promised ("Deduped by (source, externalId) for scraper
+    // rows") but never actually had — every source's upsert should target
+    // this, not urlNormalized, so re-scraping the same job updates it in
+    // place instead of relying on URL stability across scrapes.
+    sourceExternalIdUnique: uniqueIndex('jobs_source_external_id_unique')
+      .on(t.source, t.externalId)
+      .where(sql`${t.externalId} IS NOT NULL`),
     sourceCompanyIdx: index('jobs_source_company_idx').on(t.source, t.companySlug),
     scrapedAtIdx: index('jobs_scraped_at_idx').on(t.scrapedAt.desc()),
     hrUserIdx: index('jobs_hr_user_idx').on(t.hrUserId),
+    statusIdx: index('jobs_status_idx').on(t.status),
+    canonicalJobIdx: index('jobs_canonical_job_idx').on(t.canonicalJobId),
+    canonicalNotSelfCheck: check(
+      'jobs_canonical_not_self_check',
+      sql`${t.canonicalJobId} IS NULL OR ${t.canonicalJobId} != ${t.id}`,
+    ),
+    statusCheck: check('jobs_status_check', sql`${t.status} IN ('open', 'closed', 'unknown')`),
   }),
 );
 
@@ -664,6 +710,13 @@ export const userJobs = pgTable(
     fitRationale: text('fit_rationale'),
     fitStrengths: jsonb('fit_strengths').$type<string[]>(),
     fitGaps: jsonb('fit_gaps').$type<string[]>(),
+    /** When fitScore was last computed — lets a reader decide it's fresh enough to reuse instead of re-scoring. */
+    fitScoredAt: timestamp('fit_scored_at', { withTimezone: true }),
+    /** Set when this row exists because the dashboard recommendation engine surfaced it (vs. the user favoriting/viewing it directly). */
+    recommendedAt: timestamp('recommended_at', { withTimezone: true }),
+    recommendScore: real('recommend_score'),
+    /** User dismissed this recommendation — excluded from future recommendation runs, but the row (and any favorite/application) stays intact. */
+    dismissedAt: timestamp('dismissed_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -719,6 +772,31 @@ export const applications = pgTable(
     userUpdatedIdx: index('applications_user_updated_idx').on(t.userId, t.updatedAt.desc()),
     jobIdx: index('applications_job_idx').on(t.jobId),
     statusIdx: index('applications_status_idx').on(t.status),
+  }),
+);
+
+/**
+ * One row per scraper invocation. Gives the scrape-jobs cron a resumable
+ * cursor (a paged source like Taasuka can process a bounded page-window
+ * per cron tick and pick up where it left off next time, instead of
+ * needing one invocation to finish a ~1,670-page crawl) and turns "is the
+ * pipeline actually working" from a log-diving question into a queryable
+ * one.
+ */
+export const scrapeRuns = pgTable(
+  'scrape_runs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    source: varchar('source', { length: 32 }).notNull(),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+    /** Resume point for a paged/incremental source — shape is source-specific (e.g. Taasuka: { page }). */
+    cursor: jsonb('cursor'),
+    stats: jsonb('stats'),
+    ok: boolean('ok'),
+  },
+  (t) => ({
+    sourceStartedIdx: index('scrape_runs_source_started_idx').on(t.source, t.startedAt.desc()),
   }),
 );
 
@@ -996,6 +1074,7 @@ export const schema = {
   companyInvites,
   jobs,
   userJobs,
+  scrapeRuns,
   savedSearches,
   applications,
   emailChangeRequests,

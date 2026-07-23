@@ -1,4 +1,4 @@
-import type { NormalizedJob } from '../types';
+import type { NormalizedJob, FetchResult } from '../types';
 import { normalizeUrl } from '../url-normalize';
 import { stripHtml, inferSeniority, parseIsoDate } from '../html-utils';
 
@@ -14,19 +14,19 @@ interface LeverPosting {
   categories?: { location?: string };
 }
 
-/** Fetch all open postings from a company's Lever board. Returns [] on error. */
-export async function fetchLeverJobs(companySlug: string): Promise<NormalizedJob[]> {
+/** Fetch all open postings from a company's Lever board. */
+export async function fetchLeverJobs(companySlug: string): Promise<FetchResult> {
   const url = BASE.replace('{slug}', companySlug);
   let postings: LeverPosting[];
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
-    if (!res.ok) return [];
+    if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
     postings = (await res.json()) as LeverPosting[];
-  } catch {
-    return [];
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
   }
 
-  return postings.map((job): NormalizedJob => {
+  const jobs = postings.map((job): NormalizedJob => {
     const location = job.categories?.location ?? '';
     const jobUrl = job.hostedUrl ?? '';
     const rawDesc = job.descriptionPlain ?? job.description ?? '';
@@ -46,4 +46,5 @@ export async function fetchLeverJobs(companySlug: string): Promise<NormalizedJob
       rawData: job,
     };
   });
+  return { ok: true, jobs };
 }

@@ -1,40 +1,133 @@
 /**
  * GET /api/cron/scrape-jobs
  *
- * Bearer-secret cron. Daily run that hits every wired scraper source
- * (Greenhouse, Lever, Workable, Ashby) and inserts new jobs deduped
- * by url_normalized.
+ * Bearer-secret cron, run in-cluster by the scrape-jobs Helm CronJob
+ * (infra/helm/resumaker/templates/scrape-jobs-cronjob.yaml) — that
+ * manifest curls this route with the CRON_SECRET, so GET (not POST) is
+ * what actually gets exercised; keep it GET.
+ *
+ * Hits every wired scraper source (Greenhouse, Lever, Workable, Ashby)
+ * for its curated Israeli company list (job-engine's COMPANIES) and
+ * upserts by (source, external_id) — a re-scrape of a still-open job
+ * refreshes its content and bumps lastSeenAt/resets missCount/status
+ * instead of just being silently deduped, which is what actually makes
+ * "is this job still open" trackable over time (see the closure sweep
+ * planned for Phase 1, which increments missCount on jobs that stop
+ * showing up in a source's successful fetches).
  *
  * The job-engine package handles the actual HTTP + parsing. Each
- * source's fetcher returns [] on error so one bad company won't kill
- * the whole run.
- *
- * NOTE: Vercel Cron sends GET, so this MUST be exported as GET.
- * The route previously exported POST and never fired in production.
+ * source's fetcher returns FetchResult — {ok:false} on a genuine fetch
+ * failure vs {ok:true, jobs:[]} for "this company's board is just
+ * empty right now" — so a transient network blip on one company can't
+ * get misread as "every job at that company closed."
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
+import { sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { logger } from '@/lib/observability';
 import { verifyCronSecret } from '@/lib/cron-auth';
+import type { FetchResult, NormalizedJob } from '@resumaker/job-engine';
 
 export const maxDuration = 300; // 5 minutes — scraping can take a while
+
+const UPSERT_CHUNK_SIZE = 500;
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+interface SourceStats {
+  companies: number;
+  fetchErrors: string[];
+  fetched: number;
+  inserted: number;
+  updated: number;
+  insertErrors: string[];
+}
+
+/** Upsert one source's collected jobs, batched. Returns {inserted, updated} counts. */
+async function upsertJobs(
+  jobs: NormalizedJob[],
+  source: string,
+): Promise<{ inserted: number; updated: number; errors: string[] }> {
+  let inserted = 0;
+  let updated = 0;
+  const errors: string[] = [];
+
+  for (const batch of chunk(jobs, UPSERT_CHUNK_SIZE)) {
+    try {
+      const rows = await db
+        .insert(schema.jobs)
+        .values(
+          batch.map((item) => ({
+            externalId: item.externalId,
+            source: item.source,
+            company: item.company,
+            ...(item.companySlug ? { companySlug: item.companySlug } : {}),
+            title: item.title,
+            ...(item.location ? { location: item.location } : {}),
+            description: item.description,
+            url: item.url,
+            urlNormalized: item.urlNormalized,
+            remote: item.remote,
+            ...(item.seniority ? { seniority: item.seniority } : {}),
+            ...(item.postedAt ? { postedAt: item.postedAt } : {}),
+            ...(item.rawData ? { rawData: item.rawData as Record<string, unknown> } : {}),
+          })),
+        )
+        .onConflictDoUpdate({
+          target: [schema.jobs.source, schema.jobs.externalId],
+          // Matches the partial unique index (external_id IS NOT NULL) —
+          // without this, Postgres can't infer which constraint the
+          // conflict target refers to and the upsert throws.
+          targetWhere: sql`${schema.jobs.externalId} IS NOT NULL`,
+          set: {
+            title: sql`excluded.title`,
+            company: sql`excluded.company`,
+            companySlug: sql`excluded.company_slug`,
+            location: sql`excluded.location`,
+            description: sql`excluded.description`,
+            url: sql`excluded.url`,
+            urlNormalized: sql`excluded.url_normalized`,
+            remote: sql`excluded.remote`,
+            seniority: sql`excluded.seniority`,
+            postedAt: sql`excluded.posted_at`,
+            rawData: sql`excluded.raw_data`,
+            lastSeenAt: sql`now()`,
+            // A job re-appearing after being marked closed/unknown is a
+            // real "it's back" signal, not just a refresh — reopen it.
+            status: sql`'open'`,
+            missCount: sql`0`,
+          },
+        })
+        // xmax = 0 is the standard Postgres tell for "this row was just
+        // inserted, not updated" within the same statement — the UPDATE
+        // arm of an upsert always leaves a non-zero xmax.
+        .returning({ inserted: sql<boolean>`(xmax = 0)` });
+
+      inserted += rows.filter((r) => r.inserted).length;
+      updated += rows.filter((r) => !r.inserted).length;
+    } catch (err) {
+      const msg = (err as Error).message;
+      errors.push(`upsert:${source}:batch_of_${batch.length}:${msg}`);
+      logger.warn({ err: msg, source, batchSize: batch.length }, 'cron.scrape_jobs.upsert_failed');
+    }
+  }
+
+  return { inserted, updated, errors };
+}
 
 export async function GET(req: NextRequest): Promise<Response> {
   const authError = verifyCronSecret(req);
   if (authError) return authError;
 
-  const startedAt = Date.now();
-  const stats = {
-    sources: 0,
-    fetched: 0,
-    inserted: 0,
-    deduped: 0,
-    errors: [] as string[],
-  };
+  const invocationStartedAt = Date.now();
 
   let companies: Record<string, string[]> = {};
-  let fetchers: Record<string, (slug: string) => Promise<unknown[]>>;
+  let fetchers: Record<string, (slug: string) => Promise<FetchResult>>;
   try {
     const engine = await import('@resumaker/job-engine');
     companies = (engine as unknown as { COMPANIES: Record<string, string[]> }).COMPANIES;
@@ -52,83 +145,59 @@ export async function GET(req: NextRequest): Promise<Response> {
     );
   }
 
+  const perSource: Record<string, SourceStats> = {};
+
   for (const [source, fetchFn] of Object.entries(fetchers)) {
     const slugs = companies[source] ?? [];
-    stats.sources += 1;
+    const sourceStartedAt = Date.now();
+    const stats: SourceStats = {
+      companies: slugs.length,
+      fetchErrors: [],
+      fetched: 0,
+      inserted: 0,
+      updated: 0,
+      insertErrors: [],
+    };
+    const collected: NormalizedJob[] = [];
+
     for (const slug of slugs) {
+      let result: FetchResult;
       try {
-        const items = (await fetchFn(slug)) as Array<{
-          externalId: string;
-          source: string;
-          company: string;
-          companySlug?: string;
-          title: string;
-          location?: string;
-          description: string;
-          url: string;
-          urlNormalized: string;
-          remote: boolean;
-          seniority?: string;
-          postedAt?: Date;
-          rawData?: unknown;
-        }>;
-        stats.fetched += items.length;
-        for (const item of items) {
-          // Dedupe by url_normalized (we have a unique-ish index on it).
-          try {
-            const result = await db
-              .insert(schema.jobs)
-              .values({
-                externalId: item.externalId,
-                source: item.source,
-                company: item.company,
-                ...(item.companySlug ? { companySlug: item.companySlug } : {}),
-                title: item.title,
-                ...(item.location ? { location: item.location } : {}),
-                description: item.description,
-                url: item.url,
-                urlNormalized: item.urlNormalized,
-                remote: item.remote,
-                ...(item.seniority ? { seniority: item.seniority } : {}),
-                ...(item.postedAt ? { postedAt: item.postedAt } : {}),
-                ...(item.rawData ? { rawData: item.rawData as Record<string, unknown> } : {}),
-              })
-              .onConflictDoNothing({
-                // No explicit unique constraint exists for urlNormalized in the
-                // current schema (just a non-unique index), so we duck-type the
-                // conflict by selecting an existing row first if there's risk
-                // of duplicate. For now: pre-check the index hit.
-                target: schema.jobs.urlNormalized,
-              })
-              .returning({ id: schema.jobs.id });
-            if (result.length > 0) {
-              stats.inserted += 1;
-            } else {
-              stats.deduped += 1;
-            }
-          } catch (insertErr) {
-            // Real insert error: schema mismatch, FK violation, etc.
-            // Previously this was silently counted as dedupe, which
-            // hid catastrophic failures from a whole new scraper source.
-            // Log loudly + track separately so cron health check sees it.
-            const msg = (insertErr as Error).message;
-            stats.errors.push(`insert:${source}:${item.urlNormalized}:${msg}`);
-            logger.warn(
-              { err: msg, source, externalId: item.externalId, slug },
-              'cron.scrape_jobs.insert_failed',
-            );
-          }
-        }
+        result = await fetchFn(slug);
       } catch (err) {
-        stats.errors.push(`${source}:${slug}:${(err as Error).message}`);
+        stats.fetchErrors.push(`${slug}:${(err as Error).message}`);
+        continue;
       }
+      if (!result.ok) {
+        stats.fetchErrors.push(`${slug}:${result.error}`);
+        continue;
+      }
+      stats.fetched += result.jobs.length;
+      collected.push(...result.jobs);
     }
+
+    const { inserted, updated, errors } = await upsertJobs(collected, source);
+    stats.inserted = inserted;
+    stats.updated = updated;
+    stats.insertErrors = errors;
+    perSource[source] = stats;
+
+    const ok = stats.fetchErrors.length === 0 && stats.insertErrors.length === 0;
+    await db.insert(schema.scrapeRuns).values({
+      source,
+      startedAt: new Date(sourceStartedAt),
+      finishedAt: new Date(),
+      stats,
+      ok,
+    });
   }
 
-  const durationMs = Date.now() - startedAt;
+  const durationMs = Date.now() - invocationStartedAt;
+  const allErrors = Object.values(perSource).flatMap((s) => [...s.fetchErrors, ...s.insertErrors]);
+  const success = allErrors.length === 0;
   // Use error level if any failures so Vercel cron dashboard surfaces it.
-  const logFn = stats.errors.length > 0 ? logger.error : logger.info;
-  logFn.bind(logger)({ ...stats, durationMs }, 'cron.scrape_jobs.completed');
+  const logFn = success ? logger.info : logger.error;
+  logFn.bind(logger)({ perSource, durationMs, success }, 'cron.scrape_jobs.completed');
 
-  return NextResponse.json({ success: stats.errors.length === 0, ...stats, durationMs });
+  return NextResponse.json({ success, perSource, durationMs });
 }

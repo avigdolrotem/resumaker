@@ -1,4 +1,4 @@
-import type { NormalizedJob } from '../types';
+import type { NormalizedJob, FetchResult } from '../types';
 import { normalizeUrl } from '../url-normalize';
 import { stripHtml, inferSeniority, parseIsoDate } from '../html-utils';
 
@@ -18,19 +18,19 @@ interface GreenhouseResponse {
   jobs?: GreenhouseJob[];
 }
 
-/** Fetch all open jobs from a company's Greenhouse board. Returns [] on error. */
-export async function fetchGreenhouseJobs(companySlug: string): Promise<NormalizedJob[]> {
+/** Fetch all open jobs from a company's Greenhouse board. */
+export async function fetchGreenhouseJobs(companySlug: string): Promise<FetchResult> {
   const url = BASE.replace('{slug}', companySlug);
   let data: GreenhouseResponse;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
-    if (!res.ok) return [];
+    if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
     data = (await res.json()) as GreenhouseResponse;
-  } catch {
-    return [];
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
   }
 
-  return (data.jobs ?? []).map((job): NormalizedJob => {
+  const jobs = (data.jobs ?? []).map((job): NormalizedJob => {
     const location = job.location?.name ?? '';
     const jobUrl = job.absolute_url ?? '';
     return {
@@ -49,4 +49,5 @@ export async function fetchGreenhouseJobs(companySlug: string): Promise<Normaliz
       rawData: job,
     };
   });
+  return { ok: true, jobs };
 }

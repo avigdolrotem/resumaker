@@ -1,9 +1,11 @@
 {{- if .Values.cronJobs.scrapeJobs.enabled }}
 # Job listing scraper.
 #
-# GET /api/cron/scrape-jobs fetches fresh job listings from configured
-# sources and stores them for the job-match feature. Implementation is
-# pending (Track 2) — keep this CronJob disabled until the route exists.
+# GET /api/cron/scrape-jobs fetches fresh listings from every wired
+# source (Greenhouse/Lever/Workable/Ashby today — see
+# packages/job-engine/src/sources/companies.ts for the curated Israeli
+# company list) and upserts them by (source, external_id), refreshing
+# lastSeenAt/status on every re-sighting.
 #
 # Auth: Bearer token via CRON_SECRET (must match the value in the
 # resumaker-app Secret). Curl-from-inside-the-cluster so the secret

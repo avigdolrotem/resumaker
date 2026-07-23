@@ -87,6 +87,6 @@ cronJobs:
   onboardingEmails:
     enabled: true
   scrapeJobs:
-    enabled: false # not implemented yet — Track 2
+    enabled: true
   pushNotifications:
     enabled: true

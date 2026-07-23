@@ -140,7 +140,7 @@ cronJobs:
     enabled: false
     schedule: '0 9 * * *'
   scrapeJobs:
-    enabled: false
+    enabled: true
     schedule: '0 6 * * *'
   pushNotifications:
     enabled: false

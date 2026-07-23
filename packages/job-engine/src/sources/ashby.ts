@@ -1,4 +1,4 @@
-import type { NormalizedJob } from '../types';
+import type { NormalizedJob, FetchResult } from '../types';
 import { normalizeUrl } from '../url-normalize';
 import { stripHtml, inferSeniority, parseIsoDate } from '../html-utils';
 
@@ -20,24 +20,24 @@ interface AshbyResponse {
   jobPostings?: AshbyPosting[];
 }
 
-/** Fetch all open postings from a company's Ashby job board. Returns [] on error. */
-export async function fetchAshbyJobs(companySlug: string): Promise<NormalizedJob[]> {
+/** Fetch all open postings from a company's Ashby job board. */
+export async function fetchAshbyJobs(companySlug: string): Promise<FetchResult> {
   let data: AshbyResponse;
   try {
     const res = await fetch(
       `${BASE}?organizationHostedJobsPageName=${encodeURIComponent(companySlug)}`,
       { signal: AbortSignal.timeout(20_000) },
     );
-    if (!res.ok) return [];
+    if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
     data = (await res.json()) as AshbyResponse;
-  } catch {
-    return [];
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
   }
 
   const companyName =
     data.jobBoard?.title ?? companySlug.charAt(0).toUpperCase() + companySlug.slice(1);
 
-  return (data.jobPostings ?? []).map((job): NormalizedJob => {
+  const jobs = (data.jobPostings ?? []).map((job): NormalizedJob => {
     const location = job.locationName ?? '';
     const jobUrl = job.applicationLink ?? job.externalLink ?? '';
     return {
@@ -56,4 +56,5 @@ export async function fetchAshbyJobs(companySlug: string): Promise<NormalizedJob
       rawData: job,
     };
   });
+  return { ok: true, jobs };
 }

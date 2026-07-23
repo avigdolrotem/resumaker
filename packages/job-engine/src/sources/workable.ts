@@ -1,4 +1,4 @@
-import type { NormalizedJob } from '../types';
+import type { NormalizedJob, FetchResult } from '../types';
 import { normalizeUrl } from '../url-normalize';
 import { stripHtml, inferSeniority } from '../html-utils';
 
@@ -19,8 +19,8 @@ interface WorkableResponse {
   results?: WorkableJob[];
 }
 
-/** Fetch all open jobs from a company's Workable board. Returns [] on error. */
-export async function fetchWorkableJobs(companySlug: string): Promise<NormalizedJob[]> {
+/** Fetch all open jobs from a company's Workable board. */
+export async function fetchWorkableJobs(companySlug: string): Promise<FetchResult> {
   const url = BASE.replace('{slug}', companySlug);
   let data: WorkableResponse;
   try {
@@ -30,13 +30,13 @@ export async function fetchWorkableJobs(companySlug: string): Promise<Normalized
       body: JSON.stringify({ query: '', location: [] }),
       signal: AbortSignal.timeout(20_000),
     });
-    if (!res.ok) return [];
+    if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
     data = (await res.json()) as WorkableResponse;
-  } catch {
-    return [];
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
   }
 
-  return (data.results ?? []).map((job): NormalizedJob => {
+  const jobs = (data.results ?? []).map((job): NormalizedJob => {
     const locationParts = [job.city, job.country].filter(Boolean);
     const location = locationParts.join(', ') || undefined;
     const shortcode = job.shortcode ?? job.id ?? '';
@@ -56,4 +56,5 @@ export async function fetchWorkableJobs(companySlug: string): Promise<Normalized
       rawData: job,
     };
   });
+  return { ok: true, jobs };
 }

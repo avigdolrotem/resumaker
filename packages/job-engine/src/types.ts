@@ -30,6 +30,17 @@ export interface NormalizedJob {
   rawData?: unknown;
 }
 
+/**
+ * Every source fetcher returns this instead of a bare array. A board with
+ * zero open roles (`ok: true, jobs: []`) and a board that failed to fetch
+ * (`ok: false`) used to both collapse to `[]` — indistinguishable to the
+ * caller. That matters once closure detection exists: absence from a
+ * *successful* fetch is a real "this job is gone" signal, but absence
+ * because the fetch itself errored is not, and conflating them would mark
+ * an entire company's board closed on a single transient network blip.
+ */
+export type FetchResult = { ok: true; jobs: NormalizedJob[] } | { ok: false; error: string };
+
 export interface FitScore {
   score: number;
   rationale: string;

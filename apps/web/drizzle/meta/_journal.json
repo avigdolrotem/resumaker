@@ -134,6 +134,13 @@
       "when": 1784623727979,
       "tag": "0018_career_profile",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1784831362784,
+      "tag": "0019_job_scraping_staleness",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-export type { NormalizedJob, FitScore, UserProfile, Source } from './types';
+export type { NormalizedJob, FitScore, UserProfile, Source, FetchResult } from './types';
 export { normalizeUrl } from './url-normalize';
 export { stripHtml, inferSeniority, parseIsoDate } from './html-utils';
 export { fetchGreenhouseJobs } from './sources/greenhouse';
