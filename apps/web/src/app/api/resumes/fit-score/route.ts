@@ -6,21 +6,28 @@
  * focused) — this one is conversational and aimed at the advanced
  * builder's right-pane fit panel.
  *
+ * Scores the caller's canonical career profile, not a client-submitted
+ * resume — see the doc comment on /api/resumes/score for why scoring a
+ * resume the LLM already tailored to this exact JD produces an inflated,
+ * meaningless number. Same fix, same reason, applied here for consistency
+ * (this route currently has no caller — see below).
+ *
  * Locked to the fallback model (Haiku).
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
+import { eq } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
+import { db, schema } from '@/db';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
-import { ResumeSchema } from '@resumaker/shared';
+import type { Resume } from '@resumaker/shared';
 import { logger } from '@/lib/observability';
 import { generateObject } from '@/lib/llm/provider';
 
 const BodySchema = z.object({
-  resume: ResumeSchema,
   jobDescription: z.string().min(10).max(20_000),
 });
 
@@ -53,16 +60,31 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
+  // Same source of truth as /api/resumes/generate and /api/resumes/score:
+  // one profile per user, read server-side.
+  const profileRow = await db.query.profiles.findFirst({
+    where: eq(schema.profiles.userId, session.user.id),
+  });
+  if (!profileRow || !profileRow.onboardingCompletedAt) {
+    return NextResponse.json(
+      { error: 'Complete your career profile before scoring', code: 'NO_PROFILE' },
+      { status: 409 },
+    );
+  }
+  // ProfileContentSchema is ResumeSchema.omit({ metadata: true }) — none
+  // of the fields read below are metadata, so the profile is a direct fit.
+  const resume = profileRow.content as Resume;
+
   // Compact resume to keep tokens down — only the fields the score cares about.
   const compact = {
-    summary: body.resume.summary,
-    skills: body.resume.skills,
-    experience: body.resume.experience.map((e) => ({
+    summary: resume.summary,
+    skills: resume.skills,
+    experience: resume.experience.map((e) => ({
       title: e.title,
       company: e.company,
       highlights: e.highlights,
     })),
-    education: body.resume.education.map((e) => ({
+    education: resume.education.map((e) => ({
       degree: e.degree,
       field: e.field,
     })),

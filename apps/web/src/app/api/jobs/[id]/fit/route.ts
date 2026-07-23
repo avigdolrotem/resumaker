@@ -40,15 +40,19 @@ export async function POST(
   });
   if (!job) return NextResponse.json({ error: 'Job not found' }, { status: 404 });
 
-  // Hydrate user profile from latest saved resume (same pattern as the
-  // cover-letter flow). If the user has no saved resume yet, score against
-  // an empty profile (the AI will return mostly gaps — that's correct).
-  const latestResume = await db.query.resumes.findFirst({
-    where: eq(schema.resumes.userId, guard.user.id),
-    orderBy: (r, { desc }) => [desc(r.updatedAt)],
-    columns: { content: true },
+  // Hydrate user profile from the canonical career profile — same source
+  // /api/resumes/generate and /api/resumes/score use. This used to read
+  // the user's most recently *saved resume* instead, which is wrong: that
+  // resume was tailored to whichever job it was originally generated for,
+  // not this one, so a user who saved a resume for Job A would get Job A's
+  // tailored content scored against Job B's description here. The
+  // canonical profile is JD-independent, so it's a fair comparison no
+  // matter which job is being scored. If the user has no profile yet,
+  // score against an empty one (the AI will return mostly gaps — correct).
+  const profileRow = await db.query.profiles.findFirst({
+    where: eq(schema.profiles.userId, guard.user.id),
   });
-  const profile = (latestResume?.content as Record<string, unknown>) ?? {};
+  const profile = (profileRow?.content as Record<string, unknown>) ?? {};
 
   let fit;
   try {

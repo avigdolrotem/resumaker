@@ -143,7 +143,7 @@ export default function BuilderPage() {
         setAtsScore(null);
         const jdForScoring = jd || normalizedUrl;
         if (jdForScoring) {
-          void fetchAtsScore(data.resume, jdForScoring);
+          void fetchAtsScore(jdForScoring);
         }
       }
     } catch (err) {
@@ -157,12 +157,15 @@ export default function BuilderPage() {
     }
   }
 
-  async function fetchAtsScore(resume: Resume, jobDescription: string, resumeId?: string | null) {
+  // Scores the caller's career profile server-side, not the resume
+  // object generated here — see the doc comment on /api/resumes/score
+  // for why passing the tailored resume made this score meaningless.
+  async function fetchAtsScore(jobDescription: string, resumeId?: string | null) {
     try {
       const res = await apiFetch('/api/resumes/score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resume, jobDescription, ...(resumeId ? { resumeId } : {}) }),
+        body: JSON.stringify({ jobDescription, ...(resumeId ? { resumeId } : {}) }),
       });
       if (res.ok) {
         const data: ATSScore = await res.json();
@@ -192,7 +195,7 @@ export default function BuilderPage() {
         setSavedId(data.id);
         const jdForScoring = jd || url;
         if (jdForScoring) {
-          void fetchAtsScore(result.resume, jdForScoring, data.id);
+          void fetchAtsScore(jdForScoring, data.id);
         }
       } else {
         setError(data.error ?? t('actions.saveFailed'));
