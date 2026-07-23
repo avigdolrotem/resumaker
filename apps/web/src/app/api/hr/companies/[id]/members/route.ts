@@ -117,10 +117,12 @@ export async function POST(
     // Roll back the invite row so they can retry without hitting a
     // unique constraint on (companyId, email) on a stale row.
     await db.delete(schema.companyInvites).where(eq(schema.companyInvites.token, token));
-    logger.warn(
-      { err: result.error, companyId: id, inviteEmail: body.email },
-      'hr.invite.email_send_failed',
-    );
+    // Don't log the raw invitee address — observability scrubber keys on
+    // standard `email` field name (same reasoning as the email-change
+    // route); a custom key like `inviteEmail` bypasses it and leaks to
+    // Sentry / Cloud Logging. companyId + err is enough to debug a send
+    // failure; the invite row itself (access-controlled) has the address.
+    logger.warn({ err: result.error, companyId: id }, 'hr.invite.email_send_failed');
     return NextResponse.json(
       { error: 'Failed to send invite email. Please try again.' },
       { status: 502 },
