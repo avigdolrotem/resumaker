@@ -509,12 +509,17 @@
       "backToDashboard": "Back to dashboard",
       "saveFailed": "Save failed",
       "generateFailed": "Generation failed",
+      "retrying": "That attempt didn't go through — trying once more…",
+      "rateLimited": "You've hit the generation limit for now. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
       "invalidUrl": "That doesn't look like a valid URL — check it and try again.",
       "loadFailed": "Couldn't load this resume",
       "loadingExisting": "Loading your resume…",
       "titleFormat": "{name} — {industry}",
       "titleFallback": "Resume — {date}",
       "createCoverLetter": "Create cover letter"
+    },
+    "templatePicker": {
+      "label": "Template"
     },
     "empty": {
       "title": "Paste a job description to start",

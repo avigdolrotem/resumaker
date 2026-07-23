@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AtsScoreCard } from '@/components/ats-score-card';
 import { ResumePreview } from '@/components/resume-preview';
 import { ModelPicker } from '@/components/builder/model-picker';
+import { TemplatePicker } from '@/components/builder/template-picker';
 import { apiFetch, ApiTierError } from '@/lib/api-client';
 import { LiquidSpinner } from '@/components/ui-effects/liquid-spinner';
 import { Save as SaveIcon, Eye, ArrowLeft, Mail } from 'lucide-react';
@@ -56,12 +57,18 @@ export default function BuilderPage() {
   const [url, setUrl] = useState('');
   const [locale, setLocale] = useState<LocaleChoice>('auto');
   const [loading, setLoading] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const [result, setResult] = useState<ResumeResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [needsProfile, setNeedsProfile] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [atsScore, setAtsScore] = useState<ATSScore | null>(null);
+  // 'modern' matches the schema default in POST /api/resumes — not
+  // imported from @resumaker/resume-engine since that package's index
+  // also exports the react-pdf template components, which don't belong
+  // in a client bundle.
+  const [templateId, setTemplateId] = useState('modern');
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -96,16 +103,37 @@ export default function BuilderPage() {
       if (jd) body.jobDescription = jd;
       if (normalizedUrl) body.jobUrl = normalizedUrl;
 
-      const res = await apiFetch('/api/resumes/generate', {
+      let res = await apiFetch('/api/resumes/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      let data = await res.json();
 
-      const data = await res.json();
+      // 502 here is specifically LLM_ERROR (see /api/resumes/generate) —
+      // an occasional structured-output failure on the provider's end,
+      // not a deterministic problem with this request. Retrying once
+      // measurably recovers a meaningful share of these; a 429/402/409
+      // would just fail the same way again, so this only fires for 502.
+      if (res.status === 502) {
+        setRetrying(true);
+        res = await apiFetch('/api/resumes/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        data = await res.json();
+        setRetrying(false);
+      }
+
       if (!res.ok) {
         if (data.code === 'NO_PROFILE') {
           setNeedsProfile(true);
+        } else if (res.status === 429 && typeof data.retryAfterSeconds === 'number') {
+          // The raw "Rate limit exceeded" string reads as a dead end —
+          // same fix already applied to the import modal's rate limit.
+          const minutes = Math.ceil(data.retryAfterSeconds / 60);
+          setError(t('actions.rateLimited', { minutes }));
         } else {
           setError(data.error ?? t('actions.generateFailed'));
         }
@@ -124,6 +152,7 @@ export default function BuilderPage() {
       if (err instanceof ApiTierError) return;
       setError((err as Error).message);
     } finally {
+      setRetrying(false);
       setLoading(false);
     }
   }
@@ -155,6 +184,7 @@ export default function BuilderPage() {
           jobTitle: result.jobTitle,
           companyName: result.companyName,
           content: result.resume,
+          templateId,
         }),
       });
       const data = await res.json();
@@ -274,7 +304,9 @@ export default function BuilderPage() {
             <Card>
               <CardContent className="py-24 text-center">
                 <LiquidSpinner size={32} className="mx-auto mb-4" />
-                <p className="text-muted-foreground">{t('generating')}</p>
+                <p className="text-muted-foreground">
+                  {retrying ? t('actions.retrying') : t('generating')}
+                </p>
               </CardContent>
             </Card>
           )}
@@ -296,10 +328,13 @@ export default function BuilderPage() {
                       </Button>
                     </>
                   ) : (
-                    <Button onClick={handleSave} disabled={saving} size="sm">
-                      <SaveIcon className="me-1.5 h-3.5 w-3.5" />
-                      {saving ? t('actions.saving') : t('actions.save')}
-                    </Button>
+                    <>
+                      <TemplatePicker value={templateId} onChange={setTemplateId} />
+                      <Button onClick={handleSave} disabled={saving} size="sm">
+                        <SaveIcon className="me-1.5 h-3.5 w-3.5" />
+                        {saving ? t('actions.saving') : t('actions.save')}
+                      </Button>
+                    </>
                   )}
                   {/* Doesn't depend on `savedId` — the JD text and company
                       name this needs are already in memory the moment

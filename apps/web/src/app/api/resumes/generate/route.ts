@@ -25,6 +25,7 @@ import { db, schema } from '@/db';
 import { parseJD } from '@/lib/jd-parser';
 import { generateResume } from '@/lib/llm';
 import { resolveModelForUser } from '@/lib/llm/resolve-model';
+import { extractGenerateObjectDiagnostics } from '@/lib/llm/provider';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { sanitizeInput } from '@resumaker/ai-safety';
 import { PromptInjectionError, ValidationError, LLMError } from '@resumaker/shared';
@@ -216,9 +217,18 @@ export async function POST(req: NextRequest): Promise<Response> {
     if (err instanceof LLMError) {
       // The user-facing message stays generic (no provider internals
       // leaked), but the real cause was previously discarded entirely —
-      // undiagnosable from outside a debugger. Log it server-side.
+      // undiagnosable from outside a debugger. Log it server-side, plus
+      // the richer finishReason/zodIssues breakdown when the underlying
+      // failure is a NoObjectGeneratedError (see provider.ts) — that's
+      // the difference between "truncated by the token budget" and
+      // "produced JSON that violates the schema", which a flat message
+      // string can't distinguish.
       logger.error(
-        { err: err.message, cause: err.cause instanceof Error ? err.cause.message : err.cause },
+        {
+          err: err.message,
+          cause: err.cause instanceof Error ? err.cause.message : err.cause,
+          diagnostics: extractGenerateObjectDiagnostics(err.cause),
+        },
         'resume.generate.llm_error',
       );
       return NextResponse.json({ error: 'LLM service error' }, { status: 502 });

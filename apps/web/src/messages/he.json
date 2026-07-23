@@ -509,12 +509,17 @@
       "backToDashboard": "חזרה לאזור האישי",
       "saveFailed": "השמירה נכשלה",
       "generateFailed": "היצירה נכשלה",
+      "retrying": "הניסיון הזה לא עבר — מנסים שוב…",
+      "rateLimited": "הגעת למגבלת היצירה כרגע. נסה שוב בעוד {minutes, plural, one {דקה אחת} two {# דקות} other {# דקות}}.",
       "invalidUrl": "זו לא נראית כתובת URL תקינה — בדוק ונסה שוב.",
       "loadFailed": "טעינת קורות החיים נכשלה",
       "loadingExisting": "טוען את קורות החיים שלך…",
       "titleFormat": "{name} — {industry}",
       "titleFallback": "קורות חיים — {date}",
       "createCoverLetter": "צור מכתב מקדים"
+    },
+    "templatePicker": {
+      "label": "תבנית"
     },
     "empty": {
       "title": "הדבק תיאור משרה כדי להתחיל",

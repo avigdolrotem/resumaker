@@ -77,9 +77,16 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   entryTitle: { fontSize: 11, fontWeight: 700 },
+  // No italic here (was fontStyle: 'italic') — only normal-weight Heebo
+  // is registered (fonts.ts), and Hebrew has no traditional italic form
+  // to begin with, so an italic variant isn't worth sourcing for a
+  // bilingual template. This crashed the PDF route with "Could not
+  // resolve font for Heebo, fontWeight 400, fontStyle italic" the first
+  // time this template was actually reachable end-to-end (it had no UI
+  // path to select it before the template picker existed). Color +
+  // size already differentiate this line from entryTitle above it.
   entryItalic: {
     fontSize: 10.5,
-    fontStyle: 'italic',
     color: '#333333',
     marginBottom: 4,
   },
@@ -238,7 +245,7 @@ export function ClassicTemplate({ resume }: ResumePdfProps) {
                 <Text>
                   <Text style={{ fontWeight: 700 }}>{c.name}</Text>
                   {c.issuer ? ` · ` : ''}
-                  {c.issuer && <Text style={{ fontStyle: 'italic' }}>{c.issuer}</Text>}
+                  {c.issuer && <Text style={{ color: '#333333' }}>{c.issuer}</Text>}
                 </Text>
                 <Text style={styles.entryDates}>
                   {c.date ? formatMonthYear(c.date) : ''}

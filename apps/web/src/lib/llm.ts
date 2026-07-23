@@ -98,6 +98,16 @@ export async function generateResume(input: GenerateResumeInput): Promise<Genera
       schemaName: 'resume',
       schemaDescription:
         'A tailored resume in the canonical Resume schema, plus the job_title and company_name extracted from the job description.',
+      // Confirmed via NoObjectGeneratedError.finishReason === 'length' in
+      // production QA: this call was missing the disableThinking flag
+      // documented in provider.ts, so Gemini 2.5's default reasoning
+      // tokens were eating a large, unpredictable share of MAX_TOKENS
+      // before any visible resume JSON — causing frequent truncated-
+      // response failures, and plausibly the shorter-than-expected
+      // resumes on the runs that did complete. This is a bounded
+      // tailoring/formatting task (profile + JD in, structured resume
+      // out), not one that benefits from open-ended chain-of-thought.
+      disableThinking: true,
     });
   } catch (err) {
     void recordGeneration({

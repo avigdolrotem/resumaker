@@ -17,11 +17,12 @@
 import {
   generateText as aiGenerateText,
   generateObject as aiGenerateObject,
+  NoObjectGeneratedError,
   type LanguageModelUsage,
 } from 'ai';
 import { vertex } from '@ai-sdk/google-vertex';
 import { vertexAnthropic } from '@ai-sdk/google-vertex/anthropic';
-import type { ZodSchema } from 'zod';
+import { ZodError, type ZodSchema } from 'zod';
 import { env } from '@/lib/env';
 
 /** Resolve `provider/model` to a Vertex-backed AI SDK model. */
@@ -124,4 +125,40 @@ export async function generateObject<T>(
     ...(providerOptions !== undefined && { providerOptions }),
   });
   return { object: result.object as T, usage: result.usage };
+}
+
+/**
+ * `generateObject` failures were, until this, logged as a single flat
+ * "No object generated: could not parse the response" string — the SDK's
+ * `NoObjectGeneratedError` actually carries `finishReason` (was the
+ * response truncated by the token budget, or did the model just produce
+ * something invalid?) and, when the failure is a schema mismatch rather
+ * than unparseable JSON, a Zod `cause` naming exactly which field(s)
+ * failed and why. That's the difference between "some transient LLM
+ * flakiness" and "we're asking for something the model can't reliably
+ * produce" — worth surfacing, but only the shape of the failure, never
+ * response content: this app's LLM responses are resume/cover-letter
+ * text seeded from a real user's profile, so no field here should ever
+ * carry response text or the concrete (potentially PII-bearing) value
+ * that failed validation, only path/code/length/finishReason.
+ *
+ * Returns undefined for any other error shape — callers should fall
+ * back to logging the plain message.
+ */
+export function extractGenerateObjectDiagnostics(
+  err: unknown,
+): Record<string, unknown> | undefined {
+  if (!NoObjectGeneratedError.isInstance(err)) return undefined;
+  const diagnostics: Record<string, unknown> = {
+    finishReason: err.finishReason,
+    responseTextLength: err.text?.length ?? null,
+  };
+  if (err.cause instanceof ZodError) {
+    diagnostics.zodIssues = err.cause.issues.map((issue) => ({
+      path: issue.path.join('.'),
+      code: issue.code,
+      message: issue.message,
+    }));
+  }
+  return diagnostics;
 }

@@ -103,7 +103,16 @@ const EnvSchema = z
       .string()
       .regex(/^[a-z]+\/[a-z0-9.@\-]+$/, 'Must be provider/model format')
       .default('google/gemini-2.5-flash'),
-    LLM_MAX_TOKENS: z.coerce.number().int().positive().default(4096),
+    // 4096 was tight even before accounting for the disableThinking fix
+    // in lib/llm.ts's generateResume() — a full multi-job resume with
+    // highlights, education, skills, projects, and certs as escaped JSON
+    // genuinely needs headroom. First bumped to 8192 after seeing
+    // finishReason: 'length' at an 8112-char partial response — but a
+    // longer JD still truncated at 14789 chars even under that budget,
+    // so structured JSON here runs notably denser per-token than plain
+    // prose. 16384 to give real headroom for an elaborate multi-job
+    // resume rather than re-chasing this a third time.
+    LLM_MAX_TOKENS: z.coerce.number().int().positive().default(16_384),
     LLM_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
     LLM_CONCURRENCY_LIMIT: z.coerce.number().int().positive().default(20),
 
