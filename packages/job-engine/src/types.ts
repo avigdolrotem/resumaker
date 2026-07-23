@@ -3,6 +3,7 @@ export type Source =
   | 'lever'
   | 'workable'
   | 'ashby'
+  | 'comeet'
   | 'serper'
   | 'jooble'
   | 'adzuna'

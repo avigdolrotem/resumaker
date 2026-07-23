@@ -44,6 +44,14 @@ paths = [
   '''vitest\.setup\.ts$''',
   '''.*\.test\.ts$''',
   '''.*\.spec\.ts$''',
+  # Comeet per-company API tokens (packages/job-engine/src/sources/
+  # companies.ts). Not secrets: Comeet embeds these directly in each
+  # company's public careers-page HTML (COMPANY_DATA.token), shipped
+  # unauthenticated to every visitor's browser, and they only grant
+  # read access to that company's own already-public job listings —
+  # see harvestComeetToken's doc comment in
+  # packages/job-engine/src/sources/comeet.ts for how they're sourced.
+  '''packages/job-engine/src/sources/companies\.ts$''',
 ]
 regexes = [
   # Placeholder values used in examples

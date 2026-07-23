@@ -6,14 +6,20 @@
  * manifest curls this route with the CRON_SECRET, so GET (not POST) is
  * what actually gets exercised; keep it GET.
  *
- * Hits every wired scraper source (Greenhouse, Lever, Workable, Ashby)
- * for its curated Israeli company list (job-engine's COMPANIES) and
- * upserts by (source, external_id) — a re-scrape of a still-open job
- * refreshes its content and bumps lastSeenAt/resets missCount/status
- * instead of just being silently deduped, which is what actually makes
- * "is this job still open" trackable over time (see the closure sweep
- * planned for Phase 1, which increments missCount on jobs that stop
- * showing up in a source's successful fetches).
+ * Hits every wired scraper source (Greenhouse, Lever, Workable, Ashby,
+ * Comeet) for its curated Israeli company list (job-engine's COMPANIES /
+ * COMEET_COMPANIES) and upserts by (source, external_id) — a re-scrape of
+ * a still-open job refreshes its content and bumps lastSeenAt/resets
+ * missCount/status instead of just being silently deduped.
+ *
+ * Also runs the closure sweep: for each source, any job belonging to a
+ * company we *successfully* checked this run but that didn't come back
+ * in the fetch gets missCount+1, closing at CLOSE_AFTER_MISSES misses.
+ * Scoped to companies that were actually fetched OK this run — a company
+ * whose fetch itself failed contributes no closure signal at all (see
+ * FetchResult's doc comment), and a company dropped from the curated list
+ * entirely is out of scope for every future sweep, not just this one; its
+ * jobs go stale rather than wrongly closing.
  *
  * The job-engine package handles the actual HTTP + parsing. Each
  * source's fetcher returns FetchResult — {ok:false} on a genuine fetch
@@ -23,15 +29,19 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { sql } from 'drizzle-orm';
+import { and, eq, inArray, notInArray, sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { logger } from '@/lib/observability';
 import { verifyCronSecret } from '@/lib/cron-auth';
-import type { FetchResult, NormalizedJob } from '@resumaker/job-engine';
+import type { ComeetCompany, FetchResult, NormalizedJob } from '@resumaker/job-engine';
 
 export const maxDuration = 300; // 5 minutes — scraping can take a while
 
 const UPSERT_CHUNK_SIZE = 500;
+// Consecutive full sweeps a previously-seen job can be absent from a
+// successful fetch before it's considered closed rather than a transient
+// scrape hiccup (a company board flickering empty for one run, etc.).
+const CLOSE_AFTER_MISSES = 2;
 
 function chunk<T>(items: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -46,6 +56,8 @@ interface SourceStats {
   inserted: number;
   updated: number;
   insertErrors: string[];
+  missIncremented: number;
+  closed: number;
 }
 
 /** Upsert one source's collected jobs, batched. Returns {inserted, updated} counts. */
@@ -120,6 +132,91 @@ async function upsertJobs(
   return { inserted, updated, errors };
 }
 
+/**
+ * Mark jobs stale for companies we successfully checked this run but that
+ * didn't reappear in the fetch. `checkedSlugs` must only include companies
+ * whose fetch succeeded this run (a failed fetch is not a closure signal —
+ * see the route doc comment). Returns early (no-op) if nothing succeeded,
+ * since there's no scope to sweep against.
+ */
+async function sweepClosures(
+  source: string,
+  checkedSlugs: string[],
+  seenExternalIds: string[],
+): Promise<{ missIncremented: number; closed: number }> {
+  if (checkedSlugs.length === 0) return { missIncremented: 0, closed: 0 };
+
+  const conditions = [
+    eq(schema.jobs.source, source),
+    inArray(schema.jobs.companySlug, checkedSlugs),
+    eq(schema.jobs.status, 'open'),
+  ];
+  // Omit rather than pass [] to notInArray — "not in the empty set" should
+  // mean "matches everything" (a company confirmed to have zero current
+  // listings correctly closes every job we'd previously seen from it),
+  // and relying on notInArray's own empty-array SQL generation for that
+  // is one more thing to get subtly wrong.
+  if (seenExternalIds.length > 0) {
+    conditions.push(notInArray(schema.jobs.externalId, seenExternalIds));
+  }
+
+  const rows = await db
+    .update(schema.jobs)
+    .set({
+      missCount: sql`${schema.jobs.missCount} + 1`,
+      status: sql`CASE WHEN ${schema.jobs.missCount} + 1 >= ${CLOSE_AFTER_MISSES} THEN 'closed' ELSE ${schema.jobs.status} END`,
+      closedAt: sql`CASE WHEN ${schema.jobs.missCount} + 1 >= ${CLOSE_AFTER_MISSES} THEN COALESCE(${schema.jobs.closedAt}, now()) ELSE ${schema.jobs.closedAt} END`,
+    })
+    .where(and(...conditions))
+    .returning({ status: schema.jobs.status });
+
+  const closed = rows.filter((r) => r.status === 'closed').length;
+  return { missIncremented: rows.length, closed };
+}
+
+/**
+ * Shared tail end for every source: upsert what was fetched, sweep
+ * closures for the companies that succeeded, log a scrapeRuns row.
+ * Mutates and returns `stats` for the caller to fold into perSource.
+ */
+async function finishSource(
+  source: string,
+  sourceStartedAt: number,
+  companiesAttempted: number,
+  fetchErrors: string[],
+  checkedSlugs: string[],
+  collected: NormalizedJob[],
+): Promise<SourceStats> {
+  const { inserted, updated, errors: insertErrors } = await upsertJobs(collected, source);
+  const { missIncremented, closed } = await sweepClosures(
+    source,
+    checkedSlugs,
+    collected.map((j) => j.externalId),
+  );
+
+  const stats: SourceStats = {
+    companies: companiesAttempted,
+    fetchErrors,
+    fetched: collected.length,
+    inserted,
+    updated,
+    insertErrors,
+    missIncremented,
+    closed,
+  };
+
+  const ok = fetchErrors.length === 0 && insertErrors.length === 0;
+  await db.insert(schema.scrapeRuns).values({
+    source,
+    startedAt: new Date(sourceStartedAt),
+    finishedAt: new Date(),
+    stats,
+    ok,
+  });
+
+  return stats;
+}
+
 export async function GET(req: NextRequest): Promise<Response> {
   const authError = verifyCronSecret(req);
   if (authError) return authError;
@@ -127,10 +224,14 @@ export async function GET(req: NextRequest): Promise<Response> {
   const invocationStartedAt = Date.now();
 
   let companies: Record<string, string[]> = {};
+  let comeetCompanies: ComeetCompany[] = [];
   let fetchers: Record<string, (slug: string) => Promise<FetchResult>>;
+  let fetchComeet: (slug: string, uid: string, token: string) => Promise<FetchResult>;
   try {
     const engine = await import('@resumaker/job-engine');
     companies = (engine as unknown as { COMPANIES: Record<string, string[]> }).COMPANIES;
+    comeetCompanies = engine.COMEET_COMPANIES;
+    fetchComeet = engine.fetchComeetJobs;
     fetchers = {
       greenhouse: engine.fetchGreenhouseJobs,
       lever: engine.fetchLeverJobs,
@@ -150,14 +251,8 @@ export async function GET(req: NextRequest): Promise<Response> {
   for (const [source, fetchFn] of Object.entries(fetchers)) {
     const slugs = companies[source] ?? [];
     const sourceStartedAt = Date.now();
-    const stats: SourceStats = {
-      companies: slugs.length,
-      fetchErrors: [],
-      fetched: 0,
-      inserted: 0,
-      updated: 0,
-      insertErrors: [],
-    };
+    const fetchErrors: string[] = [];
+    const checkedSlugs: string[] = [];
     const collected: NormalizedJob[] = [];
 
     for (const slug of slugs) {
@@ -165,31 +260,63 @@ export async function GET(req: NextRequest): Promise<Response> {
       try {
         result = await fetchFn(slug);
       } catch (err) {
-        stats.fetchErrors.push(`${slug}:${(err as Error).message}`);
+        fetchErrors.push(`${slug}:${(err as Error).message}`);
         continue;
       }
       if (!result.ok) {
-        stats.fetchErrors.push(`${slug}:${result.error}`);
+        fetchErrors.push(`${slug}:${result.error}`);
         continue;
       }
-      stats.fetched += result.jobs.length;
+      checkedSlugs.push(slug);
       collected.push(...result.jobs);
     }
 
-    const { inserted, updated, errors } = await upsertJobs(collected, source);
-    stats.inserted = inserted;
-    stats.updated = updated;
-    stats.insertErrors = errors;
-    perSource[source] = stats;
-
-    const ok = stats.fetchErrors.length === 0 && stats.insertErrors.length === 0;
-    await db.insert(schema.scrapeRuns).values({
+    perSource[source] = await finishSource(
       source,
-      startedAt: new Date(sourceStartedAt),
-      finishedAt: new Date(),
-      stats,
-      ok,
-    });
+      sourceStartedAt,
+      slugs.length,
+      fetchErrors,
+      checkedSlugs,
+      collected,
+    );
+  }
+
+  // Comeet needs a slug+uid+token triple per company, not a bare slug, so
+  // it can't share the generic loop above.
+  {
+    const source = 'comeet';
+    const sourceStartedAt = Date.now();
+    const fetchErrors: string[] = [];
+    const checkedSlugs: string[] = [];
+    const collected: NormalizedJob[] = [];
+
+    for (const company of comeetCompanies) {
+      let result: FetchResult;
+      try {
+        result = await fetchComeet(company.slug, company.uid, company.token);
+      } catch (err) {
+        fetchErrors.push(`${company.slug}:${(err as Error).message}`);
+        continue;
+      }
+      if (!result.ok) {
+        // A 401 here means the token's rotated — see harvestComeetToken's
+        // doc comment for the re-harvest path. Surfaces as a normal fetch
+        // error, not a crash.
+        fetchErrors.push(`${company.slug}:${result.error}`);
+        continue;
+      }
+      checkedSlugs.push(company.slug);
+      collected.push(...result.jobs);
+    }
+
+    perSource[source] = await finishSource(
+      source,
+      sourceStartedAt,
+      comeetCompanies.length,
+      fetchErrors,
+      checkedSlugs,
+      collected,
+    );
   }
 
   const durationMs = Date.now() - invocationStartedAt;
