@@ -178,6 +178,13 @@ const EnvSchema = z
     VAPID_PRIVATE_KEY: z.string().optional(),
     VAPID_SUBJECT: z.string().email().optional(),
 
+    // Job scraping — Serper.dev powers Google-search-based ATS discovery
+    // (site:greenhouse.io / site:lever.co / etc queries, see job-engine's
+    // sources/serper.ts). Optional: the scrape-jobs cron's Serper pass is
+    // skipped entirely when unset, same as every other optional source
+    // key here — not a boot-time requirement.
+    SERPER_API_KEY: z.string().optional(),
+
     // Feature flags: currently no flags are gating anything in the app.
     // Add them here (with `default('false')`) once you wire a flag check
     // in the code so the env contract stays meaningful.

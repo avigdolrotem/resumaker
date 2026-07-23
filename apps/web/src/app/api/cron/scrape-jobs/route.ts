@@ -10,16 +10,23 @@
  * Comeet) for its curated Israeli company list (job-engine's COMPANIES /
  * COMEET_COMPANIES) and upserts by (source, external_id) — a re-scrape of
  * a still-open job refreshes its content and bumps lastSeenAt/resets
- * missCount/status instead of just being silently deduped.
+ * missCount/status instead of just being silently deduped. Also runs
+ * Serper-based discovery (site:greenhouse.io/etc Google searches, see
+ * job-engine's discoverJobsViaSerper) to find companies not in the
+ * curated lists — skipped entirely if SERPER_API_KEY is unset.
  *
- * Also runs the closure sweep: for each source, any job belonging to a
- * company we *successfully* checked this run but that didn't come back
- * in the fetch gets missCount+1, closing at CLOSE_AFTER_MISSES misses.
- * Scoped to companies that were actually fetched OK this run — a company
- * whose fetch itself failed contributes no closure signal at all (see
- * FetchResult's doc comment), and a company dropped from the curated list
- * entirely is out of scope for every future sweep, not just this one; its
- * jobs go stale rather than wrongly closing.
+ * Also runs the closure sweep: for each curated-list source, any job
+ * belonging to a company we *successfully* checked this run but that
+ * didn't come back in the fetch gets missCount+1, closing at
+ * CLOSE_AFTER_MISSES misses. Scoped to companies that were actually
+ * fetched OK this run — a company whose fetch itself failed contributes
+ * no closure signal at all (see FetchResult's doc comment), and a
+ * company dropped from the curated list entirely is out of scope for
+ * every future sweep, not just this one; its jobs go stale rather than
+ * wrongly closing. Serper's discoveries never participate in this sweep
+ * — a partial search-result sample not surfacing a company says nothing
+ * about whether that company's jobs are still open (see
+ * discoverJobsViaSerper's doc comment).
  *
  * The job-engine package handles the actual HTTP + parsing. Each
  * source's fetcher returns FetchResult — {ok:false} on a genuine fetch
@@ -31,9 +38,15 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { and, eq, inArray, notInArray, sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
+import { env } from '@/lib/env';
 import { logger } from '@/lib/observability';
 import { verifyCronSecret } from '@/lib/cron-auth';
-import type { ComeetCompany, FetchResult, NormalizedJob } from '@resumaker/job-engine';
+import type {
+  ComeetCompany,
+  FetchResult,
+  NormalizedJob,
+  SerperDiscoveryResult,
+} from '@resumaker/job-engine';
 
 export const maxDuration = 300; // 5 minutes — scraping can take a while
 
@@ -227,11 +240,13 @@ export async function GET(req: NextRequest): Promise<Response> {
   let comeetCompanies: ComeetCompany[] = [];
   let fetchers: Record<string, (slug: string) => Promise<FetchResult>>;
   let fetchComeet: (slug: string, uid: string, token: string) => Promise<FetchResult>;
+  let discoverSerper: (apiKey: string) => Promise<SerperDiscoveryResult>;
   try {
     const engine = await import('@resumaker/job-engine');
     companies = (engine as unknown as { COMPANIES: Record<string, string[]> }).COMPANIES;
     comeetCompanies = engine.COMEET_COMPANIES;
     fetchComeet = engine.fetchComeetJobs;
+    discoverSerper = engine.discoverJobsViaSerper;
     fetchers = {
       greenhouse: engine.fetchGreenhouseJobs,
       lever: engine.fetchLeverJobs,
@@ -317,6 +332,57 @@ export async function GET(req: NextRequest): Promise<Response> {
       checkedSlugs,
       collected,
     );
+  }
+
+  // Serper discovery: jobs land under their true ATS source
+  // (greenhouse/lever/workable), not 'serper', so they upsert through
+  // the same per-source path and dedupe naturally against the
+  // curated-list crawls above. No-op (empty jobs, 0 queriesRun) when
+  // SERPER_API_KEY is unset. Deliberately does not call sweepClosures —
+  // see the route doc comment for why a partial discovery sample is
+  // never a valid closure signal.
+  {
+    const sourceStartedAt = Date.now();
+    const { jobs, queriesRun, queryErrors } = await discoverSerper(env.SERPER_API_KEY ?? '');
+
+    const byTrueSource = new Map<string, NormalizedJob[]>();
+    for (const job of jobs) {
+      const list = byTrueSource.get(job.source) ?? [];
+      list.push(job);
+      byTrueSource.set(job.source, list);
+    }
+
+    let inserted = 0;
+    let updated = 0;
+    const insertErrors: string[] = [];
+    for (const [trueSource, sourceJobs] of byTrueSource) {
+      const result = await upsertJobs(sourceJobs, trueSource);
+      inserted += result.inserted;
+      updated += result.updated;
+      insertErrors.push(...result.errors);
+    }
+
+    const stats: SourceStats & { queriesRun: number } = {
+      companies: 0, // discovery, not a curated company list — not company-scoped
+      fetchErrors: queryErrors,
+      fetched: jobs.length,
+      inserted,
+      updated,
+      insertErrors,
+      missIncremented: 0,
+      closed: 0,
+      queriesRun,
+    };
+    perSource.serper = stats;
+
+    const ok = queryErrors.length === 0 && insertErrors.length === 0;
+    await db.insert(schema.scrapeRuns).values({
+      source: 'serper',
+      startedAt: new Date(sourceStartedAt),
+      finishedAt: new Date(),
+      stats,
+      ok,
+    });
   }
 
   const durationMs = Date.now() - invocationStartedAt;

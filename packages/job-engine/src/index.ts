@@ -6,6 +6,8 @@ export { fetchLeverJobs } from './sources/lever';
 export { fetchWorkableJobs } from './sources/workable';
 export { fetchAshbyJobs } from './sources/ashby';
 export { fetchComeetJobs, harvestComeetToken } from './sources/comeet';
+export { discoverJobsViaSerper } from './sources/serper';
+export type { SerperDiscoveryResult } from './sources/serper';
 export { COMPANIES, COMEET_COMPANIES } from './sources/companies';
 export type { ComeetCompany } from './sources/companies';
 export { importJobFromUrl } from './importer';
