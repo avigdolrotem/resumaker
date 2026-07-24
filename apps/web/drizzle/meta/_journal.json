@@ -148,6 +148,13 @@
       "when": 1784876517776,
       "tag": "0020_recommendations_search_index",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1784877600000,
+      "tag": "0021_user_jobs_unique_fix",
+      "breakpoints": true
     }
   ]
 }

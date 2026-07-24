@@ -1,19 +1,7 @@
 import { generateObject } from 'ai';
-import { vertex } from '@ai-sdk/google-vertex';
-import { vertexAnthropic } from '@ai-sdk/google-vertex/anthropic';
 import { z } from 'zod';
 import { lookup as dnsLookup } from 'node:dns/promises';
-
-/** Resolve `provider/model` to a Vertex-backed AI SDK model. */
-function resolveModel(modelString: string) {
-  const slash = modelString.indexOf('/');
-  if (slash === -1) throw new Error(`Invalid model string "${modelString}"`);
-  const provider = modelString.slice(0, slash);
-  const modelId = modelString.slice(slash + 1);
-  if (provider === 'anthropic') return vertexAnthropic(modelId);
-  if (provider === 'google') return vertex(modelId);
-  throw new Error(`Unsupported provider "${provider}"`);
-}
+import { resolveModel, thinkingProviderOptions } from './model';
 import type { NormalizedJob } from './types';
 import { normalizeUrl } from './url-normalize';
 import { stripHtml, inferSeniority, parseIsoDate } from './html-utils';
@@ -161,12 +149,14 @@ const ExtractJobSchema = z.object({
 type ExtractedJob = z.infer<typeof ExtractJobSchema>;
 
 async function extractJobData(content: string, modelString: string): Promise<ExtractedJob | null> {
+  const providerOptions = thinkingProviderOptions(modelString);
   const result = await generateObject({
     model: resolveModel(modelString),
     schema: ExtractJobSchema,
     maxOutputTokens: 2048,
     system: EXTRACT_JD_SYSTEM,
     prompt: `Extract job information:\n\n${content.slice(0, 12_000)}`,
+    ...(providerOptions !== undefined && { providerOptions }),
   });
   return result.object;
 }

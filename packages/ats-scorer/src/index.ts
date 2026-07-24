@@ -224,7 +224,7 @@ const TECH_KEYWORDS_BOOST = [
   'lambda',
 ];
 
-interface KeywordExtractResult {
+export interface KeywordExtractResult {
   keyword: string;
   weight: number;
 }
@@ -233,7 +233,7 @@ function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function extractKeywords(text: string): KeywordExtractResult[] {
+export function extractKeywords(text: string): KeywordExtractResult[] {
   const isHebrew = HEBREW_REGEX.test(text);
   const normalized = text.toLowerCase();
 

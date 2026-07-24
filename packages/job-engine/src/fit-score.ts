@@ -1,18 +1,6 @@
 import { generateObject } from 'ai';
-import { vertex } from '@ai-sdk/google-vertex';
-import { vertexAnthropic } from '@ai-sdk/google-vertex/anthropic';
 import { z } from 'zod';
-
-/** Resolve `provider/model` to a Vertex-backed AI SDK model. */
-function resolveModel(modelString: string) {
-  const slash = modelString.indexOf('/');
-  if (slash === -1) throw new Error(`Invalid model string "${modelString}"`);
-  const provider = modelString.slice(0, slash);
-  const modelId = modelString.slice(slash + 1);
-  if (provider === 'anthropic') return vertexAnthropic(modelId);
-  if (provider === 'google') return vertex(modelId);
-  throw new Error(`Unsupported provider "${provider}"`);
-}
+import { resolveModel, thinkingProviderOptions } from './model';
 import type { FitScore, NormalizedJob, UserProfile } from './types';
 
 const FIT_SCORE_SYSTEM = `You are a technical recruiter evaluating candidate-job fit.
@@ -61,6 +49,8 @@ export async function computeFitScore(opts: ComputeFitScoreOpts): Promise<FitSco
     4_000,
   );
 
+  const providerOptions = thinkingProviderOptions(modelString);
+
   try {
     const result = await generateObject({
       model: resolveModel(modelString),
@@ -68,6 +58,7 @@ export async function computeFitScore(opts: ComputeFitScoreOpts): Promise<FitSco
       maxOutputTokens: 512,
       system: FIT_SCORE_SYSTEM,
       prompt: `CANDIDATE:\n${profileText}\n\nJOB:\n${jdText}`,
+      ...(providerOptions !== undefined && { providerOptions }),
     });
 
     return {
@@ -76,7 +67,13 @@ export async function computeFitScore(opts: ComputeFitScoreOpts): Promise<FitSco
       strengths: result.object.strengths ?? [],
       gaps: result.object.gaps ?? [],
     };
-  } catch {
+  } catch (err) {
+    // Was a bare `catch { return fallback() }` — every failure silently
+    // vanished with zero visibility into why, which is exactly how the
+    // thinking-budget bug above went undiagnosed until it was caught
+    // live. Still "never throws" (callers keep the same contract), but
+    // now at least logged.
+    console.error('[job-engine] computeFitScore failed, returning fallback:', err);
     return fallback();
   }
 }
