@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { apiFetch, ApiTierError } from '@/lib/api-client';
 
 /**
  * /jobs/paste — manual job import (URL or pasted text).
@@ -31,7 +32,7 @@ export default function JobsPastePage() {
     if (!url && !text) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/jobs/import', {
+      const res = await apiFetch('/api/jobs/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(url ? { url } : { text }),
@@ -43,6 +44,7 @@ export default function JobsPastePage() {
       }
       router.push(`/jobs/${data.id}`);
     } catch (err) {
+      if (err instanceof ApiTierError) return;
       toast.error((err as Error).message);
     } finally {
       setLoading(false);

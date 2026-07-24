@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Trash2, ExternalLink } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { apiFetch, ApiTierError } from '@/lib/api-client';
 
 const STATUSES = [
   'interested',
@@ -48,13 +49,14 @@ export function ApplicationsList({ rows, locale }: { rows: Row[]; locale: 'he' |
     // Optimistic
     setLocal((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     try {
-      const res = await fetch(`/api/applications/${id}`, {
+      const res = await apiFetch(`/api/applications/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
       if (!res.ok) throw new Error('Failed');
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiTierError) return;
       toast.error(locale === 'he' ? 'עדכון נכשל' : 'Update failed');
       router.refresh(); // re-sync
     }
@@ -63,10 +65,11 @@ export function ApplicationsList({ rows, locale }: { rows: Row[]; locale: 'he' |
   async function remove(id: string) {
     setLocal((prev) => prev.filter((r) => r.id !== id));
     try {
-      const res = await fetch(`/api/applications/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/applications/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed');
       toast.success(t('deleted'));
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiTierError) return;
       toast.error(locale === 'he' ? 'מחיקה נכשלה' : 'Delete failed');
       router.refresh();
     } finally {

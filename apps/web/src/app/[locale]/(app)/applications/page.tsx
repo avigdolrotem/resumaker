@@ -5,7 +5,7 @@ import { desc, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { Card, CardContent } from '@/components/ui/card';
 import { requireActiveUser } from '@/lib/auth-guards';
-import { hasJobHuntBeta } from '@/lib/beta-gate';
+import { hasJobHuntBetaAsync } from '@/lib/beta-gate';
 import { ApplicationsList } from '@/components/applications-list';
 import { ApplicationsPreview } from '@/components/applications-preview';
 import { Briefcase } from 'lucide-react';
@@ -14,10 +14,10 @@ import { Briefcase } from 'lucide-react';
  * /applications — tracker view. Lists every application the current user
  * has tracked, with inline status updates.
  *
- * Soft beta gate: non-flagged users see a blurred preview + an upsell
- * card instead of being silently redirected, mirroring /jobs. The API
- * routes still hard-gate with `requireJobHuntBetaApi`, so no data ever
- * reaches a non-flagged client.
+ * Soft gate: users without access see a blurred preview + an upsell card
+ * instead of being silently redirected, mirroring /jobs. The API routes
+ * still hard-gate with `requireJobHuntBetaApi`, so no data ever reaches
+ * a gated client.
  */
 export default async function ApplicationsPage({
   params,
@@ -29,7 +29,7 @@ export default async function ApplicationsPage({
   if (guard instanceof Response) {
     redirect('/sign-in');
   }
-  if (!hasJobHuntBeta(guard.user)) {
+  if (!(await hasJobHuntBetaAsync(guard.user))) {
     return <ApplicationsPreview />;
   }
   const t = await getTranslations({ locale, namespace: 'applications' });

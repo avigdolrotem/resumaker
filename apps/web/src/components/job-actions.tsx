@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Star, Sparkles, ClipboardCheck, CheckCircle2, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { apiFetch, ApiTierError } from '@/lib/api-client';
 
 interface Props {
   jobId: string;
@@ -54,10 +55,12 @@ export function JobActions({
     const next = !fav;
     setFav(next); // optimistic
     try {
-      const res = await fetch(`/api/jobs/${jobId}/favorite`, { method: 'POST' });
+      const res = await apiFetch(`/api/jobs/${jobId}/favorite`, { method: 'POST' });
       if (!res.ok) throw new Error('Failed');
-    } catch {
+    } catch (err) {
       setFav(!next);
+      // ApiTierError = 402; the global ApiUpgradeListener already opened the upgrade modal.
+      if (err instanceof ApiTierError) return;
       toast.error(locale === 'he' ? 'שמירה נכשלה' : 'Failed');
     }
   }
@@ -65,7 +68,7 @@ export function JobActions({
   async function scoreFit() {
     setScoring(true);
     try {
-      const res = await fetch(`/api/jobs/${jobId}/fit`, { method: 'POST' });
+      const res = await apiFetch(`/api/jobs/${jobId}/fit`, { method: 'POST' });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         toast.error(data.error ?? (locale === 'he' ? 'חישוב נכשל' : 'Couldn’t score'));
@@ -73,6 +76,7 @@ export function JobActions({
       }
       router.refresh();
     } catch (err) {
+      if (err instanceof ApiTierError) return;
       toast.error((err as Error).message);
     } finally {
       setScoring(false);
@@ -82,7 +86,7 @@ export function JobActions({
   async function trackApplication() {
     setTracking(true);
     try {
-      const res = await fetch('/api/applications', {
+      const res = await apiFetch('/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobId, status: 'interested' }),
@@ -96,6 +100,7 @@ export function JobActions({
       toast.success(locale === 'he' ? 'במעקב' : 'Tracked');
       router.refresh();
     } catch (err) {
+      if (err instanceof ApiTierError) return;
       toast.error((err as Error).message);
     } finally {
       setTracking(false);

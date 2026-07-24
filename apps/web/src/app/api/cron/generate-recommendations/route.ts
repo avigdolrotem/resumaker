@@ -2,14 +2,19 @@
  * GET /api/cron/generate-recommendations
  *
  * Nightly batch: runs generateRecommendationsForUser (the 3-stage
- * funnel — apps/web/src/lib/recommendations.ts) for every user with the
- * jobHuntBeta flag (or admin role — mirrors hasJobHuntBeta in
+ * funnel — apps/web/src/lib/recommendations.ts) for every user who can
+ * actually reach /dashboard's recommendation card — admin, beta flag, or
+ * a paid (plus/pro) subscription (mirrors hasJobHuntBetaAsync in
  * lib/beta-gate.ts, replicated here as a query condition since a route
- * handler can't call that helper against arbitrary rows) and a
- * completed career profile. No additional "active in the last 7 days"
- * filter for now — deliberately simplified: beta access is already an
- * admin-curated, small population (see beta-gate.ts's own reasoning),
- * so filtering further on recency isn't earning its complexity yet.
+ * handler can't call that helper against arbitrary rows) — with a
+ * completed career profile. The subscription half of this is a plain
+ * tier+status check, not the full getUserTier grace-period logic (a
+ * user in their canceled-but-still-in-grace-period window might miss a
+ * day's refresh) — acceptable here since this only affects freshness,
+ * never access; getUserTier alone gates whether they can see the page.
+ * No additional "active in the last 7 days" filter for now — beta
+ * access is still a small, curated population, so filtering further on
+ * recency isn't earning its complexity yet.
  * generateRecommendationsForUser itself no-ops for anyone without a
  * completed profile, so this could even skip the profile check below
  * and still be correct — kept explicit so a single query shows exactly
@@ -43,11 +48,16 @@ export async function GET(req: NextRequest): Promise<Response> {
     .select({ id: schema.users.id })
     .from(schema.users)
     .innerJoin(schema.profiles, eq(schema.profiles.userId, schema.users.id))
+    .leftJoin(schema.subscriptions, eq(schema.subscriptions.userId, schema.users.id))
     .where(
       and(
         or(
           eq(schema.users.role, 'admin'),
           sql`${schema.users.featureFlags}->>'jobHuntBeta' = 'true'`,
+          and(
+            sql`${schema.subscriptions.tier} IN ('plus', 'pro')`,
+            sql`${schema.subscriptions.status} IN ('active', 'trialing')`,
+          ),
         ),
         isNotNull(schema.profiles.onboardingCompletedAt),
       ),

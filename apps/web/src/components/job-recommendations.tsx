@@ -7,6 +7,7 @@ import { useRouter, Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { RESUME_BUILDER_PREFILL_KEY } from '@/lib/resume-builder-prefill';
+import { apiFetch, ApiTierError } from '@/lib/api-client';
 
 export interface RecommendedJob {
   id: string;
@@ -44,10 +45,15 @@ export function JobRecommendations({ jobs: initialJobs, isHebrew }: Props) {
     const prev = jobs;
     setJobs((js) => js.filter((j) => j.id !== id)); // optimistic
     try {
-      const res = await fetch(`/api/jobs/${id}/dismiss`, { method: 'POST' });
+      const res = await apiFetch(`/api/jobs/${id}/dismiss`, { method: 'POST' });
       if (!res.ok) throw new Error('failed');
-    } catch {
+    } catch (err) {
       setJobs(prev);
+      // ApiTierError = 402; the global ApiUpgradeListener already
+      // opened the upgrade modal (access was revoked mid-session — the
+      // page itself gates this normally, so this is a rare race, not
+      // the primary path).
+      if (err instanceof ApiTierError) return;
       toast.error(isHebrew ? 'הפעולה נכשלה' : 'Couldn’t dismiss');
     } finally {
       setDismissingId(null);
@@ -56,10 +62,11 @@ export function JobRecommendations({ jobs: initialJobs, isHebrew }: Props) {
 
   async function favorite(id: string) {
     try {
-      const res = await fetch(`/api/jobs/${id}/favorite`, { method: 'POST' });
+      const res = await apiFetch(`/api/jobs/${id}/favorite`, { method: 'POST' });
       if (!res.ok) throw new Error('failed');
       toast.success(isHebrew ? 'נשמר למועדפים' : 'Saved to favorites');
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiTierError) return;
       toast.error(isHebrew ? 'השמירה נכשלה' : 'Save failed');
     }
   }

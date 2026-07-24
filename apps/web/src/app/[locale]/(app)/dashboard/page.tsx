@@ -12,7 +12,7 @@ import { MagicCard } from '@/components/ui-effects/magic-card';
 import { CountUp } from '@/components/ui-effects/count-up';
 import { getLatestScoresByResumeId } from '@/lib/ats-score-lookup';
 import { EmailChangeStatusToast } from '@/components/email-change-status-toast';
-import { hasJobHuntBeta } from '@/lib/beta-gate';
+import { hasJobHuntBetaAsync } from '@/lib/beta-gate';
 import { JobRecommendations, type RecommendedJob } from '@/components/job-recommendations';
 import {
   FileText,
@@ -104,15 +104,18 @@ export default async function DashboardPage() {
       columns: { id: true, title: true, companyName: true, updatedAt: true },
     }),
     // Cheap PK lookup so every dashboard load pays for this even when
-    // job-hunt is off — the actual recommendations join below only runs
-    // for the flagged minority.
+    // job-hunt is off — hasJobHuntBetaAsync short-circuits on
+    // admin/flag before ever touching subscriptions, so this stays
+    // cheap for the common case too.
     db.query.users.findFirst({
       where: eq(schema.users.id, userId),
       columns: { role: true, featureFlags: true },
     }),
   ]);
 
-  const jobHuntBeta = betaUserRow ? hasJobHuntBeta(betaUserRow) : false;
+  const jobHuntBeta = betaUserRow
+    ? await hasJobHuntBetaAsync({ id: userId, ...betaUserRow })
+    : false;
 
   // Dashboard-precomputed only — never scores at request time (see
   // recommendations.ts). status='open' re-checked here defensively: a

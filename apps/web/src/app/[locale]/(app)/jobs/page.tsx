@@ -8,18 +8,19 @@ import { Link } from '@/i18n/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { requireActiveUser } from '@/lib/auth-guards';
-import { hasJobHuntBeta } from '@/lib/beta-gate';
+import { hasJobHuntBetaAsync } from '@/lib/beta-gate';
 import { JobHuntPreview } from '@/components/job-hunt-preview';
 
 /**
  * /jobs — beta inbox. Lists imported + scraped jobs newest first, with
  * the user's per-job state (favorite + fit score) joined.
  *
- * Soft beta gate: non-flagged users see a blurred preview + an upsell
- * card instead of being silently redirected. Creates demand for the
- * feature without leaking real job data. The API routes still hard-gate
- * with `requireJobHuntBetaApi`, so no data ever reaches a non-flagged
- * client — the preview is sample data only.
+ * Soft gate: users without access (no admin/beta-flag/paid-tier — see
+ * beta-gate.ts) see a blurred preview + an upsell card instead of being
+ * silently redirected. Creates demand for the feature without leaking
+ * real job data. The API routes still hard-gate with
+ * `requireJobHuntBetaApi`, so no data ever reaches a gated client — the
+ * preview is sample data only.
  */
 export default async function JobsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -27,7 +28,7 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
   if (guard instanceof Response) {
     redirect('/sign-in');
   }
-  if (!hasJobHuntBeta(guard.user)) {
+  if (!(await hasJobHuntBetaAsync(guard.user))) {
     return <JobHuntPreview />;
   }
   const t = await getTranslations({ locale, namespace: 'jobs' });
