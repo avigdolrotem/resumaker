@@ -145,6 +145,10 @@ cronJobs:
   scrapeTaasuka:
     enabled: true
     schedule: '*/15 * * * *'
+  generateRecommendations:
+    enabled: true
+    # After scrapeJobs (06:00) so the funnel sees the freshest listings.
+    schedule: '0 7 * * *'
   pushNotifications:
     enabled: false
     schedule: '0 18 * * *'

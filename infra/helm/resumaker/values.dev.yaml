@@ -73,5 +73,7 @@ cronJobs:
     enabled: true
   scrapeTaasuka:
     enabled: true
+  generateRecommendations:
+    enabled: true
   pushNotifications:
     enabled: true

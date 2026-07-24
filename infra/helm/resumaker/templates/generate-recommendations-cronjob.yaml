@@ -1,0 +1,71 @@
+{{- if .Values.cronJobs.generateRecommendations.enabled }}
+# Dashboard job-recommendation batch. GET /api/cron/generate-recommendations
+# runs the 3-stage funnel (apps/web/src/lib/recommendations.ts) for every
+# jobHuntBeta/admin user with a completed career profile, once a night —
+# also the de facto "refresh after profile changes" mechanism, see that
+# route's own doc comment for why this app doesn't have a separate
+# debounced-on-save trigger.
+#
+# Auth: Bearer token via CRON_SECRET (must match the value in the
+# resumaker-app Secret). Curl-from-inside-the-cluster so the secret
+# never leaves the VPC.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "resumaker.fullname" . }}-generate-recommendations
+  labels:
+    {{- include "resumaker.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cronJobs.generateRecommendations.schedule | quote }}
+  timeZone: Etc/UTC
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 7
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            {{- include "resumaker.selectorLabels" . | nindent 12 }}
+            job-type: generate-recommendations
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+          containers:
+            - name: generate-recommendations
+              image: curlimages/curl:8.10.1
+              securityContext:
+                runAsNonRoot: true
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  curl --fail --show-error --silent \
+                    --max-time 290 \
+                    -H "Authorization: Bearer $CRON_SECRET" \
+                    "http://{{ include "resumaker.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local/api/cron/generate-recommendations"
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "resumaker.fullname" . }}-app
+                      key: CRON_SECRET
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 32Mi
+                limits:
+                  cpu: 200m
+                  memory: 64Mi
+{{- end }}
