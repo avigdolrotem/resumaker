@@ -30,8 +30,18 @@ export function resolveModel(modelString: string) {
  * depend on packages and not the reverse). Always pass this as
  * providerOptions for a bounded single-shot structured-output call on a
  * google/* model; harmless no-op for anthropic/* models.
+ *
+ * gemini-2.5-pro is the one exception: Vertex rejects thinkingBudget:0
+ * outright for it (verified live against apps/web's copy of this same
+ * function — 100% reproducible, not intermittent), unlike flash/
+ * flash-lite which allow disabling thinking entirely. Not currently
+ * reachable here (fit-score/importer both pin a fixed cheap model, not
+ * a user's own preference), but fixing it anyway — this is the exact
+ * "fixed in one copy, not the other" failure mode this file's own top
+ * comment exists to prevent.
  */
 export function thinkingProviderOptions(modelString: string) {
   if (!modelString.startsWith('google/')) return undefined;
+  if (modelString === 'google/gemini-2.5-pro') return undefined;
   return { vertex: { thinkingConfig: { thinkingBudget: 0 } } };
 }

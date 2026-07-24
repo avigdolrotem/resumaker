@@ -82,3 +82,63 @@ describe('provider.generateObject', () => {
     );
   });
 });
+
+describe('provider thinkingProviderOptions (via disableThinking)', () => {
+  const Schema = z.object({ x: z.number() });
+
+  beforeEach(() => {
+    (ai.generateObject as ReturnType<typeof vi.fn>).mockResolvedValue({
+      object: { x: 1 },
+      usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+    });
+  });
+
+  it('disables thinking entirely for flash', async () => {
+    await generateObject({
+      model: 'google/gemini-2.5-flash',
+      schema: Schema,
+      prompt: '.',
+      disableThinking: true,
+    });
+    expect(ai.generateObject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        providerOptions: { vertex: { thinkingConfig: { thinkingBudget: 0 } } },
+      }),
+    );
+  });
+
+  // Regression test: Vertex rejects thinkingBudget:0 for gemini-2.5-pro
+  // outright ("The model does not support setting thinking_budget to
+  // 0"), which made every disableThinking caller — resume generation
+  // chief among them — 100% fail whenever a user had Pro selected, with
+  // zero test coverage catching it. Pro needs a small non-zero budget
+  // instead (verified live: omitting thinkingConfig entirely produces
+  // an unparseable response; 0 is rejected outright; a small positive
+  // value works).
+  it('uses a small non-zero budget for pro instead of 0', async () => {
+    await generateObject({
+      model: 'google/gemini-2.5-pro',
+      schema: Schema,
+      prompt: '.',
+      disableThinking: true,
+    });
+    const call = (ai.generateObject as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
+      providerOptions?: { vertex?: { thinkingConfig?: { thinkingBudget?: number } } };
+    };
+    const budget = call.providerOptions?.vertex?.thinkingConfig?.thinkingBudget;
+    expect(budget).toBeGreaterThan(0);
+  });
+
+  it('leaves anthropic models untouched regardless of disableThinking', async () => {
+    await generateObject({
+      model: 'anthropic/claude-sonnet-4-5@20250929',
+      schema: Schema,
+      prompt: '.',
+      disableThinking: true,
+    });
+    const call = (ai.generateObject as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
+      providerOptions?: unknown;
+    };
+    expect(call.providerOptions).toBeUndefined();
+  });
+});

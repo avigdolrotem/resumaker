@@ -56,9 +56,27 @@ function resolveModel(modelString: string) {
  * mechanism entirely and isn't affected). Prefer this over just raising
  * maxOutputTokens for anything that doesn't need reasoning: it's also
  * faster and cheaper.
+ *
+ * gemini-2.5-pro is the one exception: Vertex rejects thinkingBudget:0
+ * outright for it ("The model does not support setting thinking_budget
+ * to 0" — verified live, 100% reproducible, not intermittent) unlike
+ * flash/flash-lite which allow disabling thinking entirely. Pro can't
+ * have its thinking turned off, so every disableThinking caller
+ * (resume generation chief among them) was hard-failing every single
+ * time a user had Pro selected. Leaving thinkingConfig unset entirely
+ * (Pro's own default/dynamic budget) was tried first and made things
+ * worse, not better: verified live, a real generateObject call took 54s
+ * and came back "No object generated: could not parse the response" —
+ * Pro's unbounded thinking trace appears to interfere with the SDK's
+ * structured-output extraction. A small non-zero budget is the actual
+ * fix: keeps it within what Vertex will accept for this model while
+ * still giving the schema-constrained tool-call step a clean shot.
  */
 function thinkingProviderOptions(disableThinking: boolean | undefined, modelString: string) {
   if (!disableThinking || !modelString.startsWith('google/')) return undefined;
+  if (modelString === 'google/gemini-2.5-pro') {
+    return { vertex: { thinkingConfig: { thinkingBudget: 128 } } };
+  }
   return { vertex: { thinkingConfig: { thinkingBudget: 0 } } };
 }
 
