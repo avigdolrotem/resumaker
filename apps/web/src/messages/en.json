@@ -243,8 +243,8 @@
     "betaGate": {
       "title": "Job Hunt is in beta",
       "subtitle": "Track every job you've applied to, score your fit, save favourites, and let us auto-import postings from your saved searches.",
-      "ctaButton": "Request beta access",
-      "note": "Currently invite-only — we'll email you when your access opens."
+      "ctaButton": "See Plus",
+      "note": "Included with Plus — join the waitlist below and we'll email you when upgrades open."
     },
     "filters": {
       "all": "All",
@@ -442,8 +442,8 @@
     "betaGate": {
       "title": "Application tracking is in beta",
       "subtitle": "Track every job you've applied to, move them through each stage, and keep notes and next actions in one place.",
-      "ctaButton": "Request beta access",
-      "note": "Currently invite-only — we'll email you when your access opens."
+      "ctaButton": "See Plus",
+      "note": "Included with Plus — join the waitlist below and we'll email you when upgrades open."
     }
   },
   "profile": {
@@ -1322,12 +1322,12 @@
         "body": "Premium templates ship with Plus. Upgrade to use them on every resume."
       },
       "job_hunt_beta": {
-        "title": "Job Hunt is in beta",
-        "body": "Track every job you've applied to, score your fit, save favourites, and let us auto-import postings. Join the waitlist and we'll email you when access opens."
+        "title": "Job Hunt is a Plus feature",
+        "body": "Track every job you've applied to, score your fit, save favourites, and let us auto-import postings — unlocked on Plus. Join the waitlist and we'll email you when upgrades open."
       },
       "application_tracking_beta": {
-        "title": "Application tracking is in beta",
-        "body": "Move every application through each stage, keep notes and next actions in one place, and see it all alongside your saved jobs. Join the waitlist and we'll email you when access opens."
+        "title": "Application tracking is a Plus feature",
+        "body": "Move every application through each stage, keep notes and next actions in one place, and see it all alongside your saved jobs — unlocked on Plus. Join the waitlist and we'll email you when upgrades open."
       }
     }
   },
