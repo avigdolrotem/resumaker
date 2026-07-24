@@ -62,6 +62,21 @@ function chunk<T>(items: T[], size: number): T[][] {
   return out;
 }
 
+/**
+ * Defensive clamp for the jobs table's bounded varchar columns.
+ * Scraped `company`/`location` in particular are free text on the
+ * source's end — verified live: a real Greenhouse company returned a
+ * `location` long enough to overflow varchar(200) and fail its entire
+ * insert batch (500 good rows sacrificed for one). None of these
+ * fields need full fidelity beyond their column width (display-only),
+ * so silently clamping is strictly better than losing a whole batch
+ * over one oversized field from one source.
+ */
+function clamp(value: string | undefined, maxLength: number): string | undefined {
+  if (value === undefined || value.length <= maxLength) return value;
+  return value.slice(0, maxLength);
+}
+
 interface SourceStats {
   companies: number;
   fetchErrors: string[];
@@ -90,10 +105,10 @@ async function upsertJobs(
           batch.map((item) => ({
             externalId: item.externalId,
             source: item.source,
-            company: item.company,
-            ...(item.companySlug ? { companySlug: item.companySlug } : {}),
-            title: item.title,
-            ...(item.location ? { location: item.location } : {}),
+            company: clamp(item.company, 200)!,
+            ...(item.companySlug ? { companySlug: clamp(item.companySlug, 200) } : {}),
+            title: clamp(item.title, 300)!,
+            ...(item.location ? { location: clamp(item.location, 200) } : {}),
             description: item.description,
             url: item.url,
             urlNormalized: item.urlNormalized,

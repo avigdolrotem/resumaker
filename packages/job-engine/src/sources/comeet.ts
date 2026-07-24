@@ -46,6 +46,10 @@ export async function fetchComeetJobs(
     const description = stripHtml(pos.details?.description ?? '');
     const requirements = stripHtml(pos.details?.requirements ?? '');
     const workType = (pos.work_type ?? '').toLowerCase();
+    // See greenhouse.ts's equivalent comment — details.description and
+    // .requirements are already fully captured (stripped) below; don't
+    // duplicate them in rawData.
+    const { details: _details, ...rawDataRest } = pos;
     return {
       externalId: positionUid,
       source: 'comeet',
@@ -59,7 +63,7 @@ export async function fetchComeetJobs(
       remote: workType === 'remote' || workType === 'hybrid',
       seniority: inferSeniority(pos.name ?? ''),
       postedAt: parseIsoDate(pos.time_updated),
-      rawData: pos,
+      rawData: rawDataRest,
     };
   });
   return { ok: true, jobs };

@@ -41,6 +41,9 @@ export async function fetchWorkableJobs(companySlug: string): Promise<FetchResul
     const location = locationParts.join(', ') || undefined;
     const shortcode = job.shortcode ?? job.id ?? '';
     const jobUrl = `https://apply.workable.com/${companySlug}/j/${shortcode}`;
+    // See greenhouse.ts's equivalent comment — description is already
+    // captured (stripped) below; don't duplicate it in rawData.
+    const { description: _d, ...rawDataRest } = job;
     return {
       externalId: shortcode,
       source: 'workable',
@@ -53,7 +56,7 @@ export async function fetchWorkableJobs(companySlug: string): Promise<FetchResul
       urlNormalized: normalizeUrl(jobUrl),
       remote: job.remote ?? false,
       seniority: inferSeniority(job.title ?? ''),
-      rawData: job,
+      rawData: rawDataRest,
     };
   });
   return { ok: true, jobs };

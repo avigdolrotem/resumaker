@@ -30,8 +30,12 @@ export async function fetchLeverJobs(companySlug: string): Promise<FetchResult> 
     const location = job.categories?.location ?? '';
     const jobUrl = job.hostedUrl ?? '';
     const rawDesc = job.descriptionPlain ?? job.description ?? '';
+    // See greenhouse.ts's equivalent comment — description(Plain) is
+    // already captured (stripped) below; don't duplicate it in rawData.
+    const { descriptionPlain: _dp, description: _d, ...rawDataRest } = job;
+    const externalId = job.id ?? '';
     return {
-      externalId: job.id ?? '',
+      externalId,
       source: 'lever',
       company: companySlug.charAt(0).toUpperCase() + companySlug.slice(1),
       companySlug,
@@ -39,11 +43,14 @@ export async function fetchLeverJobs(companySlug: string): Promise<FetchResult> 
       location: location || undefined,
       description: stripHtml(rawDesc),
       url: jobUrl,
-      urlNormalized: normalizeUrl(jobUrl),
+      // Fold in externalId so two postings can never collide onto the
+      // same urlNormalized regardless of URL shape — see greenhouse.ts
+      // for the live-verified collision this prevents.
+      urlNormalized: `${normalizeUrl(jobUrl)}#lever-${externalId}`,
       remote: location.toLowerCase().includes('remote'),
       seniority: inferSeniority(job.text ?? ''),
       postedAt: parseIsoDate(job.createdAt),
-      rawData: job,
+      rawData: rawDataRest,
     };
   });
   return { ok: true, jobs };

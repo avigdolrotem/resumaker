@@ -40,8 +40,12 @@ export async function fetchAshbyJobs(companySlug: string): Promise<FetchResult> 
   const jobs = (data.jobPostings ?? []).map((job): NormalizedJob => {
     const location = job.locationName ?? '';
     const jobUrl = job.applicationLink ?? job.externalLink ?? '';
+    // See greenhouse.ts's equivalent comment — descriptionHtml is
+    // already captured (stripped) below; don't duplicate it in rawData.
+    const { descriptionHtml: _dh, ...rawDataRest } = job;
+    const externalId = job.id ?? '';
     return {
-      externalId: job.id ?? '',
+      externalId,
       source: 'ashby',
       company: companyName,
       companySlug,
@@ -49,11 +53,17 @@ export async function fetchAshbyJobs(companySlug: string): Promise<FetchResult> 
       location: location || undefined,
       description: stripHtml(job.descriptionHtml ?? ''),
       url: jobUrl,
-      urlNormalized: normalizeUrl(jobUrl),
+      // Fold in externalId so two postings can never collide onto the
+      // same urlNormalized regardless of URL shape — see greenhouse.ts
+      // for the live-verified collision this prevents. applicationLink
+      // is an external URL (ATS-hosted or the company's own domain),
+      // not something this fetcher constructs itself, so the same risk
+      // applies here as it did for Greenhouse.
+      urlNormalized: `${normalizeUrl(jobUrl)}#ashby-${externalId}`,
       remote: job.isRemote ?? false,
       seniority: inferSeniority(job.title ?? ''),
       postedAt: parseIsoDate(job.publishedDate),
-      rawData: job,
+      rawData: rawDataRest,
     };
   });
   return { ok: true, jobs };
