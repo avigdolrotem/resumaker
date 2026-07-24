@@ -4,6 +4,7 @@ export type Source =
   | 'workable'
   | 'ashby'
   | 'comeet'
+  | 'taasuka'
   | 'serper'
   | 'jooble'
   | 'adzuna'

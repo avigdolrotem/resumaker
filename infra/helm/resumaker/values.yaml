@@ -142,6 +142,9 @@ cronJobs:
   scrapeJobs:
     enabled: true
     schedule: '0 6 * * *'
+  scrapeTaasuka:
+    enabled: true
+    schedule: '*/15 * * * *'
   pushNotifications:
     enabled: false
     schedule: '0 18 * * *'
