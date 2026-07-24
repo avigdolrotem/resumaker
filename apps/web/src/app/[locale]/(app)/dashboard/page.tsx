@@ -3,7 +3,7 @@ import { getTranslations, getLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
-import { eq, desc, count, isNull, and, gte, sql } from 'drizzle-orm';
+import { eq, desc, count, isNull, isNotNull, and, gte, sql } from 'drizzle-orm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ResumeGrid } from '@/components/resume-grid';
@@ -12,6 +12,8 @@ import { MagicCard } from '@/components/ui-effects/magic-card';
 import { CountUp } from '@/components/ui-effects/count-up';
 import { getLatestScoresByResumeId } from '@/lib/ats-score-lookup';
 import { EmailChangeStatusToast } from '@/components/email-change-status-toast';
+import { hasJobHuntBeta } from '@/lib/beta-gate';
+import { JobRecommendations, type RecommendedJob } from '@/components/job-recommendations';
 import {
   FileText,
   Sparkles,
@@ -50,6 +52,7 @@ export default async function DashboardPage() {
     recentResumes,
     recentActivity,
     recentCoverLetters,
+    betaUserRow,
   ] = await Promise.all([
     db
       .select({ value: count() })
@@ -100,7 +103,58 @@ export default async function DashboardPage() {
       limit: 3,
       columns: { id: true, title: true, companyName: true, updatedAt: true },
     }),
+    // Cheap PK lookup so every dashboard load pays for this even when
+    // job-hunt is off — the actual recommendations join below only runs
+    // for the flagged minority.
+    db.query.users.findFirst({
+      where: eq(schema.users.id, userId),
+      columns: { role: true, featureFlags: true },
+    }),
   ]);
+
+  const jobHuntBeta = betaUserRow ? hasJobHuntBeta(betaUserRow) : false;
+
+  // Dashboard-precomputed only — never scores at request time (see
+  // recommendations.ts). status='open' re-checked here defensively: a
+  // job can close in the gap between the nightly batch run and this
+  // page load.
+  const recommendedJobsRaw = jobHuntBeta
+    ? await db
+        .select({
+          id: schema.jobs.id,
+          company: schema.jobs.company,
+          title: schema.jobs.title,
+          location: schema.jobs.location,
+          remote: schema.jobs.remote,
+          description: schema.jobs.description,
+          hrUserId: schema.jobs.hrUserId,
+          fitScore: schema.userJobs.fitScore,
+          fitRationale: schema.userJobs.fitRationale,
+        })
+        .from(schema.userJobs)
+        .innerJoin(schema.jobs, eq(schema.userJobs.jobId, schema.jobs.id))
+        .where(
+          and(
+            eq(schema.userJobs.userId, userId),
+            isNotNull(schema.userJobs.recommendedAt),
+            isNull(schema.userJobs.dismissedAt),
+            eq(schema.jobs.status, 'open'),
+          ),
+        )
+        .orderBy(desc(schema.userJobs.recommendScore))
+        .limit(4)
+    : [];
+  const recommendedJobs: RecommendedJob[] = recommendedJobsRaw.map((j) => ({
+    id: j.id,
+    company: j.company,
+    title: j.title,
+    location: j.location,
+    remote: j.remote,
+    description: j.description,
+    hrPosted: j.hrUserId !== null,
+    fitScore: j.fitScore,
+    fitRationale: j.fitRationale,
+  }));
 
   const atsScoreByResumeId = await getLatestScoresByResumeId(recentResumes.map((r) => r.id));
   const recentResumesWithScores = recentResumes.map((r) => ({
@@ -259,6 +313,8 @@ export default async function DashboardPage() {
           glow="rgba(16, 185, 129, 0.2)"
         />
       </div>
+
+      {jobHuntBeta && <JobRecommendations jobs={recommendedJobs} isHebrew={isHebrew} />}
 
       {/* Recent resumes (filterable) */}
       <section>

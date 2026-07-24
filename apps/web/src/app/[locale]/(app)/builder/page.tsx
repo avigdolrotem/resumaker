@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { apiFetch, ApiTierError } from '@/lib/api-client';
 import { LiquidSpinner } from '@/components/ui-effects/liquid-spinner';
 import { Save as SaveIcon, Eye, ArrowLeft, Mail } from 'lucide-react';
 import { COVER_LETTER_PREFILL_KEY } from '@/lib/cover-letter-prefill';
+import { readAndClearResumeBuilderPrefill } from '@/lib/resume-builder-prefill';
 import type { Resume, ATSScore } from '@resumaker/shared';
 
 type LocaleChoice = 'auto' | 'he' | 'en';
@@ -69,6 +70,15 @@ export default function BuilderPage() {
   // also exports the react-pdf template components, which don't belong
   // in a client bundle.
   const [templateId, setTemplateId] = useState('modern');
+
+  // Dashboard recommendation card's "Generate resume for this job" — see
+  // resume-builder-prefill.ts. Pre-fills the JD only; the user still
+  // reviews and clicks Generate themselves, same as the analogous
+  // builder→cover-letters handoff below.
+  useEffect(() => {
+    const prefill = readAndClearResumeBuilderPrefill();
+    if (prefill) setJd(prefill.jobDescription);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
