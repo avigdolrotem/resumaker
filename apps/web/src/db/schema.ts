@@ -24,8 +24,20 @@ import {
   uniqueIndex,
   unique,
   check,
+  customType,
   type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
+
+// No built-in drizzle-orm pg-core column type for tsvector as of 0.45.x.
+// Maintained by a Postgres trigger (see migration 0020), not a
+// GENERATED ALWAYS AS column — drizzle-kit has no concept of trigger DDL
+// either way, so there was no generate-vs-hand-write tradeoff to make;
+// this just declares the column exists for query-building purposes.
+const tsvector = customType<{ data: string }>({
+  dataType() {
+    return 'tsvector';
+  },
+});
 
 // ─── BETTER AUTH TABLES ─────────────────────────────────────────────
 
@@ -660,6 +672,17 @@ export const jobs = pgTable(
     }),
     /** Taasuka occupation-category tag (or equivalent from other sources) — lets the default feed filter by occupation without re-crawling. */
     occupationCode: varchar('occupation_code', { length: 64 }),
+    /**
+     * title || ' ' || description, tokenized 'simple' (no Hebrew stemmer
+     * in Postgres core — 'simple' plus the GIN index below still gives
+     * real ranked full-text search over Hebrew tokens, just without
+     * stemming). Kept current by a trigger, not application code — every
+     * INSERT/UPDATE of title or description recomputes it regardless of
+     * which code path wrote the row. Replaces ILIKE '%q%' substring
+     * search, which was always going to be a full table scan and stopped
+     * being viable the moment Taasuka's ~16,700 rows landed.
+     */
+    searchVector: tsvector('search_vector'),
   },
   (t) => ({
     // UNIQUE so the cron's onConflictDoNothing({target: urlNormalized})
@@ -682,6 +705,7 @@ export const jobs = pgTable(
     hrUserIdx: index('jobs_hr_user_idx').on(t.hrUserId),
     statusIdx: index('jobs_status_idx').on(t.status),
     canonicalJobIdx: index('jobs_canonical_job_idx').on(t.canonicalJobId),
+    searchVectorIdx: index('jobs_search_vector_idx').using('gin', t.searchVector),
     canonicalNotSelfCheck: check(
       'jobs_canonical_not_self_check',
       sql`${t.canonicalJobId} IS NULL OR ${t.canonicalJobId} != ${t.id}`,
