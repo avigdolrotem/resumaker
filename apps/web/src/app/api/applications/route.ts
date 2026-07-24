@@ -9,6 +9,7 @@ import { headers } from 'next/headers';
 import { and, desc, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireJobHuntBetaApi } from '@/lib/beta-gate';
+import { isUniqueViolation } from '@/lib/db-errors';
 
 const APP_STATUSES = [
   'interested',
@@ -88,17 +89,33 @@ export async function POST(req: NextRequest): Promise<Response> {
   });
   if (existing) return NextResponse.json({ id: existing.id, deduped: true });
 
-  const [row] = await db
-    .insert(schema.applications)
-    .values({
-      userId: guard.user.id,
-      jobId: body.jobId,
-      status: body.status,
-      ...(body.notes ? { notes: body.notes } : {}),
-      notifyRecruiter: body.notifyRecruiter,
-      ...(body.status === 'applied' ? { appliedAt: new Date() } : {}),
-    })
-    .returning({ id: schema.applications.id });
+  try {
+    const [row] = await db
+      .insert(schema.applications)
+      .values({
+        userId: guard.user.id,
+        jobId: body.jobId,
+        status: body.status,
+        ...(body.notes ? { notes: body.notes } : {}),
+        notifyRecruiter: body.notifyRecruiter,
+        ...(body.status === 'applied' ? { appliedAt: new Date() } : {}),
+      })
+      .returning({ id: schema.applications.id });
 
-  return NextResponse.json({ id: row?.id, deduped: false });
+    return NextResponse.json({ id: row?.id, deduped: false });
+  } catch (err) {
+    // Two near-simultaneous POSTs (double-click) can both pass the
+    // `existing` check above before either INSERT commits — the unique
+    // constraint catches the loser. Same graceful response as the
+    // non-racy duplicate path, not a 500.
+    if (!isUniqueViolation(err)) throw err;
+    const row = await db.query.applications.findFirst({
+      where: and(
+        eq(schema.applications.userId, guard.user.id),
+        eq(schema.applications.jobId, body.jobId),
+      ),
+      columns: { id: true },
+    });
+    return NextResponse.json({ id: row?.id, deduped: true });
+  }
 }

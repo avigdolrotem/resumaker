@@ -12,6 +12,7 @@ import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { ResumeSchema } from '@resumaker/shared';
 import { auditEvent } from '@/lib/audit';
+import { isUniqueViolation } from '@/lib/db-errors';
 
 async function getOwnedResume(
   resumeId: string,
@@ -25,6 +26,43 @@ async function getOwnedResume(
     ),
   });
   return row ?? null;
+}
+
+/**
+ * Snapshot the resume's current content as a new version row. SELECT
+ * MAX(versionNumber)+1 → INSERT is a read-then-write race — two
+ * concurrent PATCHes (double-click Save, two open tabs) can both read
+ * the same max and try to insert the same next number. The unique
+ * constraint on (resumeId, versionNumber) turns the loser into a
+ * catchable conflict instead of a silent duplicate; retrying once here
+ * (re-reading the now-updated max) is enough since a 3-way collision on
+ * the same resume within the same request pair is not worth guarding.
+ */
+async function snapshotVersion(
+  resumeId: string,
+  content: typeof schema.resumeVersions.$inferInsert.content,
+  title: string,
+): Promise<void> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const [latest] = await db
+      .select({ version: schema.resumeVersions.versionNumber })
+      .from(schema.resumeVersions)
+      .where(eq(schema.resumeVersions.resumeId, resumeId))
+      .orderBy(desc(schema.resumeVersions.versionNumber))
+      .limit(1);
+    const nextVersion = (latest?.version ?? 0) + 1;
+    try {
+      await db.insert(schema.resumeVersions).values({
+        resumeId,
+        versionNumber: nextVersion,
+        content,
+        title,
+      });
+      return;
+    } catch (err) {
+      if (!isUniqueViolation(err) || attempt === 1) throw err;
+    }
+  }
 }
 
 export async function GET(
@@ -77,19 +115,7 @@ export async function PATCH(
 
   // If content is changing, snapshot the previous version FIRST
   if (body.content) {
-    const [latest] = await db
-      .select({ version: schema.resumeVersions.versionNumber })
-      .from(schema.resumeVersions)
-      .where(eq(schema.resumeVersions.resumeId, id))
-      .orderBy(desc(schema.resumeVersions.versionNumber))
-      .limit(1);
-    const nextVersion = (latest?.version ?? 0) + 1;
-    await db.insert(schema.resumeVersions).values({
-      resumeId: id,
-      versionNumber: nextVersion,
-      content: existing.content,
-      title: existing.title,
-    });
+    await snapshotVersion(id, existing.content, existing.title);
   }
 
   const patchResult = await db
