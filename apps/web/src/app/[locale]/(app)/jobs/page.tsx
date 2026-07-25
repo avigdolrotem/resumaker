@@ -22,8 +22,15 @@ import { JobsList } from '@/components/jobs-list';
  * `requireJobHuntBetaApi`, so no data ever reaches a gated client — the
  * preview is sample data only.
  */
-export default async function JobsPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function JobsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ page?: string }>;
+}) {
   const { locale } = await params;
+  const { page: pageParam } = await searchParams;
   const guard = await requireActiveUser(await nextHeaders());
   if (guard instanceof Response) {
     redirect('/sign-in');
@@ -34,9 +41,15 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
   const t = await getTranslations({ locale, namespace: 'jobs' });
   const isHebrew = locale === 'he';
 
-  // First page, server-rendered. JobsList (client) takes it from here
-  // for "Load more" — same listJobs() query, so it can't drift.
-  const { jobs, nextCursor, hasMore } = await listJobs({ userId: guard.user.id });
+  // Server-rendered for whatever page the URL asks for (defaults to 1)
+  // — JobsList (client) takes over from here for in-place page
+  // navigation, same listJobs() query so it can't drift from this.
+  const requestedPage = Number(pageParam ?? '1');
+  const { jobs, page, totalPages, totalCount } = await listJobs({
+    userId: guard.user.id,
+    israeliOnly: true,
+    page: Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1,
+  });
 
   return (
     <div className="space-y-6">
@@ -75,8 +88,9 @@ export default async function JobsPage({ params }: { params: Promise<{ locale: s
       ) : (
         <JobsList
           initialJobs={jobs}
-          initialCursor={nextCursor}
-          initialHasMore={hasMore}
+          initialPage={page}
+          totalPages={totalPages}
+          totalCount={totalCount}
           isHebrew={isHebrew}
         />
       )}

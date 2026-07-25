@@ -17,16 +17,20 @@
  *
  * Always excludes canonicalJobId-set rows (cross-source duplicates —
  * see jobs.canonicalJobId's doc comment) so the same real-world job
- * found at two sources doesn't show up twice.
+ * found at two sources doesn't show up twice. Also defaults to
+ * Israeli-only (location string match, or source in taasuka/hr which
+ * are Israeli by construction) — pass includeNonIsraeli=true to lift
+ * that. This is a plain lookup against an already-clean structured
+ * field, not something that needs an LLM.
  *
- * Pagination: cursor by `scrapedAt` desc (newest first) when unfiltered
- * or `remote`/`source`/`company`-filtered; by rank desc when `q` is set
- * (full-text relevance, not recency, is what matters for a search).
- * Page size 20.
+ * Pagination: real pages (page=1,2,3…), ordered by `scrapedAt` desc
+ * (newest first) when unfiltered, or by rank desc when `q` is set
+ * (full-text relevance, not recency, matters for a search). Page size
+ * 20 — see @/lib/jobs-query's PAGE_SIZE.
  *
  * The actual query lives in @/lib/jobs-query's listJobs() — shared with
- * /jobs's initial server-rendered page so client-side "Load more" can
- * never drift from what the first page showed.
+ * /jobs's initial server-rendered page so client-side page navigation
+ * can never drift from what the first page showed.
  *
  * L5 beta-gated.
  */
@@ -45,7 +49,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   const company = sp.get('company');
   const source = sp.get('source');
   const remote = sp.get('remote');
-  const cursor = sp.get('cursor'); // ISO timestamp, or a rank float string when q is set
+  const page = Number(sp.get('page') ?? '1');
 
   const result = await listJobs({
     userId: guard.user.id,
@@ -56,7 +60,8 @@ export async function GET(req: NextRequest): Promise<Response> {
     ...(remote === 'false' && { remote: false }),
     favoriteOnly: sp.get('favorite') === 'true',
     includeClosed: sp.get('includeClosed') === 'true',
-    ...(cursor && { cursor }),
+    israeliOnly: sp.get('includeNonIsraeli') !== 'true',
+    page: Number.isFinite(page) && page > 0 ? page : 1,
   });
 
   return NextResponse.json(result);

@@ -1,64 +1,70 @@
 'use client';
 
-import { useState } from 'react';
+import { useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import { Star, ExternalLink, Loader2 } from 'lucide-react';
-import { Link } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
+import { ChevronLeft, ChevronRight, Star, ExternalLink, Loader2 } from 'lucide-react';
+import { Link, useRouter, usePathname } from '@/i18n/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { apiFetch } from '@/lib/api-client';
 import type { JobListRow } from '@/lib/jobs-query';
 
 interface Props {
   initialJobs: JobListRow[];
-  initialCursor: string | null;
-  initialHasMore: boolean;
+  initialPage: number;
+  totalPages: number;
+  totalCount: number;
   isHebrew: boolean;
 }
 
 /**
- * The actual job cards + "Load more" pagination for /jobs. Split out
- * from the page (a Server Component) because paging needs client-side
- * fetch + state — the page still does the first, server-rendered page
- * itself (via the same listJobs() this calls for every page after),
- * so first paint is unchanged and only "Load more" costs a round trip.
+ * The actual job cards + real page navigation for /jobs (page=1,2,3…
+ * in the URL, not an ever-growing "Load more" list — the underlying
+ * data still comes from the server on every page change, same
+ * listJobs() the page itself calls, so this component holds no jobs
+ * state of its own: changing ?page= re-renders the Server Component
+ * with fresh props, this just displays whatever it's handed.
  *
- * Previously the page hard-capped at 20 rows with no way to see more —
- * fine when the table had a handful of manually-imported jobs, not
- * once the scrapers actually populated it (2.5k+ rows).
+ * Previously hard-capped at 20 rows with no way to see more, then
+ * "Load more" (append-only, no discrete pages) — replaced with real
+ * pagination once the table actually had enough rows (7k+) for
+ * "which page am I on" to matter.
  */
-export function JobsList({ initialJobs, initialCursor, initialHasMore, isHebrew }: Props) {
+export function JobsList({
+  initialJobs: jobs,
+  initialPage,
+  totalPages,
+  totalCount,
+  isHebrew,
+}: Props) {
   const t = useTranslations('jobs');
-  const [jobs, setJobs] = useState(initialJobs);
-  const [cursor, setCursor] = useState(initialCursor);
-  const [hasMore, setHasMore] = useState(initialHasMore);
-  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
-  async function loadMore() {
-    if (!cursor || loading) return;
-    setLoading(true);
-    try {
-      const res = await apiFetch(`/api/jobs?cursor=${encodeURIComponent(cursor)}`);
-      if (!res.ok) return;
-      const data = (await res.json()) as {
-        jobs: JobListRow[];
-        nextCursor: string | null;
-        hasMore: boolean;
-      };
-      setJobs((prev) => [...prev, ...data.jobs]);
-      setCursor(data.nextCursor);
-      setHasMore(data.hasMore);
-    } finally {
-      setLoading(false);
-    }
+  function goToPage(n: number) {
+    if (n < 1 || n > totalPages || isPending) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('page', String(n));
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`, { scroll: true });
+    });
   }
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+      <p className="text-muted-foreground text-sm">
+        {isHebrew
+          ? `${totalCount.toLocaleString('he-IL')} משרות · עמוד ${initialPage} מתוך ${totalPages}`
+          : `${totalCount.toLocaleString('en-US')} jobs · page ${initialPage} of ${totalPages}`}
+      </p>
+
+      <div className={`grid gap-3 lg:grid-cols-2 xl:grid-cols-3 ${isPending ? 'opacity-60' : ''}`}>
         {jobs.map((j, i) => (
           <Card
             key={j.id}
+            interactive={false}
             className="animate-slide-up hover:border-violet-300"
             style={
               i < 8 ? { animationDelay: `${i * 40}ms`, animationFillMode: 'backwards' } : undefined
@@ -125,10 +131,32 @@ export function JobsList({ initialJobs, initialCursor, initialHasMore, isHebrew 
         ))}
       </div>
 
-      {hasMore && (
-        <div className="flex justify-center pt-2">
-          <Button variant="outline" onClick={() => void loadMore()} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t('loadMore')}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => goToPage(initialPage - 1)}
+            disabled={initialPage <= 1 || isPending}
+          >
+            <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+          </Button>
+          <span className="text-muted-foreground min-w-[6rem] text-center text-sm">
+            {isPending ? (
+              <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+            ) : isHebrew ? (
+              `עמוד ${initialPage} מתוך ${totalPages}`
+            ) : (
+              `Page ${initialPage} of ${totalPages}`
+            )}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => goToPage(initialPage + 1)}
+            disabled={initialPage >= totalPages || isPending}
+          >
+            <ChevronRight className="h-4 w-4 rtl:rotate-180" />
           </Button>
         </div>
       )}

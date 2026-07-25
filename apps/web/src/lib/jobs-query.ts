@@ -1,18 +1,18 @@
 /**
- * Shared jobs-list query — used by both GET /api/jobs (client-side
- * "Load more" pagination) and /jobs's initial server-rendered page, so
- * the two can never drift into different filter/sort/pagination
- * behavior. The page used to run its own bespoke 20-row query with no
- * cursor at all; this is the one place that logic now lives.
+ * Shared jobs-list query — used by both GET /api/jobs (client-side page
+ * navigation) and /jobs's initial server-rendered page, so the two can
+ * never drift into different filter/sort/pagination behavior.
  *
- * Pagination: cursor by `scrapedAt` desc (newest first) when unfiltered
- * or `remote`/`source`/`company`-filtered; by rank desc when `q` is set
- * (full-text relevance, not recency, is what matters for a search).
+ * Pagination: real pages (page=1,2,3…), not cursor-based "load more" —
+ * offset/limit is entirely adequate at this table's size (tens of
+ * thousands of rows, not the point where OFFSET's O(n) skip cost
+ * actually matters) and lets the UI show Prev/Next + a page count
+ * instead of an ever-growing single list.
  */
-import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
 
-const PAGE_SIZE = 20;
+export const PAGE_SIZE = 20;
 
 export interface ListJobsParams {
   userId: string;
@@ -22,8 +22,9 @@ export interface ListJobsParams {
   remote?: boolean;
   favoriteOnly?: boolean;
   includeClosed?: boolean;
-  /** ISO timestamp, or a rank float string when `q` is set. */
-  cursor?: string;
+  israeliOnly?: boolean;
+  /** 1-indexed. Defaults to 1. */
+  page?: number;
 }
 
 export interface JobListRow {
@@ -46,17 +47,37 @@ export interface JobListRow {
   scrapedAt: Date;
   isFavorite: boolean | null;
   fitScore: number | null;
-  rank?: number;
 }
 
 export interface ListJobsResult {
   jobs: JobListRow[];
-  nextCursor: string | null;
-  hasMore: boolean;
+  page: number;
+  totalPages: number;
+  totalCount: number;
+}
+
+/**
+ * Matches location strings that read as Israel-based. Deliberately a
+ * plain string match, not an LLM call — location is already a clean
+ * structured field from every source (verified: "Israel - Tel Aviv",
+ * "United Kingdom - London" etc. straight from Greenhouse's own API),
+ * so this is a lookup problem, not a judgment one. Taasuka locations
+ * are Hebrew city names with no country suffix at all (it's an
+ * Israeli-government board, every listing already is Israeli) — NULL
+ * location + source='taasuka' also counts as Israeli for that reason.
+ */
+const ISRAELI_LOCATION_RE =
+  /israel|תל.?אביב|תל אביב|ירושלים|חיפה|באר.?שבע|רמת.?גן|הרצליה|פתח.?תקווה|נתניה|רעננה|כפר.?סבא|ראשון.?לציון|רחובות|אשדוד|אשקלון|נצרת|יפו/i;
+
+export function isIsraeliLocation(location: string | null, source: string): boolean {
+  if (source === 'taasuka' || source === 'hr') return true; // Israeli by construction
+  if (!location) return false;
+  return ISRAELI_LOCATION_RE.test(location);
 }
 
 export async function listJobs(params: ListJobsParams): Promise<ListJobsResult> {
   const q = params.q?.trim() ?? '';
+  const page = Math.max(1, params.page ?? 1);
 
   // websearch_to_tsquery tolerates arbitrary user input (quotes, bare
   // "-"/"|" characters, empty string) without throwing the syntax errors
@@ -69,23 +90,23 @@ export async function listJobs(params: ListJobsParams): Promise<ListJobsResult> 
   if (params.source) conditions.push(eq(schema.jobs.source, params.source));
   if (params.remote !== undefined) conditions.push(eq(schema.jobs.remote, params.remote));
   if (!params.includeClosed) conditions.push(eq(schema.jobs.status, 'open'));
-  conditions.push(isNull(schema.jobs.canonicalJobId));
-  if (params.cursor) {
-    if (tsQuery) {
-      conditions.push(
-        sql`ts_rank(${schema.jobs.searchVector}, ${tsQuery}) < ${Number(params.cursor)}`,
-      );
-    } else {
-      conditions.push(lt(schema.jobs.scrapedAt, new Date(params.cursor)));
-    }
+  if (params.israeliOnly) {
+    // Same plain-text rule as isIsraeliLocation, expressed in SQL so it
+    // can filter + paginate server-side instead of over-fetching and
+    // filtering in JS (which would break page counts/limits).
+    conditions.push(
+      sql`(${schema.jobs.source} IN ('taasuka', 'hr') OR ${schema.jobs.location} ~* ${ISRAELI_LOCATION_RE.source})`,
+    );
   }
+  conditions.push(isNull(schema.jobs.canonicalJobId));
 
   const where = conditions.length ? and(...conditions) : undefined;
 
   // Left-join user_jobs so we can return favorite + fit-score in the same
   // row. The `favoriteOnly` filter requires an inner join — applied via
-  // post-filter to keep the query shape consistent.
-  const rows = await db
+  // post-filter (small enough result sets per page that this is fine;
+  // see the comment below on why it doesn't affect the page count).
+  const baseQuery = db
     .select({
       id: schema.jobs.id,
       source: schema.jobs.source,
@@ -102,7 +123,6 @@ export async function listJobs(params: ListJobsParams): Promise<ListJobsResult> 
       scrapedAt: schema.jobs.scrapedAt,
       isFavorite: schema.userJobs.isFavorite,
       fitScore: schema.userJobs.fitScore,
-      ...(tsQuery ? { rank: sql<number>`ts_rank(${schema.jobs.searchVector}, ${tsQuery})` } : {}),
     })
     .from(schema.jobs)
     .leftJoin(
@@ -114,19 +134,20 @@ export async function listJobs(params: ListJobsParams): Promise<ListJobsResult> 
       tsQuery
         ? desc(sql`ts_rank(${schema.jobs.searchVector}, ${tsQuery})`)
         : desc(schema.jobs.scrapedAt),
-    )
-    .limit(PAGE_SIZE + 1);
+    );
 
-  const filtered = params.favoriteOnly ? rows.filter((r) => r.isFavorite === true) : rows;
-  const hasMore = filtered.length > PAGE_SIZE;
-  const page = filtered.slice(0, PAGE_SIZE);
-  const lastRow = page[page.length - 1];
-  const nextCursor =
-    hasMore && lastRow
-      ? tsQuery && 'rank' in lastRow
-        ? String(lastRow.rank)
-        : lastRow.scrapedAt.toISOString()
-      : null;
+  // favoriteOnly can't be expressed as a WHERE (it depends on the
+  // left-joined row), so it's not reflected in the COUNT below — a rare
+  // filter combo (favorites are typically a handful), and worst case
+  // means a page shows fewer than PAGE_SIZE favorited rows rather than
+  // a wrong total. Not worth a second, differently-shaped query for.
+  const [countRow] = await db.select({ value: count() }).from(schema.jobs).where(where);
+  const totalCount = countRow?.value ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const clampedPage = Math.min(page, totalPages);
 
-  return { jobs: page, nextCursor, hasMore };
+  const rows = await baseQuery.limit(PAGE_SIZE).offset((clampedPage - 1) * PAGE_SIZE);
+  const jobs = params.favoriteOnly ? rows.filter((r) => r.isFavorite === true) : rows;
+
+  return { jobs, page: clampedPage, totalPages, totalCount };
 }
