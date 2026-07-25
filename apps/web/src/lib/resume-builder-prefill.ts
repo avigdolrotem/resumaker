@@ -13,6 +13,12 @@ export const RESUME_BUILDER_PREFILL_KEY = 'resumaker:resume-builder-prefill';
 
 export interface ResumeBuilderPrefill {
   jobDescription: string;
+  /** The original posting's URL, when known — carried through so the
+   * generation result screen can offer a direct "view original
+   * posting" link (the whole point of generating a tailored resume for
+   * a specific job is to then go apply with it). Absent for
+   * manually-pasted jobs with no real URL. */
+  jobUrl?: string;
 }
 
 export function readAndClearResumeBuilderPrefill(): ResumeBuilderPrefill | null {
@@ -22,7 +28,10 @@ export function readAndClearResumeBuilderPrefill(): ResumeBuilderPrefill | null 
     sessionStorage.removeItem(RESUME_BUILDER_PREFILL_KEY);
     const parsed = JSON.parse(raw) as Partial<ResumeBuilderPrefill>;
     if (!parsed.jobDescription) return null;
-    return { jobDescription: parsed.jobDescription };
+    return {
+      jobDescription: parsed.jobDescription,
+      ...(parsed.jobUrl && { jobUrl: parsed.jobUrl }),
+    };
   } catch {
     return null;
   }

@@ -14,7 +14,7 @@ import { ModelPicker } from '@/components/builder/model-picker';
 import { TemplatePicker } from '@/components/builder/template-picker';
 import { apiFetch, ApiTierError } from '@/lib/api-client';
 import { LiquidSpinner } from '@/components/ui-effects/liquid-spinner';
-import { Save as SaveIcon, Eye, ArrowLeft, Mail } from 'lucide-react';
+import { Save as SaveIcon, Eye, ArrowLeft, Mail, ExternalLink } from 'lucide-react';
 import { COVER_LETTER_PREFILL_KEY } from '@/lib/cover-letter-prefill';
 import { readAndClearResumeBuilderPrefill } from '@/lib/resume-builder-prefill';
 import type { Resume, ATSScore } from '@resumaker/shared';
@@ -70,6 +70,11 @@ export default function BuilderPage() {
   // also exports the react-pdf template components, which don't belong
   // in a client bundle.
   const [templateId, setTemplateId] = useState('modern');
+  // Set only when we arrived here via "Generate resume for this job"
+  // (dashboard card or job detail page) — lets the result screen below
+  // offer a direct link back to go apply. Manually-pasted JDs never
+  // have this since there's no real URL to link to.
+  const [prefillJobUrl, setPrefillJobUrl] = useState<string | null>(null);
 
   // Dashboard recommendation card's "Generate resume for this job" — see
   // resume-builder-prefill.ts. Pre-fills the JD only; the user still
@@ -77,7 +82,10 @@ export default function BuilderPage() {
   // builder→cover-letters handoff below.
   useEffect(() => {
     const prefill = readAndClearResumeBuilderPrefill();
-    if (prefill) setJd(prefill.jobDescription);
+    if (prefill) {
+      setJd(prefill.jobDescription);
+      setPrefillJobUrl(prefill.jobUrl ?? null);
+    }
   }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -356,6 +364,21 @@ export default function BuilderPage() {
                     <Mail className="me-1.5 h-3.5 w-3.5" />
                     {t('actions.createCoverLetter')}
                   </Button>
+                  {/* Only present when generation started from "Generate
+                      resume for this job" (dashboard card / job detail
+                      page) — the whole point of tailoring a resume to a
+                      specific posting is to then go apply with it, so
+                      this is the natural next step once it's ready. */}
+                  {prefillJobUrl && (
+                    <Button size="sm" variant="default" asChild>
+                      <a href={prefillJobUrl} target="_blank" rel="noreferrer">
+                        <ExternalLink className="me-1.5 h-3.5 w-3.5" />
+                        {locale === 'he'
+                          ? 'צפה במשרה המקורית והגש מועמדות'
+                          : 'View original posting & apply'}
+                      </a>
+                    </Button>
+                  )}
                   <Button size="sm" variant="ghost" onClick={() => router.push('/dashboard')}>
                     <ArrowLeft className="me-1.5 h-3.5 w-3.5 rtl:hidden" />
                     {t('actions.backToDashboard')}

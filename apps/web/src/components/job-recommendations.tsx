@@ -16,6 +16,7 @@ export interface RecommendedJob {
   location: string | null;
   remote: boolean;
   description: string;
+  url: string;
   /** jobs.hrUserId !== null — the same signal Stage 2 boosts on. Must stay in sync with recommendations.ts's disclosure requirement. */
   hrPosted: boolean;
   fitScore: number | null;
@@ -74,7 +75,7 @@ export function JobRecommendations({ jobs: initialJobs, isHebrew }: Props) {
   function generateResume(job: RecommendedJob) {
     sessionStorage.setItem(
       RESUME_BUILDER_PREFILL_KEY,
-      JSON.stringify({ jobDescription: job.description }),
+      JSON.stringify({ jobDescription: job.description, jobUrl: job.url }),
     );
     router.push('/builder');
   }

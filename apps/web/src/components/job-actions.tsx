@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { toast } from 'sonner';
-import { Star, Sparkles, ClipboardCheck, CheckCircle2, Share2 } from 'lucide-react';
+import { Star, Sparkles, ClipboardCheck, X, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { apiFetch, ApiTierError } from '@/lib/api-client';
@@ -21,15 +21,22 @@ interface Props {
   fitStrengths: string[];
   fitGaps: string[];
   alreadyTracked: boolean;
+  /** The applications row id when alreadyTracked — needed to untrack. Null otherwise. */
+  applicationId: string | null;
   locale: 'he' | 'en';
 }
 
 /**
  * Detail-page action strip: favorite toggle, score fit, track application.
  *
- * Score-fit and track are non-blocking — toast on failure. Track is the
- * only action that's one-way (once tracked, button disables and we send
- * the user to /applications to manage it).
+ * Track/untrack toggles like favorite does (optimistic, no confirm
+ * dialog) — previously track-only was one-way from here (button just
+ * disabled once tracked), with the only way back a trip to
+ * /applications to find and delete the row there. Untracking here
+ * doesn't touch the application's history/notes/status if the user
+ * re-tracks later — it's a real DELETE (see /api/applications/[id]),
+ * so re-tracking after untracking starts a fresh row, same as if it
+ * had never been tracked.
  */
 export function JobActions({
   jobId,
@@ -42,12 +49,14 @@ export function JobActions({
   fitStrengths,
   fitGaps,
   alreadyTracked: initialTracked,
+  applicationId: initialApplicationId,
   locale,
 }: Props) {
   const t = useTranslations('jobs');
   const router = useRouter();
   const [fav, setFav] = useState(initialFav);
   const [tracked, setTracked] = useState(initialTracked);
+  const [applicationId, setApplicationId] = useState(initialApplicationId);
   const [scoring, setScoring] = useState(false);
   const [tracking, setTracking] = useState(false);
 
@@ -97,11 +106,32 @@ export function JobActions({
         return;
       }
       setTracked(true);
+      setApplicationId(data.id ?? null);
       toast.success(locale === 'he' ? 'במעקב' : 'Tracked');
       router.refresh();
     } catch (err) {
       if (err instanceof ApiTierError) return;
       toast.error((err as Error).message);
+    } finally {
+      setTracking(false);
+    }
+  }
+
+  async function untrackApplication() {
+    if (!applicationId) return;
+    setTracking(true);
+    const prevId = applicationId;
+    setTracked(false); // optimistic
+    setApplicationId(null);
+    try {
+      const res = await apiFetch(`/api/applications/${prevId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed');
+      toast.success(locale === 'he' ? 'הוסר מהמעקב' : 'Untracked');
+      router.refresh();
+    } catch {
+      setTracked(true);
+      setApplicationId(prevId);
+      toast.error(locale === 'he' ? 'ההסרה נכשלה' : "Couldn't untrack");
     } finally {
       setTracking(false);
     }
@@ -148,11 +178,15 @@ export function JobActions({
           <Sparkles className="me-2 h-4 w-4" />
           {scoring ? t('scoring') : t('scoreFit')}
         </Button>
-        <Button variant="default" onClick={trackApplication} disabled={tracked || tracking}>
+        <Button
+          variant={tracked ? 'outline' : 'default'}
+          onClick={() => void (tracked ? untrackApplication() : trackApplication())}
+          disabled={tracking}
+        >
           {tracked ? (
             <>
-              <CheckCircle2 className="me-2 h-4 w-4" />
-              {t('tracked')}
+              <X className="me-2 h-4 w-4" />
+              {tracking ? '…' : locale === 'he' ? 'הסר ממעקב' : 'Untrack'}
             </>
           ) : (
             <>

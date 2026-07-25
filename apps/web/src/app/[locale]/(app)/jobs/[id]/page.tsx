@@ -6,6 +6,7 @@ import { db, schema } from '@/db';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireJobHuntBetaPage } from '@/lib/beta-gate';
 import { JobActions } from '@/components/job-actions';
+import { GenerateResumeCta } from '@/components/generate-resume-cta';
 
 export default async function JobDetailPage({
   params,
@@ -84,6 +85,7 @@ export default async function JobDetailPage({
         fitStrengths={job.fitStrengths ?? []}
         fitGaps={job.fitGaps ?? []}
         alreadyTracked={Boolean(existingApp)}
+        applicationId={existingApp?.id ?? null}
         locale={locale}
       />
 
@@ -107,10 +109,15 @@ export default async function JobDetailPage({
             )}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-5">
           <div className="text-foreground whitespace-pre-wrap text-sm leading-relaxed">
             {job.description}
           </div>
+          <GenerateResumeCta
+            jobDescription={job.description}
+            jobUrl={job.source === 'manual' ? null : job.url}
+            isHebrew={locale === 'he'}
+          />
         </CardContent>
       </Card>
     </div>

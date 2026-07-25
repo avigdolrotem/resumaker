@@ -130,6 +130,7 @@ export default async function DashboardPage() {
           location: schema.jobs.location,
           remote: schema.jobs.remote,
           description: schema.jobs.description,
+          url: schema.jobs.url,
           hrUserId: schema.jobs.hrUserId,
           fitScore: schema.userJobs.fitScore,
           fitRationale: schema.userJobs.fitRationale,
@@ -145,7 +146,7 @@ export default async function DashboardPage() {
           ),
         )
         .orderBy(desc(schema.userJobs.recommendScore))
-        .limit(4)
+        .limit(6)
     : [];
   const recommendedJobs: RecommendedJob[] = recommendedJobsRaw.map((j) => ({
     id: j.id,
@@ -154,6 +155,7 @@ export default async function DashboardPage() {
     location: j.location,
     remote: j.remote,
     description: j.description,
+    url: j.url,
     hrPosted: j.hrUserId !== null,
     fitScore: j.fitScore,
     fitRationale: j.fitRationale,
