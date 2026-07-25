@@ -86,8 +86,14 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   // Try the package's importer when we have a URL. For text-paste we
   // skip the URL fetch and ask Claude to extract from the raw text only.
-  // The importer never throws — on failure it returns a NormalizedJob
-  // with sensible "Unknown" placeholders, which the user can edit.
+  // Retries once on failure before falling back to "Unknown" placeholders
+  // — verified live that a transient Vertex OAuth token hiccup (not a
+  // code bug: retrying the exact same URL moments later extracted the
+  // real title/company/description cleanly) was enough to leave a job
+  // permanently stuck as "Imported from <host>" with the raw URL as its
+  // description, with no way for the user to fix it short of re-pasting.
+  // One retry absorbs exactly that class of blip; a second consecutive
+  // failure is treated as a real problem with the URL/page itself.
   let extracted: {
     title: string;
     company: string;
@@ -97,9 +103,18 @@ export async function POST(req: NextRequest): Promise<Response> {
     seniority?: string | undefined;
   };
   if (body.url) {
-    try {
-      const { importJobFromUrl } = await import('@resumaker/job-engine');
-      const result = await importJobFromUrl(body.url);
+    const { importJobFromUrl } = await import('@resumaker/job-engine');
+    let lastErr: Error | undefined;
+    let result: Awaited<ReturnType<typeof importJobFromUrl>> | undefined;
+    for (let attempt = 0; attempt < 2 && !result; attempt++) {
+      try {
+        result = await importJobFromUrl(body.url);
+      } catch (err) {
+        lastErr = err as Error;
+        if (attempt === 0) await new Promise((r) => setTimeout(r, 1000));
+      }
+    }
+    if (result) {
       extracted = {
         title: result.title,
         company: result.company,
@@ -108,9 +123,9 @@ export async function POST(req: NextRequest): Promise<Response> {
         remote: result.remote,
         seniority: result.seniority,
       };
-    } catch (err) {
+    } else {
       logger.warn(
-        { err: (err as Error).message, userId: guard.user.id },
+        { err: lastErr?.message, userId: guard.user.id },
         'jobs.import.llm_failed_using_fallback',
       );
       extracted = {
