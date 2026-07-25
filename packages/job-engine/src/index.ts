@@ -13,5 +13,8 @@ export type { TaasukaPageResult } from './sources/taasuka';
 export { COMPANIES, COMEET_COMPANIES } from './sources/companies';
 export type { ComeetCompany } from './sources/companies';
 export { importJobFromUrl } from './importer';
+export type { ImportJobResult } from './importer';
+export { verifyManualImport } from './verify-import';
+export type { VerifyImportInput, VerifyImportResult } from './verify-import';
 export { computeFitScore } from './fit-score';
 export type { ComputeFitScoreOpts } from './fit-score';

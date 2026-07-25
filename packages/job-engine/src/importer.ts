@@ -156,9 +156,19 @@ async function extractJobData(content: string, modelString: string): Promise<Ext
     maxOutputTokens: 2048,
     system: EXTRACT_JD_SYSTEM,
     prompt: `Extract job information:\n\n${content.slice(0, 12_000)}`,
+    abortSignal: AbortSignal.timeout(20_000),
     ...(providerOptions !== undefined && { providerOptions }),
   });
   return result.object;
+}
+
+export interface ImportJobResult {
+  job: NormalizedJob;
+  /** Raw fetched page text (pre-LLM, capped at 20k chars by fetchUrlText)
+   * — surfaced so a caller can run its own checks (e.g. verify-import's
+   * post-hoc QA pass) against the same SSRF-safe fetch instead of
+   * re-fetching the URL a second time. */
+  rawContent: string;
 }
 
 /**
@@ -170,7 +180,7 @@ async function extractJobData(content: string, modelString: string): Promise<Ext
 export async function importJobFromUrl(
   url: string,
   modelString = 'google/gemini-2.5-flash',
-): Promise<NormalizedJob> {
+): Promise<ImportJobResult> {
   let content = '';
   try {
     content = await fetchUrlText(url);
@@ -182,7 +192,7 @@ export async function importJobFromUrl(
   const effectiveUrl = data?.application_url ?? url; // application_url is string|null — null falls through to url
   const externalId = normalizeUrl(url) || `manual-${Math.abs(hashStr(content)) & 0xffffff}`;
 
-  return {
+  const job: NormalizedJob = {
     externalId,
     source: 'manual',
     company: data?.company ?? 'Unknown',
@@ -197,6 +207,7 @@ export async function importJobFromUrl(
     postedAt: parseIsoDate(data?.posted_at ?? undefined),
     rawData: data ?? undefined,
   };
+  return { job, rawContent: content };
 }
 
 function hashStr(s: string): number {

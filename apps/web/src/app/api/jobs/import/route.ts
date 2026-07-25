@@ -6,11 +6,20 @@
  *
  * Flow:
  *   1. Beta + auth gate.
- *   2. If url: fetch + strip HTML to plain text. If text: use as-is.
- *   3. Call @resumaker/job-engine `importJobFromUrl` (which wraps an
- *      Anthropic haiku call to extract title/company/description).
- *   4. Normalize URL, dedupe by url_normalized (return existing row id
+ *   2. Normalize URL, dedupe by url_normalized (return existing row id
  *      if already imported).
+ *   3. If url: @resumaker/job-engine's `importJobFromUrl` fetches the
+ *      page and extracts title/company/description via an LLM call
+ *      (retried once on failure). If text: skip the fetch, hand the
+ *      pasted text straight to the minimal-row path.
+ *   4. For a url-mode extraction, `verifyManualImport` runs a second,
+ *      cheap LLM pass checking the extraction against the same fetched
+ *      page content — rejects with 422 only on a high-confidence "this
+ *      isn't actually a real job posting" verdict; anything uncertain
+ *      (including the check itself failing) lets the import through,
+ *      same as before this existed. See verify-import.ts for why this
+ *      exists and its AI-security posture (the fetched content is
+ *      fully untrusted input).
  *   5. Insert + audit.
  *
  * L5 beta-gated.
@@ -103,7 +112,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     seniority?: string | undefined;
   };
   if (body.url) {
-    const { importJobFromUrl } = await import('@resumaker/job-engine');
+    const { importJobFromUrl, verifyManualImport } = await import('@resumaker/job-engine');
     let lastErr: Error | undefined;
     let result: Awaited<ReturnType<typeof importJobFromUrl>> | undefined;
     for (let attempt = 0; attempt < 2 && !result; attempt++) {
@@ -115,13 +124,34 @@ export async function POST(req: NextRequest): Promise<Response> {
       }
     }
     if (result) {
+      const verdict = await verifyManualImport({
+        title: result.job.title,
+        company: result.job.company,
+        description: result.job.description,
+        rawContent: result.rawContent,
+      });
+      if (verdict && !verdict.isValid && verdict.confidence === 'high') {
+        logger.warn(
+          { userId: guard.user.id, reason: verdict.reason, url: body.url },
+          'jobs.import.verification_rejected',
+        );
+        return NextResponse.json(
+          {
+            error:
+              "This doesn't look like a valid job posting — try pasting the job description text directly instead.",
+            code: 'IMPORT_VERIFICATION_FAILED',
+            detail: verdict.reason,
+          },
+          { status: 422 },
+        );
+      }
       extracted = {
-        title: result.title,
-        company: result.company,
-        description: result.description,
-        location: result.location,
-        remote: result.remote,
-        seniority: result.seniority,
+        title: result.job.title,
+        company: result.job.company,
+        description: result.job.description,
+        location: result.job.location,
+        remote: result.job.remote,
+        seniority: result.job.seniority,
       };
     } else {
       logger.warn(

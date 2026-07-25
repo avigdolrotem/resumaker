@@ -16,6 +16,7 @@
   "dependencies": {
     "ai": "^6.0.191",
     "@ai-sdk/google-vertex": "^4.0.0",
+    "@resumaker/ai-safety": "workspace:*",
     "cheerio": "^1.2.0",
     "zod": "^3.24.1"
   },
