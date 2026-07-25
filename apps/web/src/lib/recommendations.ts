@@ -17,6 +17,7 @@ import { db, schema } from '@/db';
 import { extractKeywords } from '@resumaker/ats-scorer';
 import { computeFitScore, type NormalizedJob, type Source } from '@resumaker/job-engine';
 import { logger } from '@/lib/observability';
+import { ISRAELI_LOCATION_RE } from '@/lib/jobs-query';
 
 const STAGE1_LIMIT = 50;
 const STAGE2_LIMIT = 10;
@@ -112,6 +113,11 @@ async function retrieveStage1(profileContent: Record<string, unknown>): Promise<
         eq(schema.jobs.status, 'open'),
         isNull(schema.jobs.canonicalJobId),
         sql`${schema.jobs.searchVector} @@ ${tsQuery}`,
+        // Same Israeli-only guard as the jobs list (jobs-query.ts) — recs
+        // draw from the same table and a stray non-Israeli row (e.g. a
+        // manually-imported one) shouldn't be able to reach the dashboard
+        // just because this funnel has its own query.
+        sql`(${schema.jobs.source} IN ('taasuka', 'hr') OR ${schema.jobs.location} ~* ${ISRAELI_LOCATION_RE.source})`,
       ),
     )
     .orderBy(

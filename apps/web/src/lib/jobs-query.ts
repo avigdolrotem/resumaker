@@ -66,7 +66,7 @@ export interface ListJobsResult {
  * Israeli-government board, every listing already is Israeli) — NULL
  * location + source='taasuka' also counts as Israeli for that reason.
  */
-const ISRAELI_LOCATION_RE =
+export const ISRAELI_LOCATION_RE =
   /israel|תל.?אביב|תל אביב|ירושלים|חיפה|באר.?שבע|רמת.?גן|הרצליה|פתח.?תקווה|נתניה|רעננה|כפר.?סבא|ראשון.?לציון|רחובות|אשדוד|אשקלון|נצרת|יפו/i;
 
 export function isIsraeliLocation(location: string | null, source: string): boolean {
