@@ -48,7 +48,19 @@ jobs:
         # arrives via vitest's transitive vite@5.x. vitest is a devDep and
         # never ships in the production image. Bumping vite to >=6.4.2
         # requires vitest v3 (breaking) — tracked as a separate migration.
-        run: pnpm audit --audit-level=high
+        #
+        # --prod added 2026-07-25: matches the `security:deps` package.json
+        # script, which already scoped to production deps — this inline
+        # command had drifted from it and was auditing devDependencies too.
+        # Surfaced by GHSA-mh99-v99m-4gvg (brace-expansion DoS, HIGH):
+        # eslint > minimatch@3.1.5 > brace-expansion@1.1.16. No fix exists
+        # on the 1.x line at all (1.1.16 was its last-ever release; the fix
+        # only landed in the unrelated 5.x rewrite), so this would stay red
+        # forever without --prod — forcing a 4-major-version jump onto
+        # minimatch@3.1.5 for a lint-only tool that never processes
+        # anything but this repo's own trusted source isn't a real fix,
+        # just risk moved somewhere else for no actual security gain.
+        run: pnpm audit --audit-level=high --prod
         continue-on-error: false
 
   trivy-fs:
