@@ -26,7 +26,7 @@
  * Pagination: real pages (page=1,2,3…), ordered by `scrapedAt` desc
  * (newest first) when unfiltered, or by rank desc when `q` is set
  * (full-text relevance, not recency, matters for a search). Page size
- * 20 — see @/lib/jobs-query's PAGE_SIZE.
+ * — see @/lib/jobs-query's PAGE_SIZE.
  *
  * The actual query lives in @/lib/jobs-query's listJobs() — shared with
  * /jobs's initial server-rendered page so client-side page navigation

@@ -12,7 +12,9 @@
 import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
 
-export const PAGE_SIZE = 20;
+// Multiple of 3 so the 3-column grid (jobs-list.tsx) never ends a page
+// on a partial row — 20 left a dangling 2-card row every time.
+export const PAGE_SIZE = 21;
 
 export interface ListJobsParams {
   userId: string;
