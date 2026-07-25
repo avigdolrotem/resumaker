@@ -60,7 +60,13 @@ export const users = pgTable(
     featureFlags: jsonb('feature_flags')
       .notNull()
       .default(sql`'{}'::jsonb`)
-      .$type<{ jobHuntBeta?: boolean | undefined }>(),
+      .$type<{
+        jobHuntBeta?: boolean | undefined;
+        /** "Don't show again" on the dashboard onboarding checklist's X. Session-only "not now" dismissal is sessionStorage, not this — see dashboard-dismiss.tsx. */
+        onboardingChecklistDismissed?: boolean | undefined;
+        /** "Remind me later" on the profile-completion nudge — an ISO timestamp; the nudge re-appears once now() passes it. */
+        profileNudgeSnoozedUntil?: string | undefined;
+      }>(),
     /** UI theme: 'system' follows OS preference */
     theme: varchar('theme', { length: 8 })
       .notNull()

@@ -14,6 +14,7 @@ import { getLatestScoresByResumeId } from '@/lib/ats-score-lookup';
 import { EmailChangeStatusToast } from '@/components/email-change-status-toast';
 import { hasJobHuntBetaAsync } from '@/lib/beta-gate';
 import { JobRecommendations, type RecommendedJob } from '@/components/job-recommendations';
+import { ProfileNudge } from '@/components/profile-nudge';
 import {
   FileText,
   Sparkles,
@@ -84,7 +85,7 @@ export default async function DashboardPage() {
       .where(and(eq(schema.resumes.userId, userId), isNull(schema.resumes.deletedAt))),
     db.query.profiles.findFirst({
       where: eq(schema.profiles.userId, userId),
-      columns: { onboardingCompletedAt: true },
+      columns: { onboardingCompletedAt: true, content: true },
     }),
     db.query.resumes.findMany({
       where: and(eq(schema.resumes.userId, userId), isNull(schema.resumes.deletedAt)),
@@ -116,6 +117,27 @@ export default async function DashboardPage() {
   const jobHuntBeta = betaUserRow
     ? await hasJobHuntBetaAsync({ id: userId, ...betaUserRow })
     : false;
+
+  // Profile-completeness nudge — separate from the onboarding checklist
+  // above (one-time setup milestones) since these two fields can stay
+  // empty indefinitely without blocking anything else on that list.
+  // Only checked once onboarding itself is done — nudging someone to
+  // add certifications before they've even finished the wizard that
+  // already asks for them is redundant noise.
+  const profileContent = careerProfile?.content as
+    | { skills?: unknown[]; certifications?: unknown[] }
+    | undefined;
+  const snoozedUntil = betaUserRow?.featureFlags?.profileNudgeSnoozedUntil;
+  const nudgeSnoozed = Boolean(snoozedUntil && new Date(snoozedUntil) > new Date());
+  const missingFieldLabels: string[] =
+    careerProfile?.onboardingCompletedAt && !nudgeSnoozed
+      ? [
+          ...((profileContent?.skills?.length ?? 0) === 0 ? [isHebrew ? 'כישורים' : 'skills'] : []),
+          ...((profileContent?.certifications?.length ?? 0) === 0
+            ? [isHebrew ? 'הסמכות' : 'certifications']
+            : []),
+        ]
+      : [];
 
   // Dashboard-precomputed only — never scores at request time (see
   // recommendations.ts). status='open' re-checked here defensively: a
@@ -243,7 +265,15 @@ export default async function DashboardPage() {
         </Button>
       </div>
 
-      <OnboardingChecklist items={onboardingSteps} locale={uiLocale} />
+      <OnboardingChecklist
+        items={onboardingSteps}
+        locale={uiLocale}
+        initiallyDismissedForever={betaUserRow?.featureFlags?.onboardingChecklistDismissed === true}
+      />
+
+      {jobHuntBeta && <JobRecommendations jobs={recommendedJobs} isHebrew={isHebrew} />}
+
+      <ProfileNudge missingFieldLabels={missingFieldLabels} isHebrew={isHebrew} />
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -318,8 +348,6 @@ export default async function DashboardPage() {
           glow="rgba(16, 185, 129, 0.2)"
         />
       </div>
-
-      {jobHuntBeta && <JobRecommendations jobs={recommendedJobs} isHebrew={isHebrew} />}
 
       {/* Recent resumes (filterable) */}
       <section>
