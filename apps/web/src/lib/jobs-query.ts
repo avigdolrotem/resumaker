@@ -33,6 +33,11 @@ export interface JobListRow {
   companySlug: string | null;
   title: string;
   location: string | null;
+  /** Truncated to ~300 chars at the SQL level — a card preview only ever
+   * shows 2 lines (line-clamp-2 handles the ellipsis), no need to ship
+   * a full multi-KB description just to render that. The detail page
+   * queries the untruncated column directly. */
+  descriptionPreview: string;
   url: string;
   remote: boolean;
   seniority: string | null;
@@ -88,6 +93,7 @@ export async function listJobs(params: ListJobsParams): Promise<ListJobsResult> 
       companySlug: schema.jobs.companySlug,
       title: schema.jobs.title,
       location: schema.jobs.location,
+      descriptionPreview: sql<string>`left(${schema.jobs.description}, 300)`,
       url: schema.jobs.url,
       remote: schema.jobs.remote,
       seniority: schema.jobs.seniority,

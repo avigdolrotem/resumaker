@@ -55,7 +55,7 @@ export function JobsList({ initialJobs, initialCursor, initialHasMore, isHebrew 
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
         {jobs.map((j, i) => (
           <Card
             key={j.id}
@@ -68,7 +68,20 @@ export function JobsList({ initialJobs, initialCursor, initialHasMore, isHebrew 
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <h3 className="line-clamp-1 font-semibold">
-                    <Link href={`/jobs/${j.id}`} className="hover:text-violet-700">
+                    {/* Stretched link: the ::after pseudo-element covers
+                        the whole (relatively-positioned, overflow-hidden)
+                        Card, making the entire card clickable while the
+                        real link element stays just the title text. The
+                        "view original" <a> below sits in normal document
+                        flow with no z-index of its own — later paint
+                        order alone puts it above this pseudo-element, so
+                        its own click still registers instead of the
+                        stretched link swallowing it (can't nest <a> in
+                        <a>, so this is the standard way to do both). */}
+                    <Link
+                      href={`/jobs/${j.id}`}
+                      className="after:absolute after:inset-0 hover:text-violet-700"
+                    >
                       {j.title}
                     </Link>
                   </h3>
@@ -78,8 +91,13 @@ export function JobsList({ initialJobs, initialCursor, initialHasMore, isHebrew 
                     {j.remote ? ` · ${isHebrew ? 'מרחוק' : 'Remote'}` : ''}
                   </p>
                 </div>
-                {j.isFavorite && <Star className="h-4 w-4 fill-amber-400 text-amber-400" />}
+                {j.isFavorite && (
+                  <Star className="h-4 w-4 flex-shrink-0 fill-amber-400 text-amber-400" />
+                )}
               </div>
+              {j.descriptionPreview && (
+                <p className="text-muted-foreground line-clamp-2 text-sm">{j.descriptionPreview}</p>
+              )}
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">
                   {j.source} ·{' '}
@@ -95,7 +113,7 @@ export function JobsList({ initialJobs, initialCursor, initialHasMore, isHebrew 
                     href={j.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                    className="text-muted-foreground hover:text-foreground relative inline-flex items-center gap-1"
                     aria-label={t('viewOriginal')}
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
