@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { Link, usePathname } from '@/i18n/navigation';
@@ -13,14 +14,21 @@ import { MobileDrawer } from './mobile-drawer';
 import { ScrollHideHeader } from './scroll-hide-header';
 import { Button } from './ui/button';
 import { NewMenu, UserAvatarMenu } from './app-header-menus';
+import { UpgradeModal } from './upgrade-modal';
+
+interface Props {
+  /** Server-resolved (admin/flag/paid-tier) — drives the Jobs nav link below. */
+  hasJobHuntBeta: boolean;
+}
 
 /**
  * Header for authenticated app pages.
  * Client component (needs useSession + sign-out handler).
  */
-export function AppHeader() {
+export function AppHeader({ hasJobHuntBeta }: Props) {
   const t = useTranslations('nav');
   const { data: session, isPending } = useSession();
+  const [jobsGateOpen, setJobsGateOpen] = useState(false);
 
   return (
     // ScrollHideHeader owns the sticky positioning + viewport offset —
@@ -94,7 +102,14 @@ export function AppHeader() {
             icon={<Mail className="h-4 w-4" />}
             label={t('coverLetters')}
           />
-          <NavLink href="/jobs" icon={<Briefcase className="h-4 w-4" />} label={t('jobs')} />
+          <NavLink
+            href="/jobs"
+            icon={<Briefcase className="h-4 w-4" />}
+            label={t('jobs')}
+            badge={t('betaBadge')}
+            locked={!hasJobHuntBeta}
+            onLockedClick={() => setJobsGateOpen(true)}
+          />
           <NavLink
             href="/applications"
             icon={<TrendingUp className="h-4 w-4" />}
@@ -140,6 +155,20 @@ export function AppHeader() {
           <MobileDrawer />
         </nav>
       </header>
+      {/* Locked "Jobs" click opens straight to the upgrade offer —
+          previously it navigated into /jobs first, which then showed
+          its own blurred-preview upsell. That extra hop read as "the
+          feature is broken/empty" before a user ever saw why; a modal
+          on the nav click itself (same beat as the sign-in/sign-up
+          modals) states the paywall immediately instead. The in-page
+          preview at /jobs still exists as a fallback for anyone who
+          lands there directly (bookmark, shared link, back button). */}
+      <UpgradeModal
+        open={jobsGateOpen}
+        onOpenChange={setJobsGateOpen}
+        feature="job_hunt_beta"
+        requiredTier="plus"
+      />
     </ScrollHideHeader>
   );
 }
@@ -148,6 +177,9 @@ function NavLink({
   href,
   icon,
   label,
+  badge,
+  locked,
+  onLockedClick,
 }: {
   href:
     | '/dashboard'
@@ -159,6 +191,11 @@ function NavLink({
     | '/settings';
   icon: React.ReactNode;
   label: string;
+  /** Small pill shown next to the label (lg+ only, where the label itself shows). */
+  badge?: string;
+  /** When true, clicking doesn't navigate — onLockedClick fires instead. */
+  locked?: boolean;
+  onLockedClick?: () => void;
 }) {
   const pathname = usePathname();
   const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -167,6 +204,14 @@ function NavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
+      onClick={
+        locked
+          ? (e) => {
+              e.preventDefault();
+              onLockedClick?.();
+            }
+          : undefined
+      }
       className="text-foreground/80 hover:text-brand-700 dark:hover:text-brand-200 group relative hidden items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium transition-colors md:inline-flex"
     >
       {/* Sliding active pill — same `layoutId` shared across every
@@ -199,6 +244,11 @@ function NavLink({
         {icon}
       </span>
       <span className="hidden lg:inline">{label}</span>
+      {badge && (
+        <span className="bg-brand-500/15 text-brand-600 dark:bg-brand-400/20 dark:text-brand-300 hidden rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none lg:inline">
+          {badge}
+        </span>
+      )}
     </Link>
   );
 }

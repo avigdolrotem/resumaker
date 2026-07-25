@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
+import { eq } from 'drizzle-orm';
 import { getTranslations } from 'next-intl/server';
 import { auth } from '@/lib/auth';
+import { db, schema } from '@/db';
+import { hasJobHuntBetaAsync } from '@/lib/beta-gate';
 import { AppHeader } from '@/components/app-header';
 import { Link } from '@/i18n/navigation';
 import { SessionGuard } from '@/components/session-guard';
@@ -43,6 +46,18 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     redirect('/api/auth/clear-session?to=/sign-in');
   }
 
+  // session.user doesn't reliably carry role/featureFlags (see
+  // auth-guards.ts) — fresh PK lookup, same as every other gate. Drives
+  // the nav's "Jobs" link: locked users get the upgrade modal on click
+  // instead of navigating into a page that immediately bounces them.
+  const navUser = await db.query.users.findFirst({
+    where: eq(schema.users.id, session.user.id),
+    columns: { role: true, featureFlags: true },
+  });
+  const hasJobHuntBeta = navUser
+    ? await hasJobHuntBetaAsync({ id: session.user.id, ...navUser })
+    : false;
+
   return (
     <div className="bg-background relative flex min-h-screen flex-col overflow-x-hidden">
       {/* Ambient liquid backdrop, fixed to the viewport so it stays put
@@ -62,7 +77,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           this listener turns into the existing upgrade modal — call
           sites don't manage modal state themselves. */}
       <ApiUpgradeListener />
-      <AppHeader />
+      <AppHeader hasJobHuntBeta={hasJobHuntBeta} />
       <main id="main" className="text-foreground container relative z-10 mx-auto flex-1 px-4 py-8">
         {children}
       </main>
