@@ -12,9 +12,12 @@
 import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
 
-// Multiple of 3 so the 3-column grid (jobs-list.tsx) never ends a page
-// on a partial row — 20 left a dangling 2-card row every time.
-export const PAGE_SIZE = 21;
+// A multiple of 1/2/3/4/6/8/12 so the grid never ends a page on a
+// partial row no matter how many columns a future breakpoint uses —
+// 20 left a dangling 2-card row every time at the current 3-column
+// layout. 24 rows (8 rows of 3) balances scroll depth against how
+// often someone has to click to the next page.
+export const PAGE_SIZE = 24;
 
 export interface ListJobsParams {
   userId: string;
