@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from '@/i18n/navigation';
+import { useEffect, useState } from 'react';
+import { Link, useRouter } from '@/i18n/navigation';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,18 +10,40 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
+interface CompanyOption {
+  id: string;
+  name: string;
+  verified: boolean;
+}
+
 export function HrPostJobForm() {
   const router = useRouter();
   const params = useParams();
   const locale = (params?.['locale'] === 'he' ? 'he' : 'en') as 'he' | 'en';
 
+  const [companies, setCompanies] = useState<CompanyOption[] | null>(null);
+  const [companyId, setCompanyId] = useState('');
   const [title, setTitle] = useState('');
-  const [company, setCompany] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [remote, setRemote] = useState(false);
   const [applyUrl, setApplyUrl] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Posting requires an actual companies row now (see the route's own
+  // comment — companyId used to never get set at all), so the form
+  // needs to know which companies this HR user can post as before it
+  // can render anything.
+  useEffect(() => {
+    fetch('/api/hr/companies')
+      .then((res) => res.json())
+      .then((data: { companies?: CompanyOption[] }) => {
+        const list = data.companies ?? [];
+        setCompanies(list);
+        if (list.length > 0 && list[0]) setCompanyId(list[0].id);
+      })
+      .catch(() => setCompanies([]));
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,8 +53,8 @@ export function HrPostJobForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          companyId,
           title,
-          company,
           location: location || undefined,
           description,
           remote,
@@ -53,6 +75,30 @@ export function HrPostJobForm() {
     }
   }
 
+  if (companies !== null && companies.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <Card>
+          <CardHeader>
+            <CardTitle>{locale === 'he' ? 'פרסם משרה' : 'Post a job'}</CardTitle>
+            <CardDescription>
+              {locale === 'he'
+                ? 'צריך קודם ליצור חברה כדי לפרסם משרה תחתיה.'
+                : "You'll need to create a company before you can post a job under it."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild>
+              <Link href="/hr/company/new">
+                {locale === 'he' ? 'צור חברה' : 'Create a company'}
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-2xl">
       <Card>
@@ -71,13 +117,21 @@ export function HrPostJobForm() {
               <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company">{locale === 'he' ? 'שם החברה' : 'Company name'}</Label>
-              <Input
+              <Label htmlFor="company">{locale === 'he' ? 'חברה' : 'Company'}</Label>
+              <select
                 id="company"
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
+                value={companyId}
+                onChange={(e) => setCompanyId(e.target.value)}
                 required
-              />
+                className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              >
+                {(companies ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                    {c.verified ? ` — ${locale === 'he' ? 'מאומת' : 'verified'}` : ''}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -124,7 +178,7 @@ export function HrPostJobForm() {
                 dir="ltr"
               />
             </div>
-            <Button type="submit" size="lg" className="w-full" disabled={saving}>
+            <Button type="submit" size="lg" className="w-full" disabled={saving || !companyId}>
               {saving
                 ? locale === 'he'
                   ? 'מפרסם…'

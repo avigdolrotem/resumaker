@@ -557,6 +557,15 @@ export const companies = pgTable(
     ownerUserId: text('owner_user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    /**
+     * True when the owner's account-email domain matches websiteUrl's
+     * hostname (see lib/company-verification.ts) — recomputed on create
+     * and on any websiteUrl update, not user-settable directly. A cheap,
+     * standard signal (same trust model as Slack Connect / most B2B
+     * onboarding): doesn't prove identity, but does stop the trivial case
+     * of claiming "Google" while signed in with a personal Gmail.
+     */
+    verified: boolean('verified').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -647,6 +656,17 @@ export const jobs = pgTable(
     seniority: varchar('seniority', { length: 50 }),
     /** HR-posted jobs: the HR user who owns this row (null otherwise) */
     hrUserId: text('hr_user_id').references(() => users.id, { onDelete: 'set null' }),
+    /**
+     * Manual imports (source='manual'): who pasted/imported it. Deliberately
+     * separate from hrUserId, not a reuse — recommendations.ts's HR ranking
+     * boost keys off hrUserId being non-null, and a manually-imported job
+     * (no claim of representing the company) must never pick that up.
+     * Exists for moderation (attribute a bad import to an account) — not
+     * currently surfaced on the card itself, only source='manual' is.
+     */
+    submittedByUserId: text('submitted_by_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
     /** Company that posted this job (null for scraped jobs) */
     companyId: uuid('company_id').references(() => companies.id, { onDelete: 'set null' }),
     postedAt: timestamp('posted_at', { withTimezone: true }),

@@ -180,6 +180,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     .values({
       externalId: null,
       source: 'manual',
+      submittedByUserId: guard.user.id,
       company: extracted.company,
       title: extracted.title,
       ...(extracted.location ? { location: extracted.location } : {}),

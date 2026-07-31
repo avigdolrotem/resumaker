@@ -10,6 +10,7 @@ import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { auditEvent } from '@/lib/audit';
+import { computeCompanyVerified } from '@/lib/company-verification';
 
 async function requireHr(h: Headers) {
   const guard = await requireActiveUser(h);
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       description: body.description ?? null,
       websiteUrl: body.websiteUrl ?? null,
       ownerUserId: guard.user.id,
+      verified: computeCompanyVerified(guard.user.email, body.websiteUrl ?? null),
     })
     .returning();
 

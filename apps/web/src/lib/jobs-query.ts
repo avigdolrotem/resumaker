@@ -52,6 +52,8 @@ export interface JobListRow {
   scrapedAt: Date;
   isFavorite: boolean | null;
   fitScore: number | null;
+  /** True only for source='hr' jobs whose company has a verified domain match (see company-verification.ts). Null when the job has no linked company at all. */
+  companyVerified: boolean | null;
 }
 
 export interface ListJobsResult {
@@ -128,12 +130,14 @@ export async function listJobs(params: ListJobsParams): Promise<ListJobsResult> 
       scrapedAt: schema.jobs.scrapedAt,
       isFavorite: schema.userJobs.isFavorite,
       fitScore: schema.userJobs.fitScore,
+      companyVerified: schema.companies.verified,
     })
     .from(schema.jobs)
     .leftJoin(
       schema.userJobs,
       and(eq(schema.userJobs.jobId, schema.jobs.id), eq(schema.userJobs.userId, params.userId)),
     )
+    .leftJoin(schema.companies, eq(schema.companies.id, schema.jobs.companyId))
     .where(where)
     .orderBy(
       tsQuery

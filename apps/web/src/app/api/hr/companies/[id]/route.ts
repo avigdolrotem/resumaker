@@ -12,6 +12,7 @@ import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { requireHrMember, requireHrOwner } from '@/lib/hr-guards';
 import { auditEvent } from '@/lib/audit';
+import { computeCompanyVerified } from '@/lib/company-verification';
 
 async function requireHr(h: Headers) {
   const guard = await requireActiveUser(h);
@@ -76,7 +77,13 @@ export async function PATCH(
   if (body.name !== undefined) updates['name'] = body.name;
   if (body.logoUrl !== undefined) updates['logoUrl'] = body.logoUrl;
   if (body.description !== undefined) updates['description'] = body.description;
-  if (body.websiteUrl !== undefined) updates['websiteUrl'] = body.websiteUrl;
+  if (body.websiteUrl !== undefined) {
+    updates['websiteUrl'] = body.websiteUrl;
+    // requireHrOwner above already confirmed guard.user is this company's
+    // owner, so their email is the right one to re-check verification
+    // against whenever the claimed website changes.
+    updates['verified'] = computeCompanyVerified(guard.user.email, body.websiteUrl);
+  }
 
   await db.update(schema.companies).set(updates).where(eq(schema.companies.id, id));
 

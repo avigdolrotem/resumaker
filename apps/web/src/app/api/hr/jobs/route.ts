@@ -4,6 +4,16 @@
  *
  * Only callers with role='hr' or role='admin'. Source-of-truth check
  * lives in the requireHr() helper.
+ *
+ * POST used to take a free-text `company` string with no link to the
+ * companies table at all — companyId was never set on any HR-posted
+ * job, which meant (a) /companies/[slug]'s "this company's open roles"
+ * query, which filters on companyId, could never show a single result,
+ * and (b) there was no way to know which companies row (and therefore
+ * verified status) a posting belonged to. Now takes companyId, checks
+ * membership the same way every other /api/hr/companies/[id] route
+ * does, and derives the display name from the company row instead of
+ * trusting free-typed input that could say anything.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -12,6 +22,7 @@ import { headers } from 'next/headers';
 import { and, desc, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
+import { requireHrMember } from '@/lib/hr-guards';
 import { auditEvent } from '@/lib/audit';
 
 async function requireHr(headers: Headers) {
@@ -45,8 +56,8 @@ export async function GET(): Promise<Response> {
 }
 
 const PostBody = z.object({
+  companyId: z.string().uuid(),
   title: z.string().min(3).max(300),
-  company: z.string().min(1).max(200),
   location: z.string().max(200).optional(),
   description: z.string().min(50).max(20_000),
   remote: z.boolean().default(false),
@@ -68,6 +79,14 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
+  const memberCheck = await requireHrMember(body.companyId, guard.user.id, guard.user.role);
+  if (memberCheck instanceof NextResponse) return memberCheck;
+
+  const company = await db.query.companies.findFirst({
+    where: eq(schema.companies.id, body.companyId),
+  });
+  if (!company) return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+
   // Internal URL for HR-posted jobs: applicants click through to the
   // hosting page rather than an external posting (unless the HR provided
   // applyUrl). The URL normalization is deterministic per (user, time)
@@ -80,7 +99,9 @@ export async function POST(req: NextRequest): Promise<Response> {
     .values({
       externalId: null,
       source: 'hr',
-      company: body.company,
+      company: company.name,
+      companySlug: company.slug,
+      companyId: company.id,
       title: body.title,
       ...(body.location ? { location: body.location } : {}),
       description: body.description,

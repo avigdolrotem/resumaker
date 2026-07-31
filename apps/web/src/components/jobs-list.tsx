@@ -3,7 +3,7 @@
 import { useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Star, ExternalLink, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, ExternalLink, Loader2, BadgeCheck } from 'lucide-react';
 import { Link, useRouter, usePathname } from '@/i18n/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -91,11 +91,22 @@ export function JobsList({
                       {j.title}
                     </Link>
                   </h3>
-                  <p className="text-muted-foreground line-clamp-1 text-sm">
+                  <p className="text-muted-foreground line-clamp-1 flex items-center gap-1 text-sm">
                     {j.company}
+                    {j.source === 'hr' && j.companyVerified && (
+                      <BadgeCheck
+                        className="h-3.5 w-3.5 shrink-0 text-emerald-500"
+                        aria-label={isHebrew ? 'מעסיק מאומת' : 'Verified employer'}
+                      />
+                    )}
                     {j.location ? ` · ${j.location}` : ''}
                     {j.remote ? ` · ${isHebrew ? 'מרחוק' : 'Remote'}` : ''}
                   </p>
+                  {j.source === 'manual' && (
+                    <span className="text-muted-foreground mt-1 inline-block rounded-full border border-dashed px-1.5 py-0.5 text-[10px]">
+                      {isHebrew ? 'נוסף על ידי משתמש' : 'Community-added'}
+                    </span>
+                  )}
                 </div>
                 {j.isFavorite && (
                   <Star className="h-4 w-4 flex-shrink-0 fill-amber-400 text-amber-400" />
