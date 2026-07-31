@@ -1,10 +1,14 @@
 /**
  * PATCH /api/admin/users/[id]/flags — toggle per-user feature flags.
  *
- * Body: { jobHuntBeta?: boolean } (more flags can be added the same way)
+ * Body: { jobHuntBeta?: boolean, trustedSharer?: boolean } (more flags
+ * can be added the same way)
  *
  * Merges into the existing users.feature_flags JSONB so partial updates
- * don't wipe other flags.
+ * don't wipe other flags. trustedSharer can also be granted indirectly
+ * by approving a trustedSharerRequests row at /admin/moderation — this
+ * route is the direct path for a known-trustworthy user who hasn't
+ * (and doesn't need to) file a request first.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -18,6 +22,7 @@ import { requireAdmin } from '@/lib/auth-guards';
 const BodySchema = z
   .object({
     jobHuntBeta: z.boolean().optional(),
+    trustedSharer: z.boolean().optional(),
   })
   .strict();
 

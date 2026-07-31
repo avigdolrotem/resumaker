@@ -262,7 +262,8 @@
       "textPlaceholder": "We are looking for…",
       "submit": "Import",
       "importing": "Importing…",
-      "failed": "Couldn't import. Try the text option instead."
+      "failed": "Couldn't import. Try the text option instead.",
+      "pendingReview": "Added — pending a quick review before it's visible to others. You can still see and use it yourself right away. Want your imports to publish instantly? Request trusted-sharer status in Settings."
     },
     "savedSearches": {
       "navLabel": "Saved searches",
@@ -880,6 +881,7 @@
       "notifications": "Notifications",
       "regional": "Date & time",
       "ai": "AI engine",
+      "trustedSharer": "Trusted sharer",
       "data": "Your data",
       "danger": "Danger zone"
     },

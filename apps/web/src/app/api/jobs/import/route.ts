@@ -20,9 +20,19 @@
  *      same as before this existed. See verify-import.ts for why this
  *      exists and its AI-security posture (the fetched content is
  *      fully untrusted input).
- *   5. Insert + audit.
+ *   5. Insert + audit. status is 'open' for a trusted submitter
+ *      (admin/hr/admin-granted — see lib/content-trust.ts) or 'pending'
+ *      otherwise: the row exists and the submitter can see it directly
+ *      at /jobs/[id], but it's excluded from the shared /jobs feed
+ *      until an admin approves it at /admin/moderation. This is a
+ *      *different* check from step 4's AI content-plausibility pass —
+ *      that asks "is this text a real job posting," this asks "is this
+ *      submitter trusted enough to publish to everyone without a human
+ *      looking at it first." Both run independently; passing one says
+ *      nothing about the other.
  *
- * L5 beta-gated.
+ * L5 beta-gated (in name only now — see beta-gate.ts, the whole
+ * surface is free; the gate call stays for the auth/session load).
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -31,6 +41,7 @@ import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireJobHuntBetaApi } from '@/lib/beta-gate';
+import { isTrustedSharer } from '@/lib/content-trust';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { auditEvent } from '@/lib/audit';
 import { logger } from '@/lib/observability';
@@ -175,6 +186,12 @@ export async function POST(req: NextRequest): Promise<Response> {
     };
   }
 
+  // Trusted submitters (admin/hr/admin-granted) publish immediately;
+  // everyone else's import needs a review pass before it's visible to
+  // anyone but themselves — see lib/content-trust.ts.
+  const trusted = isTrustedSharer(guard.user);
+  const status = trusted ? 'open' : 'pending';
+
   const [row] = await db
     .insert(schema.jobs)
     .values({
@@ -189,14 +206,15 @@ export async function POST(req: NextRequest): Promise<Response> {
       urlNormalized: urlNorm,
       remote: extracted.remote ?? false,
       ...(extracted.seniority ? { seniority: extracted.seniority } : {}),
+      status,
     })
     .returning({ id: schema.jobs.id });
 
   auditEvent({
     userId: guard.user.id,
     event: 'resume_created', // re-uses existing event name to avoid a schema change; metadata distinguishes
-    metadata: { kind: 'job_imported', jobId: row?.id, source: 'manual' },
+    metadata: { kind: 'job_imported', jobId: row?.id, source: 'manual', status },
   });
 
-  return NextResponse.json({ id: row?.id, deduped: false });
+  return NextResponse.json({ id: row?.id, deduped: false, pendingReview: !trusted });
 }

@@ -14,6 +14,7 @@ import {
   ScreenShare,
   Sparkles,
   Shield,
+  ShieldCheck,
   ExternalLink,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +26,7 @@ import { useRouter, Link } from '@/i18n/navigation';
 import { Security2FACard } from '@/components/security-2fa-card';
 import { LinkedAccountsCard } from '@/components/linked-accounts-card';
 import { AIModelCard } from '@/components/settings/ai-model-card';
+import { TrustedSharerCard } from '@/components/settings/trusted-sharer-card';
 
 type Tab =
   | 'profile'
@@ -33,6 +35,7 @@ type Tab =
   | 'notifications'
   | 'regional'
   | 'ai'
+  | 'trustedSharer'
   | 'data'
   | 'danger'
   | 'admin';
@@ -47,6 +50,7 @@ const TABS: { id: Tab; key: string; icon: typeof User; adminOnly?: boolean }[] =
   // here is timezone + date format, so renamed to "Date & time".
   { id: 'regional', key: 'regional', icon: Clock },
   { id: 'ai', key: 'ai', icon: Sparkles },
+  { id: 'trustedSharer', key: 'trustedSharer', icon: ShieldCheck },
   { id: 'data', key: 'data', icon: Database },
   { id: 'danger', key: 'danger', icon: AlertOctagon },
   // Admin tab — visible ONLY when the session's user.role === 'admin'.
@@ -158,6 +162,7 @@ export default function SettingsPage() {
               {tab === 'notifications' && <NotificationsTab />}
               {tab === 'regional' && <RegionalTab />}
               {tab === 'ai' && <AIModelCard />}
+              {tab === 'trustedSharer' && <TrustedSharerCard />}
               {tab === 'data' && <DataTab />}
               {tab === 'danger' && <DangerTab />}
               {tab === 'admin' && isAdmin && <AdminTab />}
@@ -182,7 +187,8 @@ const ADMIN_LINKS: {
     | '/admin/audit'
     | '/admin/broadcast'
     | '/admin/coupons'
-    | '/admin/maintenance';
+    | '/admin/maintenance'
+    | '/admin/moderation';
   label: string;
   description: string;
 }[] = [
@@ -211,6 +217,11 @@ const ADMIN_LINKS: {
     href: '/admin/maintenance',
     label: 'Maintenance',
     description: 'Feature flags + maintenance mode toggle',
+  },
+  {
+    href: '/admin/moderation',
+    label: 'Moderation',
+    description: 'Pending manual job imports + trusted-sharer requests',
   },
 ];
 

@@ -66,6 +66,15 @@ export const users = pgTable(
         onboardingChecklistDismissed?: boolean | undefined;
         /** "Remind me later" on the profile-completion nudge — an ISO timestamp; the nudge re-appears once now() passes it. */
         profileNudgeSnoozedUntil?: string | undefined;
+        /**
+         * Admin-granted (via a reviewed trustedSharerRequests row, or
+         * directly in /admin/users/[id]): manual job imports from this
+         * user publish immediately (status='open') instead of landing
+         * as status='pending' for admin review. role='hr'/'admin' get
+         * the same effective trust without needing this flag — see
+         * lib/content-trust.ts's isTrustedSharer.
+         */
+        trustedSharer?: boolean | undefined;
       }>(),
     /** UI theme: 'system' follows OS preference */
     theme: varchar('theme', { length: 8 })
@@ -675,10 +684,15 @@ export const jobs = pgTable(
     /**
      * open: currently live at the source. closed: confirmed gone (explicit
      * signal, or missCount crossed the source's threshold — see the
-     * scrape-jobs cron). unknown: a source that gives no closure signal at
-     * all (aggregators) hasn't been seen in a while. Never delete a job row
-     * on closure — applications.jobId and userJobs.jobId both cascade, so a
-     * delete here would silently erase a user's application history.
+     * scrape-jobs cron), OR an admin-rejected pending import. unknown: a
+     * source that gives no closure signal at all (aggregators) hasn't been
+     * seen in a while. pending: a manual import from a non-trusted user
+     * (see lib/content-trust.ts) awaiting admin review at
+     * /admin/moderation — excluded from listJobs()'s default query for
+     * free, same as closed/unknown, since it only ever filters *for*
+     * 'open'. Never delete a job row on closure/rejection —
+     * applications.jobId and userJobs.jobId both cascade, so a delete
+     * here would silently erase a user's application history.
      */
     status: varchar('status', { length: 16 }).notNull().default('open'),
     /** Bumped every time a scrape confirms this job is still listed at its source. */
@@ -736,7 +750,42 @@ export const jobs = pgTable(
       'jobs_canonical_not_self_check',
       sql`${t.canonicalJobId} IS NULL OR ${t.canonicalJobId} != ${t.id}`,
     ),
-    statusCheck: check('jobs_status_check', sql`${t.status} IN ('open', 'closed', 'unknown')`),
+    statusCheck: check(
+      'jobs_status_check',
+      sql`${t.status} IN ('open', 'closed', 'unknown', 'pending')`,
+    ),
+  }),
+);
+
+/**
+ * A user's request to become a trusted sharer (see lib/content-trust.ts)
+ * — free-text justification, reviewed by an admin at /admin/moderation.
+ * One row per request; a denied user can submit a new one later (no
+ * unique constraint forcing one-per-user-ever), but the API layer only
+ * allows one *pending* request outstanding at a time.
+ */
+export const trustedSharerRequests = pgTable(
+  'trusted_sharer_requests',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    note: text('note').notNull(),
+    status: varchar('status', { length: 16 }).notNull().default('pending'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    reviewedByUserId: text('reviewed_by_user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+  },
+  (t) => ({
+    userIdx: index('trusted_sharer_requests_user_idx').on(t.userId),
+    statusIdx: index('trusted_sharer_requests_status_idx').on(t.status),
+    statusCheck: check(
+      'trusted_sharer_requests_status_check',
+      sql`${t.status} IN ('pending', 'approved', 'denied')`,
+    ),
   }),
 );
 
@@ -1124,6 +1173,7 @@ export const schema = {
   companyInvites,
   jobs,
   userJobs,
+  trustedSharerRequests,
   scrapeRuns,
   savedSearches,
   applications,
@@ -1153,6 +1203,7 @@ export type NewSubscription = typeof subscriptions.$inferInsert;
 export type StripeWebhookEvent = typeof stripeWebhookEvents.$inferSelect;
 export type Job = typeof jobs.$inferSelect;
 export type NewJob = typeof jobs.$inferInsert;
+export type TrustedSharerRequest = typeof trustedSharerRequests.$inferSelect;
 export type UserJob = typeof userJobs.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 export type NewApplication = typeof applications.$inferInsert;

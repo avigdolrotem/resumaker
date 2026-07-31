@@ -42,6 +42,14 @@ export default function JobsPastePage() {
         toast.error(data.error ?? t('failed'));
         return;
       }
+      // Non-trusted submitters land in the moderation queue (see
+      // lib/content-trust.ts) — the job still exists and this user can
+      // still see/act on it via the redirect below, it just isn't in
+      // the shared feed for anyone else yet. Worth saying explicitly
+      // rather than letting them wonder why it isn't searchable later.
+      if (data.pendingReview) {
+        toast.info(t('pendingReview'), { duration: 8000 });
+      }
       router.push(`/jobs/${data.id}`);
     } catch (err) {
       if (err instanceof ApiTierError) return;
