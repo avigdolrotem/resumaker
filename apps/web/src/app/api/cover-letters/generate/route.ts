@@ -14,6 +14,7 @@ import { env } from '@/lib/env';
 import { sanitizeInput, type SanitizeResult } from '@resumaker/ai-safety';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { auditEvent } from '@/lib/audit';
+import { canCreateCoverLetter, getCoverLettersThisMonth, getUserTier } from '@/lib/billing/tier';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -31,6 +32,32 @@ export async function POST(req: NextRequest): Promise<Response> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Tier gate BEFORE the LLM call. This route previously had only the
+  // rate limit below, while `canCreateCoverLetter` was checked solely on
+  // POST /api/cover-letters (the *save*) — so any user could burn the
+  // expensive generation repeatedly and simply never save, which is both
+  // an uncapped cost path and backwards from how resume generation
+  // works (gated on generate, free to save). Same 402 `tier_gate` shape
+  // every other gated route returns, so apiFetch opens the upgrade modal.
+  const [tier, coverLettersThisMonth] = await Promise.all([
+    getUserTier(session.user.id),
+    getCoverLettersThisMonth(session.user.id),
+  ]);
+  const tierGate = canCreateCoverLetter(tier, coverLettersThisMonth);
+  if (!tierGate.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Cover-letter limit reached for your tier',
+        code: 'TIER_LIMIT',
+        reasonKey: tierGate.reasonKey,
+        requiredTier: tierGate.requiredTier,
+        current: tierGate.current,
+        limit: tierGate.limit,
+      },
+      { status: 402 },
+    );
   }
 
   const rateLimit = await checkRateLimit(`cover-letter:${session.user.id}`, 5, 3600);

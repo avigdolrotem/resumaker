@@ -29,7 +29,16 @@ export default async function CompanyPublicPage({ params }: Props) {
       postedAt: schema.jobs.postedAt,
     })
     .from(schema.jobs)
-    .where(and(eq(schema.jobs.companyId, company.id), eq(schema.jobs.source, 'hr')));
+    .where(
+      and(
+        eq(schema.jobs.companyId, company.id),
+        eq(schema.jobs.source, 'hr'),
+        // This page is public and its heading says "Open positions" —
+        // without this, a role an employer explicitly closed kept
+        // rendering here with a working Apply button, forever.
+        eq(schema.jobs.status, 'open'),
+      ),
+    );
 
   const isHe = locale === 'he';
 

@@ -26,6 +26,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
+import { computeCompanyVerified } from '@/lib/company-verification';
 
 function outcomeRedirect(req: NextRequest, locale: string, outcome: string): NextResponse {
   return NextResponse.redirect(new URL(`/${locale}/dashboard?email-change=${outcome}`, req.url));
@@ -70,6 +71,17 @@ export async function GET(req: NextRequest): Promise<Response> {
     return outcomeRedirect(req, locale, 'conflict');
   }
 
+  // Companies this user owns are verified by matching their account-email
+  // domain against the company's websiteUrl (see lib/company-verification).
+  // That was computed once at company-create time and never revisited, so
+  // changing the account email here silently left a stale verified badge:
+  // sign up as you@realcorp.com, verify, then move to a personal address
+  // and the "verified employer" mark survived with nothing behind it.
+  const ownedCompanies = await db.query.companies.findMany({
+    where: eq(schema.companies.ownerUserId, request.userId),
+    columns: { id: true, websiteUrl: true, verified: true },
+  });
+
   await db.transaction(async (tx) => {
     await tx
       .update(schema.users)
@@ -78,6 +90,16 @@ export async function GET(req: NextRequest): Promise<Response> {
     await tx
       .delete(schema.emailChangeRequests)
       .where(eq(schema.emailChangeRequests.id, request.id));
+
+    for (const company of ownedCompanies) {
+      const nextVerified = computeCompanyVerified(request.newEmail, company.websiteUrl);
+      if (nextVerified !== company.verified) {
+        await tx
+          .update(schema.companies)
+          .set({ verified: nextVerified, updatedAt: new Date() })
+          .where(eq(schema.companies.id, company.id));
+      }
+    }
   });
 
   auditEvent({

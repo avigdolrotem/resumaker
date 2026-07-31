@@ -20,6 +20,8 @@ export default async function JobDetailPage({
   const [job] = await db
     .select({
       id: schema.jobs.id,
+      status: schema.jobs.status,
+      submittedByUserId: schema.jobs.submittedByUserId,
       company: schema.jobs.company,
       title: schema.jobs.title,
       location: schema.jobs.location,
@@ -43,6 +45,17 @@ export default async function JobDetailPage({
     .limit(1);
 
   if (!job) notFound();
+
+  // Pending (unmoderated) imports are visible only to their submitter
+  // and to admins — same rule as GET /api/jobs/[id]. notFound() rather
+  // than a redirect so the page doesn't confirm the row exists.
+  if (
+    job.status === 'pending' &&
+    guard.user.role !== 'admin' &&
+    job.submittedByUserId !== guard.user.id
+  ) {
+    notFound();
+  }
 
   // Check if user already tracks this job — disables the Track button below.
   const existingApp = await db.query.applications.findFirst({

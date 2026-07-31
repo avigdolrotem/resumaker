@@ -22,8 +22,9 @@ import { headers } from 'next/headers';
 import { and, desc, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
-import { requireHrMember } from '@/lib/hr-guards';
+import { requireHrRole } from '@/lib/hr-guards';
 import { auditEvent } from '@/lib/audit';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 async function requireHr(headers: Headers) {
   const guard = await requireActiveUser(headers);
@@ -69,6 +70,16 @@ export async function POST(req: NextRequest): Promise<Response> {
   const guard = await requireHr(await headers());
   if (guard instanceof NextResponse) return guard;
 
+  // Bulk-import already rate-limits; the single-post path did not, so it
+  // was the cheaper way to flood the shared feed.
+  const rl = await checkRateLimit(`hr-job-post:${guard.user.id}`, 60, 3600);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', retryAfterSeconds: rl.resetSeconds },
+      { status: 429 },
+    );
+  }
+
   let body: z.infer<typeof PostBody>;
   try {
     body = PostBody.parse(await req.json());
@@ -79,7 +90,12 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
-  const memberCheck = await requireHrMember(body.companyId, guard.user.id, guard.user.role);
+  // Posting is a write, so 'viewer' (read-only by name) must not pass —
+  // requireHrMember accepted every role including viewer.
+  const memberCheck = await requireHrRole(body.companyId, guard.user.id, guard.user.role, [
+    'owner',
+    'recruiter',
+  ]);
   if (memberCheck instanceof NextResponse) return memberCheck;
 
   const company = await db.query.companies.findFirst({

@@ -7,7 +7,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
 import { requireAdmin, requireFreshSession } from '@/lib/auth-guards';
@@ -67,6 +67,21 @@ export async function POST(
   // signing back in until their role is restored.
   if (body.role === 'suspended') {
     await db.delete(schema.sessions).where(eq(schema.sessions.userId, id));
+
+    // A suspended employer's live postings shouldn't keep collecting
+    // applicants while the account itself is blocked — same reasoning as
+    // the account-deletion path in /api/account. Closed, never deleted:
+    // applications/userJobs cascade off jobs.
+    await db
+      .update(schema.jobs)
+      .set({ status: 'closed', closedAt: new Date() })
+      .where(
+        and(
+          eq(schema.jobs.source, 'hr'),
+          eq(schema.jobs.hrUserId, id),
+          eq(schema.jobs.status, 'open'),
+        ),
+      );
   }
 
   // Audit log stores only userId, never email — so when the target user

@@ -32,7 +32,8 @@
  * /jobs's initial server-rendered page so client-side page navigation
  * can never drift from what the first page showed.
  *
- * L5 beta-gated.
+ * The requireJobHuntBetaApi call is now just auth/session loading —
+ * the job-hunt surface is free for everyone (see lib/beta-gate.ts).
  */
 
 import { NextResponse, type NextRequest } from 'next/server';

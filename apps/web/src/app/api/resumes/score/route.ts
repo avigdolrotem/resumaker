@@ -29,6 +29,11 @@ import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { scoreResume } from '@resumaker/ats-scorer';
 import type { Resume } from '@resumaker/shared';
+import { getUserTier } from '@/lib/billing/tier';
+import { TIER_LIMITS } from '@/lib/billing/limits';
+
+/** Free tier's advertised ATS depth: "overall score + top 3 missing keywords". */
+const BASIC_MISSING_KEYWORD_LIMIT = 3;
 
 const BodySchema = z.object({
   jobDescription: z.string().min(10).max(20_000),
@@ -93,5 +98,24 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
   }
 
-  return NextResponse.json(score);
+  // Tier-scoped response. The row persisted above deliberately keeps the
+  // FULL score — it's internal data feeding the dashboard average and the
+  // resume's history, and degrading what we store would make a later
+  // upgrade unable to show the detail retroactively. Only the response is
+  // trimmed. Until now `atsScoring` was declared per-tier in limits.ts and
+  // rendered on the pricing page, but never consulted anywhere: free
+  // accounts received the identical 'deep' payload sold as a Plus upgrade.
+  const atsScoring = TIER_LIMITS[await getUserTier(session.user.id)].atsScoring;
+  if (atsScoring === 'basic') {
+    return NextResponse.json({
+      overall: score.overall,
+      matched_keywords: [],
+      missing_keywords: score.missing_keywords.slice(0, BASIC_MISSING_KEYWORD_LIMIT),
+      suggestions: [],
+      tierLimited: true,
+      atsScoring,
+    });
+  }
+
+  return NextResponse.json({ ...score, tierLimited: false, atsScoring });
 }

@@ -31,7 +31,12 @@ export async function getUserTier(userId: string): Promise<Tier> {
   const [sub, user] = await Promise.all([
     db.query.subscriptions.findFirst({
       where: eq(schema.subscriptions.userId, userId),
-      columns: { tier: true, status: true, currentPeriodEnd: true },
+      columns: {
+        tier: true,
+        status: true,
+        currentPeriodEnd: true,
+        cancelAtPeriodEnd: true,
+      },
     }),
     db.query.users.findFirst({
       where: eq(schema.users.id, userId),
@@ -53,6 +58,25 @@ export async function getUserTier(userId: string): Promise<Tier> {
 
   // Incomplete subscriptions (Stripe handshake hasn't finished) are free
   if (sub.status === 'incomplete') return DEFAULT_TIER;
+
+  // Non-renewing grant that has run out. The one-time "Job Hunt Pack"
+  // (90 days) is written as status='active' + cancelAtPeriodEnd=true +
+  // currentPeriodEnd=+90d — and nothing ever moves it off 'active',
+  // because there is no LemonSqueezy subscription behind a one-time
+  // order and therefore no `subscription_expired` webhook will ever
+  // fire for it. Without this check a single ₪75/₪199 purchase granted
+  // the tier permanently.
+  //
+  // Deliberately scoped to cancelAtPeriodEnd rather than "any active
+  // sub whose currentPeriodEnd is past": for a healthy *recurring*
+  // subscription currentPeriodEnd is the NEXT billing date, so a
+  // renewal webhook that arrives late (or is retried) would otherwise
+  // downgrade a paying customer mid-cycle. Falsely revoking access
+  // someone paid for is a worse failure than the one being fixed, so
+  // this only expires grants that are already flagged as not renewing.
+  if (sub.cancelAtPeriodEnd && sub.currentPeriodEnd && sub.currentPeriodEnd <= new Date()) {
+    return DEFAULT_TIER;
+  }
 
   return sub.tier;
 }
@@ -169,34 +193,55 @@ export async function getActiveResumeCount(userId: string): Promise<number> {
  * cap during normal evening usage. Anchoring the counter to Asia/Jerusalem
  * midnight matches user intuition.
  */
+/**
+ * The real UTC offset of `timezone` right now, as "+HH:MM".
+ *
+ * Both helpers below used to hardcode "+02:00". Israel is UTC+3 (IDT)
+ * from roughly late March to late October, so for ~7 months of the year
+ * "midnight Jerusalem" was computed an hour late — a Plus user at 00:30
+ * IDT was still being counted against the previous day's cap. The
+ * `timezone` argument was also effectively ignored, since only the
+ * Y/M/D parts respected it while the offset stayed fixed.
+ */
+function utcOffsetFor(timezone: string, at: Date): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    timeZoneName: 'longOffset',
+  }).formatToParts(at);
+  const name = parts.find((p) => p.type === 'timeZoneName')?.value ?? '';
+  // longOffset yields e.g. "GMT+03:00"; "GMT" alone means UTC.
+  const match = /GMT([+-]\d{2}:\d{2})/.exec(name);
+  return match?.[1] ?? '+00:00';
+}
+
 function startOfDayInTimezone(timezone: string): Date {
   // Format the current instant as YYYY-MM-DD in the target tz, then
   // parse that date back as midnight in that tz to get a stable UTC.
+  const now = new Date();
   const fmt = new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   });
-  const parts = fmt.formatToParts(new Date());
+  const parts = fmt.formatToParts(now);
   const y = parts.find((p) => p.type === 'year')?.value;
   const m = parts.find((p) => p.type === 'month')?.value;
   const d = parts.find((p) => p.type === 'day')?.value;
-  // Constructed as "YYYY-MM-DDT00:00:00" in the local tz; offset shift via
-  // Date parsing is approximate but sufficient for a once-daily reset.
-  return new Date(`${y}-${m}-${d}T00:00:00+02:00`);
+  return new Date(`${y}-${m}-${d}T00:00:00${utcOffsetFor(timezone, now)}`);
 }
 
 function startOfMonthInTimezone(timezone: string): Date {
+  const now = new Date();
   const fmt = new Intl.DateTimeFormat('en-CA', {
     timeZone: timezone,
     year: 'numeric',
     month: '2-digit',
   });
-  const parts = fmt.formatToParts(new Date());
+  const parts = fmt.formatToParts(now);
   const y = parts.find((p) => p.type === 'year')?.value;
   const m = parts.find((p) => p.type === 'month')?.value;
-  return new Date(`${y}-${m}-01T00:00:00+02:00`);
+  return new Date(`${y}-${m}-01T00:00:00${utcOffsetFor(timezone, now)}`);
 }
 
 /** Anchor counters to Israel time so users don't get reset at 2-3am local. */

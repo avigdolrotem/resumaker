@@ -35,6 +35,7 @@
  * surface is free; the gate call stays for the auth/session load).
  */
 
+import { randomUUID } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
@@ -91,7 +92,9 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   const sourceUrl = body.url ?? 'manual-paste';
-  const urlNorm = body.url ? normalizeUrl(body.url) : `manual:${guard.user.id}:${Date.now()}`;
+  // randomUUID, not Date.now(): two text imports in the same millisecond
+  // by one user collided on jobs_url_norm_unique.
+  const urlNorm = body.url ? normalizeUrl(body.url) : `manual:${guard.user.id}:${randomUUID()}`;
 
   // Dedupe — if user already imported this URL, return the existing row.
   if (body.url) {
@@ -189,7 +192,15 @@ export async function POST(req: NextRequest): Promise<Response> {
   // Trusted submitters (admin/hr/admin-granted) publish immediately;
   // everyone else's import needs a review pass before it's visible to
   // anyone but themselves — see lib/content-trust.ts.
-  const trusted = isTrustedSharer(guard.user);
+  //
+  // Exception: the text-paste path never runs verifyManualImport (there's
+  // no fetched page to check an extraction against), so trusting it would
+  // publish wholly unchecked free text straight to the shared feed —
+  // bypassing BOTH the AI plausibility pass and moderation, which is
+  // exactly the gap the trust layer exists to close. Text imports are
+  // always queued, whoever submits them.
+  const verifiedByAi = Boolean(body.url);
+  const trusted = isTrustedSharer(guard.user) && verifiedByAi;
   const status = trusted ? 'open' : 'pending';
 
   const [row] = await db

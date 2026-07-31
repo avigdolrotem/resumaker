@@ -1041,6 +1041,7 @@
       "maxResumes": "{count} active resumes",
       "maxResumesUnlimited": "Unlimited resumes",
       "generationsPerDay": "{count} AI generations / day",
+      "jobBrowsingFree": "Browse every job & track applications — free",
       "generationsUnlimited": "Unlimited AI generations",
       "coverLettersPerMonth": "{count} cover letters / month",
       "coverLettersUnlimited": "Unlimited cover letters",

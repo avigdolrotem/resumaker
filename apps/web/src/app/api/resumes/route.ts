@@ -10,7 +10,7 @@ import { and, eq, desc, isNull } from 'drizzle-orm';
 import { auth } from '@/lib/auth';
 import { db, schema } from '@/db';
 import { ResumeSchema } from '@resumaker/shared';
-import { DEFAULT_TEMPLATE_ID } from '@resumaker/resume-engine';
+import { DEFAULT_TEMPLATE_ID, templatesForTier } from '@resumaker/resume-engine';
 import { canCreateResume, getActiveResumeCount, getUserTier } from '@/lib/billing/tier';
 import { deriveResumeTitle } from '@/lib/resumes/title';
 
@@ -88,6 +88,25 @@ export async function POST(req: NextRequest): Promise<Response> {
         limit: gate.limit,
       },
       { status: 402 }, // Payment Required
+    );
+  }
+
+  // Tier gate: template choice. /api/templates already returns
+  // `locked: true` for out-of-tier templates so the picker can show the
+  // upgrade modal — but that's a client-side affordance, and this route
+  // accepted any templateId string, so a direct POST saved a Plus-only
+  // template to a free account. The PDF route deliberately does NOT
+  // tier-check (a resume saved before a downgrade must keep rendering),
+  // which makes this the only place the choice can actually be enforced.
+  if (!templatesForTier(tier).some((t) => t.id === body.templateId)) {
+    return NextResponse.json(
+      {
+        error: 'This template requires a paid plan',
+        code: 'TIER_LIMIT',
+        reasonKey: 'billing.gate.template_locked',
+        requiredTier: 'plus',
+      },
+      { status: 402 },
     );
   }
 

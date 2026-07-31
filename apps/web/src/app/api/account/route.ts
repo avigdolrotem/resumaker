@@ -8,7 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/observability';
@@ -67,11 +67,32 @@ export async function DELETE(): Promise<Response> {
     }
   }
 
-  // 2. Soft-delete user + drop sessions + audit, atomically.
+  // 2. Soft-delete user + drop sessions + close their postings + audit,
+  //    atomically.
   await db.transaction(async (tx) => {
     await tx.update(schema.users).set({ deletedAt: new Date() }).where(eq(schema.users.id, userId));
 
     await tx.delete(schema.sessions).where(eq(schema.sessions.userId, userId));
+
+    // Close anything this user posted as an employer. Nothing did this
+    // before, so a deleted employer's roles stayed live in the public
+    // feed and on their company page indefinitely — and once the purge
+    // cron hard-deletes the user, jobs.hrUserId goes NULL (FK is SET
+    // NULL) and getOwned can never match the row again, leaving a live
+    // listing nobody can take down. Closing (not deleting) matches how
+    // every other job ends its life here: applications.jobId and
+    // userJobs.jobId cascade, so a delete would erase applicants'
+    // tracked history.
+    await tx
+      .update(schema.jobs)
+      .set({ status: 'closed', closedAt: new Date() })
+      .where(
+        and(
+          eq(schema.jobs.source, 'hr'),
+          eq(schema.jobs.hrUserId, userId),
+          eq(schema.jobs.status, 'open'),
+        ),
+      );
 
     await tx.insert(schema.auditLog).values({
       userId,

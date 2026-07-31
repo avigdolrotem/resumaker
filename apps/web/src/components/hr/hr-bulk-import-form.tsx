@@ -59,8 +59,8 @@ export function HrBulkImportForm() {
         </h1>
         <p className="text-muted-foreground mt-1">
           {locale === 'he'
-            ? 'העלה קובץ CSV עם העמודות: title, company, location, description, remote, seniority, applyUrl'
-            : 'Upload a CSV file with columns: title, company, location, description, remote, seniority, applyUrl'}
+            ? 'העלה קובץ CSV עם העמודות: companyId, title, location, description, remote, seniority, applyUrl. שם החברה נלקח מפרופיל החברה לפי companyId — אין עמודת company.'
+            : 'Upload a CSV file with columns: companyId, title, location, description, remote, seniority, applyUrl. The employer name comes from the company profile that companyId points at — there is no company column.'}
         </p>
       </div>
 

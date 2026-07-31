@@ -23,6 +23,7 @@ import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { auditEvent } from '@/lib/audit';
 import { computeCompanyVerified } from '@/lib/company-verification';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 async function requireHr(h: Headers) {
   const guard = await requireActiveUser(h);
@@ -65,6 +66,19 @@ const PostBody = z.object({
 export async function POST(req: NextRequest): Promise<Response> {
   const guard = await requireActiveUser(await headers());
   if (guard instanceof NextResponse) return guard;
+
+  // Creating a company also self-promotes the caller to role='hr', which
+  // in turn makes them a trusted sharer (lib/content-trust.ts) whose
+  // manual imports skip moderation. That makes unbounded company
+  // creation a way to mint trusted accounts in a loop, so it needs a
+  // ceiling like every other write that grants capability.
+  const rl = await checkRateLimit(`hr-company-create:${guard.user.id}`, 5, 86_400);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', retryAfterSeconds: rl.resetSeconds },
+      { status: 429 },
+    );
+  }
 
   let body: z.infer<typeof PostBody>;
   try {

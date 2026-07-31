@@ -21,6 +21,8 @@ export async function GET(
   const [row] = await db
     .select({
       id: schema.jobs.id,
+      status: schema.jobs.status,
+      submittedByUserId: schema.jobs.submittedByUserId,
       source: schema.jobs.source,
       company: schema.jobs.company,
       title: schema.jobs.title,
@@ -46,6 +48,18 @@ export async function GET(
     .limit(1);
 
   if (!row) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  // A pending (unmoderated) import is visible only to whoever submitted
+  // it, and to admins reviewing the queue. Fetch-by-id had no status
+  // check at all, so anyone holding the UUID could read unreviewed
+  // content — see lib/content-trust.ts.
+  if (
+    row.status === 'pending' &&
+    guard.user.role !== 'admin' &&
+    row.submittedByUserId !== guard.user.id
+  ) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 

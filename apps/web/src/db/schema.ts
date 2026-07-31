@@ -782,6 +782,14 @@ export const trustedSharerRequests = pgTable(
   (t) => ({
     userIdx: index('trusted_sharer_requests_user_idx').on(t.userId),
     statusIdx: index('trusted_sharer_requests_status_idx').on(t.status),
+    // The API's "one pending request at a time" rule was a SELECT
+    // followed by an INSERT with nothing in between — five concurrent
+    // POSTs reproducibly created three pending rows. The rule has to
+    // live here to actually hold; the route now catches the unique
+    // violation and returns the same 409 it used to guess at.
+    onePendingPerUser: uniqueIndex('trusted_sharer_requests_one_pending_per_user')
+      .on(t.userId)
+      .where(sql`${t.status} = 'pending'`),
     statusCheck: check(
       'trusted_sharer_requests_status_check',
       sql`${t.status} IN ('pending', 'approved', 'denied')`,

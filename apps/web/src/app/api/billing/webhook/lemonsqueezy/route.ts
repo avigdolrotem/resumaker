@@ -169,15 +169,56 @@ function getUserIdFromCustomData(payload: LsWebhookPayload): string | null {
 }
 
 /**
- * Locate the resumaker user behind a webhook event. Tries `custom_data.user_id`
- * first (set by our checkout flow) and falls back to looking up by lsCustomerId.
+ * Locate the resumaker user behind a webhook event.
+ *
+ * `custom_data.user_id` is the primary signal (our checkout route sets
+ * it server-side), but it is NOT self-evidently trustworthy: the
+ * signature proves LemonSqueezy sent the payload, not that *we* set the
+ * custom data. LS hosted checkout links accept `checkout[custom][...]`
+ * as URL parameters and the store's buy-links are public, so the value
+ * can be attacker-chosen — which would attach a real payment to an
+ * unrelated account and break the refund/chargeback trail.
+ *
+ * So: when the payload carries a buyer email, require it to match the
+ * user the custom id points at. On mismatch we log loudly and fall back
+ * to resolving by email, i.e. the account that actually paid wins.
  */
 async function resolveWebhookUserId(
   payload: LsWebhookPayload,
   customerId: string | null,
 ): Promise<string | null> {
+  const attrs = payload.data.attributes as { user_email?: unknown };
+  const buyerEmail = typeof attrs.user_email === 'string' ? attrs.user_email.toLowerCase() : null;
+
   const fromCustom = getUserIdFromCustomData(payload);
-  if (fromCustom) return fromCustom;
+  if (fromCustom) {
+    if (!buyerEmail) return fromCustom; // nothing to cross-check against
+    const claimed = await db.query.users.findFirst({
+      where: eq(schema.users.id, fromCustom),
+      columns: { id: true, email: true },
+    });
+    if (claimed && claimed.email.toLowerCase() === buyerEmail) return claimed.id;
+
+    logger.warn(
+      { claimedUserId: fromCustom, eventId: payload.data.id },
+      'lemonsqueezy.webhook.custom_user_id_email_mismatch',
+    );
+    const byEmail = await db.query.users.findFirst({
+      where: eq(schema.users.email, buyerEmail),
+      columns: { id: true },
+    });
+    if (byEmail) return byEmail.id;
+    return null;
+  }
+
+  if (buyerEmail) {
+    const byEmail = await db.query.users.findFirst({
+      where: eq(schema.users.email, buyerEmail),
+      columns: { id: true },
+    });
+    if (byEmail) return byEmail.id;
+  }
+
   if (!customerId) return null;
   const row = await db.query.subscriptions.findFirst({
     where: eq(schema.subscriptions.lsCustomerId, customerId),

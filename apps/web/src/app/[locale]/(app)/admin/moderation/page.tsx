@@ -40,6 +40,8 @@ export default async function AdminModerationPage() {
       requesterId: schema.users.id,
       requesterEmail: schema.users.email,
       requesterName: schema.users.name,
+      requesterRole: schema.users.role,
+      requesterFlags: schema.users.featureFlags,
     })
     .from(schema.trustedSharerRequests)
     .innerJoin(schema.users, eq(schema.users.id, schema.trustedSharerRequests.userId))
@@ -115,6 +117,21 @@ export default async function AdminModerationPage() {
                     <p className="text-muted-foreground text-xs" dir="ltr">
                       {r.requesterEmail}
                     </p>
+                    {/* Trust can come from role='hr'/'admin' as well as the
+                        flag this request would grant (see content-trust.ts).
+                        Without this, "Deny" looked effective on someone who
+                        is already trusted by role and silently did nothing. */}
+                    {(r.requesterRole === 'hr' || r.requesterRole === 'admin') && (
+                      <p className="mt-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                        Already trusted via role=&apos;{r.requesterRole}&apos; — approving changes
+                        nothing, and denying will NOT revoke it (change their role instead).
+                      </p>
+                    )}
+                    {r.requesterFlags?.trustedSharer === true && (
+                      <p className="mt-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                        Already has the trustedSharer flag.
+                      </p>
+                    )}
                     <p className="mt-1 text-sm">{r.note}</p>
                   </div>
                   <ModerationActions endpoint={`/api/admin/moderation/trust-requests/${r.id}`} />

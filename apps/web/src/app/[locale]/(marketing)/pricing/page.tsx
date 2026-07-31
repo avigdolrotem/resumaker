@@ -39,11 +39,19 @@ export default async function PricingPage({ params }: { params: Promise<{ locale
         ? t('features.maxResumesUnlimited')
         : t('features.maxResumes', { count: limits.maxResumes }),
     );
-    features.push(
-      limits.generationsPerDay === -1
-        ? t('features.generationsUnlimited')
-        : t('features.generationsPerDay', { count: limits.generationsPerDay }),
-    );
+    // A 0/day tier isn't "0 AI generations / day" — generation simply
+    // isn't part of that plan. Same skip-when-zero treatment cover
+    // letters already get below; the free plan leads with what it does
+    // include (browsing + tracking) instead of a zero.
+    if (limits.generationsPerDay === 0) {
+      features.push(t('features.jobBrowsingFree'));
+    } else {
+      features.push(
+        limits.generationsPerDay === -1
+          ? t('features.generationsUnlimited')
+          : t('features.generationsPerDay', { count: limits.generationsPerDay }),
+      );
+    }
     if (limits.coverLettersPerMonth !== 0) {
       features.push(
         limits.coverLettersPerMonth === -1

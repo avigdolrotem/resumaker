@@ -56,6 +56,27 @@ export async function requireHrMember(
   return { member };
 }
 
+/**
+ * Returns the member row if their company role is one of `allowed`;
+ * 404 otherwise. Use this instead of requireHrMember for anything that
+ * *writes* — requireHrMember accepts every role including 'viewer',
+ * which by name is read-only, so gating a mutation on mere membership
+ * silently lets a viewer act as the company.
+ */
+export async function requireHrRole(
+  companyId: string,
+  userId: string,
+  userRole: string,
+  allowed: CompanyMemberRole[],
+): Promise<HrMemberGuard | NextResponse> {
+  const result = await requireHrMember(companyId, userId, userRole);
+  if (result instanceof NextResponse) return result;
+  if (!allowed.includes(result.member.role as CompanyMemberRole)) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+  return result;
+}
+
 /** Returns member row if owner; 404 NextResponse otherwise. */
 export async function requireHrOwner(
   companyId: string,

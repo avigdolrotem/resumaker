@@ -87,31 +87,46 @@ export async function fetchSmartRecruitersJobs(companySlug: string): Promise<Fet
     return { ok: false, error: (err as Error).message };
   }
 
-  const jobs = items.map((item): NormalizedJob => {
+  // flatMap-and-skip, not map-with-fallback: a posting whose detail
+  // fetch failed has no description AND no postingUrl. Falling back to
+  // `listUrl` gave every such posting the SAME urlNormalized, so two
+  // failures in one board collided on jobs_url_norm_unique and took the
+  // entire 500-row upsert batch down with them (upsertJobs batches, so
+  // one bad pair loses every job from that company for the run).
+  // A posting we couldn't read is better dropped this run and picked up
+  // on the next one.
+  const jobs = items.flatMap((item): NormalizedJob[] => {
+    const detail = details.get(item.id);
+    if (!detail?.postingUrl) return [];
+
     const loc = item.location;
     const location = [loc?.city, loc?.region, loc?.country].filter(Boolean).join(', ');
-    const detail = details.get(item.id);
-    const sections = detail?.jobAd?.sections ?? {};
+    const sections = detail.jobAd?.sections ?? {};
     const description = Object.values(sections)
       .map((s) => stripHtml(s?.text ?? ''))
       .filter(Boolean)
       .join('\n\n');
-    const jobUrl = detail?.postingUrl ?? listUrl;
-    return {
-      externalId: item.id,
-      source: 'smartrecruiters',
-      company: item.company?.name ?? companySlug,
-      companySlug,
-      title: item.name ?? '',
-      location: location || undefined,
-      description,
-      url: jobUrl,
-      urlNormalized: normalizeUrl(jobUrl),
-      remote: loc?.remote ?? false,
-      seniority: inferSeniority(item.name ?? ''),
-      postedAt: parseIsoDate(item.releasedDate),
-      rawData: item,
-    };
+    const jobUrl = detail.postingUrl;
+    return [
+      {
+        externalId: item.id,
+        source: 'smartrecruiters',
+        company: item.company?.name ?? companySlug,
+        companySlug,
+        title: item.name ?? '',
+        location: location || undefined,
+        description,
+        url: jobUrl,
+        // externalId folded in for the same reason greenhouse.ts does it
+        // — two postings must never normalize to one row even if a board
+        // serves an unexpected URL shape.
+        urlNormalized: `${normalizeUrl(jobUrl)}#smartrecruiters-${item.id}`,
+        remote: loc?.remote ?? false,
+        seniority: inferSeniority(item.name ?? ''),
+        postedAt: parseIsoDate(item.releasedDate),
+        rawData: item,
+      },
+    ];
   });
   return { ok: true, jobs };
 }

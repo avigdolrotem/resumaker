@@ -43,6 +43,10 @@ export async function fetchRecruiteeJobs(companySlug: string): Promise<FetchResu
 
   const jobs = (data.offers ?? []).map((offer): NormalizedJob => {
     const location = [offer.city, offer.country].filter(Boolean).join(', ');
+    // Falls back to the board URL, which is identical for every offer —
+    // see the matching comment in smartrecruiters.ts. externalId is
+    // folded into urlNormalized below so that fallback can never
+    // collide two offers onto one row.
     const jobUrl = offer.careers_url ?? url;
     const description = stripHtml(offer.description ?? '');
     const requirements = stripHtml(offer.requirements ?? '');
@@ -55,7 +59,7 @@ export async function fetchRecruiteeJobs(companySlug: string): Promise<FetchResu
       location: location || undefined,
       description: [description, requirements].filter(Boolean).join('\n\n'),
       url: jobUrl,
-      urlNormalized: normalizeUrl(jobUrl),
+      urlNormalized: `${normalizeUrl(jobUrl)}#recruitee-${offer.id}`,
       remote: Boolean(offer.remote || offer.hybrid),
       seniority: inferSeniority(offer.title ?? ''),
       postedAt: parseIsoDate(offer.updated_at),

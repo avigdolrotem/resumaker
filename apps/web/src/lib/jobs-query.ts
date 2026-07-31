@@ -9,7 +9,7 @@
  * actually matters) and lets the UI show Prev/Next + a page count
  * instead of an ever-growing single list.
  */
-import { and, count, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, ne, sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
 
 // A multiple of 1/2/3/4/6/8/12 so the grid never ends a page on a
@@ -96,6 +96,15 @@ export async function listJobs(params: ListJobsParams): Promise<ListJobsResult> 
   if (params.company) conditions.push(eq(schema.jobs.companySlug, params.company));
   if (params.source) conditions.push(eq(schema.jobs.source, params.source));
   if (params.remote !== undefined) conditions.push(eq(schema.jobs.remote, params.remote));
+  // Unmoderated manual imports are NEVER listable, by any caller, under
+  // any flag combination. Expressed as its own always-on exclusion
+  // rather than relying on the open-only filter below: that filter is
+  // switched off by `includeClosed` (a legitimate, caller-supplied
+  // widening for application-history views), which silently un-hid
+  // every pending row to anyone who passed ?includeClosed=true. An
+  // inclusion filter can't be the moderation boundary — see
+  // lib/content-trust.ts for what 'pending' means.
+  conditions.push(ne(schema.jobs.status, 'pending'));
   if (!params.includeClosed) conditions.push(eq(schema.jobs.status, 'open'));
   if (params.israeliOnly) {
     // Same plain-text rule as isIsraeliLocation, expressed in SQL so it
