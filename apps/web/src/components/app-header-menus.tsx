@@ -7,6 +7,7 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import {
+  Briefcase,
   ChevronDown,
   CreditCard,
   FilePlus2,
@@ -246,6 +247,23 @@ export function UserAvatarMenu() {
               >
                 <Gift className="h-4 w-4" />
                 {t('referral')}
+              </Link>
+            </li>
+            {/* Visible to every user, not just role='hr' — creating a
+                company is the self-serve signup itself (see the comment
+                on POST /api/hr/companies), so this has to be reachable
+                *before* someone has that role, not after. /hr/jobs
+                itself branches on role to show either "my posted jobs"
+                or a "become an employer" prompt. */}
+            <li role="none">
+              <Link
+                role="menuitem"
+                href="/hr/jobs"
+                onClick={() => setOpen(false)}
+                className={menuItemClass}
+              >
+                <Briefcase className="h-4 w-4" />
+                {t('forEmployers')}
               </Link>
             </li>
             <li role="none" className="border-border/60 mt-1 border-t pt-1">

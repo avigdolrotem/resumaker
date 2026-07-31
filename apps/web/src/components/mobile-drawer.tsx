@@ -14,6 +14,7 @@ import {
   LogIn,
   UserPlus,
   Briefcase,
+  Building2,
   Mail,
   Home,
   CreditCard,
@@ -60,6 +61,7 @@ type LinkHref =
   | '/profile'
   | '/account/billing'
   | '/referral'
+  | '/hr/jobs'
   | '/examples'
   | '/pricing'
   | '/'
@@ -123,6 +125,7 @@ function authedItems(t: NavT, tLegal: LegalT): Item[] {
     { kind: 'link', href: '/settings', label: t('settings'), Icon: Settings },
     { kind: 'link', href: '/account/billing', label: t('billing'), Icon: CreditCard },
     { kind: 'link', href: '/referral', label: t('referral'), Icon: Gift },
+    { kind: 'link', href: '/hr/jobs', label: t('forEmployers'), Icon: Building2 },
     ...legalItems(tLegal),
     { kind: 'action', action: 'sign-out', label: t('signOut'), Icon: LogOut },
   ];

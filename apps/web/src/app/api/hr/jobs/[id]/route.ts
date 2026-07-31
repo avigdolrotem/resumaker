@@ -1,6 +1,16 @@
 /**
- * PATCH  /api/hr/jobs/[id] — edit own HR-posted job
- * DELETE /api/hr/jobs/[id] — delete own HR-posted job
+ * PATCH  /api/hr/jobs/[id] — edit own HR-posted job, including status
+ *        (open/closed — the "mark this filled" action)
+ * DELETE /api/hr/jobs/[id] — close own HR-posted job
+ *
+ * DELETE does NOT delete the row — it sets status='closed', same as
+ * PATCH {status:'closed'}. The jobs table's own schema comment is
+ * explicit about why: applications.jobId and userJobs.jobId both
+ * cascade on a real delete, so removing a job row would silently wipe
+ * every applicant's tracked-application history for it. Kept as the
+ * DELETE verb (not merged into PATCH-only) because "remove this
+ * listing" is the client-facing action an HR user actually takes —
+ * it just isn't destructive underneath.
  *
  * Only the owning HR user (or admin) can mutate. Other HR users
  * see 404 (not 403, to hide existence).
@@ -21,6 +31,7 @@ const Patch = z.object({
   description: z.string().min(50).max(20_000).optional(),
   remote: z.boolean().optional(),
   seniority: z.string().max(50).optional(),
+  status: z.enum(['open', 'closed']).optional(),
 });
 
 async function getOwned(id: string, hrUserId: string, role: string) {
@@ -64,6 +75,10 @@ export async function PATCH(
   if (body.description !== undefined) updates['description'] = body.description;
   if (body.remote !== undefined) updates['remote'] = body.remote;
   if (body.seniority !== undefined) updates['seniority'] = body.seniority;
+  if (body.status !== undefined) {
+    updates['status'] = body.status;
+    updates['closedAt'] = body.status === 'closed' ? new Date() : null;
+  }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
@@ -94,12 +109,15 @@ export async function DELETE(
   const existing = await getOwned(id, guard.user.id, guard.user.role);
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  await db.delete(schema.jobs).where(eq(schema.jobs.id, id));
+  await db
+    .update(schema.jobs)
+    .set({ status: 'closed', closedAt: new Date() })
+    .where(eq(schema.jobs.id, id));
 
   auditEvent({
     userId: guard.user.id,
     event: 'admin_action',
-    metadata: { kind: 'hr_job_deleted', jobId: id },
+    metadata: { kind: 'hr_job_closed', jobId: id },
   });
 
   return NextResponse.json({ success: true });

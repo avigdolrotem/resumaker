@@ -62,8 +62,14 @@ export default async function ApplicantsPage({
                 key={a.applicationId}
                 className="hover:bg-accent/40 space-y-1 px-6 py-4 transition-colors"
               >
-                <p className="font-medium">{(a.name ?? isHe) ? 'ללא שם' : 'No name'}</p>
-                <p className="text-muted-foreground text-sm">{a.email}</p>
+                <p className="font-medium">{a.name ?? (isHe ? 'ללא שם' : 'No name')}</p>
+                <a
+                  href={`mailto:${a.email}`}
+                  className="text-muted-foreground hover:text-brand-600 text-sm underline-offset-2 hover:underline"
+                  dir="ltr"
+                >
+                  {a.email}
+                </a>
                 <p className="text-muted-foreground text-xs">
                   {isHe ? 'סטטוס: ' : 'Status: '}
                   <span className="bg-muted rounded-full px-2 py-0.5 font-medium">{a.status}</span>

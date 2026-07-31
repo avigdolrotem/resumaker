@@ -1,6 +1,18 @@
 /**
  * GET  /api/hr/companies — list companies caller is member of
  * POST /api/hr/companies — create company (caller becomes owner)
+ *
+ * POST is the self-serve "become an employer" action — any active user
+ * can call it, not just existing role='hr'/'admin'. Before 2026-07-31
+ * there was no way for a new business to reach this at all: every HR
+ * route required role='hr' already, and nothing ever granted that role
+ * except direct DB/admin-panel intervention, so "free to post" didn't
+ * matter in practice — there was no door in. Creating a company IS the
+ * signup now: a first-time caller gets promoted to role='hr' as part of
+ * the same request. Safe to do unconditionally — role='hr' only adds
+ * capability (see beta-gate.ts and every /hr/* route), nothing in the
+ * app gates job-seeker features on role==='user' specifically, so this
+ * can't cost someone their existing account access.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -51,7 +63,7 @@ const PostBody = z.object({
 });
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const guard = await requireHr(await headers());
+  const guard = await requireActiveUser(await headers());
   if (guard instanceof NextResponse) return guard;
 
   let body: z.infer<typeof PostBody>;
@@ -95,6 +107,13 @@ export async function POST(req: NextRequest): Promise<Response> {
     role: 'owner',
     acceptedAt: new Date(),
   });
+
+  // First company → self-serve promotion to role='hr'. Never downgrades
+  // an existing admin, and a no-op for someone who already has 'hr'
+  // (e.g. creating a second company).
+  if (guard.user.role !== 'hr' && guard.user.role !== 'admin') {
+    await db.update(schema.users).set({ role: 'hr' }).where(eq(schema.users.id, guard.user.id));
+  }
 
   auditEvent({
     userId: guard.user.id,
