@@ -2,19 +2,12 @@
  * GET /api/cron/generate-recommendations
  *
  * Nightly batch: runs generateRecommendationsForUser (the 3-stage
- * funnel — apps/web/src/lib/recommendations.ts) for every user who can
- * actually reach /dashboard's recommendation card — admin, beta flag, or
- * a paid (plus/pro) subscription (mirrors hasJobHuntBetaAsync in
- * lib/beta-gate.ts, replicated here as a query condition since a route
- * handler can't call that helper against arbitrary rows) — with a
- * completed career profile. The subscription half of this is a plain
- * tier+status check, not the full getUserTier grace-period logic (a
- * user in their canceled-but-still-in-grace-period window might miss a
- * day's refresh) — acceptable here since this only affects freshness,
- * never access; getUserTier alone gates whether they can see the page.
- * No additional "active in the last 7 days" filter for now — beta
- * access is still a small, curated population, so filtering further on
- * recency isn't earning its complexity yet.
+ * funnel — apps/web/src/lib/recommendations.ts) for every user with a
+ * completed career profile. The job-hunt surface (including dashboard
+ * recommendations) is free for everyone as of 2026-07-31 — see
+ * lib/beta-gate.ts — so this no longer restricts to admin/beta-flag/
+ * paid-tier; every eligible user gets the same nightly refresh
+ * regardless of billing status.
  * generateRecommendationsForUser itself no-ops for anyone without a
  * completed profile, so this could even skip the profile check below
  * and still be correct — kept explicit so a single query shows exactly
@@ -22,15 +15,14 @@
  *
  * Also serves as the effective "regenerate after profile save" trigger
  * the original design called for: rather than a debounced per-save
- * hook (needs a delayed-job primitive this app doesn't have), every
- * beta user's recommendations simply refresh once a day regardless of
- * what changed. A job-recommendation feature refreshing daily is a
- * perfectly normal cadence — most job boards don't do better than that
- * either.
+ * hook (needs a delayed-job primitive this app doesn't have), everyone's
+ * recommendations simply refresh once a day regardless of what changed.
+ * A job-recommendation feature refreshing daily is a perfectly normal
+ * cadence — most job boards don't do better than that either.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { and, eq, isNotNull, or, sql } from 'drizzle-orm';
+import { eq, isNotNull } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { logger } from '@/lib/observability';
 import { verifyCronSecret } from '@/lib/cron-auth';
@@ -48,20 +40,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     .select({ id: schema.users.id })
     .from(schema.users)
     .innerJoin(schema.profiles, eq(schema.profiles.userId, schema.users.id))
-    .leftJoin(schema.subscriptions, eq(schema.subscriptions.userId, schema.users.id))
-    .where(
-      and(
-        or(
-          eq(schema.users.role, 'admin'),
-          sql`${schema.users.featureFlags}->>'jobHuntBeta' = 'true'`,
-          and(
-            sql`${schema.subscriptions.tier} IN ('plus', 'pro')`,
-            sql`${schema.subscriptions.status} IN ('active', 'trialing')`,
-          ),
-        ),
-        isNotNull(schema.profiles.onboardingCompletedAt),
-      ),
-    );
+    .where(isNotNull(schema.profiles.onboardingCompletedAt));
 
   let usersProcessed = 0;
   let totalRecommended = 0;

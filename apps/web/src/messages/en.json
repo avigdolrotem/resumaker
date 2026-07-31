@@ -1048,7 +1048,7 @@
     },
     "gate": {
       "resume_limit": "You've hit your resume limit. Upgrade to add more.",
-      "generation_limit": "You've hit today's generation limit. Upgrade to continue.",
+      "generation_limit": "Generating a resume requires a paid plan. Browsing and tracking jobs is always free.",
       "cover_letter_limit": "You've hit this month's cover-letter limit. Upgrade to continue.",
       "cover_letter_disabled": "Cover letters are available on Pro and above.",
       "model_choice": "Choosing the AI model is a Pro feature.",
@@ -1315,8 +1315,8 @@
         "body": "You've hit the free-tier resume cap. Upgrade to Plus to save unlimited resumes."
       },
       "generation_limit": {
-        "title": "Daily AI generations exhausted",
-        "body": "Free accounts get a handful of generations a day to try things out. Plus removes the daily cap so you can keep iterating."
+        "title": "Generating a resume is a paid feature",
+        "body": "Browsing jobs and tracking applications is free for everyone. Upgrade to Plus to generate tailored resumes."
       },
       "template_locked": {
         "title": "This template is Plus-only",

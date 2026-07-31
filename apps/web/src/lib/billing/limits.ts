@@ -56,8 +56,14 @@ export interface TierLimits {
 
 export const TIER_LIMITS: Record<Tier, TierLimits> = {
   free: {
+    // 2026-07-31, Rotem's decision: browsing/tracking jobs is free for
+    // everyone (see lib/beta-gate.ts), but generation itself is the
+    // paid feature now — 0, not a trial allowance. canGenerate's
+    // existing 402 (already wired through apiFetch to the upgrade
+    // modal, same path a free user hitting the old 3/day cap already
+    // took) now fires on the first attempt instead of the fourth.
     maxResumes: 2,
-    generationsPerDay: 3,
+    generationsPerDay: 0,
     coverLettersPerMonth: 1,
     atsScoring: 'basic', // overall score + top 3 missing keywords
     modelChoice: false, // locked to Haiku
@@ -69,8 +75,8 @@ export const TIER_LIMITS: Record<Tier, TierLimits> = {
     multiLanguageExport: false,
     displayName: { he: 'חינם', en: 'Free' },
     tagline: {
-      he: 'התחל לבנות ולראות אם זה מתאים לך',
-      en: 'Build one polished resume and see if it fits',
+      he: 'עיינו במשרות ועקבו אחרי מועמדויות בחינם',
+      en: 'Browse every job and track applications for free',
     },
     priceMonthly: -1,
     priceYearly: -1,
