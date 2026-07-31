@@ -53,6 +53,12 @@ export const COMPANIES: Partial<Record<Source, string[]>> = {
   lever: ['cloudinary', 'walkme', 'biocatch', 'houzz', 'logz'],
   workable: ['bizzabo', 'humanz', 'hyro', 'powtoon'],
   ashby: [],
+  // Empty until Serper discovery (or manual curation) turns up real
+  // Israeli companies on these two — both fetchers are wired and
+  // verified against real live boards (see recruitee.ts /
+  // smartrecruiters.ts), just no curated list yet.
+  recruitee: [],
+  smartrecruiters: [],
 };
 
 export interface ComeetCompany {

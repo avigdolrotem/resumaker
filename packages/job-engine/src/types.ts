@@ -4,6 +4,8 @@ export type Source =
   | 'workable'
   | 'ashby'
   | 'comeet'
+  | 'recruitee'
+  | 'smartrecruiters'
   | 'taasuka'
   | 'serper'
   | 'jooble'

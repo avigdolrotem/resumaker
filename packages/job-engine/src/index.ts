@@ -6,6 +6,8 @@ export { fetchLeverJobs } from './sources/lever';
 export { fetchWorkableJobs } from './sources/workable';
 export { fetchAshbyJobs } from './sources/ashby';
 export { fetchComeetJobs, harvestComeetToken } from './sources/comeet';
+export { fetchRecruiteeJobs } from './sources/recruitee';
+export { fetchSmartRecruitersJobs } from './sources/smartrecruiters';
 export { discoverJobsViaSerper } from './sources/serper';
 export type { SerperDiscoveryResult } from './sources/serper';
 export { fetchTaasukaPage, TAASUKA_PROFESSION_CATEGORIES } from './sources/taasuka';

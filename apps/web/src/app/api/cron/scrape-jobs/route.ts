@@ -267,6 +267,8 @@ export async function GET(req: NextRequest): Promise<Response> {
       lever: engine.fetchLeverJobs,
       workable: engine.fetchWorkableJobs,
       ashby: engine.fetchAshbyJobs,
+      recruitee: engine.fetchRecruiteeJobs,
+      smartrecruiters: engine.fetchSmartRecruitersJobs,
     };
   } catch (err) {
     logger.error({ err: (err as Error).message }, 'cron.scrape_jobs.engine_load_failed');

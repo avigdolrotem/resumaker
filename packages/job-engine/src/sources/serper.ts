@@ -1,6 +1,8 @@
 import type { NormalizedJob } from '../types';
 import { normalizeUrl } from '../url-normalize';
 import { stripHtml, inferSeniority } from '../html-utils';
+import { fetchRecruiteeJobs } from './recruitee';
+import { fetchSmartRecruitersJobs } from './smartrecruiters';
 
 const SERPER_URL = 'https://google.serper.dev/search';
 
@@ -30,9 +32,20 @@ const QUERIES = [
   'product manager Israel tech site:greenhouse.io OR site:lever.co',
 ];
 
+// Separate query batch for the two board-fetch (not single-job) sources
+// below — same discovery mechanism, different resolution strategy (see
+// the per-source comment in the results loop).
+const BOARD_DISCOVERY_QUERIES = [
+  'jobs Israel site:recruitee.com',
+  'jobs Tel Aviv site:recruitee.com',
+  'jobs Israel site:jobs.smartrecruiters.com',
+];
+
 const GH_RE = /greenhouse\.io\/([A-Za-z0-9_-]+)\/jobs\/(\d+)/i;
 const LV_RE = /jobs\.lever\.co\/([A-Za-z0-9_-]+)\/([0-9a-f-]{36})/i;
 const WK_RE = /apply\.workable\.com\/([A-Za-z0-9_-]+)\/j\/([A-Za-z0-9]+)/i;
+const RC_RE = /^https:\/\/([a-z0-9-]+)\.recruitee\.com\//i;
+const SR_RE = /jobs\.smartrecruiters\.com\/([A-Za-z0-9_-]+)\//i;
 
 interface SerperOrganicResult {
   link?: string;
@@ -203,6 +216,25 @@ export interface SerperDiscoveryResult {
  * closure signal. Callers should upsert these jobs but skip sweeping on
  * their behalf.
  */
+async function runQuery(
+  apiKey: string,
+  query: string,
+): Promise<{ links: string[]; error?: string }> {
+  try {
+    const res = await fetch(SERPER_URL, {
+      method: 'POST',
+      headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: query, hl: 'en', num: 10 }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!res.ok) return { links: [], error: `${query}:HTTP ${res.status}` };
+    const data = (await res.json()) as SerperResponse;
+    return { links: (data.organic ?? []).map((item) => item.link ?? '') };
+  } catch (err) {
+    return { links: [], error: `${query}:${(err as Error).message}` };
+  }
+}
+
 export async function discoverJobsViaSerper(apiKey: string): Promise<SerperDiscoveryResult> {
   if (!apiKey) return { jobs: [], queriesRun: 0, queryErrors: [] };
 
@@ -212,28 +244,14 @@ export async function discoverJobsViaSerper(apiKey: string): Promise<SerperDisco
   let queriesRun = 0;
 
   for (const query of QUERIES) {
-    let data: SerperResponse;
-    try {
-      const res = await fetch(SERPER_URL, {
-        method: 'POST',
-        headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q: query, hl: 'en', num: 10 }),
-        signal: AbortSignal.timeout(15_000),
-      });
-      if (!res.ok) {
-        queryErrors.push(`${query}:HTTP ${res.status}`);
-        continue;
-      }
-      data = (await res.json()) as SerperResponse;
-    } catch (err) {
-      queryErrors.push(`${query}:${(err as Error).message}`);
+    const { links, error } = await runQuery(apiKey, query);
+    if (error) {
+      queryErrors.push(error);
       continue;
     }
     queriesRun++;
 
-    for (const item of data.organic ?? []) {
-      const link = item.link ?? '';
-
+    for (const link of links) {
       const gh = GH_RE.exec(link);
       if (gh?.[1] && gh[2]) {
         const slug = gh[1].toLowerCase();
@@ -264,6 +282,61 @@ export async function discoverJobsViaSerper(apiKey: string): Promise<SerperDisco
         seen.add(key);
         const job = await fetchSingleWorkableJob(slug, wk[2]);
         if (job) jobs.push(job);
+      }
+    }
+  }
+
+  // Recruitee/SmartRecruiters: unlike the three above, there's no
+  // single-job endpoint worth using — each company's full board is one
+  // cheap call (recruitee.ts) or a small bounded-concurrency batch
+  // (smartrecruiters.ts) that returns everything at once, so once a
+  // company is discovered here it's worth fetching completely rather
+  // than resolving just the one posting Serper happened to surface.
+  // fetchedBoards prevents doing that twice if multiple links from the
+  // same company appear across these queries.
+  const fetchedBoards = new Set<string>(); // `${source}:${slug}`
+  for (const query of BOARD_DISCOVERY_QUERIES) {
+    const { links, error } = await runQuery(apiKey, query);
+    if (error) {
+      queryErrors.push(error);
+      continue;
+    }
+    queriesRun++;
+
+    for (const link of links) {
+      const rc = RC_RE.exec(link);
+      if (rc?.[1]) {
+        const slug = rc[1].toLowerCase();
+        const key = `recruitee:${slug}`;
+        if (fetchedBoards.has(key)) continue;
+        fetchedBoards.add(key);
+        const result = await fetchRecruiteeJobs(slug);
+        if (result.ok) {
+          for (const job of result.jobs) {
+            const jobKey = `recruitee:${job.externalId}`;
+            if (seen.has(jobKey)) continue;
+            seen.add(jobKey);
+            jobs.push(job);
+          }
+        }
+        continue;
+      }
+
+      const sr = SR_RE.exec(link);
+      if (sr?.[1]) {
+        const slug = sr[1];
+        const key = `smartrecruiters:${slug}`;
+        if (fetchedBoards.has(key)) continue;
+        fetchedBoards.add(key);
+        const result = await fetchSmartRecruitersJobs(slug);
+        if (result.ok) {
+          for (const job of result.jobs) {
+            const jobKey = `smartrecruiters:${job.externalId}`;
+            if (seen.has(jobKey)) continue;
+            seen.add(jobKey);
+            jobs.push(job);
+          }
+        }
       }
     }
   }
