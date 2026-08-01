@@ -70,6 +70,8 @@ export type CheckoutResult =
 export async function startCheckout(args: {
   userId: string;
   userEmail: string;
+  /** Validated coupon (see lib/billing/coupons.ts) — LemonSqueezy only. */
+  coupon?: { id: string; code: string };
   priceKey: PriceKey;
   successUrl: string;
   cancelUrl: string;
@@ -163,6 +165,7 @@ export async function startCheckout(args: {
         userEmail: args.userEmail,
         successUrl: args.successUrl,
         ...(args.locale ? { locale: args.locale } : {}),
+        ...(args.coupon ? { discountCode: args.coupon.code, couponId: args.coupon.id } : {}),
       });
       // Mark the subscription row as "lemonsqueezy" provider so when the
       // webhook arrives we don't accidentally treat it as a Stripe row.
@@ -400,6 +403,8 @@ export type PurchaseOrChangeResult =
 export async function purchaseOrChangePlan(args: {
   userId: string;
   userEmail: string;
+  /** Validated coupon — only applies to a NEW checkout, not a plan change. */
+  coupon?: { id: string; code: string };
   priceKey: PriceKey;
   successUrl: string;
   cancelUrl: string;

@@ -204,6 +204,13 @@
       "when": 1785592804397,
       "tag": "0028_happy_maelstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1785593387656,
+      "tag": "0029_square_sentry",
+      "breakpoints": true
     }
   ]
 }

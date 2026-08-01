@@ -22,12 +22,14 @@ import { getLocale } from 'next-intl/server';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { env } from '@/lib/env';
 import { purchaseOrChangePlan, getActiveProvider } from '@/lib/billing/provider';
+import { validateCoupon } from '@/lib/billing/coupons';
 import { auditEvent } from '@/lib/audit';
 import { logger } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 
 const BodySchema = z.object({
+  couponCode: z.string().max(40).optional(),
   priceKey: z.enum([
     'plus_monthly',
     'plus_yearly',
@@ -65,9 +67,27 @@ export async function POST(req: NextRequest): Promise<Response> {
   const rawLocale = await getLocale();
   const locale: 'he' | 'en' = rawLocale === 'he' ? 'he' : 'en';
 
+  // Validate the code before creating the checkout. LemonSqueezy also
+  // enforces expiry/redemption caps on its own discount, so this is the
+  // friendly-error layer rather than the only line of defence — but it's
+  // what stops a user reaching a payment page with a code that will be
+  // silently ignored.
+  let coupon: { id: string; code: string } | undefined;
+  if (body.couponCode?.trim()) {
+    const check = await validateCoupon(body.couponCode, guard.user.id);
+    if (!check.ok) {
+      return NextResponse.json(
+        { error: 'Coupon not valid', code: 'COUPON_INVALID', reason: check.reason },
+        { status: 422 },
+      );
+    }
+    coupon = { id: check.couponId, code: check.code };
+  }
+
   const result = await purchaseOrChangePlan({
     userId: guard.user.id,
     userEmail: guard.user.email,
+    ...(coupon ? { coupon } : {}),
     priceKey: body.priceKey,
     successUrl,
     cancelUrl: `${env.APP_URL}/pricing?canceled=1`,
@@ -103,7 +123,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   auditEvent({
     userId: guard.user.id,
     event: 'billing_checkout_started',
-    metadata: { priceKey: body.priceKey },
+    metadata: { priceKey: body.priceKey, ...(coupon ? { couponCode: coupon.code } : {}) },
   });
 
   return NextResponse.json({ url: result.url });

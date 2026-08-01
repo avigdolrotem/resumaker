@@ -968,6 +968,16 @@ export const coupons = pgTable(
     expiresAt: timestamp('expires_at', { withTimezone: true }),
     usageLimit: integer('usage_limit'),
     usageCount: integer('usage_count').notNull().default(0),
+    /**
+     * The matching discount in LemonSqueezy. Until this existed the
+     * coupon system was decorative: an admin could create a row here,
+     * but the code was never sent to a payment provider, nothing ever
+     * wrote couponRedemptions, and usageCount could only read zero.
+     * The row and the LS discount are created together (see POST
+     * /api/admin/coupons) so a code an admin can see is always a code
+     * that actually discounts a checkout.
+     */
+    lsDiscountId: varchar('ls_discount_id', { length: 64 }),
     notes: text('notes'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),

@@ -47,6 +47,70 @@ export function PricingClient({
   const t = useTranslations('billing');
   const [interval, setInterval] = useState<BillingInterval>('monthly');
 
+  // One coupon field for the whole grid rather than one per card — the
+  // code applies to whichever plan you then pick. Validated here so the
+  // discount is confirmed *before* anyone is sent to a payment page;
+  // the actual redemption is only recorded once payment completes (see
+  // lib/billing/coupons.ts).
+  const [couponInput, setCouponInput] = useState('');
+  const [coupon, setCoupon] = useState<{ code: string; discountPercent: number } | null>(null);
+  const [couponChecking, setCouponChecking] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+
+  const isHe = locale === 'he';
+
+  async function applyCoupon() {
+    const code = couponInput.trim();
+    if (!code) return;
+    setCouponChecking(true);
+    setCouponError(null);
+    try {
+      const res = await fetch('/api/billing/coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      if (res.status === 401) {
+        setCouponError(isHe ? 'יש להתחבר כדי להשתמש בקוד' : 'Sign in to use a code');
+        return;
+      }
+      const data = (await res.json()) as {
+        valid?: boolean;
+        reason?: string;
+        code?: string;
+        discountPercent?: number;
+        error?: string;
+      };
+      if (!res.ok) {
+        setCouponError(data.error ?? (isHe ? 'לא ניתן לבדוק את הקוד' : "Couldn't check that code"));
+        return;
+      }
+      if (!data.valid) {
+        const reasons: Record<string, string> = isHe
+          ? {
+              not_found: 'קוד לא קיים',
+              expired: 'הקוד פג תוקף',
+              usage_limit_reached: 'הקוד מוצה',
+              already_redeemed: 'כבר השתמשתם בקוד הזה',
+            }
+          : {
+              not_found: "That code doesn't exist",
+              expired: 'That code has expired',
+              usage_limit_reached: 'That code has been fully used',
+              already_redeemed: "You've already used that code",
+            };
+        setCouponError(reasons[data.reason ?? ''] ?? (isHe ? 'קוד לא תקין' : 'Invalid code'));
+        setCoupon(null);
+        return;
+      }
+      setCoupon({ code: data.code!, discountPercent: data.discountPercent! });
+    } catch (err) {
+      setCouponError((err as Error).message);
+    } finally {
+      setCouponChecking(false);
+    }
+  }
+
   return (
     <>
       {/* Interval toggle — hidden when only Free tier exists (no paid options to compare) */}
@@ -95,9 +159,61 @@ export function PricingClient({
             checkoutReady={checkoutReady}
             isAuthed={isAuthed}
             locale={locale}
+            couponCode={coupon?.code ?? null}
           />
         ))}
       </div>
+
+      {checkoutReady && isAuthed && (
+        <div className="mx-auto mt-8 max-w-sm">
+          {coupon ? (
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 dark:border-emerald-800 dark:bg-emerald-950/40">
+              <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+                {isHe
+                  ? `הקוד ${coupon.code} הוחל — ${coupon.discountPercent}% הנחה`
+                  : `${coupon.code} applied — ${coupon.discountPercent}% off`}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setCoupon(null);
+                  setCouponInput('');
+                }}
+                className="text-xs text-emerald-700 underline dark:text-emerald-300"
+              >
+                {isHe ? 'הסר' : 'Remove'}
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                <input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void applyCoupon();
+                  }}
+                  placeholder={isHe ? 'קוד קופון' : 'Coupon code'}
+                  aria-label={isHe ? 'קוד קופון' : 'Coupon code'}
+                  dir="ltr"
+                  className="border-input bg-background/60 focus-visible:ring-brand-500/18 h-10 flex-1 rounded-xl border px-3.5 text-sm focus-visible:outline-none focus-visible:ring-4"
+                />
+                <button
+                  type="button"
+                  onClick={() => void applyCoupon()}
+                  disabled={couponChecking || !couponInput.trim()}
+                  className="glass hover:glass-strong h-10 rounded-xl px-4 text-sm font-medium disabled:opacity-50"
+                >
+                  {couponChecking ? '…' : isHe ? 'החל' : 'Apply'}
+                </button>
+              </div>
+              {couponError && (
+                <p className="mt-2 text-xs text-red-600 dark:text-red-400">{couponError}</p>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {checkoutReady && (
         <p className="text-muted-foreground mt-8 text-center text-xs">
@@ -126,12 +242,15 @@ function TierCard({
   checkoutReady,
   isAuthed,
   locale,
+  couponCode,
 }: {
   tier: TierData;
   interval: BillingInterval;
   currentTier: Tier;
   checkoutReady: boolean;
   isAuthed: boolean;
+  /** Validated code from the shared field above, applied to this purchase. */
+  couponCode?: string | null;
   locale: string;
 }) {
   const t = useTranslations('billing');
@@ -186,7 +305,7 @@ function TierCard({
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceKey }),
+        body: JSON.stringify({ priceKey, ...(couponCode ? { couponCode } : {}) }),
       });
       const data = (await res.json()) as { url?: string; changed?: boolean; error?: string };
       if (!res.ok) {

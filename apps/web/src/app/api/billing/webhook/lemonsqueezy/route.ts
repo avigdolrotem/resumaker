@@ -30,6 +30,7 @@ import { isUniqueViolation } from '@/lib/db-errors';
 import { verifyWebhookSignature, resolveVariantId, mapLsStatus } from '@/lib/billing/lemonsqueezy';
 import { JOB_HUNT_PACK_DURATION_DAYS } from '@/lib/billing/limits';
 import { markReferralQualifiedIfPending } from '@/lib/referrals';
+import { recordCouponRedemption } from '@/lib/billing/coupons';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -169,6 +170,16 @@ function getUserIdFromCustomData(payload: LsWebhookPayload): string | null {
 }
 
 /**
+ * Our coupons.id, round-tripped through checkout custom data. Used
+ * rather than reading a discount code off the order, so the redemption
+ * is tied to the exact coupon row we validated at checkout time.
+ */
+function getCouponIdFromCustomData(payload: LsWebhookPayload): string | null {
+  const v = payload.meta.custom_data?.['coupon_id'];
+  return typeof v === 'string' && v.length > 0 ? v : null;
+}
+
+/**
  * Locate the resumaker user behind a webhook event.
  *
  * `custom_data.user_id` is the primary signal (our checkout route sets
@@ -247,6 +258,15 @@ async function handleOrderCreated(payload: LsWebhookPayload): Promise<void> {
   // subscription_created, and the one-time Job Hunt Pack) since it's
   // idempotent — see markReferralQualifiedIfPending.
   await markReferralQualifiedIfPending(userId);
+
+  // A completed order is the only point a coupon is actually spent —
+  // creating a checkout isn't, since the buyer may never pay. Safe to
+  // call on a replayed webhook: the (couponId, userId) unique
+  // constraint makes it idempotent, so usageCount can't double-count.
+  const couponId = getCouponIdFromCustomData(payload);
+  if (couponId) {
+    await recordCouponRedemption(couponId, userId);
+  }
 
   // If the order created a subscription, the `subscription_created` event
   // will handle the tier grant — don't double-process.

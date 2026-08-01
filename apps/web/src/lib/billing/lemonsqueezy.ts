@@ -27,6 +27,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import {
   lemonSqueezySetup,
   createCheckout,
+  createDiscount,
   getSubscription,
   getCustomer,
   updateSubscription,
@@ -124,6 +125,77 @@ export function resolveVariantId(
  * `userId` is round-tripped via `custom.user_id` so the webhook handler
  * can map the resulting subscription back to our user row.
  */
+/**
+ * Create a percent-off discount in LemonSqueezy to back one of our
+ * `coupons` rows. Mirrors our own expiry/usage limits into LS as well,
+ * so the provider enforces them independently of our checks — a code
+ * that leaks can't be redeemed past its cap even if our validation is
+ * bypassed.
+ *
+ * Returns the LS discount id to store on the coupon row.
+ */
+export async function createPercentDiscount(args: {
+  name: string;
+  code: string;
+  percent: number;
+  expiresAt?: Date | null;
+  maxRedemptions?: number | null;
+}): Promise<string> {
+  ensureLemonSqueezy();
+  if (!env.LEMONSQUEEZY_STORE_ID) {
+    throw new Error('LEMONSQUEEZY_STORE_ID is not set');
+  }
+
+  const { data, error } = await createDiscount({
+    storeId: env.LEMONSQUEEZY_STORE_ID,
+    name: args.name,
+    code: args.code,
+    amount: args.percent,
+    amountType: 'percent',
+    ...(args.expiresAt ? { expiresAt: args.expiresAt.toISOString() } : {}),
+    ...(args.maxRedemptions && args.maxRedemptions > 0
+      ? { isLimitedRedemptions: true, maxRedemptions: args.maxRedemptions }
+      : {}),
+  });
+
+  if (error) throw new Error(`LemonSqueezy createDiscount failed: ${error.message}`);
+  const id = data?.data.id;
+  if (!id) throw new Error('LemonSqueezy returned no discount id');
+  return String(id);
+}
+
+/**
+ * Remove a discount from LemonSqueezy.
+ *
+ * Deliberately a raw fetch rather than the SDK's `deleteDiscount`: that
+ * helper unconditionally parses the response body as JSON, but LS
+ * answers a successful delete with `204 No Content` — an empty body —
+ * so it reports every *successful* delete as
+ * `Unexpected end of JSON input`. Observed directly: the discount was
+ * gone from LS (subsequent GET 404s) while the SDK claimed failure,
+ * which made the coupon-edit path abort after it had already destroyed
+ * the discount and leave a row pointing at a dead id.
+ *
+ * 404 counts as success too — the desired end state is "this discount
+ * doesn't exist", and a retry after a partial failure should converge,
+ * not error.
+ */
+export async function deletePercentDiscount(discountId: string): Promise<void> {
+  if (!env.LEMONSQUEEZY_API_KEY) {
+    throw new Error('LEMONSQUEEZY_API_KEY is not set');
+  }
+  const res = await fetch(`https://api.lemonsqueezy.com/v1/discounts/${discountId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${env.LEMONSQUEEZY_API_KEY}`,
+      Accept: 'application/vnd.api+json',
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (res.status === 204 || res.status === 404) return;
+  throw new Error(`LemonSqueezy deleteDiscount failed: HTTP ${res.status}`);
+}
+
 export async function createCheckoutUrl(args: {
   variantId: string;
   userId: string;
@@ -131,6 +203,10 @@ export async function createCheckoutUrl(args: {
   successUrl: string;
   /** UI locale of the buyer — controls receipt-button copy. */
   locale?: 'he' | 'en';
+  /** Pre-applied discount code; LS validates it again on its side. */
+  discountCode?: string;
+  /** Our coupons.id, round-tripped so the webhook can record the redemption. */
+  couponId?: string;
 }): Promise<string> {
   ensureLemonSqueezy();
   if (!env.LEMONSQUEEZY_STORE_ID) {
@@ -142,8 +218,13 @@ export async function createCheckoutUrl(args: {
   const { data, error } = await createCheckout(env.LEMONSQUEEZY_STORE_ID, args.variantId, {
     checkoutData: {
       email: args.userEmail,
+      ...(args.discountCode ? { discountCode: args.discountCode } : {}),
       custom: {
         user_id: args.userId,
+        // Carried through to the webhook rather than relying on LS to
+        // echo the discount back on the order — this is the signal that
+        // records the redemption once payment actually completes.
+        ...(args.couponId ? { coupon_id: args.couponId } : {}),
       },
     },
     productOptions: {
