@@ -33,8 +33,6 @@ export async function GET(): Promise<Response> {
       // persisted correctly, this endpoint just never sent it back.
       marketingOptIn: true,
       notificationPrefs: true,
-      timezone: true,
-      dateFormat: true,
     },
   });
   if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });

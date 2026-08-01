@@ -8,7 +8,6 @@ import {
   User,
   Lock,
   Bell,
-  Clock,
   Database,
   AlertOctagon,
   ScreenShare,
@@ -33,7 +32,6 @@ type Tab =
   | 'security'
   | 'sessions'
   | 'notifications'
-  | 'regional'
   | 'ai'
   | 'trustedSharer'
   | 'data'
@@ -45,10 +43,6 @@ const TABS: { id: Tab; key: string; icon: typeof User; adminOnly?: boolean }[] =
   { id: 'security', key: 'security', icon: Lock },
   { id: 'sessions', key: 'sessions', icon: ScreenShare },
   { id: 'notifications', key: 'notifications', icon: Bell },
-  // Was "Appearance" with a Theme picker — that's now in the header's
-  // ThemeToggle (available everywhere, no settings detour). What's left
-  // here is timezone + date format, so renamed to "Date & time".
-  { id: 'regional', key: 'regional', icon: Clock },
   { id: 'ai', key: 'ai', icon: Sparkles },
   { id: 'trustedSharer', key: 'trustedSharer', icon: ShieldCheck },
   { id: 'data', key: 'data', icon: Database },
@@ -160,7 +154,6 @@ export default function SettingsPage() {
               {tab === 'security' && <SecurityTab />}
               {tab === 'sessions' && <SessionsTab />}
               {tab === 'notifications' && <NotificationsTab />}
-              {tab === 'regional' && <RegionalTab />}
               {tab === 'ai' && <AIModelCard />}
               {tab === 'trustedSharer' && <TrustedSharerCard />}
               {tab === 'data' && <DataTab />}
@@ -667,100 +660,6 @@ function NotificationsTab() {
 // ─── Tab: Regional (date & time) ────────────────────────────────────
 //
 // Was "Appearance & locale" with a Theme picker. The Theme picker is
-// now permanently in the page header's <ThemeToggle> (available on
-// every page including marketing + auth), so duplicating it in
-// settings was confusing. Timezone + date format stay because those
-// affect how the app formats display dates and don't belong in the
-// header.
-
-function RegionalTab() {
-  const t = useTranslations('settings.regional');
-  const tCommon = useTranslations('common');
-  const [timezone, setTimezone] = useState('Asia/Jerusalem');
-  const [dateFormat, setDateFormat] = useState<'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD'>(
-    'DD/MM/YYYY',
-  );
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await fetch('/api/account/profile');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.user?.timezone) setTimezone(data.user.timezone);
-        if (data.user?.dateFormat) setDateFormat(data.user.dateFormat);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  async function save() {
-    setSaving(true);
-    try {
-      const res = await fetch('/api/account/preferences', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ timezone, dateFormat }),
-      });
-      if (!res.ok) {
-        toast.error(t('saveFailed'));
-        return;
-      }
-      toast.success(t('saved'));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (loading) return <p className="text-muted-foreground text-sm">{tCommon('loading')}</p>;
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('title')}</CardTitle>
-        <CardDescription>{t('description')}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="tz">{t('timezone')}</Label>
-          <select
-            id="tz"
-            value={timezone}
-            onChange={(e) => setTimezone(e.target.value)}
-            className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 focus-visible:bg-background ease-smooth focus-visible:ring-brand-500/18 flex h-10 w-full rounded-xl border px-3.5 py-2 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
-          >
-            <option value="Asia/Jerusalem">Asia/Jerusalem (Israel)</option>
-            <option value="Europe/London">Europe/London (UK)</option>
-            <option value="America/New_York">America/New York</option>
-            <option value="America/Los_Angeles">America/Los Angeles</option>
-            <option value="Europe/Berlin">Europe/Berlin</option>
-            <option value="UTC">UTC</option>
-          </select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="df">{t('dateFormat')}</Label>
-          <select
-            id="df"
-            value={dateFormat}
-            onChange={(e) => setDateFormat(e.target.value as typeof dateFormat)}
-            className="border-input bg-background/60 text-foreground focus-visible:border-brand-400/60 focus-visible:bg-background ease-smooth focus-visible:ring-brand-500/18 flex h-10 w-full rounded-xl border px-3.5 py-2 text-sm shadow-sm backdrop-blur-sm transition-all duration-300 focus-visible:outline-none focus-visible:ring-4"
-          >
-            <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2026)</option>
-            <option value="MM/DD/YYYY">MM/DD/YYYY (12/31/2026)</option>
-            <option value="YYYY-MM-DD">YYYY-MM-DD (2026-12-31)</option>
-          </select>
-        </div>
-        <p className="text-muted-foreground text-xs">{t('tip')}</p>
-        <Button onClick={save} disabled={saving}>
-          {saving ? tCommon('saving') : t('save')}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
 // ─── Tab: Data (existing) ───────────────────────────────────────────
 
 function DataTab() {

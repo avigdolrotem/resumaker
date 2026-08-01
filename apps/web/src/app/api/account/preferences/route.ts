@@ -1,5 +1,5 @@
 /**
- * PATCH /api/account/preferences — update theme / timezone / date format /
+ * PATCH /api/account/preferences — update theme /
  * marketing opt-in / notification preferences.
  *
  * Each field optional; only present keys are updated. notificationPrefs
@@ -16,8 +16,6 @@ import { requireActiveUser } from '@/lib/auth-guards';
 
 const BodySchema = z.object({
   theme: z.enum(['light', 'dark', 'system']).optional(),
-  timezone: z.string().min(1).max(64).optional(),
-  dateFormat: z.enum(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']).optional(),
   marketingOptIn: z.boolean().optional(),
   notificationPrefs: z
     .object({
@@ -46,8 +44,6 @@ export async function PATCH(req: NextRequest): Promise<Response> {
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (body.theme !== undefined) updates['theme'] = body.theme;
-  if (body.timezone !== undefined) updates['timezone'] = body.timezone;
-  if (body.dateFormat !== undefined) updates['dateFormat'] = body.dateFormat;
   if (body.marketingOptIn !== undefined) updates['marketingOptIn'] = body.marketingOptIn;
   if (body.notificationPrefs) {
     // Merge with existing

@@ -879,7 +879,6 @@
       "security": "Security",
       "sessions": "Sessions",
       "notifications": "Notifications",
-      "regional": "Date & time",
       "ai": "AI engine",
       "trustedSharer": "Trusted sharer",
       "data": "Your data",
@@ -897,16 +896,6 @@
       "save": "Save preferences",
       "saveFailed": "Save failed",
       "saved": "Preferences saved"
-    },
-    "regional": {
-      "title": "Date & time",
-      "description": "Set your timezone and how dates are formatted across the app.",
-      "timezone": "Timezone",
-      "dateFormat": "Date format",
-      "tip": "Tip: theme (light / dark) and language are in the top-right of every page header.",
-      "save": "Save",
-      "saveFailed": "Save failed",
-      "saved": "Saved"
     },
     "security": {
       "changePassword": {

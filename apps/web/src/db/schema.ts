@@ -81,10 +81,6 @@ export const users = pgTable(
       .notNull()
       .default('system')
       .$type<'light' | 'dark' | 'system'>(),
-    /** IANA timezone string, defaults to Israel */
-    timezone: varchar('timezone', { length: 64 }).notNull().default('Asia/Jerusalem'),
-    /** Date format preference for display */
-    dateFormat: varchar('date_format', { length: 16 }).notNull().default('DD/MM/YYYY'),
     /** Explicit opt-in to marketing emails (transactional always allowed) */
     marketingOptIn: boolean('marketing_opt_in').notNull().default(false),
     /**
