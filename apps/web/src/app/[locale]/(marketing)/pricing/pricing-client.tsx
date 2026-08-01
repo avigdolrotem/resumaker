@@ -11,8 +11,10 @@
  * "buy" action to <TierCard /> below.
  */
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
+import { clearPendingCoupon, readPendingCoupon, savePendingCoupon } from '@/lib/pending-coupon';
 import { Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from '@/i18n/navigation';
@@ -59,57 +61,87 @@ export function PricingClient({
 
   const isHe = locale === 'he';
 
-  async function applyCoupon() {
-    const code = couponInput.trim();
-    if (!code) return;
-    setCouponChecking(true);
-    setCouponError(null);
-    try {
-      const res = await fetch('/api/billing/coupon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
-      });
-      if (res.status === 401) {
-        setCouponError(isHe ? 'יש להתחבר כדי להשתמש בקוד' : 'Sign in to use a code');
-        return;
+  const applyCode = useCallback(
+    async (rawCode: string, opts?: { silent?: boolean }) => {
+      const code = rawCode.trim();
+      if (!code) return;
+      setCouponChecking(true);
+      setCouponError(null);
+      try {
+        const res = await fetch('/api/billing/coupon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
+        if (res.status === 401) {
+          setCouponError(isHe ? 'יש להתחבר כדי להשתמש בקוד' : 'Sign in to use a code');
+          return;
+        }
+        const data = (await res.json()) as {
+          valid?: boolean;
+          reason?: string;
+          code?: string;
+          discountPercent?: number;
+          error?: string;
+        };
+        if (!res.ok) {
+          setCouponError(
+            data.error ?? (isHe ? 'לא ניתן לבדוק את הקוד' : "Couldn't check that code"),
+          );
+          return;
+        }
+        if (!data.valid) {
+          const reasons: Record<string, string> = isHe
+            ? {
+                not_found: 'קוד לא קיים',
+                expired: 'הקוד פג תוקף',
+                usage_limit_reached: 'הקוד מוצה',
+                already_redeemed: 'כבר השתמשתם בקוד הזה',
+              }
+            : {
+                not_found: "That code doesn't exist",
+                expired: 'That code has expired',
+                usage_limit_reached: 'That code has been fully used',
+                already_redeemed: "You've already used that code",
+              };
+          // A dead code shouldn't keep re-prompting on every future visit.
+          clearPendingCoupon();
+          if (!opts?.silent) {
+            setCouponError(reasons[data.reason ?? ''] ?? (isHe ? 'קוד לא תקין' : 'Invalid code'));
+          }
+          setCoupon(null);
+          return;
+        }
+        setCoupon({ code: data.code!, discountPercent: data.discountPercent! });
+        savePendingCoupon(data.code!);
+      } catch (err) {
+        if (!opts?.silent) setCouponError((err as Error).message);
+      } finally {
+        setCouponChecking(false);
       }
-      const data = (await res.json()) as {
-        valid?: boolean;
-        reason?: string;
-        code?: string;
-        discountPercent?: number;
-        error?: string;
-      };
-      if (!res.ok) {
-        setCouponError(data.error ?? (isHe ? 'לא ניתן לבדוק את הקוד' : "Couldn't check that code"));
-        return;
-      }
-      if (!data.valid) {
-        const reasons: Record<string, string> = isHe
-          ? {
-              not_found: 'קוד לא קיים',
-              expired: 'הקוד פג תוקף',
-              usage_limit_reached: 'הקוד מוצה',
-              already_redeemed: 'כבר השתמשתם בקוד הזה',
-            }
-          : {
-              not_found: "That code doesn't exist",
-              expired: 'That code has expired',
-              usage_limit_reached: 'That code has been fully used',
-              already_redeemed: "You've already used that code",
-            };
-        setCouponError(reasons[data.reason ?? ''] ?? (isHe ? 'קוד לא תקין' : 'Invalid code'));
-        setCoupon(null);
-        return;
-      }
-      setCoupon({ code: data.code!, discountPercent: data.discountPercent! });
-    } catch (err) {
-      setCouponError((err as Error).message);
-    } finally {
-      setCouponChecking(false);
-    }
-  }
+    },
+    [isHe],
+  );
+
+  // Capture a code from a promo link (?coupon=LAUNCH25) and hold it
+  // through signup, then apply it as soon as there's an account to
+  // apply it to. Without this the code is lost at the auth boundary:
+  // signed-out visitors can't purchase, sign-in lands on /dashboard,
+  // and this page is the only place a code can be entered.
+  const searchParams = useSearchParams();
+  const [pendingCode, setPendingCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fromUrl = searchParams.get('coupon');
+    if (fromUrl?.trim()) savePendingCoupon(fromUrl);
+    const stored = readPendingCoupon();
+    if (!stored) return;
+    setPendingCode(stored);
+    // Only signed-in users can have a code validated (the once-per-user
+    // rule needs an account). Silent: an auto-attempt that fails
+    // shouldn't throw a red error at someone who never typed anything.
+    if (isAuthed) void applyCode(stored, { silent: true });
+  }, [searchParams, isAuthed, applyCode]);
 
   return (
     <>
@@ -164,6 +196,16 @@ export function PricingClient({
         ))}
       </div>
 
+      {checkoutReady && !isAuthed && pendingCode && (
+        <div className="glass-subtle mx-auto mt-8 max-w-sm rounded-xl px-4 py-3 text-center">
+          <p className="text-sm">
+            {isHe
+              ? `הקוד ${pendingCode} שמור — התחברו כדי להשתמש בו`
+              : `Code ${pendingCode} saved — sign in to use it`}
+          </p>
+        </div>
+      )}
+
       {checkoutReady && isAuthed && (
         <div className="mx-auto mt-8 max-w-sm">
           {coupon ? (
@@ -191,7 +233,7 @@ export function PricingClient({
                   value={couponInput}
                   onChange={(e) => setCouponInput(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') void applyCoupon();
+                    if (e.key === 'Enter') void applyCode(couponInput);
                   }}
                   placeholder={isHe ? 'קוד קופון' : 'Coupon code'}
                   aria-label={isHe ? 'קוד קופון' : 'Coupon code'}
@@ -200,7 +242,7 @@ export function PricingClient({
                 />
                 <button
                   type="button"
-                  onClick={() => void applyCoupon()}
+                  onClick={() => void applyCode(couponInput)}
                   disabled={couponChecking || !couponInput.trim()}
                   className="glass hover:glass-strong h-10 rounded-xl px-4 text-sm font-medium disabled:opacity-50"
                 >
@@ -325,6 +367,10 @@ function TierCard({
         toast.error(data.error ?? 'Failed to start checkout');
         return;
       }
+      // Consumed — don't re-offer it on the next visit. (If they abandon
+      // the payment page the code is still unredeemed and re-enterable;
+      // this only stops it auto-reapplying forever.)
+      clearPendingCoupon();
       window.location.href = data.url;
     } catch (err) {
       toast.error((err as Error).message);

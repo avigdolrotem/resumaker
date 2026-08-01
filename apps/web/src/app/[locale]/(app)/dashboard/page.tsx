@@ -14,6 +14,7 @@ import { getLatestScoresByResumeId } from '@/lib/ats-score-lookup';
 import { EmailChangeStatusToast } from '@/components/email-change-status-toast';
 import { JobRecommendations, type RecommendedJob } from '@/components/job-recommendations';
 import { ProfileNudge } from '@/components/profile-nudge';
+import { PendingCouponBanner } from '@/components/pending-coupon-banner';
 import {
   FileText,
   Sparkles,
@@ -253,6 +254,8 @@ export default async function DashboardPage() {
           </Link>
         </Button>
       </div>
+
+      <PendingCouponBanner isHebrew={isHebrew} />
 
       <OnboardingChecklist
         items={onboardingSteps}
