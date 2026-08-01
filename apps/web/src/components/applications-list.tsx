@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/i18n/navigation';
 import { toast } from 'sonner';
+import { formatDate } from '@/lib/format-date';
 import { Trash2, ExternalLink } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -147,15 +148,15 @@ export function ApplicationsList({ rows, locale }: { rows: Row[]; locale: 'he' |
             <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
               {r.appliedAt && (
                 <span>
-                  {t('appliedAt')}: {new Date(r.appliedAt).toLocaleDateString()}
+                  {t('appliedAt')}: {formatDate(r.appliedAt, locale)}
                 </span>
               )}
               {r.nextActionAt && (
                 <span>
-                  {t('nextActionAt')}: {new Date(r.nextActionAt).toLocaleDateString()}
+                  {t('nextActionAt')}: {formatDate(r.nextActionAt, locale)}
                 </span>
               )}
-              <span className="ms-auto">{new Date(r.updatedAt).toLocaleDateString()}</span>
+              <span className="ms-auto">{formatDate(r.updatedAt, locale)}</span>
             </div>
             {r.notes && (
               <p className="text-foreground text-sm">

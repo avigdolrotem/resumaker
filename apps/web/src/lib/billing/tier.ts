@@ -329,9 +329,15 @@ export async function reserveGenerationSlot(userId: string, limit: number): Prom
         and(
           eq(schema.generations.userId, userId),
           gte(schema.generations.createdAt, startOfDay),
+          // .toISOString() + explicit cast, NOT a bare Date: inside a raw
+          // `sql` fragment there is no column type for Drizzle to infer
+          // the parameter from, so postgres-js receives a JS Date it
+          // can't serialize and throws "The string argument must be of
+          // type string ... Received an instance of Date". Typed helpers
+          // like the gte() above bind Dates fine; raw fragments do not.
           sql`(
             ${schema.generations.status} = 'success'
-            OR (${schema.generations.status} = 'reserved' AND ${schema.generations.createdAt} >= ${reservationCutoff})
+            OR (${schema.generations.status} = 'reserved' AND ${schema.generations.createdAt} >= ${reservationCutoff.toISOString()}::timestamptz)
           )`,
         ),
       );

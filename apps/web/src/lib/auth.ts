@@ -125,6 +125,15 @@ export const auth = betterAuth({
         event: 'password_reset_requested',
         metadata: { delivered: result.ok },
       });
+      // Throw on failure so Better Auth returns an error the client can
+      // show, matching sendVerificationEmail below. Previously this
+      // recorded `delivered: false` in the audit log and returned
+      // normally, so the user was told to check their inbox for an
+      // email that was never sent — and the only trace was a log line
+      // nobody was watching.
+      if (!result.ok) {
+        throw new Error(`Failed to send password-reset email: ${result.error ?? 'unknown'}`);
+      }
     },
   },
 

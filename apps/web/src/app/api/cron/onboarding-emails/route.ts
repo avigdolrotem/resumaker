@@ -170,6 +170,29 @@ export async function GET(req: NextRequest): Promise<Response> {
   const errors: string[] = [];
 
   // Day 1: signed up 24-36h ago, no resume
+  /**
+   * Consent predicate for the lifecycle drip.
+   *
+   * These are re-engagement/product emails, not transactional ones —
+   * "We miss you" and "Try the cover-letter generator" are marketing by
+   * any reasonable reading. Both recipient queries below previously
+   * filtered on `deletedAt` alone, so a user who unticked marketing
+   * emails in Settings — or ran /api/account/gdpr, which explicitly
+   * sets marketingOptIn=false AND every notificationPrefs.email* flag
+   * to false — kept receiving them. /api/admin/broadcast already
+   * honours marketingOptIn; this cron didn't.
+   *
+   * Israeli spam law (חוק התקשורת, תיקון 40) and GDPR both require a
+   * recorded opt-out to actually stop the sending.
+   */
+  const marketingAllowed = () =>
+    and(
+      eq(schema.users.marketingOptIn, true),
+      // Explicit `false` suppresses; absent/unset stays opted-in, matching
+      // the notificationPrefs default documented on the users table.
+      sql`COALESCE((${schema.users.notificationPrefs}->>'emailProductUpdates')::boolean, true) = true`,
+    );
+
   const day1Users = await db
     .select({
       id: schema.users.id,
@@ -185,6 +208,7 @@ export async function GET(req: NextRequest): Promise<Response> {
         gte(schema.users.createdAt, day1End),
         isNull(schema.resumes.id),
         isNull(schema.users.deletedAt),
+        marketingAllowed(),
       ),
     );
 
@@ -224,9 +248,17 @@ export async function GET(req: NextRequest): Promise<Response> {
       schema.auditLog,
       and(eq(schema.auditLog.userId, schema.users.id), eq(schema.auditLog.event, 'sign_in')),
     )
-    .where(and(lt(schema.users.createdAt, day30), isNull(schema.users.deletedAt)))
+    .where(
+      and(lt(schema.users.createdAt, day30), isNull(schema.users.deletedAt), marketingAllowed()),
+    )
     .groupBy(schema.users.id, schema.users.email, schema.users.name, schema.users.locale)
-    .having(sql`MAX(${schema.auditLog.createdAt}) < ${day14}`);
+    // .toISOString() + explicit cast: a bare JS Date inside a raw `sql`
+    // fragment has no column type for Drizzle to infer from, so
+    // postgres-js can't serialize it ("Received an instance of Date").
+    // This threw on every run, which means the Day-30 re-engagement
+    // email has never actually been sent — the route 500'd here before
+    // reaching the send loop.
+    .having(sql`MAX(${schema.auditLog.createdAt}) < ${day14.toISOString()}::timestamptz`);
 
   for (const u of day30Users) {
     if (await alreadySent(u.id, 'day30')) {

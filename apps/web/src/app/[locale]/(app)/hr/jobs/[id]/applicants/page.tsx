@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { and, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
+import { formatDate } from '@/lib/format-date';
 import { NextResponse } from 'next/server';
 
 export default async function ApplicantsPage({
@@ -76,7 +77,7 @@ export default async function ApplicantsPage({
                   {a.appliedAt && (
                     <span className="ms-2">
                       {isHe ? '· הגיש/ה ב' : '· Applied '}
-                      {new Date(a.appliedAt).toLocaleDateString()}
+                      {formatDate(a.appliedAt, locale)}
                     </span>
                   )}
                 </p>

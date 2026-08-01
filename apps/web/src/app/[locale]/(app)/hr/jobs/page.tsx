@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { NextResponse } from 'next/server';
 import { HrJobCloseButton } from '@/components/hr/hr-job-card-actions';
+import { formatDate } from '@/lib/format-date';
 
 /**
  * /hr/jobs — the "for employers" landing, and the nav entry point for
@@ -129,7 +130,7 @@ export default async function HrJobsPage({ params }: { params: Promise<{ locale:
                 </p>
                 <p className="text-muted-foreground text-xs">
                   {locale === 'he' ? 'פורסם ב-' : 'Posted '}
-                  {j.postedAt ? new Date(j.postedAt).toLocaleDateString() : '—'}
+                  {j.postedAt ? formatDate(j.postedAt, locale) : '—'}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <Button asChild size="sm" variant="outline">

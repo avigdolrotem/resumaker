@@ -922,11 +922,23 @@ export const notifications = pgTable(
     body: text('body'),
     link: text('link'),
     readAt: timestamp('read_at', { withTimezone: true }),
+    /**
+     * When this notification was included in a web-push send. The push
+     * cron selected on `readAt IS NULL` alone, with no record of what
+     * it had already pushed — so an unread notification was re-pushed
+     * on every run, nagging daily until the user happened to open it.
+     * Set once; the cron skips anything non-null.
+     */
+    pushedAt: timestamp('pushed_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({
     userUnreadIdx: index('notifications_user_unread_idx').on(t.userId, t.readAt),
     userCreatedIdx: index('notifications_user_created_idx').on(t.userId, t.createdAt.desc()),
+    // Drives the push cron's "unread and not yet pushed" scan.
+    pendingPushIdx: index('notifications_pending_push_idx')
+      .on(t.createdAt)
+      .where(sql`${t.readAt} IS NULL AND ${t.pushedAt} IS NULL`),
   }),
 );
 

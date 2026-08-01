@@ -7,6 +7,7 @@ import { ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { formatDate } from '@/lib/format-date';
 
 interface TrustedSharerRequest {
   id: string;
@@ -123,7 +124,7 @@ export function TrustedSharerCard() {
             {state.requests.map((r) => (
               <div key={r.id} className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
-                  {new Date(r.createdAt).toLocaleDateString()}
+                  {formatDate(r.createdAt, isHe ? 'he' : 'en')}
                 </span>
                 <span
                   className={
