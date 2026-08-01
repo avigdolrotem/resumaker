@@ -13,7 +13,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { db, schema } from '@/db';
 import { getUserTier } from '@/lib/billing/tier';
 import { getModelById } from '@/lib/llm/models';
@@ -28,8 +28,8 @@ const PatchSchema = z.object({
 const tierOrder = { free: 0, plus: 1, pro: 2 } as const;
 
 export async function GET(): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   // Also returns `role` so client components that need to gate admin
   // UI (settings Admin tab, avatar dropdown Admin link) can read it
@@ -38,10 +38,10 @@ export async function GET(): Promise<Response> {
   // is invasive — this endpoint is already fetched on settings load.
   const [row, tier] = await Promise.all([
     db.query.users.findFirst({
-      where: eq(schema.users.id, session.user.id),
+      where: eq(schema.users.id, guard.user.id),
       columns: { llmModel: true, role: true },
     }),
-    getUserTier(session.user.id),
+    getUserTier(guard.user.id),
   ]);
 
   return NextResponse.json({
@@ -52,8 +52,8 @@ export async function GET(): Promise<Response> {
 }
 
 export async function PATCH(req: NextRequest): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   let body: z.infer<typeof PatchSchema>;
   try {
@@ -65,7 +65,7 @@ export async function PATCH(req: NextRequest): Promise<Response> {
     );
   }
 
-  const tier = await getUserTier(session.user.id);
+  const tier = await getUserTier(guard.user.id);
 
   if (body.llmModel !== null) {
     const entry = getModelById(body.llmModel);
@@ -90,7 +90,7 @@ export async function PATCH(req: NextRequest): Promise<Response> {
   await db
     .update(schema.users)
     .set({ llmModel: body.llmModel })
-    .where(eq(schema.users.id, session.user.id))
+    .where(eq(schema.users.id, guard.user.id))
     .returning({ llmModel: schema.users.llmModel });
 
   return NextResponse.json({ llmModel: body.llmModel });

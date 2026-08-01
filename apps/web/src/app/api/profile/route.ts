@@ -16,7 +16,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { db, schema } from '@/db';
 import { ProfileContentSchema } from '@resumaker/shared';
 import { auditEvent } from '@/lib/audit';
@@ -30,11 +30,11 @@ const EMPTY_PROFILE_CONTENT = {
 };
 
 export async function GET(): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   let row = await db.query.profiles.findFirst({
-    where: eq(schema.profiles.userId, session.user.id),
+    where: eq(schema.profiles.userId, guard.user.id),
   });
 
   if (!row) {
@@ -43,7 +43,7 @@ export async function GET(): Promise<Response> {
     // does-it-exist branch scattered across every caller.
     [row] = await db
       .insert(schema.profiles)
-      .values({ userId: session.user.id, content: EMPTY_PROFILE_CONTENT })
+      .values({ userId: guard.user.id, content: EMPTY_PROFILE_CONTENT })
       .returning();
   }
 
@@ -61,8 +61,8 @@ export async function GET(): Promise<Response> {
 const MAX_PROFILE_BYTES = 64 * 1024;
 
 export async function PATCH(req: NextRequest): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   let content: ReturnType<typeof ProfileContentSchema.parse>;
   try {
@@ -83,7 +83,7 @@ export async function PATCH(req: NextRequest): Promise<Response> {
   }
 
   const existing = await db.query.profiles.findFirst({
-    where: eq(schema.profiles.userId, session.user.id),
+    where: eq(schema.profiles.userId, guard.user.id),
     columns: { userId: true },
   });
 
@@ -91,13 +91,13 @@ export async function PATCH(req: NextRequest): Promise<Response> {
     await db
       .update(schema.profiles)
       .set({ content, updatedAt: new Date() })
-      .where(eq(schema.profiles.userId, session.user.id));
+      .where(eq(schema.profiles.userId, guard.user.id));
   } else {
-    await db.insert(schema.profiles).values({ userId: session.user.id, content });
+    await db.insert(schema.profiles).values({ userId: guard.user.id, content });
   }
 
   auditEvent({
-    userId: session.user.id,
+    userId: guard.user.id,
     event: 'profile_updated',
     metadata: { kind: 'career_profile' },
   });

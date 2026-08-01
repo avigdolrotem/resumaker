@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 const { findFirstMock } = vi.hoisted(() => ({
   findFirstMock: vi.fn(),
@@ -14,8 +14,11 @@ vi.mock('@/lib/llm/provider', () => ({
   generateObject: vi.fn(),
 }));
 
-vi.mock('@/lib/auth', () => ({
-  auth: { api: { getSession: vi.fn() } },
+// The route now goes through requireActiveUser (which also rejects
+// suspended/soft-deleted accounts) rather than reading the session
+// directly, so that's what needs stubbing.
+vi.mock('@/lib/auth-guards', () => ({
+  requireActiveUser: vi.fn(),
 }));
 
 vi.mock('@/lib/rate-limit', () => ({
@@ -28,13 +31,14 @@ vi.mock('@/db', () => ({
 }));
 
 import * as llm from '@/lib/llm/provider';
-import * as authMod from '@/lib/auth';
+import * as guards from '@/lib/auth-guards';
 import { POST } from '../route';
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(authMod.auth.api.getSession).mockResolvedValue({
-    user: { id: 'u1' },
+  vi.mocked(guards.requireActiveUser).mockResolvedValue({
+    session: {},
+    user: { id: 'u1', role: 'user' },
   } as never);
   // Matches ProfileContentSchema (ResumeSchema.omit({ metadata: true })) —
   // the shape /api/resumes/generate and /api/resumes/score both read.
@@ -84,7 +88,9 @@ describe('POST /api/resumes/fit-score', () => {
   });
 
   it('returns 401 without a session', async () => {
-    vi.mocked(authMod.auth.api.getSession).mockResolvedValueOnce(null as never);
+    vi.mocked(guards.requireActiveUser).mockResolvedValueOnce(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) as never,
+    );
     const res = await POST(makeReq({ jobDescription: 'x'.repeat(20) }));
     expect(res.status).toBe(401);
   });

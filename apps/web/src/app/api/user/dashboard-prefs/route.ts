@@ -15,7 +15,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { db, schema } from '@/db';
 
 const PatchSchema = z
@@ -29,8 +29,8 @@ const PatchSchema = z
   );
 
 export async function PATCH(req: NextRequest): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   let body: z.infer<typeof PatchSchema>;
   try {
@@ -43,7 +43,7 @@ export async function PATCH(req: NextRequest): Promise<Response> {
   }
 
   const existing = await db.query.users.findFirst({
-    where: eq(schema.users.id, session.user.id),
+    where: eq(schema.users.id, guard.user.id),
     columns: { featureFlags: true },
   });
 
@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest): Promise<Response> {
   await db
     .update(schema.users)
     .set({ featureFlags: nextFlags })
-    .where(eq(schema.users.id, session.user.id));
+    .where(eq(schema.users.id, guard.user.id));
 
   return NextResponse.json({ ok: true });
 }

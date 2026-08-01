@@ -5,9 +5,7 @@ import { desc, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { Card, CardContent } from '@/components/ui/card';
 import { requireActiveUser } from '@/lib/auth-guards';
-import { hasJobHuntBetaAsync } from '@/lib/beta-gate';
 import { ApplicationsList } from '@/components/applications-list';
-import { ApplicationsPreview } from '@/components/applications-preview';
 import { Briefcase } from 'lucide-react';
 
 /**
@@ -28,9 +26,6 @@ export default async function ApplicationsPage({
   const guard = await requireActiveUser(await nextHeaders());
   if (guard instanceof Response) {
     redirect('/sign-in');
-  }
-  if (!(await hasJobHuntBetaAsync(guard.user))) {
-    return <ApplicationsPreview />;
   }
   const t = await getTranslations({ locale, namespace: 'applications' });
 

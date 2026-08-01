@@ -61,7 +61,6 @@ const FEATURE_NAMES: ReadonlySet<FeatureGateName> = new Set<FeatureGateName>([
   'resume_limit',
   'generation_limit',
   'template_locked',
-  'job_hunt_beta',
 ]);
 
 const REASON_TO_FEATURE: Record<string, FeatureGateName> = {

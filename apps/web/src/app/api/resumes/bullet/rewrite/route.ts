@@ -12,7 +12,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getUserTier } from '@/lib/billing/tier';
 import { env } from '@/lib/env';
@@ -32,12 +32,12 @@ const TONES: Record<z.infer<typeof BodySchema>['tone'], string> = {
 };
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
-  const tier = await getUserTier(session.user.id);
+  const tier = await getUserTier(guard.user.id);
   const limit = tier === 'free' ? 10 : 30;
-  const rl = await checkRateLimit(`bullet-rewrite:${session.user.id}`, limit, 3600);
+  const rl = await checkRateLimit(`bullet-rewrite:${guard.user.id}`, limit, 3600);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Rate limit exceeded', resetSeconds: rl.resetSeconds, limit },

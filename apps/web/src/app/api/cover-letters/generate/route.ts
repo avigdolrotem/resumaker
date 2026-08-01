@@ -9,7 +9,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { generateText } from '@/lib/llm/provider';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { env } from '@/lib/env';
 import { sanitizeInput, type SanitizeResult } from '@resumaker/ai-safety';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -29,10 +29,8 @@ const RequestSchema = z.object({
 });
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   // Tier gate BEFORE the LLM call. This route previously had only the
   // rate limit below, while `canCreateCoverLetter` was checked solely on
@@ -42,8 +40,8 @@ export async function POST(req: NextRequest): Promise<Response> {
   // works (gated on generate, free to save). Same 402 `tier_gate` shape
   // every other gated route returns, so apiFetch opens the upgrade modal.
   const [tier, coverLettersThisMonth] = await Promise.all([
-    getUserTier(session.user.id),
-    getCoverLettersThisMonth(session.user.id),
+    getUserTier(guard.user.id),
+    getCoverLettersThisMonth(guard.user.id),
   ]);
   const tierGate = canCreateCoverLetter(tier, coverLettersThisMonth);
   if (!tierGate.allowed) {
@@ -60,7 +58,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
-  const rateLimit = await checkRateLimit(`cover-letter:${session.user.id}`, 5, 3600);
+  const rateLimit = await checkRateLimit(`cover-letter:${guard.user.id}`, 5, 3600);
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: 'Rate limit exceeded', retryAfter: rateLimit.resetSeconds },
@@ -82,7 +80,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   const sanitizedJd: SanitizeResult = sanitizeInput(body.jobDescription);
   if (sanitizedJd.rejected) {
     auditEvent({
-      userId: session.user.id,
+      userId: guard.user.id,
       event: 'resume_generation_blocked',
       metadata: { kind: 'cover_letter', reason: sanitizedJd.reason },
     });
@@ -205,7 +203,7 @@ Write the cover letter body.`;
     }
 
     auditEvent({
-      userId: session.user.id,
+      userId: guard.user.id,
       event: 'resume_generated',
       metadata: { kind: 'cover_letter', tone: body.tone },
     });

@@ -19,7 +19,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { getLocale } from 'next-intl/server';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { env } from '@/lib/env';
 import { purchaseOrChangePlan, getActiveProvider } from '@/lib/billing/provider';
 import { auditEvent } from '@/lib/audit';
@@ -39,8 +39,8 @@ const BodySchema = z.object({
 });
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   let body: z.infer<typeof BodySchema>;
   try {
@@ -66,8 +66,8 @@ export async function POST(req: NextRequest): Promise<Response> {
   const locale: 'he' | 'en' = rawLocale === 'he' ? 'he' : 'en';
 
   const result = await purchaseOrChangePlan({
-    userId: session.user.id,
-    userEmail: session.user.email,
+    userId: guard.user.id,
+    userEmail: guard.user.email,
     priceKey: body.priceKey,
     successUrl,
     cancelUrl: `${env.APP_URL}/pricing?canceled=1`,
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       PROVIDER_ERROR: 502,
     };
     logger.error(
-      { code: result.code, userId: session.user.id, message: result.message },
+      { code: result.code, userId: guard.user.id, message: result.message },
       'billing.checkout.failed',
     );
     return NextResponse.json(
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   if (result.mode === 'changed') {
     auditEvent({
-      userId: session.user.id,
+      userId: guard.user.id,
       event: 'billing_checkout_started',
       metadata: { priceKey: body.priceKey, changedInPlace: true },
     });
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   auditEvent({
-    userId: session.user.id,
+    userId: guard.user.id,
     event: 'billing_checkout_started',
     metadata: { priceKey: body.priceKey },
   });

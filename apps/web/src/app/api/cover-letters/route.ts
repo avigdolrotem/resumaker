@@ -7,18 +7,18 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { and, eq, desc, isNull } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
 import { canCreateCoverLetter, getCoverLettersThisMonth, getUserTier } from '@/lib/billing/tier';
 
 export async function GET(): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   const letters = await db.query.coverLetters.findMany({
     where: and(
-      eq(schema.coverLetters.userId, session.user.id),
+      eq(schema.coverLetters.userId, guard.user.id),
       isNull(schema.coverLetters.deletedAt),
     ),
     orderBy: [desc(schema.coverLetters.updatedAt)],
@@ -47,8 +47,8 @@ const PostBodySchema = z.object({
 });
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   let body: z.infer<typeof PostBodySchema>;
   try {
@@ -62,8 +62,8 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   // Tier gate: cover letters per month
   const [tier, thisMonth] = await Promise.all([
-    getUserTier(session.user.id),
-    getCoverLettersThisMonth(session.user.id),
+    getUserTier(guard.user.id),
+    getCoverLettersThisMonth(guard.user.id),
   ]);
   const gate = canCreateCoverLetter(tier, thisMonth);
   if (!gate.allowed) {
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   const [row] = await db
     .insert(schema.coverLetters)
     .values({
-      userId: session.user.id,
+      userId: guard.user.id,
       title: body.title,
       content: body.content,
       jobDescription: body.jobDescription ?? null,
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     .returning({ id: schema.coverLetters.id });
 
   auditEvent({
-    userId: session.user.id,
+    userId: guard.user.id,
     event: 'resume_created',
     metadata: { kind: 'cover_letter', id: row?.id },
   });

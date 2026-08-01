@@ -1,77 +1,42 @@
 /**
- * Access gate for the L5 job-hunt surface (/jobs, /applications).
+ * Auth guards for the job-hunt surface (/jobs, /applications).
  *
- * 2026-07-31, Rotem's decision: the whole surface is free for any
- * signed-in user now — browsing/tracking earns nothing on their own,
- * only resume *generation* is paid (see billing/limits.ts's
- * `generationsPerDay`). These functions are kept as always-true
- * pass-throughs rather than deleted and their ~20 call sites edited
- * individually: every route/page still calls requireJobHuntBetaApi /
- * requireJobHuntBetaPage / hasJobHuntBetaAsync exactly as before, so if
- * this surface is ever gated again, there's one place to change instead
- * of re-auditing every call site. `featureFlags.jobHuntBeta` and its
- * admin-panel toggle are now inert (no functional effect) but left in
- * place rather than migrated out for the same reason.
+ * These were once a real gate (admin / featureFlags.jobHuntBeta / paid
+ * tier). As of 2026-07-31 that surface is free to every signed-in user —
+ * browsing and tracking earn nothing on their own, only resume
+ * *generation* is paid (see billing/limits.ts). The gate first became an
+ * always-true pass-through, which left the branches below unreachable
+ * and a trail of dead scaffolding behind them (a blurred "preview"
+ * upsell page for each surface, a locked nav item, an upgrade modal
+ * keyed to a `job_hunt_beta` feature) that could never render again.
+ * All of that is now deleted, and what remains here is plain auth.
+ *
+ * The two functions keep their names purely so their ~17 call sites
+ * don't need touching, and so re-gating this surface later means editing
+ * one file rather than re-auditing every route. `featureFlags.jobHuntBeta`
+ * still exists on the users row and is still toggleable in
+ * /admin/users/[id]; it currently controls nothing.
  */
 
 import { NextResponse } from 'next/server';
 import { headers as nextHeaders } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { requireActiveUser } from '@/lib/auth-guards';
-import type { Tier } from '@/lib/billing/limits';
-
-/** Always true now — kept for signature compatibility, see file header. */
-export function hasJobHuntBeta(
-  _user: {
-    role?: string | null;
-    featureFlags?: { jobHuntBeta?: boolean | undefined } | null;
-  },
-  _tier?: Tier,
-): boolean {
-  return true;
-}
-
-/** Always true now — kept for signature compatibility, see file header. */
-export async function hasJobHuntBetaAsync(_user: {
-  id: string;
-  role?: string | null;
-  featureFlags?: { jobHuntBeta?: boolean | undefined } | null;
-}): Promise<boolean> {
-  return true;
-}
 
 /**
- * API-side gate. hasJobHuntBetaAsync always returns true now, so this
- * is effectively requireActiveUser with the same call signature every
- * route already uses — the 402 branch is unreachable dead code, kept
- * only so a future re-gate has a body to fill in rather than a route
- * shape to rebuild.
+ * API-side guard: loads the session and rejects suspended/deleted
+ * accounts. Identical to `requireActiveUser` — kept as a named seam for
+ * the job-hunt routes.
  */
 export async function requireJobHuntBetaApi(headers: Headers) {
-  const guard = await requireActiveUser(headers);
-  if (guard instanceof NextResponse) return guard;
-  if (!(await hasJobHuntBetaAsync(guard.user))) {
-    return NextResponse.json(
-      { error: 'tier_gate', feature: 'job_hunt_beta', requiredTier: 'plus' },
-      { status: 402 },
-    );
-  }
-  return guard;
+  return requireActiveUser(headers);
 }
 
-/**
- * Server-Component-side gate. Still redirects an unauthenticated visitor
- * to /sign-in — that part is real. The /dashboard redirect below it is
- * unreachable (hasJobHuntBetaAsync always returns true now), kept for
- * the same reason as requireJobHuntBetaApi's dead branch above.
- */
+/** Server-Component-side guard. Redirects an unauthenticated visitor to /sign-in. */
 export async function requireJobHuntBetaPage() {
   const guard = await requireActiveUser(await nextHeaders());
   if (guard instanceof NextResponse) {
     redirect('/sign-in');
-  }
-  if (!(await hasJobHuntBetaAsync(guard.user))) {
-    redirect('/dashboard');
   }
   return guard;
 }

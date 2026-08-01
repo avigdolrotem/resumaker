@@ -25,7 +25,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { and, eq, isNull } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { db, schema } from '@/db';
 import { scoreResume } from '@resumaker/ats-scorer';
 import type { Resume } from '@resumaker/shared';
@@ -41,10 +41,8 @@ const BodySchema = z.object({
 });
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   let body: z.infer<typeof BodySchema>;
   try {
@@ -59,7 +57,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   // Same source of truth as /api/resumes/generate: one profile per user,
   // read server-side rather than trusted from the request body.
   const profileRow = await db.query.profiles.findFirst({
-    where: eq(schema.profiles.userId, session.user.id),
+    where: eq(schema.profiles.userId, guard.user.id),
   });
   if (!profileRow || !profileRow.onboardingCompletedAt) {
     return NextResponse.json(
@@ -78,7 +76,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     const owned = await db.query.resumes.findFirst({
       where: and(
         eq(schema.resumes.id, body.resumeId),
-        eq(schema.resumes.userId, session.user.id),
+        eq(schema.resumes.userId, guard.user.id),
         isNull(schema.resumes.deletedAt),
       ),
       columns: { id: true },
@@ -105,7 +103,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   // trimmed. Until now `atsScoring` was declared per-tier in limits.ts and
   // rendered on the pricing page, but never consulted anywhere: free
   // accounts received the identical 'deep' payload sold as a Plus upgrade.
-  const atsScoring = TIER_LIMITS[await getUserTier(session.user.id)].atsScoring;
+  const atsScoring = TIER_LIMITS[await getUserTier(guard.user.id)].atsScoring;
   if (atsScoring === 'basic') {
     return NextResponse.json({
       overall: score.overall,

@@ -9,7 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import {
   getUserTier,
   getActiveResumeCount,
@@ -22,10 +22,10 @@ import { getProviderInfo } from '@/lib/billing/provider';
 export const runtime = 'nodejs';
 
 export async function GET(): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
-  const userId = session.user.id;
+  const userId = guard.user.id;
 
   const [tier, resumeCount, generationsToday, coverLettersThisMonth] = await Promise.all([
     getUserTier(userId),

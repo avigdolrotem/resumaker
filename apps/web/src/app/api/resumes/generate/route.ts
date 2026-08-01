@@ -20,7 +20,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { db, schema } from '@/db';
 import { parseJD } from '@/lib/jd-parser';
 import { generateResume } from '@/lib/llm';
@@ -29,7 +29,14 @@ import { extractGenerateObjectDiagnostics } from '@/lib/llm/provider';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { sanitizeInput } from '@resumaker/ai-safety';
 import { PromptInjectionError, ValidationError, LLMError } from '@resumaker/shared';
-import { canGenerate, getGenerationsToday, getUserTier } from '@/lib/billing/tier';
+import {
+  canGenerate,
+  getGenerationsToday,
+  getUserTier,
+  releaseGenerationSlot,
+  reserveGenerationSlot,
+} from '@/lib/billing/tier';
+import { TIER_LIMITS } from '@/lib/billing/limits';
 import { env } from '@/lib/env';
 import { logger } from '@/lib/observability';
 
@@ -45,15 +52,13 @@ const BodySchema = z
 
 export async function POST(req: NextRequest): Promise<Response> {
   // ─── 1. Auth ───
-  const session = await auth.api.getSession({ headers: req.headers });
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const guard = await requireActiveUser(req.headers);
+  if (guard instanceof NextResponse) return guard;
 
   // ─── 2. Tier gate (per-day cap by tier) — fail fast before rate limit ───
   const [tier, generationsToday] = await Promise.all([
-    getUserTier(session.user.id),
-    getGenerationsToday(session.user.id),
+    getUserTier(guard.user.id),
+    getGenerationsToday(guard.user.id),
   ]);
   const tierGate = canGenerate(tier, generationsToday);
   if (!tierGate.allowed) {
@@ -75,7 +80,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   // could return `NaN` when the var was set to garbage, turning the limit
   // check into `current > NaN` (always false → all requests allowed).
   const limit = env.RATE_LIMIT_PER_USER_PER_HOUR;
-  const rl = await checkRateLimit(`gen:user:${session.user.id}`, limit, 3600);
+  const rl = await checkRateLimit(`gen:user:${guard.user.id}`, limit, 3600);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Rate limit exceeded', retryAfterSeconds: rl.resetSeconds },
@@ -108,7 +113,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   // the builder UI should route them to /career-profile first, but
   // this is the actual enforcement point.
   const profileRow = await db.query.profiles.findFirst({
-    where: eq(schema.profiles.userId, session.user.id),
+    where: eq(schema.profiles.userId, guard.user.id),
   });
   if (!profileRow || !profileRow.onboardingCompletedAt) {
     return NextResponse.json(
@@ -180,11 +185,34 @@ export async function POST(req: NextRequest): Promise<Response> {
     );
   }
 
-  // ─── 6. Generate ───
+  // ─── 6. Claim a slot, atomically ───
+  // The step-2 check above is a fast rejection, not the enforcement: it
+  // reads a count and then spends ~15s in an LLM call before anything is
+  // written, so N concurrent requests all pass it. This is the actual
+  // cap — one statement that counts and claims together, so exactly
+  // `limit` callers can win regardless of concurrency.
+  const reservationId = await reserveGenerationSlot(
+    guard.user.id,
+    TIER_LIMITS[tier].generationsPerDay,
+  );
+  if (TIER_LIMITS[tier].generationsPerDay !== -1 && !reservationId) {
+    return NextResponse.json(
+      {
+        error: 'Daily generation limit reached for your tier',
+        code: 'TIER_LIMIT',
+        reasonKey: 'billing.gate.generation_limit',
+        requiredTier: 'plus',
+        limit: TIER_LIMITS[tier].generationsPerDay,
+      },
+      { status: 402 },
+    );
+  }
+
+  // ─── 7. Generate ───
   try {
-    const modelString = await resolveModelForUser(session.user.id);
+    const modelString = await resolveModelForUser(guard.user.id);
     const result = await generateResume({
-      userId: session.user.id,
+      userId: guard.user.id,
       locale: jdResult.detectedLocale,
       jobDescription: jdResult.cleaned,
       userProfile: sanitizedProfile,
@@ -235,5 +263,12 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
     logger.error({ err: (err as Error).message }, 'resume.generate.failed');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } finally {
+    // generateResume() writes the real accounting row (success or an
+    // error status) via recordGeneration, so the placeholder must go
+    // either way or every generation would count twice. A crash that
+    // skips this leaves a row that stops counting after
+    // RESERVATION_TTL_MS rather than blocking the user all day.
+    await releaseGenerationSlot(reservationId);
   }
 }

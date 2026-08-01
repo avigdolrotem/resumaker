@@ -12,7 +12,6 @@ import { MagicCard } from '@/components/ui-effects/magic-card';
 import { CountUp } from '@/components/ui-effects/count-up';
 import { getLatestScoresByResumeId } from '@/lib/ats-score-lookup';
 import { EmailChangeStatusToast } from '@/components/email-change-status-toast';
-import { hasJobHuntBetaAsync } from '@/lib/beta-gate';
 import { JobRecommendations, type RecommendedJob } from '@/components/job-recommendations';
 import { ProfileNudge } from '@/components/profile-nudge';
 import {
@@ -104,19 +103,11 @@ export default async function DashboardPage() {
       limit: 3,
       columns: { id: true, title: true, companyName: true, updatedAt: true },
     }),
-    // Cheap PK lookup so every dashboard load pays for this even when
-    // job-hunt is off — hasJobHuntBetaAsync short-circuits on
-    // admin/flag before ever touching subscriptions, so this stays
-    // cheap for the common case too.
     db.query.users.findFirst({
       where: eq(schema.users.id, userId),
       columns: { role: true, featureFlags: true },
     }),
   ]);
-
-  const jobHuntBeta = betaUserRow
-    ? await hasJobHuntBetaAsync({ id: userId, ...betaUserRow })
-    : false;
 
   // Profile-completeness nudge — separate from the onboarding checklist
   // above (one-time setup milestones) since these two fields can stay
@@ -143,33 +134,31 @@ export default async function DashboardPage() {
   // recommendations.ts). status='open' re-checked here defensively: a
   // job can close in the gap between the nightly batch run and this
   // page load.
-  const recommendedJobsRaw = jobHuntBeta
-    ? await db
-        .select({
-          id: schema.jobs.id,
-          company: schema.jobs.company,
-          title: schema.jobs.title,
-          location: schema.jobs.location,
-          remote: schema.jobs.remote,
-          description: schema.jobs.description,
-          url: schema.jobs.url,
-          hrUserId: schema.jobs.hrUserId,
-          fitScore: schema.userJobs.fitScore,
-          fitRationale: schema.userJobs.fitRationale,
-        })
-        .from(schema.userJobs)
-        .innerJoin(schema.jobs, eq(schema.userJobs.jobId, schema.jobs.id))
-        .where(
-          and(
-            eq(schema.userJobs.userId, userId),
-            isNotNull(schema.userJobs.recommendedAt),
-            isNull(schema.userJobs.dismissedAt),
-            eq(schema.jobs.status, 'open'),
-          ),
-        )
-        .orderBy(desc(schema.userJobs.recommendScore))
-        .limit(6)
-    : [];
+  const recommendedJobsRaw = await db
+    .select({
+      id: schema.jobs.id,
+      company: schema.jobs.company,
+      title: schema.jobs.title,
+      location: schema.jobs.location,
+      remote: schema.jobs.remote,
+      description: schema.jobs.description,
+      url: schema.jobs.url,
+      hrUserId: schema.jobs.hrUserId,
+      fitScore: schema.userJobs.fitScore,
+      fitRationale: schema.userJobs.fitRationale,
+    })
+    .from(schema.userJobs)
+    .innerJoin(schema.jobs, eq(schema.userJobs.jobId, schema.jobs.id))
+    .where(
+      and(
+        eq(schema.userJobs.userId, userId),
+        isNotNull(schema.userJobs.recommendedAt),
+        isNull(schema.userJobs.dismissedAt),
+        eq(schema.jobs.status, 'open'),
+      ),
+    )
+    .orderBy(desc(schema.userJobs.recommendScore))
+    .limit(6);
   const recommendedJobs: RecommendedJob[] = recommendedJobsRaw.map((j) => ({
     id: j.id,
     company: j.company,
@@ -271,7 +260,7 @@ export default async function DashboardPage() {
         initiallyDismissedForever={betaUserRow?.featureFlags?.onboardingChecklistDismissed === true}
       />
 
-      {jobHuntBeta && <JobRecommendations jobs={recommendedJobs} isHebrew={isHebrew} />}
+      <JobRecommendations jobs={recommendedJobs} isHebrew={isHebrew} />
 
       <ProfileNudge missingFieldLabels={missingFieldLabels} isHebrew={isHebrew} />
 

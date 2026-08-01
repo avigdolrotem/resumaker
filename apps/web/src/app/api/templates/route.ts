@@ -11,15 +11,15 @@
 
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { TEMPLATES, templatesForTier } from '@resumaker/resume-engine';
 import { getUserTier } from '@/lib/billing/tier';
 
 export async function GET(): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
-  const tier = await getUserTier(session.user.id);
+  const tier = await getUserTier(guard.user.id);
   const allowedIds = new Set(templatesForTier(tier).map((t) => t.id));
 
   const templates = Object.values(TEMPLATES)

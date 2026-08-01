@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Mock next/headers so headers() works outside a Next.js request scope.
 vi.mock('next/headers', () => ({
@@ -12,8 +12,8 @@ vi.mock('@/lib/llm/provider', () => ({
 }));
 
 // Mock auth so we get a fake session.
-vi.mock('@/lib/auth', () => ({
-  auth: { api: { getSession: vi.fn() } },
+vi.mock('@/lib/auth-guards', () => ({
+  requireActiveUser: vi.fn(),
 }));
 
 // Mock rate limit so it always passes.
@@ -27,13 +27,14 @@ vi.mock('@/lib/billing/tier', () => ({
 }));
 
 import * as llm from '@/lib/llm/provider';
-import * as authMod from '@/lib/auth';
+import * as guards from '@/lib/auth-guards';
 import { POST } from '../route';
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(authMod.auth.api.getSession).mockResolvedValue({
-    user: { id: 'u1' },
+  vi.mocked(guards.requireActiveUser).mockResolvedValue({
+    session: {},
+    user: { id: 'u1', role: 'user' },
   } as never);
 });
 
@@ -66,7 +67,9 @@ describe('POST /api/resumes/bullet/rewrite', () => {
   });
 
   it('returns 401 without a session', async () => {
-    vi.mocked(authMod.auth.api.getSession).mockResolvedValueOnce(null as never);
+    vi.mocked(guards.requireActiveUser).mockResolvedValueOnce(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) as never,
+    );
     const res = await POST(makeReq({ bullet: 'x' }));
     expect(res.status).toBe(401);
   });

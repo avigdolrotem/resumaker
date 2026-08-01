@@ -7,19 +7,17 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { headers } from 'next/headers';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { extractText, parseResumeText } from '@/lib/resume-import';
 import { PromptInjectionError, LLMError } from '@resumaker/shared';
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   // Imports are expensive (LLM call) — tighter rate limit
-  const rl = await checkRateLimit(`import:user:${session.user.id}`, 5, 3600);
+  const rl = await checkRateLimit(`import:user:${guard.user.id}`, 5, 3600);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Rate limit exceeded', retryAfterSeconds: rl.resetSeconds },

@@ -19,7 +19,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { db, schema } from '@/db';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { env } from '@/lib/env';
@@ -39,10 +39,10 @@ const ResponseSchema = z.object({
 });
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
-  const rl = await checkRateLimit(`fit-score:${session.user.id}`, 60, 3600);
+  const rl = await checkRateLimit(`fit-score:${guard.user.id}`, 60, 3600);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Rate limit exceeded', resetSeconds: rl.resetSeconds },
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   // Same source of truth as /api/resumes/generate and /api/resumes/score:
   // one profile per user, read server-side.
   const profileRow = await db.query.profiles.findFirst({
-    where: eq(schema.profiles.userId, session.user.id),
+    where: eq(schema.profiles.userId, guard.user.id),
   });
   if (!profileRow || !profileRow.onboardingCompletedAt) {
     return NextResponse.json(

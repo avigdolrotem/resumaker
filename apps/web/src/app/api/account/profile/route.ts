@@ -9,16 +9,16 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { eq } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
 
 export async function GET(): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   const user = await db.query.users.findFirst({
-    where: eq(schema.users.id, session.user.id),
+    where: eq(schema.users.id, guard.user.id),
     columns: {
       id: true,
       email: true,
@@ -46,7 +46,7 @@ export async function GET(): Promise<Response> {
   // reading whatever resume the user last touched, which broke the
   // moment resumes stopped each owning an independent content copy.
   const profileRow = await db.query.profiles.findFirst({
-    where: eq(schema.profiles.userId, session.user.id),
+    where: eq(schema.profiles.userId, guard.user.id),
     columns: { content: true },
   });
   const profileContent =
@@ -86,8 +86,8 @@ const BodySchema = z.object({
 });
 
 export async function PATCH(req: NextRequest): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   let body: z.infer<typeof BodySchema>;
   try {
@@ -110,10 +110,10 @@ export async function PATCH(req: NextRequest): Promise<Response> {
       ...(body.locale ? { locale: body.locale } : {}),
       updatedAt: new Date(),
     })
-    .where(eq(schema.users.id, session.user.id));
+    .where(eq(schema.users.id, guard.user.id));
 
   auditEvent({
-    userId: session.user.id,
+    userId: guard.user.id,
     event: 'profile_updated',
     metadata: { fields: Object.keys(body) },
   });

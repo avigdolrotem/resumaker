@@ -14,7 +14,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { headers } from 'next/headers';
 import { and, eq, isNull } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { db, schema } from '@/db';
 import { auditEvent } from '@/lib/audit';
 import { canCreateResume, getActiveResumeCount, getUserTier } from '@/lib/billing/tier';
@@ -23,15 +23,15 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
 
   const original = await db.query.resumes.findFirst({
     where: and(
       eq(schema.resumes.id, id),
-      eq(schema.resumes.userId, session.user.id),
+      eq(schema.resumes.userId, guard.user.id),
       isNull(schema.resumes.deletedAt),
     ),
   });
@@ -42,8 +42,8 @@ export async function POST(
 
   // Tier gate: duplicating still counts toward the resume cap
   const [tier, activeCount] = await Promise.all([
-    getUserTier(session.user.id),
-    getActiveResumeCount(session.user.id),
+    getUserTier(guard.user.id),
+    getActiveResumeCount(guard.user.id),
   ]);
   const gate = canCreateResume(tier, activeCount);
   if (!gate.allowed) {
@@ -67,7 +67,7 @@ export async function POST(
   const [row] = await db
     .insert(schema.resumes)
     .values({
-      userId: session.user.id,
+      userId: guard.user.id,
       title: newTitle,
       jobTitle: original.jobTitle,
       companyName: original.companyName,
@@ -78,7 +78,7 @@ export async function POST(
     .returning({ id: schema.resumes.id });
 
   auditEvent({
-    userId: session.user.id,
+    userId: guard.user.id,
     event: 'resume_created',
     metadata: { kind: 'duplicate', sourceId: id, newId: row?.id },
   });

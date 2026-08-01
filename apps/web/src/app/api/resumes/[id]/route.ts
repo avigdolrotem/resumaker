@@ -8,7 +8,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { and, eq, isNull, desc } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { db, schema } from '@/db';
 import { ResumeSchema } from '@resumaker/shared';
 import { auditEvent } from '@/lib/audit';
@@ -69,13 +69,11 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
-  const resume = await getOwnedResume(id, session.user.id);
+  const resume = await getOwnedResume(id, guard.user.id);
   if (!resume) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -92,13 +90,11 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
-  const existing = await getOwnedResume(id, session.user.id);
+  const existing = await getOwnedResume(id, guard.user.id);
   if (!existing) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -128,7 +124,7 @@ export async function PATCH(
     .where(
       and(
         eq(schema.resumes.id, id),
-        eq(schema.resumes.userId, session.user.id),
+        eq(schema.resumes.userId, guard.user.id),
         isNull(schema.resumes.deletedAt),
       ),
     )
@@ -138,7 +134,7 @@ export async function PATCH(
   }
 
   auditEvent({
-    userId: session.user.id,
+    userId: guard.user.id,
     event: 'resume_updated',
     metadata: { resumeId: id, contentChanged: Boolean(body.content) },
   });
@@ -150,13 +146,11 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   const { id } = await params;
-  const existing = await getOwnedResume(id, session.user.id);
+  const existing = await getOwnedResume(id, guard.user.id);
   if (!existing) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -167,7 +161,7 @@ export async function DELETE(
     .where(
       and(
         eq(schema.resumes.id, id),
-        eq(schema.resumes.userId, session.user.id),
+        eq(schema.resumes.userId, guard.user.id),
         isNull(schema.resumes.deletedAt),
       ),
     )

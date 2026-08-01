@@ -6,8 +6,6 @@ import { Link } from '@/i18n/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { requireActiveUser } from '@/lib/auth-guards';
-import { hasJobHuntBetaAsync } from '@/lib/beta-gate';
-import { JobHuntPreview } from '@/components/job-hunt-preview';
 import { listJobs } from '@/lib/jobs-query';
 import { JobsList } from '@/components/jobs-list';
 
@@ -34,9 +32,6 @@ export default async function JobsPage({
   const guard = await requireActiveUser(await nextHeaders());
   if (guard instanceof Response) {
     redirect('/sign-in');
-  }
-  if (!(await hasJobHuntBetaAsync(guard.user))) {
-    return <JobHuntPreview />;
   }
   const t = await getTranslations({ locale, namespace: 'jobs' });
   const isHebrew = locale === 'he';

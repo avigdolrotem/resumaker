@@ -274,6 +274,91 @@ export async function getGenerationsToday(userId: string): Promise<number> {
   return row?.count ?? 0;
 }
 
+/**
+ * How long an in-flight reservation counts against the daily cap before
+ * it's treated as abandoned. Generation is a single LLM call (observed
+ * 6–18s here, `maxDuration` on the route is 60s); anything older than
+ * this is a crashed request whose `finally` never ran, and holding a
+ * slot forever because of it would lock a user out for the rest of the
+ * day.
+ */
+const RESERVATION_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * Atomically claim one of today's generation slots.
+ *
+ * `canGenerate(tier, getGenerationsToday(...))` is a read followed —
+ * ~15 seconds of LLM call later — by a write, so N concurrent requests
+ * all read the same count and all pass.
+ *
+ * Serialized with a per-user transaction-scoped advisory lock. The
+ * obvious-looking fix, a single `INSERT … SELECT … WHERE (subquery) <
+ * limit`, does NOT work: under READ COMMITTED every concurrent
+ * statement evaluates that subquery against its own snapshot taken at
+ * statement start, so they all read the same pre-insert count. Measured
+ * directly — with limit=3 and 10 concurrent sessions, 6 inserts
+ * succeeded. The advisory lock makes the count-then-insert pair
+ * genuinely mutually exclusive per user; it's released automatically
+ * when the transaction ends, including on error. Locking per user (not
+ * globally) means one user's concurrent generations serialize while
+ * different users never contend.
+ *
+ * The reservation row is a placeholder with status='reserved'. It counts
+ * toward the cap while in flight, and the caller MUST release it in a
+ * `finally` — the real accounting row is still written by
+ * recordGeneration in lib/llm.ts exactly as before, so a lingering
+ * reservation would double-count.
+ *
+ * Returns the reservation id, or null when the cap is already reached.
+ */
+export async function reserveGenerationSlot(userId: string, limit: number): Promise<string | null> {
+  if (limit === -1) return null; // unlimited tier — nothing to reserve
+  if (limit === 0) return null; // no slots exist to claim
+  const startOfDay = startOfDayInTimezone(COUNTER_TIMEZONE);
+  const reservationCutoff = new Date(Date.now() - RESERVATION_TTL_MS);
+
+  return db.transaction(async (tx) => {
+    // hashtext() → int4, widened to the bigint overload. Same userId
+    // always maps to the same lock, which is all this needs.
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userId}))`);
+
+    const [countRow] = await tx
+      .select({ value: sql<number>`cast(count(*) as int)` })
+      .from(schema.generations)
+      .where(
+        and(
+          eq(schema.generations.userId, userId),
+          gte(schema.generations.createdAt, startOfDay),
+          sql`(
+            ${schema.generations.status} = 'success'
+            OR (${schema.generations.status} = 'reserved' AND ${schema.generations.createdAt} >= ${reservationCutoff})
+          )`,
+        ),
+      );
+
+    if ((countRow?.value ?? 0) >= limit) return null;
+
+    const [row] = await tx
+      .insert(schema.generations)
+      .values({
+        userId,
+        model: 'reservation',
+        inputJdHash: '',
+        inputLengthChars: 0,
+        status: 'reserved',
+      })
+      .returning({ id: schema.generations.id });
+
+    return row?.id ?? null;
+  });
+}
+
+/** Drop a reservation once the generation finished (successfully or not). */
+export async function releaseGenerationSlot(reservationId: string | null): Promise<void> {
+  if (!reservationId) return;
+  await db.delete(schema.generations).where(eq(schema.generations.id, reservationId));
+}
+
 /** Cover letters created by this user since the 1st of this month Israel time. */
 export async function getCoverLettersThisMonth(userId: string): Promise<number> {
   const startOfMonth = startOfMonthInTimezone(COUNTER_TIMEZONE);

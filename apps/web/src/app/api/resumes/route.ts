@@ -7,7 +7,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { and, eq, desc, isNull } from 'drizzle-orm';
-import { auth } from '@/lib/auth';
+import { requireActiveUser } from '@/lib/auth-guards';
 import { db, schema } from '@/db';
 import { ResumeSchema } from '@resumaker/shared';
 import { DEFAULT_TEMPLATE_ID, templatesForTier } from '@resumaker/resume-engine';
@@ -15,13 +15,11 @@ import { canCreateResume, getActiveResumeCount, getUserTier } from '@/lib/billin
 import { deriveResumeTitle } from '@/lib/resumes/title';
 
 export async function GET(): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   const list = await db.query.resumes.findMany({
-    where: and(eq(schema.resumes.userId, session.user.id), isNull(schema.resumes.deletedAt)),
+    where: and(eq(schema.resumes.userId, guard.user.id), isNull(schema.resumes.deletedAt)),
     orderBy: [desc(schema.resumes.updatedAt)],
     columns: {
       id: true,
@@ -56,10 +54,8 @@ const PostBodySchema = z.object({
 });
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const guard = await requireActiveUser(await headers());
+  if (guard instanceof NextResponse) return guard;
 
   let body: z.infer<typeof PostBodySchema>;
   try {
@@ -73,8 +69,8 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   // Tier gate: cap number of active resumes per tier.
   const [tier, activeCount] = await Promise.all([
-    getUserTier(session.user.id),
-    getActiveResumeCount(session.user.id),
+    getUserTier(guard.user.id),
+    getActiveResumeCount(guard.user.id),
   ]);
   const gate = canCreateResume(tier, activeCount);
   if (!gate.allowed) {
@@ -113,7 +109,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   const [row] = await db
     .insert(schema.resumes)
     .values({
-      userId: session.user.id,
+      userId: guard.user.id,
       title: deriveResumeTitle(body.jobTitle, body.companyName, body.content.metadata.language),
       jobTitle: body.jobTitle ?? null,
       companyName: body.companyName ?? null,
