@@ -200,7 +200,11 @@ export function AtsScoreCard({
                     ? 'text-amber-500'
                     : 'text-emerald-500';
               return (
-                <div key={i} className="bg-muted flex items-start gap-2 rounded-md p-2.5 text-sm">
+                <div
+                  key={i}
+                  dir={isHebrew ? 'rtl' : 'ltr'}
+                  className="bg-muted flex items-start gap-2 rounded-md p-2.5 text-sm"
+                >
                   <Icon className={`mt-0.5 h-4 w-4 flex-shrink-0 ${iconColor}`} />
                   <span className="text-foreground">{s.message}</span>
                 </div>
