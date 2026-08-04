@@ -96,6 +96,20 @@ env:
   PAYMENT_PROVIDER: none
   LOG_LEVEL: info
   PLAYWRIGHT_FALLBACK: 'true'
+  # Output-token ceiling for resume generation. Matches the zod default in
+  # env.ts, so stating it changes nothing at runtime — the point is that a
+  # value which decides whether a generation completes or truncates should
+  # be visible in the deploy config, not something you have to know to go
+  # looking for in the schema. Inherited by every environment; the
+  # per-environment overlays restate it so each file can be read alone.
+  #
+  # Do not lower it without checking Hebrew. Hebrew tokenizes far less
+  # efficiently than English, so a Hebrew resume needs substantially more
+  # output tokens than the same content in English; at 4096 they truncate
+  # and the request fails with a 502 on the core paid feature. Only tokens
+  # actually produced are billed, so a high ceiling is free on shorter
+  # generations.
+  LLM_MAX_TOKENS: '16384'
 
 # Pulled from GCP Secret Manager (managed by external-secrets-operator)
 secretsManagerName: resumaker-prod/app
