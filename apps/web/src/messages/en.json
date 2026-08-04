@@ -8,6 +8,7 @@
     "templates": "Templates",
     "examples": "Examples",
     "pricing": "Pricing",
+    "tools": "Tools",
     "signIn": "Sign in",
     "signUp": "Sign up",
     "dashboard": "Dashboard",
@@ -146,7 +147,7 @@
       "resendCooldown": "Resend available in {seconds}s",
       "resendError": "Couldn't resend right now. Please try again in a moment.",
       "differentEmail": "Use a different email",
-      "backToSignIn": "Back to sign in"
+      "backToSignIn": "Already have an account? Sign in"
     },
     "signIn": {
       "title": "Welcome back",
@@ -229,6 +230,7 @@
     "subtitle": "Paste a posting, get a fit score, track applications",
     "betaBadge": "Beta",
     "empty": "No jobs yet. Paste a posting to get started.",
+    "noResults": "No jobs match your search. Try fewer or different words, or clear the filters.",
     "addJob": "Add a job",
     "scoreFit": "Score fit",
     "scoring": "Scoring…",
@@ -988,6 +990,7 @@
     "monthly": "per month",
     "yearly": "per year",
     "quarterly": "Job Hunt Pack (3 months)",
+    "quarterlyNote": "One payment for 90 days of access — it does not renew. When it ends your account returns to Free, and your resumes stay in your account.",
     "billedYearly": "billed yearly",
     "billedOnce": "one-time payment",
     "saveLabel": "Save {percent}%",
@@ -1291,8 +1294,8 @@
     "close": "Close",
     "later": "Maybe later",
     "cta": {
-      "label": "Join the waitlist",
-      "href": "mailto:hello@resumaker.co.il?subject=Waitlist"
+      "label": "Upgrade to {tier}",
+      "href": "/en/pricing"
     },
     "features": {
       "model_choice": {

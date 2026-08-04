@@ -192,16 +192,35 @@ export function PricingClient({
             isAuthed={isAuthed}
             locale={locale}
             couponCode={coupon?.code ?? null}
+            couponPercent={coupon?.discountPercent ?? null}
           />
         ))}
       </div>
 
+      {/* The one-time pack was the only plan that said nothing about what
+          happens when it runs out. It sets cancelAtPeriodEnd with a
+          90-day currentPeriodEnd, so getUserTier drops the account back
+          to free on expiry — say so, rather than leaving people to guess
+          whether they're about to be auto-charged. */}
+      {interval === 'quarterly' && (
+        <p className="text-muted-foreground mx-auto mt-6 max-w-md text-center text-xs">
+          {t('quarterlyNote')}
+        </p>
+      )}
+
       {checkoutReady && !isAuthed && pendingCode && (
         <div className="glass-subtle mx-auto mt-8 max-w-sm rounded-xl px-4 py-3 text-center">
-          <p className="text-sm">
+          {/*
+            Deliberately does not claim the code is valid. Validation
+            needs an account (one-redemption-per-user is per-user), so
+            signed out we genuinely don't know yet — and an unchecked
+            "saved!" reads as confirmation, which sent testers off
+            believing a junk code from a URL was going to work.
+          */}
+          <p className="break-words text-sm">
             {isHe
-              ? `הקוד ${pendingCode} שמור — התחברו כדי להשתמש בו`
-              : `Code ${pendingCode} saved — sign in to use it`}
+              ? `נבדוק את הקוד ${pendingCode} לאחר ההתחברות`
+              : `We'll check code ${pendingCode} once you sign in`}
           </p>
         </div>
       )}
@@ -285,6 +304,7 @@ function TierCard({
   isAuthed,
   locale,
   couponCode,
+  couponPercent,
 }: {
   tier: TierData;
   interval: BillingInterval;
@@ -293,6 +313,7 @@ function TierCard({
   isAuthed: boolean;
   /** Validated code from the shared field above, applied to this purchase. */
   couponCode?: string | null;
+  couponPercent?: number | null;
   locale: string;
 }) {
   const t = useTranslations('billing');
@@ -319,6 +340,16 @@ function TierCard({
         ? tier.priceYearly
         : tier.priceQuarterly;
   const priceLabel = isFree ? t('free') : price > 0 ? `₪${price}` : null;
+
+  // An applied coupon used to announce "25% off" while every card kept
+  // showing the full price, so the discount looked like it hadn't taken.
+  // Show what they'll actually be charged, with the old price struck
+  // through. Trailing .00 dropped so a clean number doesn't read as
+  // spurious precision.
+  const discountedLabel =
+    !isFree && price > 0 && couponPercent
+      ? `₪${(price * (1 - couponPercent / 100)).toFixed(2).replace(/\.00$/, '')}`
+      : null;
   const intervalLabel = isFree
     ? ''
     : interval === 'monthly'
@@ -398,8 +429,13 @@ function TierCard({
         <p className="text-muted-foreground mt-1 text-sm">{tier.tagline}</p>
         <div className="mt-4 min-h-[3rem]">
           {priceLabel ? (
-            <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-bold">{priceLabel}</span>
+            <div className="flex flex-wrap items-baseline gap-1">
+              {discountedLabel && (
+                <span className="text-muted-foreground text-xl font-medium line-through">
+                  {priceLabel}
+                </span>
+              )}
+              <span className="text-4xl font-bold">{discountedLabel ?? priceLabel}</span>
               {intervalLabel && (
                 <span className="text-muted-foreground text-sm">
                   {interval === 'monthly' ? `/${intervalLabel}` : ` · ${intervalLabel}`}

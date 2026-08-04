@@ -64,6 +64,25 @@ describe('pending coupon', () => {
     expect(readPendingCoupon()).toBeNull();
   });
 
+  it('refuses a code longer than the API would ever accept', () => {
+    // `?coupon=` is attacker-controlled and gets echoed into the
+    // "we'll check your code" banner — an uncapped value overflowed
+    // the layout horizontally.
+    savePendingCoupon('A'.repeat(41));
+    expect(readPendingCoupon()).toBeNull();
+    savePendingCoupon('A'.repeat(40));
+    expect(readPendingCoupon()).toBe('A'.repeat(40));
+  });
+
+  it('rejects an over-long value already sitting in storage', () => {
+    store.set(
+      'resumaker:pending-coupon',
+      JSON.stringify({ code: 'A'.repeat(5000), savedAt: Date.now() }),
+    );
+    expect(readPendingCoupon()).toBeNull();
+    expect(store.size).toBe(0);
+  });
+
   it('survives corrupt storage without throwing', () => {
     store.set('resumaker:pending-coupon', 'not json');
     expect(readPendingCoupon()).toBeNull();

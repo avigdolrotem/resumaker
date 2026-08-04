@@ -4,6 +4,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { auth } from '@/lib/auth';
+import { SUPPORT_MAILTO } from '@/lib/constants/contact';
 import {
   ACCESSIBILITY_EMAIL,
   COMPANY_TRADING_NAME,
@@ -370,7 +371,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* ─── FOOTER ─── */}
       <footer className="bg-neutral-950 py-16 text-neutral-400">
         <div className="container mx-auto px-4">
-          <div className="grid gap-8 md:grid-cols-4">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
             <div>
               <h3 className="from-brand-300 to-brand-100 bg-gradient-to-br bg-clip-text text-xl font-bold text-transparent">
                 Resumaker
@@ -380,7 +381,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               </p>
               <div className="mt-4 flex gap-3">
                 <a
-                  href="mailto:hello@resumaker.co.il"
+                  href={SUPPORT_MAILTO}
                   aria-label="Email"
                   className="ease-snappy inline-flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/10 hover:text-white active:scale-[0.96]"
                 >
@@ -389,9 +390,19 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               </div>
             </div>
             <FooterColumn title={isHebrew ? 'מוצר' : 'Product'}>
+              <FooterLink href="/pricing">{isHebrew ? 'תמחור' : 'Pricing'}</FooterLink>
               <FooterLink href="/examples">{isHebrew ? 'דוגמאות' : 'Examples'}</FooterLink>
               <FooterLink href="/sign-up">{isHebrew ? 'הרשמה' : 'Sign up'}</FooterLink>
               <FooterLink href="/sign-in">{isHebrew ? 'כניסה' : 'Sign in'}</FooterLink>
+            </FooterColumn>
+            {/* Pricing, the FAQ, the blog, the free tools and the status
+                page were all live and complete but linked from nowhere —
+                reachable only by typing the URL. */}
+            <FooterColumn title={isHebrew ? 'מקורות' : 'Resources'}>
+              <FooterLink href="/tools">{isHebrew ? 'כלים חינמיים' : 'Free tools'}</FooterLink>
+              <FooterLink href="/faq">{isHebrew ? 'שאלות נפוצות' : 'FAQ'}</FooterLink>
+              <FooterLink href="/blog">{isHebrew ? 'בלוג' : 'Blog'}</FooterLink>
+              <FooterLink href="/status">{isHebrew ? 'סטטוס מערכת' : 'Status'}</FooterLink>
             </FooterColumn>
             <FooterColumn title={isHebrew ? 'משפטי' : 'Legal'}>
               <FooterLink href="/privacy">{isHebrew ? 'מדיניות פרטיות' : 'Privacy'}</FooterLink>
@@ -580,6 +591,11 @@ function FooterLink({
 }: {
   href:
     | '/examples'
+    | '/pricing'
+    | '/tools'
+    | '/faq'
+    | '/blog'
+    | '/status'
     | '/sign-up'
     | '/sign-in'
     | '/privacy'

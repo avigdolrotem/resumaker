@@ -83,11 +83,17 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier }: Upgr
 
   if (!portalTargetRef.current) return null;
 
-  // CTA is a mailto: to match the existing pricing-page waitlist UX
-  // when PAYMENT_PROVIDER=none. Once payments go live, swap the
-  // translation key's value to a /pricing href and this code is
-  // unchanged.
+  // Payments are live, so this now points at /pricing (per locale, set
+  // in the message catalogue) rather than the old waitlist mailto: it
+  // carried while PAYMENT_PROVIDER=none. That mailto had become the
+  // dead end on the single most important conversion path — the paywall
+  // someone hits when they try to generate.
   const ctaHref = t('cta.href');
+
+  // Only send genuinely external destinations to a new tab. An internal
+  // path opening in _blank strands the user with an orphan tab and
+  // loses the flow they were in.
+  const isExternal = /^https?:\/\//i.test(ctaHref);
 
   const titleId = `upgrade-modal-title-${feature}`;
   const descId = `upgrade-modal-desc-${feature}`;
@@ -148,8 +154,12 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier }: Upgr
                 {t('later')}
               </Button>
               <Button asChild>
-                <a href={ctaHref} target={ctaHref.startsWith('mailto:') ? '_self' : '_blank'}>
-                  {t('cta.label')}
+                <a
+                  href={ctaHref}
+                  target={isExternal ? '_blank' : '_self'}
+                  {...(isExternal ? { rel: 'noopener noreferrer' } : {})}
+                >
+                  {t('cta.label', { tier: requiredTier === 'pro' ? 'Pro' : 'Plus' })}
                 </a>
               </Button>
             </div>

@@ -56,8 +56,14 @@ export function CookieConsent({ locale }: { locale: string }) {
   const isHe = locale === 'he';
 
   return (
+    // `region`, not `dialog`. This is a passive notice that never blocks
+    // the page — there's no backdrop, no focus trap, and dismissing it is
+    // optional. Declaring it a dialog told assistive tech (and anything
+    // driving the browser) that a modal had taken over, so interactions
+    // got scoped to this bar and clicks elsewhere on the page appeared to
+    // do nothing at all.
     <div
-      role="dialog"
+      role="region"
       aria-labelledby="cookie-consent-title"
       className="border-border bg-card fixed bottom-4 end-4 start-4 z-50 mx-auto max-w-2xl rounded-xl border p-4 shadow-2xl sm:p-5"
     >

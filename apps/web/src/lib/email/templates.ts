@@ -6,6 +6,7 @@
  */
 
 import { env } from '@/lib/env';
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from '@/lib/constants/contact';
 
 type Locale = 'he' | 'en';
 
@@ -52,7 +53,7 @@ function layout({
           <td style="padding:24px 32px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:12px;color:#64748b;text-align:center;">
             <p style="margin:0 0 8px 0;">
               <a href="${env.APP_URL}" style="color:${BRAND};text-decoration:none;">resumaker.co.il</a>
-              · <a href="mailto:hello@resumaker.co.il" style="color:${BRAND};text-decoration:none;">hello@resumaker.co.il</a>
+              · <a href="${SUPPORT_MAILTO}" style="color:${BRAND};text-decoration:none;">${SUPPORT_EMAIL}</a>
             </p>
             <p style="margin:0;">© ${new Date().getFullYear()} Resumaker™</p>
           </td>

@@ -21,6 +21,15 @@
 const KEY = 'resumaker:pending-coupon';
 const TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
+/**
+ * Matches the `max(40)` on POST /api/billing/coupon. Anything longer
+ * could never validate, so there is no reason to store or display it —
+ * and `?coupon=` is attacker-controlled, so an uncapped value gets
+ * echoed straight into the "code saved" banner and blows out the
+ * layout.
+ */
+const MAX_CODE_LENGTH = 40;
+
 interface StoredCoupon {
   code: string;
   savedAt: number;
@@ -30,7 +39,7 @@ interface StoredCoupon {
 export function savePendingCoupon(code: string): void {
   if (typeof window === 'undefined') return;
   const trimmed = code.trim();
-  if (!trimmed) return;
+  if (!trimmed || trimmed.length > MAX_CODE_LENGTH) return;
   try {
     const payload: StoredCoupon = { code: trimmed, savedAt: Date.now() };
     window.localStorage.setItem(KEY, JSON.stringify(payload));
@@ -47,7 +56,14 @@ export function readPendingCoupon(): string | null {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<StoredCoupon>;
-    if (typeof parsed.code !== 'string' || typeof parsed.savedAt !== 'number') {
+    if (
+      typeof parsed.code !== 'string' ||
+      typeof parsed.savedAt !== 'number' ||
+      parsed.code.length > MAX_CODE_LENGTH
+    ) {
+      // Length is re-checked on read, not just on write — a value
+      // predating the cap (or hand-edited into storage) must not reach
+      // the banner either.
       window.localStorage.removeItem(KEY);
       return null;
     }

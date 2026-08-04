@@ -32,15 +32,21 @@ export function PendingCouponBanner({ isHebrew }: { isHebrew: boolean }) {
       <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
         <p className="flex items-center gap-2 text-sm">
           <Tag className="text-brand-500 h-4 w-4 shrink-0" />
+          {/*
+            "We'll check" rather than "is saved": the code is still
+            unvalidated at this point — validation happens on /pricing —
+            so asserting it's good here would promise a discount a junk
+            code can't deliver.
+          */}
           {isHebrew ? (
             <span>
-              הקוד <span className="font-semibold">{code}</span> שמור עבורכם — בחרו תוכנית כדי
-              להשתמש בו.
+              נבדוק את הקוד <span className="font-semibold">{code}</span> — בחרו תוכנית כדי להשתמש
+              בו.
             </span>
           ) : (
             <span>
-              Your code <span className="font-semibold">{code}</span> is saved — pick a plan to use
-              it.
+              We&apos;ll check your code <span className="font-semibold">{code}</span> — pick a plan
+              to use it.
             </span>
           )}
         </p>

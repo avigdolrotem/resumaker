@@ -18,25 +18,42 @@ interface DepStatus {
 
 export const revalidate = 30;
 
+/**
+ * The readiness probe's response shape. This page previously read
+ * `{ ok, deps }`, which the endpoint has never returned — it speaks
+ * `{ status, checks }`. The mismatch meant `deps` was always empty and
+ * `overall` always false, so a perfectly healthy system rendered
+ * "⚠ Issue detected" above an empty list, permanently, to every visitor.
+ */
+interface ReadyResponse {
+  status?: string;
+  timestamp?: string;
+  checks?: Record<string, { status?: string; latencyMs?: number }>;
+}
+
 async function fetchHealth(): Promise<{ overall: boolean; deps: DepStatus[]; ts: string }> {
   try {
     // Internal call — Next.js server-side fetch
     const base = process.env['APP_URL'] ?? 'http://localhost:3000';
     const res = await fetch(`${base}/api/health/ready`, { cache: 'no-store' });
-    if (!res.ok) {
-      return {
-        overall: false,
-        deps: [{ name: 'Status endpoint', ok: false, detail: `HTTP ${res.status}` }],
-        ts: new Date().toISOString(),
-      };
-    }
-    const data = await res.json();
-    const deps: DepStatus[] = Object.entries(data.deps ?? {}).map(([name, info]) => ({
+
+    // Deliberately parsed even on a non-2xx: an unhealthy service answers
+    // 503 *with* a full per-dependency body, and naming the dependency
+    // that's actually down is the entire point of this page. Bailing out
+    // on `!res.ok` would replace that with a useless "HTTP 503".
+    const data = (await res.json()) as ReadyResponse;
+
+    const deps: DepStatus[] = Object.entries(data.checks ?? {}).map(([name, info]) => ({
       name,
-      ok: Boolean((info as { ok?: boolean }).ok),
-      ...((info as { error?: string }).error ? { detail: (info as { error?: string }).error } : {}),
+      ok: info?.status === 'ok',
+      ...(typeof info?.latencyMs === 'number' ? { detail: `${info.latencyMs} ms` } : {}),
     }));
-    return { overall: Boolean(data.ok), deps, ts: data.ts ?? new Date().toISOString() };
+
+    return {
+      overall: data.status === 'ready',
+      deps,
+      ts: data.timestamp ?? new Date().toISOString(),
+    };
   } catch (err) {
     return {
       overall: false,
@@ -80,13 +97,19 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
 
       <h2 className="mt-8 text-lg font-semibold">{isHe ? 'תלויות' : 'Dependencies'}</h2>
       <ul className="mt-3 space-y-2">
+        {/* A bare heading over nothing reads as a broken page — say so instead. */}
+        {status.deps.length === 0 && (
+          <li className="glass-subtle text-muted-foreground rounded-xl px-4 py-3 text-sm">
+            {isHe ? 'לא התקבל מידע על תלויות.' : 'No dependency information was returned.'}
+          </li>
+        )}
         {status.deps.map((d) => (
           <li
             key={d.name}
             className="glass-subtle ease-smooth flex items-center justify-between rounded-xl px-4 py-3 transition-all duration-500 hover:-translate-y-0.5"
           >
             <div>
-              <p className="font-medium">{d.name}</p>
+              <p className="font-medium capitalize">{d.name}</p>
               {d.detail && <p className="text-muted-foreground mt-1 text-xs">{d.detail}</p>}
             </div>
             <span

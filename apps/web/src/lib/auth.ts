@@ -238,6 +238,17 @@ export const auth = betterAuth({
       '/sign-up/email': { window: 60 * 60, max: 5 }, // 5 signups/hour/IP
       '/forget-password': { window: 60 * 60, max: 3 }, // 3/hour/IP
       '/send-verification-email': { window: 60 * 5, max: 3 },
+
+      // Session reads are NOT an attack surface the way the credential
+      // endpoints are — they need a valid cookie and reveal nothing to
+      // someone without one. But they're the highest-traffic auth route
+      // by far: the client checks the session on essentially every
+      // navigation, so the default 10/min bucket above is spent after
+      // ~10 page views and every subsequent check 429s. A signed-in
+      // user browsing jobs then looks signed-out to their own UI.
+      // Bounded generously rather than disabled, so a flood still costs
+      // something.
+      '/get-session': { window: 60, max: 120 },
     },
   },
 
