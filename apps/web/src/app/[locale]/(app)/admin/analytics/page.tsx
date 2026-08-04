@@ -1,10 +1,30 @@
+import { headers } from 'next/headers';
 import { requireAdminPage } from '@/lib/auth-guards';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
 import { ArrowLeft } from 'lucide-react';
 
+/**
+ * These endpoints are admin-guarded, and a server component calling its
+ * own API does NOT inherit the browser's cookies — so every one of these
+ * fetches came back 401 and the page rendered `undefined` into each
+ * card. That surfaced as a blank Signups and Funnel, and as "No data
+ * yet" under DAU and Cohort, which read as an empty database rather than
+ * a broken request. Forward the caller's session so the guard passes.
+ *
+ * Throws on a non-OK response instead of parsing the error body as data:
+ * an analytics page that quietly shows nothing is worse than one that
+ * fails loudly, because nobody investigates a zero.
+ */
 async function fetchJson<T>(url: string, baseUrl: string): Promise<T> {
-  const res = await fetch(`${baseUrl}${url}`, { cache: 'no-store' });
+  const cookie = (await headers()).get('cookie') ?? '';
+  const res = await fetch(`${baseUrl}${url}`, {
+    cache: 'no-store',
+    headers: cookie ? { cookie } : {},
+  });
+  if (!res.ok) {
+    throw new Error(`Analytics request failed: ${url} returned ${res.status}`);
+  }
   return res.json() as Promise<T>;
 }
 
