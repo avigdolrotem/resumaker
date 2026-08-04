@@ -297,14 +297,25 @@ const COUNTER_TIMEZONE = 'Asia/Jerusalem';
  */
 export async function getGenerationsToday(userId: string): Promise<number> {
   const startOfDay = startOfDayInTimezone(COUNTER_TIMEZONE);
+  const reservationCutoff = new Date(Date.now() - RESERVATION_TTL_MS);
   const [row] = await db
     .select({ count: sql<number>`cast(count(*) as int)` })
     .from(schema.generations)
     .where(
       and(
         eq(schema.generations.userId, userId),
-        eq(schema.generations.status, 'success'),
         gte(schema.generations.createdAt, startOfDay),
+        // Must match reserveGenerationSlot's predicate exactly. This
+        // used to count only status='success', while the gate that
+        // actually enforces the cap also counts live reservations — so
+        // an in-flight (or abandoned-but-not-yet-expired) generation was
+        // charged against the user while the usage meter still showed
+        // the lower number. Someone reading "18 of 20" would start a
+        // generation the gate had already spent.
+        sql`(
+          ${schema.generations.status} = 'success'
+          OR (${schema.generations.status} = 'reserved' AND ${schema.generations.createdAt} >= ${reservationCutoff.toISOString()}::timestamptz)
+        )`,
       ),
     );
   return row?.count ?? 0;

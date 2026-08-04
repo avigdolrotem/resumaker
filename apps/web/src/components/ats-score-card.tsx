@@ -14,21 +14,51 @@ interface ATSScore {
 /**
  * Visualizes an ATS score with animated ring + keyword chips.
  */
-export function AtsScoreCard({ score, isHebrew }: { score: ATSScore; isHebrew: boolean }) {
-  const [displayScore, setDisplayScore] = useState(0);
+export function AtsScoreCard({
+  score,
+  isHebrew,
+  isStale = false,
+}: {
+  score: ATSScore;
+  isHebrew: boolean;
+  /** Resume has been edited since this score was computed. */
+  isStale?: boolean;
+}) {
+  // Seeded with the real score, not 0. The count-up below starts from 0
+  // and rides requestAnimationFrame — so anything that interrupts it
+  // (an aborted View Transition on a fast route change, an unmount
+  // mid-flight, a frame loop that never gets scheduled) used to strand
+  // the card displaying 0/100 for a resume that scored fine. Starting
+  // from the truth means every failure mode lands on the right number
+  // instead of a alarming zero.
+  const [displayScore, setDisplayScore] = useState(score.overall);
 
   useEffect(() => {
     const target = score.overall;
+
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setDisplayScore(target);
+      return;
+    }
+
+    let frame = 0;
     const duration = 800;
     const start = Date.now();
+    setDisplayScore(0);
     const tick = () => {
       const elapsed = Date.now() - start;
       const progress = Math.min(elapsed / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
       setDisplayScore(Math.round(eased * target));
-      if (progress < 1) requestAnimationFrame(tick);
+      if (progress < 1) frame = requestAnimationFrame(tick);
     };
-    requestAnimationFrame(tick);
+    frame = requestAnimationFrame(tick);
+
+    // Land on the true value even if the animation is cut short.
+    return () => {
+      cancelAnimationFrame(frame);
+      setDisplayScore(target);
+    };
   }, [score.overall]);
 
   const color =
@@ -84,6 +114,20 @@ export function AtsScoreCard({ score, isHebrew }: { score: ATSScore; isHebrew: b
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Editing a resume can't trigger a rescore: the job description
+            the score was measured against isn't stored anywhere, so it
+            can't be recomputed. Rather than keep presenting a number
+            that no longer describes the document, say plainly that it's
+            out of date. */}
+        {isStale && (
+          <p className="flex items-start gap-2 rounded-md bg-amber-50 p-2.5 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+            {isHebrew
+              ? 'הניקוד חושב לפני העריכות האחרונות ואינו משקף את הגרסה הנוכחית. צרו קורות חיים מחדש כדי לקבל ניקוד מעודכן.'
+              : "This score was calculated before your latest edits and doesn't reflect the current version. Generate again for an up-to-date score."}
+          </p>
+        )}
+
         {/* Score ring */}
         <div className="flex items-center gap-4">
           <div className="relative h-24 w-24 flex-shrink-0">

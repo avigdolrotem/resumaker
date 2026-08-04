@@ -1314,6 +1314,10 @@
         "title": "Generating a resume is a paid feature",
         "body": "Browsing jobs and tracking applications is free for everyone. Upgrade to Plus to generate tailored resumes."
       },
+      "generation_limit_reached": {
+        "title": "You've used today's generations",
+        "body": "Plus includes 20 resume generations per day. Your quota resets at midnight, Israel time. Pro removes the daily limit entirely."
+      },
       "template_locked": {
         "title": "This template is Plus-only",
         "body": "Premium templates ship with Plus. Upgrade to use them on every resume."

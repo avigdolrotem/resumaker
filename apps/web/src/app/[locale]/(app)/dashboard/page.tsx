@@ -15,6 +15,7 @@ import { EmailChangeStatusToast } from '@/components/email-change-status-toast';
 import { JobRecommendations, type RecommendedJob } from '@/components/job-recommendations';
 import { ProfileNudge } from '@/components/profile-nudge';
 import { PendingCouponBanner } from '@/components/pending-coupon-banner';
+import { getUserTier } from '@/lib/billing/tier';
 import {
   FileText,
   Sparkles,
@@ -54,6 +55,7 @@ export default async function DashboardPage() {
     recentActivity,
     recentCoverLetters,
     betaUserRow,
+    currentTier,
   ] = await Promise.all([
     db
       .select({ value: count() })
@@ -108,6 +110,7 @@ export default async function DashboardPage() {
       where: eq(schema.users.id, userId),
       columns: { role: true, featureFlags: true },
     }),
+    getUserTier(userId),
   ]);
 
   // Profile-completeness nudge — separate from the onboarding checklist
@@ -255,7 +258,10 @@ export default async function DashboardPage() {
         </Button>
       </div>
 
-      <PendingCouponBanner isHebrew={isHebrew} />
+      {/* Only for someone who can still act on a code. A held promo was
+          being shown to paying subscribers too, telling them to "pick a
+          plan" they had already bought. */}
+      {currentTier === 'free' && <PendingCouponBanner isHebrew={isHebrew} />}
 
       <OnboardingChecklist
         items={onboardingSteps}
