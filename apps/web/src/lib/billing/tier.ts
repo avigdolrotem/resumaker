@@ -12,7 +12,7 @@
 
 import { eq, sql, gte, and, isNull } from 'drizzle-orm';
 import { db, schema } from '@/db';
-import { TIER_LIMITS, DEFAULT_TIER, type Tier } from './limits';
+import { TIER_LIMITS, TIER_ORDER, DEFAULT_TIER, type Tier } from './limits';
 
 /**
  * Look up a user's current tier. Returns `'free'` if no subscription
@@ -111,6 +111,27 @@ export interface GateResult {
 
 const ALLOW: GateResult = { allowed: true };
 
+/**
+ * The cheapest tier whose limit for this feature is actually higher than
+ * the caller's.
+ *
+ * The gates below used to hardcode 'plus', which is right for a free
+ * user but tells a *Plus* user who has hit their daily cap to "Upgrade
+ * to Plus" — a plan they already pay for, with no way forward. Pro
+ * carries -1 (unlimited) on all three of these, so there is a genuine
+ * next step to name; when there isn't, we return the caller's own tier
+ * and the UI simply won't offer an upsell.
+ */
+function nextTierFor(tier: Tier, pick: (limits: (typeof TIER_LIMITS)[Tier]) => number): Tier {
+  const current = pick(TIER_LIMITS[tier]);
+  if (current === -1) return tier; // already unlimited — nothing higher exists
+  for (const candidate of TIER_ORDER.slice(TIER_ORDER.indexOf(tier) + 1)) {
+    const candidateLimit = pick(TIER_LIMITS[candidate]);
+    if (candidateLimit === -1 || candidateLimit > current) return candidate;
+  }
+  return tier;
+}
+
 function deny(reasonKey: string, requiredTier: Tier, current?: number, limit?: number): GateResult {
   const result: GateResult = { allowed: false, reasonKey, requiredTier };
   if (current !== undefined) result.current = current;
@@ -123,7 +144,12 @@ export function canCreateResume(tier: Tier, currentResumeCount: number): GateRes
   const limit = TIER_LIMITS[tier].maxResumes;
   if (limit === -1) return ALLOW;
   if (currentResumeCount >= limit) {
-    return deny('billing.gate.resume_limit', 'plus', currentResumeCount, limit);
+    return deny(
+      'billing.gate.resume_limit',
+      nextTierFor(tier, (l) => l.maxResumes),
+      currentResumeCount,
+      limit,
+    );
   }
   return ALLOW;
 }
@@ -133,7 +159,12 @@ export function canGenerate(tier: Tier, generationsToday: number): GateResult {
   const limit = TIER_LIMITS[tier].generationsPerDay;
   if (limit === -1) return ALLOW;
   if (generationsToday >= limit) {
-    return deny('billing.gate.generation_limit', 'plus', generationsToday, limit);
+    return deny(
+      'billing.gate.generation_limit',
+      nextTierFor(tier, (l) => l.generationsPerDay),
+      generationsToday,
+      limit,
+    );
   }
   return ALLOW;
 }
@@ -144,7 +175,12 @@ export function canCreateCoverLetter(tier: Tier, coverLettersThisMonth: number):
   if (limit === 0) return deny('billing.gate.cover_letter_disabled', 'plus');
   if (limit === -1) return ALLOW;
   if (coverLettersThisMonth >= limit) {
-    return deny('billing.gate.cover_letter_limit', 'plus', coverLettersThisMonth, limit);
+    return deny(
+      'billing.gate.cover_letter_limit',
+      nextTierFor(tier, (l) => l.coverLettersPerMonth),
+      coverLettersThisMonth,
+      limit,
+    );
   }
   return ALLOW;
 }
@@ -261,14 +297,25 @@ const COUNTER_TIMEZONE = 'Asia/Jerusalem';
  */
 export async function getGenerationsToday(userId: string): Promise<number> {
   const startOfDay = startOfDayInTimezone(COUNTER_TIMEZONE);
+  const reservationCutoff = new Date(Date.now() - RESERVATION_TTL_MS);
   const [row] = await db
     .select({ count: sql<number>`cast(count(*) as int)` })
     .from(schema.generations)
     .where(
       and(
         eq(schema.generations.userId, userId),
-        eq(schema.generations.status, 'success'),
         gte(schema.generations.createdAt, startOfDay),
+        // Must match reserveGenerationSlot's predicate exactly. This
+        // used to count only status='success', while the gate that
+        // actually enforces the cap also counts live reservations — so
+        // an in-flight (or abandoned-but-not-yet-expired) generation was
+        // charged against the user while the usage meter still showed
+        // the lower number. Someone reading "18 of 20" would start a
+        // generation the gate had already spent.
+        sql`(
+          ${schema.generations.status} = 'success'
+          OR (${schema.generations.status} = 'reserved' AND ${schema.generations.createdAt} >= ${reservationCutoff.toISOString()}::timestamptz)
+        )`,
       ),
     );
   return row?.count ?? 0;

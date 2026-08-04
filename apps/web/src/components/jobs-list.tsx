@@ -149,6 +149,10 @@ export function JobsList({
             size="sm"
             onClick={() => goToPage(initialPage - 1)}
             disabled={initialPage <= 1 || isPending}
+            // Icon-only, so without this a screen reader announces bare
+            // "button" for both pager controls with nothing to tell them
+            // apart.
+            aria-label={isHebrew ? 'העמוד הקודם' : 'Previous page'}
           >
             <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
           </Button>
@@ -166,6 +170,7 @@ export function JobsList({
             size="sm"
             onClick={() => goToPage(initialPage + 1)}
             disabled={initialPage >= totalPages || isPending}
+            aria-label={isHebrew ? 'העמוד הבא' : 'Next page'}
           >
             <ChevronRight className="h-4 w-4 rtl:rotate-180" />
           </Button>

@@ -27,7 +27,11 @@ export function DeleteResumeButton({
         return;
       }
       toast.success(isHebrew ? 'נמחק' : 'Deleted');
-      router.push('/resumes');
+      // `replace`, not `push`: the page we're leaving is the detail view
+      // of a resume that no longer exists. Pushing leaves it in history,
+      // so Back walks the user straight into a dead record. Replacing
+      // drops it from the stack entirely.
+      router.replace('/resumes');
       router.refresh();
     } catch (err) {
       toast.error((err as Error).message);

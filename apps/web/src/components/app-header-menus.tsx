@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useSession, signOut } from '@/lib/auth-client';
+import { clearPendingCoupon } from '@/lib/pending-coupon';
 import { Button } from '@/components/ui/button';
 import {
   Briefcase,
@@ -156,6 +157,13 @@ export function UserAvatarMenu() {
 
   async function handleSignOut() {
     setOpen(false);
+    // A held promo code lives in localStorage so it can survive the
+    // signup detour, which means it outlives the session that picked it
+    // up. On a shared machine the next person to sign in inherited a
+    // banner about someone else's code. Nothing is granted by it —
+    // validation and the once-per-user rule are enforced server-side —
+    // but it reads like a leak, so drop it with the session.
+    clearPendingCoupon();
     await signOut();
     router.push('/');
     router.refresh();

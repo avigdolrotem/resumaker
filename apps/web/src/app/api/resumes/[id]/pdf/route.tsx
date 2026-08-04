@@ -74,13 +74,23 @@ export async function GET(
     metadata: { resumeId: id, fromCache },
   });
 
-  // Safe filename: strip control chars and quotes from user title;
-  // RFC 5987 filename* for non-ASCII (Hebrew titles)
-  const safeAscii = row.title
+  // Safe filename: strip control chars, quotes and path separators from
+  // the user-controlled title; RFC 5987 filename* for non-ASCII (Hebrew
+  // titles).
+  //
+  // The forward slash matters more than it looks here. Hebrew job titles
+  // are routinely gendered with one — מפתח/ת, מנהל/ת, סייע/ת — so a
+  // large share of Israeli listings produce a title containing a path
+  // separator, and `title` ultimately comes from an LLM reading pasted
+  // job text. Browsers do sanitize Content-Disposition filenames, which
+  // is why this has looked fine in practice, but a path separator in a
+  // filename shouldn't depend on the client choosing to defend itself.
+  const sanitize = (s: string) => s.replace(/[/\\]/g, '_');
+  const safeAscii = sanitize(row.title)
     .replace(/[^\x20-\x7e]/g, '_')
     .replace(/["\\]/g, '_')
     .slice(0, 100);
-  const utf8Encoded = encodeURIComponent(row.title);
+  const utf8Encoded = encodeURIComponent(sanitize(row.title));
 
   return new Response(pdfBuffer as BodyInit, {
     status: 200,

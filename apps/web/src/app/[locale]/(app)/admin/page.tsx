@@ -36,7 +36,14 @@ export default async function AdminPage() {
     .select({ value: count() })
     .from(schema.generations)
     .where(
-      sql`${schema.generations.status} != 'success' AND ${schema.generations.createdAt} >= ${day}`,
+      // `.toISOString()` + an explicit cast, NOT a bare Date. Inside a raw
+      // `sql` fragment there is no column type for Drizzle to infer the
+      // parameter from, so postgres-js receives a JS Date it can't
+      // serialize and the whole query throws — taking the entire admin
+      // dashboard down with it, since this runs in the page's server
+      // component. Typed helpers like gte() bind Dates fine; raw
+      // fragments do not.
+      sql`${schema.generations.status} != 'success' AND ${schema.generations.createdAt} >= ${day.toISOString()}::timestamptz`,
     );
 
   const recentUsers = await db.query.users.findMany({

@@ -83,11 +83,27 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier }: Upgr
 
   if (!portalTargetRef.current) return null;
 
-  // CTA is a mailto: to match the existing pricing-page waitlist UX
-  // when PAYMENT_PROVIDER=none. Once payments go live, swap the
-  // translation key's value to a /pricing href and this code is
-  // unchanged.
+  // Payments are live, so this now points at /pricing (per locale, set
+  // in the message catalogue) rather than the old waitlist mailto: it
+  // carried while PAYMENT_PROVIDER=none. That mailto had become the
+  // dead end on the single most important conversion path — the paywall
+  // someone hits when they try to generate.
   const ctaHref = t('cta.href');
+
+  // Only send genuinely external destinations to a new tab. An internal
+  // path opening in _blank strands the user with an orphan tab and
+  // loses the flow they were in.
+  const isExternal = /^https?:\/\//i.test(ctaHref);
+
+  // A daily cap is not a feature gate, and the copy for one reads badly
+  // as the other. `generation_limit` fires in two very different
+  // situations: a free user who can't generate at all, and a Plus
+  // subscriber who has used today's 20. Only the second can be told to
+  // move to Pro, so requiredTier is what distinguishes them — a paying
+  // customer was being shown "Generating a resume is a paid feature.
+  // Upgrade to Plus" under a button reading "Upgrade to Pro".
+  const copyKey =
+    feature === 'generation_limit' && requiredTier === 'pro' ? 'generation_limit_reached' : feature;
 
   const titleId = `upgrade-modal-title-${feature}`;
   const descId = `upgrade-modal-desc-${feature}`;
@@ -137,10 +153,10 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier }: Upgr
             </div>
 
             <h2 id={titleId} className="text-foreground text-lg font-semibold">
-              {t(`features.${feature}.title`)}
+              {t(`features.${copyKey}.title`)}
             </h2>
             <p id={descId} className="text-muted-foreground mt-2 text-sm">
-              {t(`features.${feature}.body`)}
+              {t(`features.${copyKey}.body`)}
             </p>
 
             <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
@@ -148,8 +164,12 @@ export function UpgradeModal({ open, onOpenChange, feature, requiredTier }: Upgr
                 {t('later')}
               </Button>
               <Button asChild>
-                <a href={ctaHref} target={ctaHref.startsWith('mailto:') ? '_self' : '_blank'}>
-                  {t('cta.label')}
+                <a
+                  href={ctaHref}
+                  target={isExternal ? '_blank' : '_self'}
+                  {...(isExternal ? { rel: 'noopener noreferrer' } : {})}
+                >
+                  {t('cta.label', { tier: requiredTier === 'pro' ? 'Pro' : 'Plus' })}
                 </a>
               </Button>
             </div>

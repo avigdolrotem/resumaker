@@ -23,6 +23,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { requireHrRole } from '@/lib/hr-guards';
+import { hrPlaceholderUrl } from '@/lib/hr-job-url';
 import { auditEvent } from '@/lib/audit';
 import { checkRateLimit } from '@/lib/rate-limit';
 
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   // hosting page rather than an external posting (unless the HR provided
   // applyUrl). The URL normalization is deterministic per (user, time)
   // so dedupe works for accidental double-submits within the same second.
-  const internalUrl = body.applyUrl ?? `https://resumaker.co.il/jobs/hr-${guard.user.id}`;
+  const internalUrl = body.applyUrl ?? hrPlaceholderUrl(guard.user.id);
   const urlNorm = `${internalUrl.toLowerCase()}#${Date.now()}`;
 
   const [row] = await db

@@ -110,8 +110,18 @@ export async function listJobs(params: ListJobsParams): Promise<ListJobsResult> 
     // Same plain-text rule as isIsraeliLocation, expressed in SQL so it
     // can filter + paginate server-side instead of over-fetching and
     // filtering in JS (which would break page counts/limits).
+    //
+    // 'manual' joins the trusted sources deliberately. A pasted job
+    // reaches status='open' only by passing human moderation or coming
+    // from a trusted sharer, and its `location` is frequently NULL
+    // because nothing parses one out of free text. Judging those rows on
+    // location alone meant an admin could approve a job, see the success
+    // toast, watch the audit log record it — and the job would never
+    // appear anywhere, because it failed a geography test it had no data
+    // to pass. Approval is the signal that a manual job belongs here;
+    // this filter shouldn't get to overrule it.
     conditions.push(
-      sql`(${schema.jobs.source} IN ('taasuka', 'hr') OR ${schema.jobs.location} ~* ${ISRAELI_LOCATION_RE.source})`,
+      sql`(${schema.jobs.source} IN ('taasuka', 'hr', 'manual') OR ${schema.jobs.location} ~* ${ISRAELI_LOCATION_RE.source})`,
     );
   }
   conditions.push(isNull(schema.jobs.canonicalJobId));

@@ -60,6 +60,9 @@ env:
   GCP_CLOUD_SQL_IP_TYPE: PRIVATE
   GOOGLE_VERTEX_PROJECT: resumaker-497309
   GOOGLE_VERTEX_LOCATION: europe-west1
+  # See values.yaml for why this is stated rather than left to the schema
+  # default, and why lowering it breaks Hebrew generation.
+  LLM_MAX_TOKENS: '16384'
   REDIS_URL: rediss://10.130.0.4:6378
 
 # ExternalSecrets — pulls from GCP Secret Manager via Workload Identity.

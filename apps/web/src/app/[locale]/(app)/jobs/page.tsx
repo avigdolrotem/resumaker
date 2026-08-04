@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { listJobs } from '@/lib/jobs-query';
 import { JobsList } from '@/components/jobs-list';
+import { JobsSearch } from '@/components/jobs-search';
 
 /**
  * /jobs — beta inbox. Lists imported + scraped jobs newest first, with
@@ -25,10 +26,10 @@ export default async function JobsPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; remote?: string }>;
 }) {
   const { locale } = await params;
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, q: qParam, remote: remoteParam } = await searchParams;
   const guard = await requireActiveUser(await nextHeaders());
   if (guard instanceof Response) {
     redirect('/sign-in');
@@ -40,11 +41,15 @@ export default async function JobsPage({
   // — JobsList (client) takes over from here for in-place page
   // navigation, same listJobs() query so it can't drift from this.
   const requestedPage = Number(pageParam ?? '1');
+  const query = qParam?.trim() ?? '';
   const { jobs, page, totalPages, totalCount } = await listJobs({
     userId: guard.user.id,
     israeliOnly: true,
     page: Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1,
+    ...(query ? { q: query } : {}),
+    ...(remoteParam === 'true' ? { remote: true } : {}),
   });
+  const isFiltered = Boolean(query) || remoteParam === 'true';
 
   return (
     <div className="space-y-6">
@@ -74,10 +79,15 @@ export default async function JobsPage({
         </div>
       </div>
 
+      <JobsSearch isHebrew={isHebrew} />
+
       {jobs.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="text-muted-foreground py-16 text-center">
-            {t('empty')}
+            {/* "No jobs yet — paste one to get started" is right for an
+                empty board, but actively misleading after a search that
+                matched nothing against ~17,000 listings. */}
+            {isFiltered ? t('noResults') : t('empty')}
           </CardContent>
         </Card>
       ) : (

@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { NextResponse } from 'next/server';
-import { HrJobCloseButton } from '@/components/hr/hr-job-card-actions';
+import { HrJobCloseButton, HrJobReopenButton } from '@/components/hr/hr-job-card-actions';
 import { formatDate } from '@/lib/format-date';
 
 /**
@@ -141,8 +141,14 @@ export default async function HrJobsPage({ params }: { params: Promise<{ locale:
                         : `Applicants (${j.applicantCount})`}
                     </Link>
                   </Button>
-                  {j.status === 'open' && (
+                  {j.status === 'open' ? (
                     <HrJobCloseButton jobId={j.id} isHebrew={locale === 'he'} />
+                  ) : (
+                    /* Closing is a reversible status change, but the card
+                       used to drop every control except Applicants once
+                       closed — stranding anyone who closed a listing by
+                       mistake. */
+                    <HrJobReopenButton jobId={j.id} isHebrew={locale === 'he'} />
                   )}
                 </div>
               </CardContent>

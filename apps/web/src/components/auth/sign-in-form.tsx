@@ -114,13 +114,15 @@ export function SignInForm({
             <Label htmlFor="email">{t('fields.email')}</Label>
             <Input id="email" name="email" type="email" required autoComplete="email" dir="ltr" />
           </div>
+          {/* "Forgot password?" sits AFTER the input, not beside the
+              label. In the label row it came before the password field in
+              DOM order, so tabbing from email landed on the link rather
+              than the field someone is obviously about to fill — an
+              interruption on the single most-typed form in the app, and
+              worst for exactly the keyboard and screen-reader users least
+              able to recover from it. */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">{t('fields.password')}</Label>
-              <Link href="/forgot-password" className="text-brand-600 text-xs hover:underline">
-                {t('signIn.forgotPassword')}
-              </Link>
-            </div>
+            <Label htmlFor="password">{t('fields.password')}</Label>
             <Input
               id="password"
               name="password"
@@ -129,6 +131,11 @@ export function SignInForm({
               autoComplete="current-password"
               dir="ltr"
             />
+            <div className="flex justify-end">
+              <Link href="/forgot-password" className="text-brand-600 text-xs hover:underline">
+                {t('signIn.forgotPassword')}
+              </Link>
+            </div>
           </div>
 
           {error && (

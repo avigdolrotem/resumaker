@@ -47,6 +47,9 @@ env:
   NODE_ENV: development
   APP_URL: https://dev.resumaker.co.il
   LOG_LEVEL: debug
+  # See values.yaml for why this is stated rather than left to the schema
+  # default, and why lowering it breaks Hebrew generation.
+  LLM_MAX_TOKENS: '16384'
 
 # ExternalSecrets — pulls from GCP Secret Manager via Workload Identity.
 externalSecrets:

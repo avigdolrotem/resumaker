@@ -171,7 +171,16 @@ export async function generateResume(input: GenerateResumeInput): Promise<Genera
   });
 
   return {
-    resume: validation.resume,
+    // `generated_at` is in the schema, so the model dutifully fills it —
+    // and gets it wrong, emitting whatever date its training suggests
+    // (observed: 2024-07-31 for a generation run in 2026). The server
+    // knows the real answer, so don't ask a language model to guess a
+    // clock. Stamped after validation so the schema still enforces that
+    // the field exists and is a valid datetime.
+    resume: {
+      ...validation.resume,
+      metadata: { ...validation.resume.metadata, generated_at: new Date().toISOString() },
+    },
     jobTitle: jobIdentity.success ? jobIdentity.data.job_title : null,
     companyName: jobIdentity.success ? jobIdentity.data.company_name : null,
     generationId,

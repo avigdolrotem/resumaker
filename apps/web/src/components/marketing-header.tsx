@@ -66,6 +66,7 @@ export async function MarketingHeader({ locale: _locale }: { locale: Locale }) {
             homeLabel={t('home')}
             examplesLabel={t('examples')}
             pricingLabel={t('pricing')}
+            toolsLabel={t('tools')}
           />
           <LocaleSwitcher />
           <ThemeToggle />

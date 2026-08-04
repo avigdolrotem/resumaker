@@ -293,7 +293,34 @@ function matchKeyword(keyword: string, resumeText: string): boolean {
   return re.test(resumeText);
 }
 
+/**
+ * Suggestion copy, per locale.
+ *
+ * These were hardcoded English, so the entire "recommendations" panel
+ * rendered in English on an otherwise fully-Hebrew resume page — a whole
+ * feature in the wrong language for the primary market, not a stray
+ * label. Locale comes from the resume itself (`metadata.language`), so
+ * no caller has to pass it and no existing call site changes.
+ */
+const SUGGESTION_COPY = {
+  en: {
+    keywords: (kw: string) => `Consider adding these keywords from the job description: ${kw}`,
+    shortSummary: 'Summary is short — aim for 2-4 sentences highlighting your value',
+    noExperience: 'No experience entries — add at least one role',
+    noHighlights: 'Some experience entries lack bullet points — add measurable achievements',
+    fewSkills: 'List more skills — at least 5-10 relevant ones for ATS scanning',
+  },
+  he: {
+    keywords: (kw: string) => `כדאי להוסיף את מילות המפתח האלה מתיאור המשרה: ${kw}`,
+    shortSummary: 'התקציר קצר — כדאי לכתוב 2-4 משפטים שמדגישים את הערך שלכם',
+    noExperience: 'אין רשומות ניסיון תעסוקתי — הוסיפו לפחות תפקיד אחד',
+    noHighlights: 'בחלק מרשומות הניסיון חסרות נקודות — הוסיפו הישגים מדידים',
+    fewSkills: 'הוסיפו עוד מיומנויות — לפחות 5-10 רלוונטיות לסריקת ATS',
+  },
+} as const;
+
 export function scoreResume(resume: Resume, jobDescription: string): ATSScore {
+  const copy = SUGGESTION_COPY[resume.metadata.language === 'he' ? 'he' : 'en'];
   const keywords = extractKeywords(jobDescription);
 
   const resumeText = [
@@ -335,7 +362,7 @@ export function scoreResume(resume: Resume, jobDescription: string): ATSScore {
     suggestions.push({
       type: 'keyword',
       severity: 'medium',
-      message: `Consider adding these keywords from the job description: ${topMissing.join(', ')}`,
+      message: copy.keywords(topMissing.join(', ')),
     });
   }
 
@@ -343,7 +370,7 @@ export function scoreResume(resume: Resume, jobDescription: string): ATSScore {
     suggestions.push({
       type: 'content',
       severity: 'low',
-      message: 'Summary is short — aim for 2-4 sentences highlighting your value',
+      message: copy.shortSummary,
     });
   }
 
@@ -351,7 +378,7 @@ export function scoreResume(resume: Resume, jobDescription: string): ATSScore {
     suggestions.push({
       type: 'structure',
       severity: 'high',
-      message: 'No experience entries — add at least one role',
+      message: copy.noExperience,
     });
   } else {
     const hasHighlights = resume.experience.every((e) => (e.highlights?.length ?? 0) > 0);
@@ -359,7 +386,7 @@ export function scoreResume(resume: Resume, jobDescription: string): ATSScore {
       suggestions.push({
         type: 'content',
         severity: 'medium',
-        message: 'Some experience entries lack bullet points — add measurable achievements',
+        message: copy.noHighlights,
       });
     }
   }
@@ -368,7 +395,7 @@ export function scoreResume(resume: Resume, jobDescription: string): ATSScore {
     suggestions.push({
       type: 'structure',
       severity: 'low',
-      message: 'List more skills — at least 5-10 relevant ones for ATS scanning',
+      message: copy.fewSkills,
     });
   }
 

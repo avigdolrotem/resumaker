@@ -19,10 +19,12 @@ export function MarketingNavLinks({
   homeLabel,
   examplesLabel,
   pricingLabel,
+  toolsLabel,
 }: {
   homeLabel: string;
   examplesLabel: string;
   pricingLabel: string;
+  toolsLabel: string;
 }) {
   const pathname = usePathname();
 
@@ -37,6 +39,14 @@ export function MarketingNavLinks({
       <NavLink href="/pricing" active={pathname === '/pricing'}>
         {pricingLabel}
       </NavLink>
+      {/* The free tools work with no account at all, which makes them
+          the best top-of-funnel entry we have — but nothing linked to
+          them from anywhere, so visitors only reached them by guessing
+          the URL. `startsWith` so the two tool pages keep the header
+          highlighted, not just the index. */}
+      <NavLink href="/tools" active={pathname.startsWith('/tools')}>
+        {toolsLabel}
+      </NavLink>
     </>
   );
 }
@@ -46,7 +56,7 @@ function NavLink({
   active,
   children,
 }: {
-  href: '/' | '/examples' | '/pricing';
+  href: '/' | '/examples' | '/pricing' | '/tools';
   active: boolean;
   children: string;
 }) {

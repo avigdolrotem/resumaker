@@ -21,6 +21,7 @@ import {
   getCoverLettersThisMonth,
 } from '@/lib/billing/tier';
 import { TIER_LIMITS } from '@/lib/billing/limits';
+import { SUPPORT_MAILTO } from '@/lib/constants/contact';
 import { getProviderInfo } from '@/lib/billing/provider';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -238,7 +239,7 @@ function BillingAction({
   if (!checkoutReady) {
     return (
       <Button asChild>
-        <a href="mailto:hello@resumaker.co.il?subject=Waitlist%20-%20Billing">{waitlistLabel}</a>
+        <a href={`${SUPPORT_MAILTO}?subject=Waitlist%20-%20Billing`}>{waitlistLabel}</a>
       </Button>
     );
   }

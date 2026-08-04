@@ -9,7 +9,7 @@ import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { ResumePreview } from '@/components/resume-preview';
 import { AtsScoreCard } from '@/components/ats-score-card';
-import { ArrowLeft, ArrowRight, Download } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Download, Pencil } from 'lucide-react';
 import type { Resume } from '@resumaker/shared';
 import { DeleteResumeButton } from './delete-resume-button';
 
@@ -18,9 +18,11 @@ import { DeleteResumeButton } from './delete-resume-button';
  * score (if scored), download, delete.
  *
  * Replaces the old behavior of clicking a resume card, which used to
- * reopen the full per-resume editor at /builder?id= — that editor no
- * longer exists (content is generated from the shared career profile,
- * not hand-edited per resume), so this is a view, not an edit surface.
+ * reopen the full per-resume editor at /builder?id=. Per-resume editing
+ * now lives at ./edit (ResumeInlineEditor, versioned via PATCH
+ * /api/resumes/[id]) and is linked from the actions below — the comment
+ * here used to claim that editor no longer existed, which is how it
+ * ended up shipped but unreachable.
  */
 export default async function ResumeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -62,6 +64,17 @@ export default async function ResumeDetailPage({ params }: { params: Promise<{ i
           {resume.companyName && <p className="text-muted-foreground mt-1">{resume.companyName}</p>}
         </div>
         <div className="flex items-center gap-2">
+          {/* The inline editor at ./edit was reachable only by typing the
+              URL — nothing linked to it, so a generated resume looked
+              permanently uneditable. It's also the only way to correct a
+              field the generator got wrong, which makes it the first
+              thing someone reaches for. */}
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/resumes/${resume.id}/edit`}>
+              <Pencil className="me-1.5 h-3.5 w-3.5" />
+              {isHebrew ? 'עריכה' : 'Edit'}
+            </Link>
+          </Button>
           <Button asChild variant="outline" size="sm">
             <a href={`/api/resumes/${resume.id}/pdf`} target="_blank" rel="noreferrer">
               <Download className="me-1.5 h-3.5 w-3.5" />
@@ -85,6 +98,9 @@ export default async function ResumeDetailPage({ params }: { params: Promise<{ i
             }>,
           }}
           isHebrew={isHebrew}
+          // The resume has moved on since this score was taken. Both
+          // timestamps already exist, so staleness needs no schema change.
+          isStale={resume.updatedAt > scoreRow.createdAt}
         />
       )}
 

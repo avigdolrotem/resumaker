@@ -42,7 +42,13 @@ import { logger } from '@/lib/observability';
 
 const BodySchema = z
   .object({
-    jobDescription: z.string().max(20_000).optional(),
+    // `.min(10)` matches POST /api/resumes/score. Without it the two
+    // endpoints disagreed: generate accepted an 8-character job
+    // description like "Engineer", produced a resume from it, and then
+    // the follow-on score call rejected the very same string — leaving a
+    // resume that could never be scored, after spending a billable
+    // generation on input too thin to tailor anything to.
+    jobDescription: z.string().min(10).max(20_000).optional(),
     jobUrl: z.string().url().optional(),
     locale: z.enum(['he', 'en', 'auto']).default('auto'),
   })
