@@ -60,6 +60,19 @@ env:
   GCP_CLOUD_SQL_IP_TYPE: PRIVATE
   GOOGLE_VERTEX_PROJECT: resumaker-497309
   GOOGLE_VERTEX_LOCATION: europe-west1
+  # Output-token ceiling for resume generation. Stated explicitly rather
+  # than left to env.ts's zod default, which is the same 16384 — this
+  # value decides whether a generation completes or truncates, and it
+  # should be visible to anyone reading the deploy config instead of
+  # something you have to know to go looking for in the schema.
+  #
+  # Do not lower it without checking Hebrew. Hebrew tokenizes far less
+  # efficiently than English, so a Hebrew resume needs substantially more
+  # output tokens than the same content in English; at 4096 they truncate
+  # and the request fails with a 502 on the core paid feature. The model
+  # is only billed for tokens actually produced, so a high ceiling costs
+  # nothing on shorter generations.
+  LLM_MAX_TOKENS: '16384'
   REDIS_URL: rediss://10.130.0.4:6378
 
 # ExternalSecrets — pulls from GCP Secret Manager via Workload Identity.
