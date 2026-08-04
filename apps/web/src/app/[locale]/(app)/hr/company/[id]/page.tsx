@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { BadgeCheck } from 'lucide-react';
+import { HrEditCompanyForm } from '@/components/hr/hr-edit-company-form';
 import { useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +21,7 @@ interface Company {
   slug: string;
   description: string | null;
   websiteUrl: string | null;
+  verified: boolean;
   companyMembers: Member[];
 }
 
@@ -26,29 +29,40 @@ export default function CompanyDetailPage() {
   const { id, locale } = useParams<{ id: string; locale: string }>();
   const isHe = locale === 'he';
   const [company, setCompany] = useState<Company | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'recruiter' | 'viewer'>('recruiter');
   const [inviteSending, setInviteSending] = useState(false);
   const [status, setStatus] = useState('');
 
-  async function load() {
+  // In an effect, not during render. This used to call load() straight
+  // from the render body guarded by `if (!company && !loading)` — so a
+  // request that failed left company null, flipped loading back to
+  // false, and immediately re-triggered itself. A bad or unknown id
+  // didn't show "not found", it spun on "Loading…" while refetching
+  // forever.
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/hr/companies/${id}`);
-      if (res.ok) {
-        const data = (await res.json()) as { company: Company };
-        setCompany(data.company);
+      if (!res.ok) {
+        setFailed(true);
+        return;
       }
+      const data = (await res.json()) as { company: Company };
+      setCompany(data.company);
+      setFailed(false);
+    } catch {
+      setFailed(true);
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
 
-  // Load on mount using useEffect-equivalent via server action pattern
-  if (!company && !loading) {
+  useEffect(() => {
     void load();
-  }
+  }, [load]);
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
@@ -77,7 +91,7 @@ export default function CompanyDetailPage() {
     void load();
   }
 
-  if (loading && !company) {
+  if (loading && !company && !failed) {
     return <p className="text-muted-foreground p-6">{isHe ? 'טוען…' : 'Loading…'}</p>;
   }
 
@@ -89,7 +103,22 @@ export default function CompanyDetailPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">{company.name}</h1>
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="text-3xl font-bold">{company.name}</h1>
+        {/* The badge existed on public job cards but never here, so an
+            employer had no way to see their own verification state — the
+            one place they'd go to fix it. */}
+        {company.verified ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200">
+            <BadgeCheck className="h-3.5 w-3.5" />
+            {isHe ? 'מאומת' : 'Verified'}
+          </span>
+        ) : (
+          <span className="bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 text-xs font-medium">
+            {isHe ? 'לא מאומת' : 'Not verified'}
+          </span>
+        )}
+      </div>
       {company.description && <p className="text-muted-foreground">{company.description}</p>}
       {company.websiteUrl && (
         <a
@@ -101,6 +130,18 @@ export default function CompanyDetailPage() {
           {company.websiteUrl}
         </a>
       )}
+
+      <HrEditCompanyForm
+        company={{
+          id: company.id,
+          name: company.name,
+          description: company.description,
+          websiteUrl: company.websiteUrl,
+          verified: company.verified,
+        }}
+        isHe={isHe}
+        onSaved={(updated) => setCompany((prev) => (prev ? { ...prev, ...updated } : prev))}
+      />
 
       {/* Member list — glass-subtle, flat rows (scannable list, not chrome) */}
       <div className="glass-subtle overflow-hidden rounded-2xl">
