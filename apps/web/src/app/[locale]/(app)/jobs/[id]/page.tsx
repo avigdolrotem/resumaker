@@ -6,6 +6,7 @@ import { db, schema } from '@/db';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireJobHuntBetaPage } from '@/lib/beta-gate';
 import { JobActions } from '@/components/job-actions';
+import { isSyntheticHrUrl } from '@/lib/hr-job-url';
 import { GenerateResumeCta } from '@/components/generate-resume-cta';
 
 export default async function JobDetailPage({
@@ -110,7 +111,14 @@ export default async function JobDetailPage({
                 is a 'manual-paste' sentinel (see api/jobs/import/route.ts),
                 not a link, so this would otherwise navigate to a
                 nonsensical relative path built from that string. */}
-            {job.source !== 'manual' && (
+            {/* Same problem for employer-posted jobs. `jobs.url` is NOT
+                NULL, so a job posted through the HR form with no apply
+                URL gets a synthetic `…/jobs/hr-<userId>` placeholder to
+                satisfy the column. That is not a posting anywhere — this
+                page IS the original — and offering "View original
+                posting" sent job-seekers to a dead address on a domain
+                that isn't even this app. */}
+            {job.source !== 'manual' && !isSyntheticHrUrl(job.source, job.url) && (
               <a
                 href={job.url}
                 target="_blank"
@@ -123,7 +131,11 @@ export default async function JobDetailPage({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <div className="text-foreground whitespace-pre-wrap text-sm leading-relaxed">
+          {/* `break-words` because job descriptions are pasted from
+              anywhere: an unbroken 10,000-character run has no space for
+              normal wrapping to act on and ran straight off the side of
+              the card, taking the page's horizontal scroll with it. */}
+          <div className="text-foreground whitespace-pre-wrap break-words text-sm leading-relaxed">
             {job.description}
           </div>
           <GenerateResumeCta
