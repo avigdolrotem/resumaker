@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { and, desc, eq, sql } from 'drizzle-orm';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, Pencil } from 'lucide-react';
 import { db, schema } from '@/db';
 import { Link } from '@/i18n/navigation';
 import { Card, CardContent } from '@/components/ui/card';
@@ -139,6 +139,12 @@ export default async function HrJobsPage({ params }: { params: Promise<{ locale:
                       {locale === 'he'
                         ? `מועמדים (${j.applicantCount})`
                         : `Applicants (${j.applicantCount})`}
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/hr/jobs/${j.id}/edit`}>
+                      <Pencil className="me-1 h-3.5 w-3.5" />
+                      {locale === 'he' ? 'עריכה' : 'Edit'}
                     </Link>
                   </Button>
                   {j.status === 'open' ? (

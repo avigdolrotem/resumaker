@@ -85,7 +85,24 @@ export async function PATCH(
     updates['verified'] = computeCompanyVerified(guard.user.email, body.websiteUrl);
   }
 
-  await db.update(schema.companies).set(updates).where(eq(schema.companies.id, id));
+  // Return the updated row, not just `success`. `verified` is recomputed
+  // server-side from the new website URL, so the caller has no way to
+  // know the resulting badge state without either being told or
+  // refetching — and a save that silently changes whether an employer
+  // appears verified is exactly the thing the UI needs to reflect
+  // immediately.
+  const [updated] = await db
+    .update(schema.companies)
+    .set(updates)
+    .where(eq(schema.companies.id, id))
+    .returning({
+      id: schema.companies.id,
+      name: schema.companies.name,
+      slug: schema.companies.slug,
+      description: schema.companies.description,
+      websiteUrl: schema.companies.websiteUrl,
+      verified: schema.companies.verified,
+    });
 
   auditEvent({
     userId: guard.user.id,
@@ -93,7 +110,7 @@ export async function PATCH(
     metadata: { kind: 'hr_company_updated', companyId: id },
   });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, company: updated });
 }
 
 export async function DELETE(
