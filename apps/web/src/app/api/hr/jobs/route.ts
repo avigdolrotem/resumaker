@@ -16,14 +16,17 @@
  * trusting free-typed input that could say anything.
  */
 
+import { randomUUID } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { db, schema } from '@/db';
 import { requireActiveUser } from '@/lib/auth-guards';
 import { requireHrRole } from '@/lib/hr-guards';
 import { hrPlaceholderUrl } from '@/lib/hr-job-url';
+import { isUniqueViolation } from '@/lib/db-errors';
+import { normalizeUrl } from '@resumaker/job-engine';
 import { auditEvent } from '@/lib/audit';
 import { checkRateLimit } from '@/lib/rate-limit';
 
@@ -104,32 +107,84 @@ export async function POST(req: NextRequest): Promise<Response> {
   });
   if (!company) return NextResponse.json({ error: 'Company not found' }, { status: 404 });
 
-  // Internal URL for HR-posted jobs: applicants click through to the
-  // hosting page rather than an external posting (unless the HR provided
-  // applyUrl). The URL normalization is deterministic per (user, time)
-  // so dedupe works for accidental double-submits within the same second.
-  const internalUrl = body.applyUrl ?? hrPlaceholderUrl(guard.user.id);
-  const urlNorm = `${internalUrl.toLowerCase()}#${Date.now()}`;
+  // Same company, same title, still open — almost certainly a double
+  // submit or a re-post of something already live. Checked explicitly
+  // because the unique index on url_normalized cannot see it: a posting
+  // with no external apply URL has only a synthetic URL, which is unique
+  // per job by construction and therefore never collides.
+  //
+  // Scoped to OPEN listings on purpose. Re-posting a role that was filled
+  // and closed months ago is a normal thing to do, and blocking it would
+  // be worse than the duplicate.
+  const duplicate = await db.query.jobs.findFirst({
+    where: and(
+      eq(schema.jobs.companyId, company.id),
+      eq(schema.jobs.status, 'open'),
+      sql`lower(${schema.jobs.title}) = lower(${body.title.trim()})`,
+    ),
+    columns: { id: true },
+  });
+  if (duplicate) {
+    return NextResponse.json(
+      {
+        error:
+          'You already have an open listing with this title at this company. Edit or close it instead of posting a second one.',
+        code: 'DUPLICATE_LISTING',
+        existingJobId: duplicate.id,
+      },
+      { status: 409 },
+    );
+  }
 
-  const [row] = await db
-    .insert(schema.jobs)
-    .values({
-      externalId: null,
-      source: 'hr',
-      company: company.name,
-      companySlug: company.slug,
-      companyId: company.id,
-      title: body.title,
-      ...(body.location ? { location: body.location } : {}),
-      description: body.description,
-      url: internalUrl,
-      urlNormalized: urlNorm,
-      remote: body.remote,
-      ...(body.seniority ? { seniority: body.seniority } : {}),
-      hrUserId: guard.user.id,
-      postedAt: new Date(),
-    })
-    .returning({ id: schema.jobs.id });
+  // Generate the id up front so the placeholder URL can reference the row
+  // it belongs to. `jobs.url` is NOT NULL and applicants click through to
+  // the hosting page unless the recruiter supplied a real applyUrl.
+  const jobId = randomUUID();
+  const internalUrl = body.applyUrl ?? hrPlaceholderUrl(jobId);
+  // No `#${Date.now()}` suffix. That made every row unique and quietly
+  // disabled the unique index — two posts sharing one real apply URL are
+  // the same opening, and should collide.
+  const urlNorm = normalizeUrl(internalUrl);
+
+  // The unique index on url_normalized is the real duplicate guard for
+  // postings that carry an external apply URL, including across
+  // companies — the same Greenhouse link posted twice is one opening.
+  // Catch the violation rather than letting it surface as a 500.
+  let row: { id: string } | undefined;
+  try {
+    [row] = await db
+      .insert(schema.jobs)
+      .values({
+        id: jobId,
+        externalId: null,
+        source: 'hr',
+        company: company.name,
+        companySlug: company.slug,
+        companyId: company.id,
+        title: body.title,
+        ...(body.location ? { location: body.location } : {}),
+        description: body.description,
+        url: internalUrl,
+        urlNormalized: urlNorm,
+        remote: body.remote,
+        ...(body.seniority ? { seniority: body.seniority } : {}),
+        hrUserId: guard.user.id,
+        postedAt: new Date(),
+      })
+      .returning({ id: schema.jobs.id });
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      return NextResponse.json(
+        {
+          error:
+            'A listing with this apply URL already exists. Edit the existing one instead of posting it again.',
+          code: 'DUPLICATE_LISTING',
+        },
+        { status: 409 },
+      );
+    }
+    throw err;
+  }
 
   auditEvent({
     userId: guard.user.id,

@@ -16,9 +16,22 @@
 
 const PREFIX = 'https://resumaker.co.il/jobs/hr-';
 
-/** Placeholder for an HR post with no external apply URL. */
-export function hrPlaceholderUrl(userId: string): string {
-  return `${PREFIX}${userId}`;
+/**
+ * Placeholder for an HR post with no external apply URL.
+ *
+ * Keyed on the JOB id, not the poster's. `jobs.url_normalized` is UNIQUE,
+ * so a per-user placeholder made every posting by one recruiter collide
+ * with their previous one — which is why a `#${Date.now()}` suffix was
+ * bolted on, and why duplicate detection never worked: with a
+ * millisecond-resolution suffix no two submissions ever match. A per-job
+ * id is naturally unique, so the suffix isn't needed and the unique
+ * index is free to do its actual job on real apply URLs.
+ *
+ * The prefix is unchanged, so isSyntheticHrUrl still recognises rows
+ * written under the old scheme.
+ */
+export function hrPlaceholderUrl(jobId: string): string {
+  return `${PREFIX}${jobId}`;
 }
 
 /**
