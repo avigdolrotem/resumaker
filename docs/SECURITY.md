@@ -29,7 +29,7 @@
 | A03 Injection                 | Drizzle parameterized queries, Zod validation, no string concat                |
 | A04 Insecure Design           | This document + threat models per service                                      |
 | A05 Security Misconfiguration | OpenTofu enforces config, no manual changes in prod                            |
-| A06 Vulnerable Components     | Dependabot, `pnpm audit`, `trivy` in CI                                        |
+| A06 Vulnerable Components     | `pnpm audit`, `trivy` in CI (Dependabot disabled 2026-10-13)                   |
 | A07 Auth & Identity           | Better Auth (industry-tested), MFA, passkeys                                   |
 | A08 Data Integrity            | Signed JWTs, package lockfiles committed, signed container images              |
 | A09 Logging Failures          | Structured JSON logs, Loki, Sentry, audit trail                                |
