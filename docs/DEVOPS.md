@@ -86,7 +86,9 @@ Sentry release marker + Grafana annotation
 - Container build (if Dockerfile changed)
 - ~5-10 min total
 
-### `security.yml` — On every PR + nightly
+### `security.yml` — On every PR + push to main
+
+(The nightly scheduled run was removed 2026-10-13 while the project is dormant.)
 
 - Gitleaks full history scan
 - Trivy deep scan

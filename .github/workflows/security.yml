@@ -5,9 +5,10 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  schedule:
-    # Nightly full scan
-    - cron: '0 3 * * *'
+  # Nightly `schedule` trigger removed 2026-10-13: the project is dormant, and
+  # newly published advisories against the pinned deps (next, sharp, undici,
+  # tinypool, ...) were failing the scan and emailing every night with nobody
+  # to act on it. Push/PR scans above still run.
 
 permissions:
   contents: read
@@ -109,7 +110,7 @@ jobs:
         #     rule guards against is mitigated by WI binding.
         # Both findings + rationale stay documented in .trivyignore at
         # repo root so they're already suppressed if MEDIUM scanning is
-        # ever re-enabled (e.g. for the nightly schedule run).
+        # ever re-enabled.
         with:
           scan-type: config
           scan-ref: ./infra
@@ -123,7 +124,7 @@ jobs:
     timeout-minutes: 10
     container:
       image: returntocorp/semgrep
-    if: github.event_name == 'pull_request' || github.event_name == 'schedule'
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
       - run: semgrep ci
